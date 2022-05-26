@@ -4,7 +4,7 @@ The `commons-mongo` module contains various utilities that enhance standard Java
 This documentation focuses on the `com.avsystem.commons.mongo.typed` package that contains a Scala-idiomatic and
 typesafe layer over the Reactive Streams driver for MongoDB.
 
-The core class of this typed API is [`TypedMongoCollection`](#invoking-database-commands) - 
+The core class of this typed API is [`TypedMongoCollection`](#invoking-database-commands) -
 a wrapper over Reactive Streams driver `MongoCollection` with more precisely typed and Scala-idiomatic API.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -12,30 +12,30 @@ a wrapper over Reactive Streams driver `MongoCollection` with more precisely typ
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [Quickstart](#quickstart)
-  - [Defining an entity](#defining-an-entity)
-  - [Setting up the client](#setting-up-the-client)
-  - [Inserting documents](#inserting-documents)
-  - [Finding documents by query](#finding-documents-by-query)
+    - [Defining an entity](#defining-an-entity)
+    - [Setting up the client](#setting-up-the-client)
+    - [Inserting documents](#inserting-documents)
+    - [Finding documents by query](#finding-documents-by-query)
 - [Modeling entities](#modeling-entities)
-  - [ID management](#id-management)
-    - [Explicit ID management](#explicit-id-management)
-    - [Automatic ID management](#automatic-id-management)
-  - [Field types](#field-types)
-  - [Embedded document types](#embedded-document-types)
-  - [Optional fields](#optional-fields)
+    - [ID management](#id-management)
+        - [Explicit ID management](#explicit-id-management)
+        - [Automatic ID management](#automatic-id-management)
+    - [Field types](#field-types)
+    - [Embedded document types](#embedded-document-types)
+    - [Optional fields](#optional-fields)
 - [Core types](#core-types)
-  - [`MongoPropertyRef`](#mongopropertyref)
-  - [`MongoDocumentFilter`](#mongodocumentfilter)
-    - [Unsupported operators](#unsupported-operators)
-  - [`MongoProjection`](#mongoprojection)
-  - [`MongoDocumentOrder`](#mongodocumentorder)
-  - [`MongoDocumentUpdate`](#mongodocumentupdate)
-  - [`MongoIndex`](#mongoindex)
+    - [`MongoPropertyRef`](#mongopropertyref)
+    - [`MongoDocumentFilter`](#mongodocumentfilter)
+        - [Unsupported operators](#unsupported-operators)
+    - [`MongoProjection`](#mongoprojection)
+    - [`MongoDocumentOrder`](#mongodocumentorder)
+    - [`MongoDocumentUpdate`](#mongodocumentupdate)
+    - [`MongoIndex`](#mongoindex)
 - [Invoking database commands](#invoking-database-commands)
-  - [Monix `Task`](#monix-task)
-  - [Monix `Observable`](#monix-observable)
-  - [Blocking](#blocking)
-  - [Unsupported operations](#unsupported-operations)
+    - [Monix `Task`](#monix-task)
+    - [Monix `Observable`](#monix-observable)
+    - [Blocking](#blocking)
+    - [Unsupported operations](#unsupported-operations)
 - [Relationship with the previous `commons-mongo` API](#relationship-with-the-previous-commons-mongo-api)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -60,12 +60,10 @@ object SimpleEntity extends MongoEntityCompanion[SimpleEntity]
 
 ```scala
 import com.avsystem.commons.mongo.typed._
-import com.mongodb.reactivestreams.client.MongoClients
 
-val client = MongoClients.create() // connects to localhost by default
-val rawCollection = client.getDatabase("test").getCollection("myEntity")
-
-val collection: TypedMongoCollection[SimpleEntity] = new TypedMongoCollection(rawCollection)
+val client: TypedMongoClient = TypedMongoClient() // connects to localhost by default
+val collection: TypedMongoCollection[SimpleEntity] =
+  client.getDatabase("test").getCollection[SimpleEntity]("myEntity")
 ```
 
 ### Inserting documents
@@ -84,6 +82,7 @@ val task: Task[Unit] =
   collection.insertMany(entities)
 
 // use whatever Scheduler is appropriate in your context (like ExecutionContext for Futures)
+
 import monix.execution.Scheduler.Implicits.global
 // run the Task
 task.foreach(_ => println("insert successful"))
@@ -99,6 +98,7 @@ val observable: Observable[SimpleEntity] =
   collection.find(SimpleEntity.ref(_.int) > 1)
 
 // use whatever Scheduler is appropriate in your context (like ExecutionContext for Futures)
+
 import monix.execution.Scheduler.Implicits.global
 // run the Observable
 observable.foreach(entity => println(s"Found entity: $entity"))
@@ -113,7 +113,8 @@ listTask.foreach(foundEntities => println(s"Found entities: $foundEntities"))
 A MongoDB entity may be:
 
 * a case class
-* a sealed trait/class with `@flatten` annotation (see `GenCodec`'s [flat format](GenCodec.md#flat-sealed-hierarchy-format) for more
+* a sealed trait/class with `@flatten` annotation (see `GenCodec`'
+  s [flat format](GenCodec.md#flat-sealed-hierarchy-format) for more
   details)
 
 Also, every MongoDB entity must have a companion object that extends `MongoEntityCompanion`. This causes an instance
@@ -150,9 +151,12 @@ that serves only to be unique and immutable but otherwise has no meaning. In thi
 entity class and use `AutoIdMongoEntity` as its base.
 
 This way we can perform insert and replace operations without specifying `_id` so that MongoDB generates it
-automatically. However, this ID can still be used in [filters](#mongodocumentfilter) and [projections](#mongoprojection)
-and therefore we are required to declare its type explicitly. Since MongoDB always generates values
-of `org.bson.types.ObjectId`, the ID type must be either raw `ObjectId` or a _transparent wrapper_ over `ObjectId`.
+automatically.
+
+However, note that even though no ID is declared in the entity class, the server-generated ID can still be used in
+[filters](#mongodocumentfilter) and [projections](#mongoprojection). For this reason we need to state the ID type.
+Since MongoDB always generates values of `org.bson.types.ObjectId`, the ID type must be either the raw `ObjectId` or a
+_transparent wrapper_ over `ObjectId`.
 
 ```scala
 case class UserId(id: ObjectId) extends AnyVal
@@ -167,7 +171,8 @@ object User extends MongoEntityCompanion[User]
 
 ### Field types
 
-Any type that has a [`GenCodec`](GenCodec.md) instance will be accepted as a field type in MongoDB entity. However, the MongoDB API is
+Any type that has a [`GenCodec`](GenCodec.md) instance will be accepted as a field type in MongoDB entity. However, the
+MongoDB API is
 additionally aware of internal structure of some types, including:
 
 * [embedded documents](#embedded-document-types) - serialized into BSON documents
@@ -210,7 +215,7 @@ on BSON level, use one of the following:
 * `@transientDefault intOpt: Option[Int] = None`
 * `@transientDefault @whenAbsent(None) intOpt: Option[Int]`
 
-**NOTE**: even when a field is absent in a MongoDB document, the database will pretend that it contains `null` 
+**NOTE**: even when a field is absent in a MongoDB document, the database will pretend that it contains `null`
 while performing a query. Therefore, you can use `{"$eq": null}` queries to match _both_ absent and `null` values.
 
 This is especially useful when introducing new fields into already existing entities. Using optional fields is an easy
@@ -274,8 +279,9 @@ Using the `.ref` macro, you can:
 * refer to common fields of intermediate subtraits in a sealed hierarchy, e.g. `MyUnionEntity.ref(_.as[HasInt].value)`
 
 You can freely combine all the above constructs into more deeply nested references.
-For more examples, see the Scaladoc of the `.ref` macro or 
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoRefTest.scala).
+For more examples, see the Scaladoc of the `.ref` macro or
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoRefTest.scala)
+.
 
 **NOTE**: some of the above references (e.g. unwrapping optional fields or narrowing sealed hierarchies) introduce
 an _implied filter_ that is automatically included into the query if this reference is used in a MongoDB query document
@@ -287,15 +293,16 @@ sort orders, indices, etc.
 ### `MongoDocumentFilter`
 
 A `MongoDocumentFilter[E]` represents a MongoDB query document for an entity type `E`. Usually, filters are created
-via `MongoPropertyRef`s, e.g. 
+via `MongoPropertyRef`s, e.g.
 
 ```scala
-val query: MongoDocumentFilter[MyEntity] = 
+val query: MongoDocumentFilter[MyEntity] =
   MyEntity.ref(_.int) > 10 && MyEntity.ref(_.data.flag).is(true)
 ```
 
-For more examples, see the Scaladoc or 
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoFilterTest.scala).
+For more examples, see the Scaladoc or
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoFilterTest.scala)
+.
 
 #### Unsupported operators
 
@@ -305,7 +312,7 @@ you can use `.rawQueryOp`, e.g.
 ```scala
 import org.bson._
 
-val query: MongoDocumentFilter[MyEntity] = 
+val query: MongoDocumentFilter[MyEntity] =
   MyEntity.ref(_.int).rawQueryOp("$bitsAllClear", new BsonInt32(0x3F))
 ```
 
@@ -318,10 +325,12 @@ in the response of a query. It is usually one of:
 * The whole-document projection narrowed to a single case class or intermediate subtrait in a sealed hierarchy, e.g.
   `MyUnionEntity.as[FirstCase]`.
 * A single `MongoPropertyRef`, e.g. `MyEntity.ref(_.int)`
-* An arbitrary combination of projections into a tuple, e.g. `MongoProjection.zip(MyEntity.ref(_.int), MyEntity.ref(_.data))`
+* An arbitrary combination of projections into a tuple,
+  e.g. `MongoProjection.zip(MyEntity.ref(_.int), MyEntity.ref(_.data))`
 
 For more examples, see the Scaladoc or
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoProjectionTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoProjectionTest.scala)
+.
 
 ### `MongoDocumentOrder`
 
@@ -332,19 +341,21 @@ A `MongoDocumentOrder[E]` represents a sort order for a document of type `E`. It
 * Multi-field order, e.g. `MongoDocumentOrder(MyEntity.ref(_.int) -> true, MyEntity.ref(_.data.number) -> false)`
 
 For more examples, see the Scaladoc or
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoOrderTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoOrderTest.scala)
+.
 
 ### `MongoDocumentUpdate`
 
 A `MongoDocumentUpdate[E]` represents a MongoDB update document for an entity of type `E`. Example:
 
 ```scala
-val update: MongoDocumentUpdate[MyEntity] = 
+val update: MongoDocumentUpdate[MyEntity] =
   MyEntity.ref(_.strOpt).set(Opt("foo")) && MyEntity.ref(_.int).inc(5)
 ```
 
 For more examples, see the Scaladoc or
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoUpdateTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoUpdateTest.scala)
+.
 
 ### `MongoIndex`
 
@@ -358,24 +369,24 @@ A `MongoIndex[E]` represents a MongoDB index document for an entity of type `E`.
   val index: MongoIndex[MyEntity] =
     MongoIndex(MyEntity.ref(_.str) -> Hashed, MyEntity.ref(_.int) -> Descending)
   ```
-  
+
 For more examples, see the Scaladoc or
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoIndexTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/MongoIndexTest.scala)
+.
 
 ## Invoking database commands
 
 In order to invoke database commands, create a `TypedMongoCollection` which is a wrapper over Reactive Streams
-driver's raw `MongoCollection`. 
+driver's raw `MongoCollection`.
 
 (assuming sample entity classes from the [previous section](#core-types))
 
 ```scala
-import com.mongodb.reactivestreams.client.MongoClients
+import com.avsystem.commons.mongo.typed._
 
-val client = MongoClients.create() // connects to localhost by default
-val rawCollection = client.getDatabase("test").getCollection("myEntity")
-
-val collection: TypedMongoCollection[MyEntity] = new TypedMongoCollection(rawCollection)
+val client: TypedMongoClient = TypedMongoClient() // connects to localhost by default
+val collection: TypedMongoCollection[MyEntity] =
+  client.getDatabase("test").getCollection[MyEntity]("myEntity")
 
 def createEntity(i: Int): MyEntity =
   MyEntity(s"id$i", i, s"str$i", Some(s"optstr$i"), (i to 10).toList, Map.empty, MyData(i.toDouble, flag = true))
@@ -383,7 +394,7 @@ def createEntity(i: Int): MyEntity =
 val program: Task[Unit] = for {
   _ <- collection.insertMany((0 until 10).map(createEntity))
   _ <- collection.updateMany(
-    MyEntity.ref(_.int) > 5, 
+    MyEntity.ref(_.int) > 5,
     MyEntity.ref(_.int).inc(10) && MyEntity.ref(_.str).set("modified")
   )
   modifiedEntities <- collection.find(MyEntity.ref(_.str).is("modified")).toListL
@@ -392,16 +403,18 @@ val program: Task[Unit] = for {
 }
 
 import monix.execution.Scheduler.Implicits.global
+
 program.runToFuture
 ```
 
 For more examples of database operations with `TypedMongoCollection`, see
-[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/TypedMongoCollectionTest.scala).
+[tests](https://github.com/AVSystem/scala-commons/blob/master/commons-mongo/jvm/src/test/scala/com/avsystem/commons/mongo/typed/TypedMongoCollectionTest.scala)
+.
 
-`TypedMongoCollection` exposes mostly the same operations as Reactive Streams `MongoCollection` but typed differently, 
+`TypedMongoCollection` exposes mostly the same operations as Reactive Streams `MongoCollection` but typed differently,
 that is: more precisely and in a more Scala-idiomatic way:
 
-* instead of raw `Bson`s, `TypedMongoCollection` uses more precise `MongoDocumentFilter`, `MongoProjection`, 
+* instead of raw `Bson`s, `TypedMongoCollection` uses more precise `MongoDocumentFilter`, `MongoProjection`,
   `MongoDocumentUpdate`, etc. for expressing queries, projections, updates, sort orders, indices, etc.
 * instead of using raw Reactive Streams `Publisher`, `TypedMongoCollection` returns operation results either as
   a [Monix `Task`](https://monix.io/docs/current/eval/task.html) (for single-element results) or as
@@ -410,7 +423,7 @@ that is: more precisely and in a more Scala-idiomatic way:
 For a proper and complete guide and documentation on Monix, refer to its [website](https://monix.io/).
 Here, we will outline the most important aspects that will let you quickly get started with the MongoDB API.
 
-The raw Reactive Streams driver is problematic to use because `org.reactivestreams.Publisher` returned by 
+The raw Reactive Streams driver is problematic to use because `org.reactivestreams.Publisher` returned by
 `MongoCollection` lacks high-level, straightforward to use API. It also does not express very well the distinction
 between methods that return single result and methods that return multiple results.
 
@@ -422,10 +435,10 @@ similar to `Future[T]`. In particular, both share a lot of similar methods and c
 However, there is a very fundamental, conceptual difference between a `Task` and a `Future`:
 
 * a `Future` represents a result of _already running or finished_ computation
-* a `Task` represents an _unexecuted_ program that needs to be run explicitly (e.g. by calling `.runToFuture`) 
-  and may be run multiple times or concurrently, each time repeating its side effects and potentially 
+* a `Task` represents an _unexecuted_ program that needs to be run explicitly (e.g. by calling `.runToFuture`)
+  and may be run multiple times or concurrently, each time repeating its side effects and potentially
   yielding different results
-  
+
 ```scala
 import monix.execution.Scheduler.Implicits.global // note: Scheduler extends ExecutionContext
 
@@ -435,15 +448,15 @@ val task: Task[Unit] = Task.eval(println("hello")) // nothing happens
 task.runToFuture // "hello" is printed
 task.runToFuture // "hello" is printed again, concurrently with the previous run
 ```
-  
-One of the consequences of the above is that `Task` is 
-[referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency) while `Future` 
+
+One of the consequences of the above is that `Task` is
+[referentially transparent](https://en.wikipedia.org/wiki/Referential_transparency) while `Future`
 [is not](https://stackoverflow.com/questions/44196088/why-future-has-side-effects).
 For people acknowledged with (pure) functional programming this will be a virtue by itself. Here we can outline some
 immediate practical benefits of that property.
 
-One of the consequences of `Task`'s referential transparency that makes it much easier to work with than with `Future` 
-is that we don't need an implicit `ExecutionContext` to invoke transformation methods like `map`, `flatMap`, etc. 
+One of the consequences of `Task`'s referential transparency that makes it much easier to work with than with `Future`
+is that we don't need an implicit `ExecutionContext` to invoke transformation methods like `map`, `flatMap`, etc.
 Instead, a `Scheduler` (extended `ExecutionContext`) is necessary but only at the very point where `Task` is being
 executed and converted into a `Future` (among other options).
 
@@ -452,11 +465,13 @@ being bound to any particular `Scheduler`. This relieves us from constant draggi
 implicit parameters that we have to do when working with `Future`s.
 
 ```scala
-val fetchValue: Task[Int] = ...
-def convertValue(int: Int): Task[String] = ...
+val fetchValue: Task[Int] =
+...
+def convertValue(int: Int): Task[String] =
+...
 
 // no ExecutionContext/Scheduler necessary at this point
-val fullProgram: Task[Unit] = 
+val fullProgram: Task[Unit] =
   for {
     value <- fetchValue
     converted <- convertValue(value)
@@ -465,18 +480,22 @@ val fullProgram: Task[Unit] =
   }
 
 // only now we need a Scheduler
+
 import monix.execution.Scheduler.Implicits.global
+
 val future: Future[Unit] = fullProgram.runToFuture
 ```
 
 ### [Monix `Observable`](https://monix.io/docs/current/reactive/observable.html)
 
-An `Observable[T]` is conceptually the same thing as a Reactive Streams `Publisher[T]` (actually, it's fairly straightforward
+An `Observable[T]` is conceptually the same thing as a Reactive Streams `Publisher[T]` (actually, it's fairly
+straightforward
 to convert between each other). That is, both represent an asynchronous stream of values of type `T` with backpressure
-(a consumer must explicitly request more elements from the producer). The difference is that `Observable` exposes a 
+(a consumer must explicitly request more elements from the producer). The difference is that `Observable` exposes a
 rich, Scala-idiomatic API with a lot of high-level combinators.
 
-There are many ways to consume results of an `Observable[T]`. If you don't need the streaming nature of the `Observable`,
+There are many ways to consume results of an `Observable[T]`. If you don't need the streaming nature of the `Observable`
+,
 you can simply "degrade" it onto a `Task[List[T]]` by calling `.toListL` on it. This is very often used in MongoDB API
 in order to fetch full results of a query into memory.
 
@@ -488,8 +507,9 @@ It is recommended to use MongoDB API in a non-blocking way (by composing `Task`s
 However, sometimes this is not possible - some external API may force us into synchronous, blocking implementations.
 Then we have no choice but to wait for the database on the current JVM thread.
 
-In order to do this, use utilities provided by `com.avsystem.commons.concurrent.BlockingUtils` class. Your project should
-provide an implementation of this class where an appropriate Monix `Scheduler`s and other options (default timeout) 
+In order to do this, use utilities provided by `com.avsystem.commons.concurrent.BlockingUtils` class. Your project
+should
+provide an implementation of this class where an appropriate Monix `Scheduler`s and other options (default timeout)
 will be configured, e.g.
 
 ```scala
@@ -498,9 +518,9 @@ import monix.execution.Scheduler
 
 object Blocking extends BlockingUtils {
   // some Scheduler usually reused throughout your application
-  def scheduler: Scheduler = Scheduler.global 
+  def scheduler: Scheduler = Scheduler.global
   // some Scheduler usually reused throughout your application (unbounded, for blocking code)
-  def ioScheduler: Scheduler = Scheduler.io() 
+  def ioScheduler: Scheduler = Scheduler.io()
 }
 ```
 
@@ -517,7 +537,7 @@ implements both Java & Scala `Iterator`.
 
 `TypedMongoCollection` does not cover the entire API of Reactive Streams driver `MongoCollection`.
 For example, [aggregation](https://docs.mongodb.com/manual/aggregation/) is currently not covered.
-In order to use this missing API, you can fall back to using operations on native `MongoCollection`. 
+In order to use this missing API, you can fall back to using operations on native `MongoCollection`.
 The easiest way to do this is via `singleResultNativeOp` or `multiResultNativeOp` which invoke some native command
 specified as lambda expression and translate the result (`Publisher`) into a `Task` or `Observable`.
 
@@ -537,7 +557,8 @@ val results: Observable[Document] = collection.multiResultNativeOp(_.aggregate(p
 ## Relationship with the previous `commons-mongo` API
 
 Before introducing `com.avsystem.commons.mongo.typed` package and `TypedMongoCollection`, the `commons-mongo` module
-already had a relatively thin layer over various native drivers (Java synchronous, Java asynchronous, Java reactive, Scala).
+already had a relatively thin layer over various native drivers (Java synchronous, Java asynchronous, Java reactive,
+Scala).
 
 This old API provides:
 
@@ -548,7 +569,7 @@ This old API provides:
 In comparison to the old API, the new one provides:
 
 * `TypedMongoCollection` wrapper over Reactive Streams collection - as opposed to native `MongoCollection`s
-  * other drivers are unsupported because they are deprecated, synchronous or redundant
+    * other drivers are unsupported because they are deprecated, synchronous or redundant
 * integration with Monix (`Task`s and `Observable`s as opposed to raw `Publisher`s)
 * well typed query/projection/update/index documents in place of raw `Bson`
 * more high-level and user-friendly API for creating queries/updates/etc than raw `Bson` building
