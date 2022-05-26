@@ -19,8 +19,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
   val nativeCollection: MongoCollection[E],
   docCollection: MongoCollection[BsonDocument],
   val clientSession: Opt[TypedClientSession],
-)(
-  implicit meta: MongoEntityMeta[E]
+)(implicit
+  meta: MongoEntityMeta[E]
 ) extends DataTypeDsl[E] with TypedMongoUtils {
 
   def this(

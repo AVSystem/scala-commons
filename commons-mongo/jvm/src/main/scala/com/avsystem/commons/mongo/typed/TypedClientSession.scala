@@ -10,6 +10,9 @@ import org.bson.{BsonDocument, BsonTimestamp}
 
 import java.io.Closeable
 
+/**
+  * Better typed wrapper over [[ClientSession]].
+  */
 class TypedClientSession(val nativeSession: ClientSession)
   extends Closeable with TypedMongoUtils {
 
@@ -30,6 +33,11 @@ class TypedClientSession(val nativeSession: ClientSession)
   def abortTransaction: Task[Unit] =
     empty(nativeSession.abortTransaction())
 
+  /**
+    * Executes a MongoDB transaction - whose contents are expressed as Monix [[Task]].
+    * If the task succeeds, the transaction is committed. If the task fails, the transaction is aborted and the
+    * error is propagated. The transaction is also aborted upon cancellation.
+    */
   def inTransaction[T](
     transactionOptions: TransactionOptions = TransactionOptions.builder().build()
   )(

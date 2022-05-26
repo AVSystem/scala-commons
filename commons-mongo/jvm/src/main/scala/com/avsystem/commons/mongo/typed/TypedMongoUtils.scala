@@ -20,5 +20,12 @@ trait TypedMongoUtils {
   protected final def multi[T](publisher: Publisher[T]): Observable[T] =
     Observable.fromReactivePublisher(publisher)
 
+  /**
+    * Transforms an expression `method(nullableArg, moreArgs)` into
+    * `if(nullableArg ne null) method(nullableArg, moreArgs) else method(moreArgs)`.
+    *
+    * Reduces boilerplate associated with calling overloaded methods from Mongo ReactiveStreams driver that
+    * may or may not take `ClientSession` as its first argument (non-nullable).
+    */
   protected def optionalizeFirstArg[T](expr: T): T = macro MiscMacros.optionalizeFirstArg
 }
