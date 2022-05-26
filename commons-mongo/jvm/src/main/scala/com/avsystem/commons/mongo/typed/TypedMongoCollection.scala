@@ -345,6 +345,9 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
 
   @bincompat private[typed] def this(rawCollection: MongoCollection[_], format: MongoAdtFormat[E]) =
     this(rawCollection)(MongoEntityMeta.bincompatMeta(format))
+
+  @bincompat private[typed] def this(rawCollection: MongoCollection[_], meta: MongoEntityMeta[E]) =
+    this(rawCollection)(meta)
 }
 
 object TypedMongoCollection {
