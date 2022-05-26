@@ -82,6 +82,9 @@ trait NodeScriptingApi extends KeyedScriptingApi {
   private final class ScriptExists(hashes: Iterable[Sha1])
     extends RedisSeqCommand[Boolean](integerAsBoolean) with NodeCommand {
     val encoded: Encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
+
+    override def immediateResult: Opt[ISeq[Boolean]] =
+      if(hashes.isEmpty) Opt(Nil) else Opt.Empty
   }
 
   private object ScriptFlush extends RedisUnitCommand with NodeCommand {
