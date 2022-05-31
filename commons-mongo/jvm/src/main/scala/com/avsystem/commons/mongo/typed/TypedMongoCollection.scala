@@ -101,7 +101,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
     setupOptions: RenameCollectionOptions => RenameCollectionOptions = identity
   ): Task[Unit] =
     empty(optionalizeFirstArg(
-      nativeCollection.renameCollection(sessionOrNull, namespace, setupOptions(new RenameCollectionOptions))))
+      nativeCollection.renameCollection(sessionOrNull, namespace, setupOptions(new RenameCollectionOptions))
+    ))
 
   def countDocuments(
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
@@ -114,9 +115,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
   def estimatedDocumentCount(
     setupOptions: EstimatedDocumentCountOptions => EstimatedDocumentCountOptions = identity
   ): Task[Long] =
-    single(optionalizeFirstArg(
-      nativeCollection.estimatedDocumentCount(setupOptions(new EstimatedDocumentCountOptions))
-    )).asInstanceOf[Task[Long]]
+    single(nativeCollection.estimatedDocumentCount(setupOptions(new EstimatedDocumentCountOptions)))
+      .asInstanceOf[Task[Long]]
 
   def exists(
     filter: MongoDocumentFilter[E],
@@ -182,7 +182,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
     projection match {
       case SelfRef =>
         singleOpt(optionalizeFirstArg(
-          nativeCollection.findOneAndUpdate(sessionOrNull, filterBson, updateBson, options)).asInstanceOf[Publisher[T]])
+          nativeCollection.findOneAndUpdate(sessionOrNull, filterBson, updateBson, options)
+        ).asInstanceOf[Publisher[T]])
       case proj =>
         val optionsWithProj = options.projection(proj.toProjectionBson)
         singleOpt(optionalizeFirstArg(
@@ -226,11 +227,13 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
     projection match {
       case SelfRef =>
         singleOpt(optionalizeFirstArg(
-          nativeCollection.findOneAndDelete(sessionOrNull, filterBson, options)).asInstanceOf[Publisher[T]])
+          nativeCollection.findOneAndDelete(sessionOrNull, filterBson, options)
+        ).asInstanceOf[Publisher[T]])
       case proj =>
         val optionsWithProj = options.projection(proj.toProjectionBson)
         singleOpt(optionalizeFirstArg(
-          docCollection.findOneAndDelete(sessionOrNull, filterBson, optionsWithProj))).map(_.map(proj.decodeFrom))
+          docCollection.findOneAndDelete(sessionOrNull, filterBson, optionsWithProj))
+        ).map(_.map(proj.decodeFrom))
     }
   }
 
@@ -255,28 +258,32 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
     setupOptions: InsertOneOptions => InsertOneOptions = identity
   ): Task[InsertOneResult] =
     single(optionalizeFirstArg(
-      nativeCollection.insertOne(sessionOrNull, value, setupOptions(new InsertOneOptions))))
+      nativeCollection.insertOne(sessionOrNull, value, setupOptions(new InsertOneOptions))
+    ))
 
   def insertMany(
     values: Seq[E],
     setupOptions: InsertManyOptions => InsertManyOptions = identity
   ): Task[InsertManyResult] =
     single(optionalizeFirstArg(
-      nativeCollection.insertMany(sessionOrNull, values.asJava, setupOptions(new InsertManyOptions))))
+      nativeCollection.insertMany(sessionOrNull, values.asJava, setupOptions(new InsertManyOptions))
+    ))
 
   def deleteOne(
     filter: MongoDocumentFilter[E],
     setupOptions: DeleteOptions => DeleteOptions = identity
   ): Task[DeleteResult] =
     single(optionalizeFirstArg(
-      nativeCollection.deleteOne(sessionOrNull, filter.toBson, setupOptions(new DeleteOptions))))
+      nativeCollection.deleteOne(sessionOrNull, filter.toBson, setupOptions(new DeleteOptions))
+    ))
 
   def deleteMany(
     filter: MongoDocumentFilter[E],
     setupOptions: DeleteOptions => DeleteOptions = identity
   ): Task[DeleteResult] =
     single(optionalizeFirstArg(
-      nativeCollection.deleteMany(sessionOrNull, filter.toBson, setupOptions(new DeleteOptions))))
+      nativeCollection.deleteMany(sessionOrNull, filter.toBson, setupOptions(new DeleteOptions))
+    ))
 
   def updateOne(
     filter: MongoDocumentFilter[E],
@@ -290,7 +297,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
       options.arrayFilters(arrayFilters)
     }
     single(optionalizeFirstArg(
-      nativeCollection.updateOne(sessionOrNull, filter.toBson, updateBson, options)))
+      nativeCollection.updateOne(sessionOrNull, filter.toBson, updateBson, options)
+    ))
   }
 
   def updateMany(
@@ -305,7 +313,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
       options.arrayFilters(arrayFilters)
     }
     single(optionalizeFirstArg(
-      nativeCollection.updateMany(sessionOrNull, filter.toBson, updateBson, options)))
+      nativeCollection.updateMany(sessionOrNull, filter.toBson, updateBson, options)
+    ))
   }
 
   def replaceOne(
@@ -316,7 +325,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
   ): Task[UpdateResult] = {
     val options = setupOptions(new ReplaceOptions).upsert(upsert)
     single(optionalizeFirstArg(
-      nativeCollection.replaceOne(sessionOrNull, filter.toBson, replacement, options)))
+      nativeCollection.replaceOne(sessionOrNull, filter.toBson, replacement, options)
+    ))
   }
 
   def bulkWrite(
@@ -325,12 +335,14 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
   ): Task[BulkWriteResult] = {
     val requests = writes.iterator.map(_.toWriteModel).to(JList)
     single(optionalizeFirstArg(
-      nativeCollection.bulkWrite(sessionOrNull, requests, setupOptions(new BulkWriteOptions))))
+      nativeCollection.bulkWrite(sessionOrNull, requests, setupOptions(new BulkWriteOptions))
+    ))
   }
 
   def createIndex(index: MongoIndex[E]): Task[String] =
     single(optionalizeFirstArg(
-      nativeCollection.createIndex(sessionOrNull, index.toBson, index.setupOptions(new IndexOptions))))
+      nativeCollection.createIndex(sessionOrNull, index.toBson, index.setupOptions(new IndexOptions))
+    ))
 
   def createIndexes(
     indexes: Seq[MongoIndex[E]],
@@ -340,7 +352,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
       .map(index => new IndexModel(index.toBson, index.setupOptions(new IndexOptions)))
       .to(JList)
     single(optionalizeFirstArg(
-      nativeCollection.createIndexes(sessionOrNull, indexModels, setupOptions(new CreateIndexOptions))))
+      nativeCollection.createIndexes(sessionOrNull, indexModels, setupOptions(new CreateIndexOptions))
+    ))
   }
 
   @bincompat private[typed] def this(rawCollection: MongoCollection[_], format: MongoAdtFormat[E]) =
