@@ -402,6 +402,7 @@ object Build extends BuildDef {
         "io.circe" %% "circe-jawn" % circeVersion,
         "io.circe" %% "circe-parser" % circeVersion,
         "com.lihaoyi" %% "upickle" % upickleVersion,
+        "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion,
       ),
       ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
     )
