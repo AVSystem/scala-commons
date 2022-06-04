@@ -15,7 +15,7 @@ object BuildBuild extends AutoPlugin {
 
       addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJSVersion),
       addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.1"),
-      addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.0"),
+      addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.3"),
       addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.7"),
       addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.3"),
       addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.9.2"),
