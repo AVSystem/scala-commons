@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo
 
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
 import org.bson._
@@ -23,14 +24,32 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
   override def readBoolean(): Boolean =
     expect(BsonType.BOOLEAN, br.readBoolean())
 
-  override def readInt(): Int =
-    expect(BsonType.INT32, br.readInt32())
+  override def readInt(): Int = handleFailures {
+    bsonType match {
+      case BsonType.INT32 => br.readInt32()
+      case BsonType.INT64 =>
+        val long = br.readInt64()
+        if (long.isValidInt) long.toInt
+        else throw new ReadFailure(s"$long is not an Int")
+      case BsonType.DOUBLE =>
+        val double = br.readDouble()
+        if (double.isValidInt) double.toInt
+        else throw new ReadFailure(s"$double is not an Int")
+      case _ =>
+        wrongType(BsonType.INT32, BsonType.INT64, BsonType.DOUBLE)
+    }
+  }
 
   override def readLong(): Long = handleFailures {
     bsonType match {
       case BsonType.INT32 => br.readInt32().toLong
       case BsonType.INT64 => br.readInt64()
-      case _ => wrongType(BsonType.INT32, BsonType.INT64)
+      case BsonType.DOUBLE =>
+        val double = br.readDouble()
+        if (double.toLong.toDouble == double) double.toLong
+        else throw new ReadFailure(s"$double is not a Long")
+      case _ =>
+        wrongType(BsonType.INT32, BsonType.INT64, BsonType.DOUBLE)
     }
   }
 

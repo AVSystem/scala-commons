@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mongo
 
+import com.avsystem.commons.concurrent.AutoPipeliner
 import com.avsystem.commons.mongo.TypedMongoBenchmark.BatchSize
 import com.avsystem.commons.mongo.typed.{MongoEntity, MongoEntityCompanion, TypedMongoCollection}
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
@@ -22,34 +23,49 @@ case class BenchEntity(
 object BenchEntity extends MongoEntityCompanion[BenchEntity]
 
 object TypedMongoBenchmark {
-  final val BatchSize = 1024
+  final val BatchSize = 1024 * 128
 }
 
-@Warmup(iterations = 2)
-@Measurement(iterations = 5)
+@Warmup(iterations = 5)
+@Measurement(iterations = 20)
 @Fork(1)
 @BenchmarkMode(Array(Mode.Throughput))
 @State(Scope.Benchmark)
 class TypedMongoBenchmark {
-  val threadPool: ExecutorService = Executors.newWorkStealingPool(2)
+  val threadPool: ExecutorService = Executors.newWorkStealingPool(6)
   implicit val scheduler: Scheduler = Scheduler(threadPool)
 
-  val mongoClientSettings: MongoClientSettings =
+  private val pipeliner = new AutoPipeliner[String, BenchEntity](
+    ids => {
+      coll
+        .find(coll.IdRef.in(ids))
+        .foldLeftL(new MHashMap[String, BenchEntity]) { (acc, entity) =>
+          acc(entity.id) = entity
+          acc
+        }
+        .map(m => ids.map(m.apply).toList)
+    },
+    maxBatchSize = 7144,
+    parallelism = 48,
+  )
+
+  private val mongoClientSettings: MongoClientSettings =
     MongoClientSettings.builder
-      .applyConnectionString(new ConnectionString("mongodb://xpseth/test"))
+      .applyConnectionString(new ConnectionString("mongodb://xpseth/bench"))
       .streamFactoryFactory(AsynchronousSocketChannelStreamFactoryFactory.builder
         .group(AsynchronousChannelGroup.withThreadPool(threadPool)).build)
       .build
 
-  val mongoClient: MongoClient = MongoClients.create(mongoClientSettings)
-  val coll = new TypedMongoCollection[BenchEntity](mongoClient.getDatabase("bench").getCollection("BenchEntity"))
+  private val mongoClient: MongoClient = MongoClients.create(mongoClientSettings)
+  val coll: TypedMongoCollection[BenchEntity] = new TypedMongoCollection[BenchEntity](
+    mongoClient.getDatabase("bench").getCollection("BenchEntity"))
 
-  val task: Task[List[Option[BenchEntity]]] =
-    Task.parSequence(List.tabulate(BatchSize)(i => coll.findById(s"foo$i")))
+  val task: Task[List[BenchEntity]] =
+    Task.parSequence(List.tabulate(BatchSize)(i => pipeliner.exec(s"foo${i * 7817 % 100000}")))
 
   @Benchmark
   @OperationsPerInvocation(BatchSize)
-  def benc: List[Option[BenchEntity]] =
+  def benc: List[BenchEntity] =
     task.runSyncUnsafe()
 }
 
