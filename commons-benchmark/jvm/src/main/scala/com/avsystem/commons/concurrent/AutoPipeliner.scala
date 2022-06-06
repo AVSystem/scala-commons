@@ -20,7 +20,7 @@ object AutoPipeliner {
 final class AutoPipeliner[C, R](
   executeBatch: Iterable[C] => Task[IIterable[R]],
   maxBatchSize: Int = DefaultMaxBatchSize,
-  parallelism: Int = DefaultParallelism
+  parallelism: Int = DefaultParallelism,
 )(implicit
   scheduler: Scheduler,
 ) {
@@ -46,14 +46,18 @@ final class AutoPipeliner[C, R](
         .runSyncUnsafe()
     }
 
-  private def handleBatch(batch: Seq[Queued[C, R]]): Task[Unit] =
-    executeBatch(batch.view.filterNot(_.canceled).map(_.cmd)).materialize.foreachL {
-      case Failure(cause) => batch.foreach(_.result.failure(cause))
-      case Success(results) =>
-        (results.iterator zip batch.iterator.map(_.result)).foreach {
-          case (res, promise) => promise.success(res)
-        }
+  private def handleBatch(batch: Seq[Queued[C, R]]): Task[Unit] = {
+    val commands = batch.view.filterNot(_.canceled).map(_.cmd)
+    Task.unless(commands.isEmpty) {
+      executeBatch(commands).materialize.foreachL {
+        case Failure(cause) => batch.foreach(_.result.failure(cause))
+        case Success(results) =>
+          (results.iterator zip batch.iterator.map(_.result)).foreach {
+            case (res, promise) => promise.success(res)
+          }
+      }
     }
+  }
 
   private val runCancelable =
     Task.parTraverseUnordered(queues) { queue =>
