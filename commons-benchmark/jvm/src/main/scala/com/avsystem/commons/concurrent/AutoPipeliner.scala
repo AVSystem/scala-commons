@@ -4,21 +4,20 @@ package concurrent
 import com.avsystem.commons.concurrent.AutoPipeliner._
 import monix.catnap.ConcurrentQueue
 import monix.eval.Task
-import monix.execution.{BufferCapacity, Callback, ChannelType, Scheduler}
+import monix.execution.{BufferCapacity, ChannelType, Scheduler}
 import monix.reactive.Observable
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.collection.SeqView
 
 object AutoPipeliner {
   final val DefaultMaxBatchSize = 512
   final val DefaultParallelism = 8
 
-  private case class Queued[C, R](cmd: C, result: Promise[R]) {
-    @volatile var canceled: Boolean = false
-  }
+  private case class Queued[C, R](cmd: C, result: Promise[R])
 }
 final class AutoPipeliner[C, R](
-  executeBatch: Iterable[C] => Task[IIterable[R]],
+  executeBatch: SeqView[C] => Task[IIterable[R]],
   maxBatchSize: Int = DefaultMaxBatchSize,
   parallelism: Int = DefaultParallelism,
 )(implicit
@@ -27,15 +26,7 @@ final class AutoPipeliner[C, R](
   def exec(cmd: C): Task[R] = for {
     queued <- Task(Queued(cmd, Promise[R]()))
     _ <- queues(roundRobin.getAndIncrement() % parallelism).offer(queued)
-    res <- Task.cancelable { (callback: Callback[Throwable, R]) =>
-      queued.result.future.onCompleteNow {
-        case Success(v) => callback.onSuccess(v)
-        case Failure(e) => callback.onError(e)
-      }
-      Task {
-        queued.canceled = true
-      }
-    }
+    res <- Task.fromFuture(queued.result.future)
   } yield res
 
   private val roundRobin = new AtomicInteger(0)
@@ -46,18 +37,14 @@ final class AutoPipeliner[C, R](
         .runSyncUnsafe()
     }
 
-  private def handleBatch(batch: Seq[Queued[C, R]]): Task[Unit] = {
-    val commands = batch.view.filterNot(_.canceled).map(_.cmd)
-    Task.unless(commands.isEmpty) {
-      executeBatch(commands).materialize.foreachL {
-        case Failure(cause) => batch.foreach(_.result.failure(cause))
-        case Success(results) =>
-          (results.iterator zip batch.iterator.map(_.result)).foreach {
-            case (res, promise) => promise.success(res)
-          }
-      }
+  private def handleBatch(batch: Seq[Queued[C, R]]): Task[Unit] =
+    executeBatch(batch.view.map(_.cmd)).materialize.foreachL {
+      case Failure(cause) => batch.foreach(_.result.failure(cause))
+      case Success(results) =>
+        (results.iterator zip batch.iterator.map(_.result)).foreach {
+          case (res, promise) => promise.success(res)
+        }
     }
-  }
 
   private val runCancelable =
     Task.parTraverseUnordered(queues) { queue =>
