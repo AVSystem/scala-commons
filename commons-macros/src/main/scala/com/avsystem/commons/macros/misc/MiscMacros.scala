@@ -75,6 +75,13 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
     q"new ${c.prefix}.ValName(${owner.asTerm.getter.name.decodedName.toString})"
   }
 
+  def optionalizeFirstArg(expr: Tree): Tree = expr match {
+    case Apply(MaybeTypeApply(Select(prefix, name: TermName), targs), head :: tail) =>
+      q"if($head ne null) $expr else ${c.untypecheck(prefix)}.$name[..$targs](..$tail)"
+    case _ =>
+      c.abort(expr.pos, "function application expected")
+  }
+
   def compilationError(error: Tree): Tree = error match {
     case StringLiteral(errorStr) =>
       abortAt(errorStr, error.pos)

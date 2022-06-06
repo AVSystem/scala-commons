@@ -62,10 +62,9 @@ object SimpleEntity extends MongoEntityCompanion[SimpleEntity]
 import com.avsystem.commons.mongo.typed._
 import com.mongodb.reactivestreams.client.MongoClients
 
-val client = MongoClients.create() // connects to localhost by default
-val rawCollection = client.getDatabase("test").getCollection("myEntity")
-
-val collection: TypedMongoCollection[SimpleEntity] = new TypedMongoCollection(rawCollection)
+val client: TypedMongoClient = TypedMongoClient() // connects to localhost by default
+val collection: TypedMongoCollection[SimpleEntity] = 
+  client.getDatabase("test").getCollection[SimpleEntity]("myEntity")
 ```
 
 ### Inserting documents
@@ -372,10 +371,9 @@ driver's raw `MongoCollection`.
 ```scala
 import com.mongodb.reactivestreams.client.MongoClients
 
-val client = MongoClients.create() // connects to localhost by default
-val rawCollection = client.getDatabase("test").getCollection("myEntity")
-
-val collection: TypedMongoCollection[MyEntity] = new TypedMongoCollection(rawCollection)
+val client: TypedMongoClient = TypedMongoClient() // connects to localhost by default
+val collection: TypedMongoCollection[MyEntity] = 
+  client.getDatabase("test").getCollection[MyEntity]("myEntity")
 
 def createEntity(i: Int): MyEntity =
   MyEntity(s"id$i", i, s"str$i", Some(s"optstr$i"), (i to 10).toList, Map.empty, MyData(i.toDouble, flag = true))

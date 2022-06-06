@@ -107,9 +107,12 @@ object Build extends BuildDef {
         params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        "supercharge", "mongodb-github-action", "1.3.0",
+        "supercharge", "mongodb-github-action", "1.7.0",
         name = Some("Setup MongoDB"),
-        params = Map("mongodb-version" -> "4.4")
+        params = Map(
+          "mongodb-version" -> "5.0.8",
+          "mongodb-replica-set" -> "test-rs",
+        )
       ),
       WorkflowStep.Run(
         List("./install-redis.sh"),
