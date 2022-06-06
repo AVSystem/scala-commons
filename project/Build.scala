@@ -38,9 +38,9 @@ object Build extends BuildDef {
   val collectionCompatVersion = "2.5.0"
   val guavaVersion = "30.1.1-jre"
   val jsr305Version = "3.0.2"
-  val scalatestVersion = "3.2.9"
-  val scalatestplusScalacheckVersion = "3.2.9.0"
-  val scalacheckVersion = "1.15.4"
+  val scalatestVersion = "3.2.12"
+  val scalatestplusScalacheckVersion = "3.2.12.0"
+  val scalacheckVersion = "1.16.0"
   val jettyVersion = "9.4.46.v20220331"
   val mongoVersion = "4.6.0"
   val springVersion = "4.3.26.RELEASE"
@@ -172,7 +172,7 @@ object Build extends BuildDef {
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
-      "org.scalatestplus" %%% "scalacheck-1-15" % scalatestplusScalacheckVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-16" % scalatestplusScalacheckVersion % Test,
       "org.mockito" % "mockito-core" % mockitoVersion % Test,
     ),
     ideBasePackages := Seq(organization.value),
@@ -193,10 +193,6 @@ object Build extends BuildDef {
     )),
   )
 
-  val commonJsTestDeps = Def.setting(Seq(
-    "org.scala-js" %%% "scalajs-fake-insecure-java-securerandom" % scalaJsSecureRandomVersion, //ScalaTest uses SecureRandom
-  ).map(_ % Test))
-
   val jsCommonSettings = commonSettings ++ Seq(
     scalacOptions += {
       val localDir = (ThisBuild / baseDirectory).value.toURI.toString
@@ -205,7 +201,6 @@ object Build extends BuildDef {
     },
     jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
     Test / fork := false,
-    libraryDependencies ++= commonJsTestDeps.value,
   )
 
   val noPublishSettings = Seq(
