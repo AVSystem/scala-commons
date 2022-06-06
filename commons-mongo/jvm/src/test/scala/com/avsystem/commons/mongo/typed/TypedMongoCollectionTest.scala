@@ -4,7 +4,6 @@ package mongo.typed
 import com.avsystem.commons.misc.{Timestamp, TypedMap}
 import com.avsystem.commons.mongo.BsonValueInput
 import com.mongodb.client.model.Aggregates
-import com.mongodb.reactivestreams.client.MongoClients
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.bson.Document
@@ -31,10 +30,10 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
 
   import UnionTestEntity._
 
-  private val client = MongoClients.create()
+  private val client = TypedMongoClient()
   private val db = client.getDatabase("test")
-  private val rteColl = new TypedMongoCollection[RecordTestEntity](db.getCollection("rte"))
-  private val rtaieColl = new TypedMongoCollection[RecordTestAutoIdEntity](db.getCollection("rtaie"))
+  private val rteColl = db.getCollection[RecordTestEntity]("rte")
+  private val rtaieColl = db.getCollection[RecordTestAutoIdEntity]("rtaie")
 
   private def innerRecord(i: Int): InnerRecord =
     InnerRecord(i, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
@@ -225,5 +224,47 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     val id = BsonValueInput.read[TestAutoId](rtaieColl.insertOne(entity).value.getInsertedId)
     val filter = Rtaie.ref(_.str).is("foo")
     assert(rtaieColl.findOne(filter, Rtaie.IdRef zip Rtaie.SelfRef).value.contains((id, entity)))
+  }
+
+  test("successful transaction") {
+    val query = Rte.IdRef.is(entities(0).id)
+    val prop = Rte.ref(_.int)
+
+    val transaction =
+      client.inTransaction() { session =>
+        val coll = rteColl.withSession(session)
+        for {
+          _ <- coll.updateOne(query, prop.inc(1))
+          fromOutside <- rteColl.findOne(query, prop)
+          fromInside <- coll.findOne(query, prop)
+        } yield (fromOutside, fromInside)
+      }
+
+    val (fromOutside, fromInside) = transaction.value
+    val committed = rteColl.findOne(query, prop).value
+
+    // no dirty reads, old value should be visible before commit
+    assert(fromOutside.contains(entities(0).int))
+    // we should see the new value from within the transaction
+    assert(fromInside.contains(entities(0).int + 1))
+    // we should see the new value after commit
+    assert(committed.contains(entities(0).int + 1))
+  }
+
+  test("failed transaction") {
+    val query = Rte.IdRef.is(entities(0).id)
+    val prop = Rte.ref(_.int)
+
+    val transaction =
+      client.inTransaction() { session =>
+        val coll = rteColl.withSession(session)
+        coll.updateOne(query, prop.inc(1)) *> Task.raiseError(new Exception)
+      }
+
+    transaction.materialize.value
+
+    val committed = rteColl.findOne(query, prop).value
+    // we should see the old value because the transaction should be aborted
+    assert(committed.contains(entities(0).int))
   }
 }
