@@ -58,7 +58,7 @@ class TypedMongoDatabase(
     setupOptions: CreateCollectionOptions => CreateCollectionOptions = identity,
   ): Task[Unit] =
     empty(optionalizeFirstArg(
-      nativeDatabase.createCollection(sessionOrNull, name, setupOptions(new CreateCollectionOptions))
+      nativeDatabase.createCollection(sessionOrNull, name, setupOptions(new CreateCollectionOptions)),
     ))
 
   //TODO: `createView`, `watch`, `aggregate`

@@ -23,7 +23,7 @@ class TypedClientSession(val nativeSession: ClientSession)
     nativeSession.getTransactionOptions
 
   def startTransaction(
-    transactionOptions: TransactionOptions = TransactionOptions.builder().build()
+    transactionOptions: TransactionOptions = TransactionOptions.builder().build(),
   ): Unit =
     nativeSession.startTransaction(transactionOptions)
 
@@ -39,9 +39,9 @@ class TypedClientSession(val nativeSession: ClientSession)
     * error is propagated. The transaction is also aborted upon cancellation.
     */
   def inTransaction[T](
-    transactionOptions: TransactionOptions = TransactionOptions.builder().build()
+    transactionOptions: TransactionOptions = TransactionOptions.builder().build(),
   )(
-    task: Task[T]
+    task: Task[T],
   ): Task[T] = Task.defer {
     startTransaction(transactionOptions)
     task.guaranteeCase {

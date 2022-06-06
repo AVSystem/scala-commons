@@ -44,7 +44,7 @@ object TypedMongoClient {
   */
 class TypedMongoClient(
   val nativeClient: MongoClient,
-  val clientSession: OptArg[TypedClientSession] = OptArg.Empty
+  val clientSession: OptArg[TypedClientSession] = OptArg.Empty,
 ) extends TypedMongoUtils with Closeable {
   private val sessionOrNull = clientSession.toOpt.map(_.nativeSession).orNull
 
@@ -66,7 +66,7 @@ class TypedMongoClient(
   //TODO: `watch` methods
 
   def startSession(
-    options: ClientSessionOptions = ClientSessionOptions.builder().build()
+    options: ClientSessionOptions = ClientSessionOptions.builder().build(),
   ): Task[TypedClientSession] =
     single(nativeClient.startSession(options)).map(new TypedClientSession(_))
 
@@ -78,9 +78,9 @@ class TypedMongoClient(
     * returned copy of these objects.
     */
   def inSession[T](
-    options: ClientSessionOptions = ClientSessionOptions.builder().build()
+    options: ClientSessionOptions = ClientSessionOptions.builder().build(),
   )(
-    task: TypedClientSession => Task[T]
+    task: TypedClientSession => Task[T],
   ): Task[T] =
     startSession(options).bracket(task)(s => Task(s.close()))
 
@@ -97,7 +97,7 @@ class TypedMongoClient(
     sessionOptions: ClientSessionOptions = ClientSessionOptions.builder().build(),
     transactionOptions: TransactionOptions = TransactionOptions.builder().build(),
   )(
-    task: TypedClientSession => Task[T]
+    task: TypedClientSession => Task[T],
   ): Task[T] =
     inSession(sessionOptions)(s => s.inTransaction(transactionOptions)(task(s)))
 
