@@ -52,9 +52,8 @@ object Build extends BuildDef {
   val mockitoVersion = "3.9.0"
   val circeVersion = "0.13.0" // benchmark only
   val upickleVersion = "1.3.11" // benchmark only
-  val scalajsBenchmarkVersion = "0.10.0"
+  val scalajsBenchmarkVersion = "0.9.0"
   val slf4jVersion = "1.7.32"
-  val scalaJsSecureRandomVersion = "1.0.0" // test only
 
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
