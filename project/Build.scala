@@ -38,17 +38,17 @@ object Build extends BuildDef {
   val collectionCompatVersion = "2.5.0"
   val guavaVersion = "30.1.1-jre"
   val jsr305Version = "3.0.2"
-  val scalatestVersion = "3.2.9"
-  val scalatestplusScalacheckVersion = "3.2.9.0"
-  val scalacheckVersion = "1.15.4"
-  val jettyVersion = "9.4.45.v20220203"
-  val mongoVersion = "4.5.0"
+  val scalatestVersion = "3.2.12"
+  val scalatestplusScalacheckVersion = "3.2.12.0"
+  val scalacheckVersion = "1.16.0"
+  val jettyVersion = "9.4.46.v20220331"
+  val mongoVersion = "4.6.0"
   val springVersion = "4.3.26.RELEASE"
   val typesafeConfigVersion = "1.4.2"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.4"
   val akkaVersion = "2.6.14"
-  val monixVersion = "3.4.0"
+  val monixVersion = "3.4.1"
   val mockitoVersion = "3.9.0"
   val circeVersion = "0.13.0" // benchmark only
   val upickleVersion = "1.3.11" // benchmark only
@@ -171,7 +171,7 @@ object Build extends BuildDef {
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
-      "org.scalatestplus" %%% "scalacheck-1-15" % scalatestplusScalacheckVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-16" % scalatestplusScalacheckVersion % Test,
       "org.mockito" % "mockito-core" % mockitoVersion % Test,
     ),
     ideBasePackages := Seq(organization.value),
