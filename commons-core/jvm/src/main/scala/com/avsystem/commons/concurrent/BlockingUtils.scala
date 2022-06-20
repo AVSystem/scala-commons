@@ -76,5 +76,5 @@ abstract class BlockingUtils {
 
 object DefaultBlocking extends BlockingUtils {
   implicit def scheduler: Scheduler = Scheduler.global
-  def ioScheduler: Scheduler = Scheduler.io()
+  lazy val ioScheduler: Scheduler = Scheduler.io()
 }
