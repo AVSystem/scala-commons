@@ -49,6 +49,7 @@ object Build extends BuildDef {
   val scalaLoggingVersion = "3.9.4"
   val akkaVersion = "2.6.14"
   val monixVersion = "3.4.1"
+  val monixBioVersion = "1.2.0"
   val mockitoVersion = "3.9.0"
   val circeVersion = "0.13.0" // benchmark only
   val upickleVersion = "1.3.11" // benchmark only
@@ -303,6 +304,7 @@ object Build extends BuildDef {
         "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
+        "io.monix" %% "monix-bio" % monixBioVersion % Optional,
       ),
     )
 
