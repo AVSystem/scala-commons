@@ -3,7 +3,7 @@ import sbt._
 
 object BuildBuild extends AutoPlugin {
   val scalaJSVersion: String =
-    Option(System.getenv("SCALAJS_VERSION")).getOrElse("1.10.0")
+    Option(System.getenv("SCALAJS_VERSION")).getOrElse("1.10.1")
 
   override def extraProjects: Seq[Project] = Seq(macros)
 
