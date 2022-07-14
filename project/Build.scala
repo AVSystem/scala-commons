@@ -41,20 +41,20 @@ object Build extends BuildDef {
   val scalatestVersion = "3.2.12"
   val scalatestplusScalacheckVersion = "3.2.12.0"
   val scalacheckVersion = "1.16.0"
-  val jettyVersion = "9.4.46.v20220331"
-  val mongoVersion = "4.6.0"
+  val jettyVersion = "9.4.48.v20220622"
+  val mongoVersion = "4.6.1"
   val springVersion = "4.3.26.RELEASE"
   val typesafeConfigVersion = "1.4.2"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.4"
-  val akkaVersion = "2.6.14"
+  val akkaVersion = "2.6.19"
   val monixVersion = "3.4.1"
   val monixBioVersion = "1.2.0"
   val mockitoVersion = "3.9.0"
   val circeVersion = "0.13.0" // benchmark only
   val upickleVersion = "1.3.11" // benchmark only
   val scalajsBenchmarkVersion = "0.9.0"
-  val slf4jVersion = "1.7.32"
+  val slf4jVersion = "1.7.36"
 
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
