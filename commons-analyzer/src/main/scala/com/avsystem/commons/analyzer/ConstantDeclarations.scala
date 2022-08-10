@@ -20,9 +20,9 @@ class ConstantDeclarations(g: Global) extends AnalyzerRule(g, "constantDeclarati
 
         val firstChar = name.toString.charAt(0)
         if (constantValue && (firstChar.isLower || !getter.isFinal)) {
-          report(t.pos, "a constant should be declared as a `final val` with an UpperCamelCase name")
+          report(t.pos, "a literal-valued constant should be declared as a `final val` with an UpperCamelCase name")
         }
-        if (firstChar.isUpper && !getter.isFinal) {
+        if (!constantValue && firstChar.isUpper && !getter.isFinal) {
           report(t.pos, "a constant with UpperCamelCase name should be declared as a `final val`")
         }
         if (getter.isFinal && constantValue && !(tpt.tpe =:= rhs.tpe)) {
