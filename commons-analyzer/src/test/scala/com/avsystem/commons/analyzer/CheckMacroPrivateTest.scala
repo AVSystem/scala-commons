@@ -50,7 +50,7 @@ class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest {
         |object test {
         |  @macroPrivate def macroPrivateMethod = { println("whatever"); 5 }
         |  @macroPrivate object macroPrivateObject {
-        |    val x = 42
+        |    final val X = 42
         |  }
         |}
       """.stripMargin

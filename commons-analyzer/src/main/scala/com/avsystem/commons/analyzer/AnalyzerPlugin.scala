@@ -56,7 +56,8 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     new Any2StringAdd(global),
     new ThrowableObjects(global),
     new DiscardedMonixTask(global),
-    new BadSingletonComponent(global)
+    new BadSingletonComponent(global),
+    new ConstantDeclarations(global),
   )
 
   private lazy val rulesByName = rules.map(r => (r.name, r)).toMap
