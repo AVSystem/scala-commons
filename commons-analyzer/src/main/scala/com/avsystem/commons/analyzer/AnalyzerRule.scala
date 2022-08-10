@@ -2,8 +2,8 @@ package com.avsystem.commons
 package analyzer
 
 import java.io.{PrintWriter, StringWriter}
-
 import scala.tools.nsc.Global
+import scala.tools.nsc.Reporting.WarningCategory
 import scala.util.control.NonFatal
 
 abstract class AnalyzerRule(val global: Global, val name: String, defaultLevel: Level = Level.Warn) {
@@ -28,11 +28,16 @@ abstract class AnalyzerRule(val global: Global, val name: String, defaultLevel: 
 
   private def adjustMsg(msg: String): String = s"[AVS] $msg"
 
-  protected def report(pos: Position, message: String): Unit =
+  protected final def report(
+    pos: Position,
+    message: String,
+    category: WarningCategory = WarningCategory.Lint,
+    site: Symbol = NoSymbol
+  ): Unit =
     level match {
       case Level.Off =>
       case Level.Info => reporter.echo(pos, adjustMsg(message))
-      case Level.Warn => reporter.warning(pos, adjustMsg(message))
+      case Level.Warn => currentRun.reporting.warning(pos, adjustMsg(message), category, site)
       case Level.Error => reporter.error(pos, adjustMsg(message))
     }
 

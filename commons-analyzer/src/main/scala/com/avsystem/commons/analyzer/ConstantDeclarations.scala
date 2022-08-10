@@ -8,7 +8,7 @@ class ConstantDeclarations(g: Global) extends AnalyzerRule(g, "constantDeclarati
   import global._
 
   def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
-    case t@ValDef(mods, name, tpt, rhs)
+    case t@ValDef(_, name, tpt, rhs)
       if t.symbol.hasGetter && t.symbol.owner.isEffectivelyFinal =>
 
       val getter = t.symbol.getterIn(t.symbol.owner)
@@ -18,15 +18,18 @@ class ConstantDeclarations(g: Global) extends AnalyzerRule(g, "constantDeclarati
           case _ => false
         }
 
+        def doReport(msg: String): Unit =
+          report(t.pos, msg, site = t.symbol)
+
         val firstChar = name.toString.charAt(0)
         if (constantValue && (firstChar.isLower || !getter.isFinal)) {
-          report(t.pos, "a literal-valued constant should be declared as a `final val` with an UpperCamelCase name")
+          doReport("a literal-valued constant should be declared as a `final val` with an UpperCamelCase name")
         }
         if (!constantValue && firstChar.isUpper && !getter.isFinal) {
-          report(t.pos, "a constant with UpperCamelCase name should be declared as a `final val`")
+          doReport("a constant with UpperCamelCase name should be declared as a `final val`")
         }
         if (getter.isFinal && constantValue && !(tpt.tpe =:= rhs.tpe)) {
-          report(t.pos, "a constant with a literal value should not have an explicit type annotation")
+          doReport("a constant with a literal value should not have an explicit type annotation")
         }
       }
     case _ =>
