@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-class ConstantDeclarations(g: Global) extends AnalyzerRule(g, "constantDeclarations") {
+class ConstantDeclarations(g: Global) extends AnalyzerRule(g, "constantDeclarations", Level.Off) {
 
   import global._
 
