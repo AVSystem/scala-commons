@@ -10,6 +10,7 @@ import org.bson.types.{Decimal128, ObjectId}
 import java.nio.ByteBuffer
 
 trait BsonGenCodecs {
+  implicit def objectIdIdentityWrapping: TransparentWrapping[ObjectId, ObjectId] = BsonGenCodecs.objectIdIdentityWrapping
   implicit def objectIdCodec: GenCodec[ObjectId] = BsonGenCodecs.objectIdCodec
   implicit def objectIdKeyCodec: GenKeyCodec[ObjectId] = BsonGenCodecs.objectIdKeyCodec
   implicit def decimal128Codec: GenCodec[Decimal128] = BsonGenCodecs.decimal128Codec
@@ -36,7 +37,7 @@ object BsonGenCodecs {
 
   implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.nullable(
     i => i.readCustom(ObjectIdMarker).getOrElse(new ObjectId(i.readSimple().readString())),
-    (o, v) => if (!o.writeCustom(ObjectIdMarker, v)) o.writeSimple().writeString(v.toHexString)
+    (o, v) => if (!o.writeCustom(ObjectIdMarker, v)) o.writeSimple().writeString(v.toHexString),
   )
 
   implicit val objectIdKeyCodec: GenKeyCodec[ObjectId] =
@@ -44,7 +45,7 @@ object BsonGenCodecs {
 
   implicit val decimal128Codec: GenCodec[Decimal128] = GenCodec.nullable(
     i => i.readCustom(Decimal128Marker).getOrElse(new Decimal128(i.readSimple().readBigDecimal().bigDecimal)),
-    (o, v) => if (!o.writeCustom(Decimal128Marker, v)) o.writeSimple().writeBigDecimal(v.bigDecimalValue())
+    (o, v) => if (!o.writeCustom(Decimal128Marker, v)) o.writeSimple().writeBigDecimal(v.bigDecimalValue()),
   )
 
   implicit val bsonValueCodec: GenCodec[BsonValue] = GenCodec.create(
@@ -59,7 +60,7 @@ object BsonGenCodecs {
       writer.flush()
       writer.close()
       o.writeSimple().writeBinary(buffer.toByteArray)
-    }
+    },
   )
 
   private def bsonValueSubCodec[T <: BsonValue](fromBsonValue: BsonValue => T): GenCodec[T] =
