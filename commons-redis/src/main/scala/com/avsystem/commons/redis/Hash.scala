@@ -46,9 +46,9 @@ object Hash {
   )
 
   def slot(key: ByteString): Int = {
-    val tagStart = key.indexOf('{')
+    val tagStart = key.indexOf[Byte]('{')
     val bytes = if (tagStart >= 0) {
-      val tagEnd = key.indexOf('}', tagStart + 1)
+      val tagEnd = key.indexOf[Byte]('}', tagStart + 1)
       if (tagEnd > tagStart + 1)
         key.iterator.slice(tagStart + 1, tagEnd)
       else key.iterator

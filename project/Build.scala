@@ -83,7 +83,7 @@ object Build extends BuildDef {
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
 
-    crossScalaVersions := Seq("2.13.8", "2.12.15"),
+    crossScalaVersions := Seq("2.13.10", "2.12.17"),
     scalaVersion := crossScalaVersions.value.head,
     compileOrder := CompileOrder.Mixed,
 

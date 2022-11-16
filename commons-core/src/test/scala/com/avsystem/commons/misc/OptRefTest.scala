@@ -31,8 +31,8 @@ class OptRefTest extends AnyFunSuite {
   }
 
   test("zip") {
-    assert(OptRef(3).zip(OptRef(2)) == OptRef((3, 2)))
-    assert(OptRef.Empty.zip(OptRef(2)) == OptRef.Empty)
-    assert(OptRef(3).zip(OptRef.Empty) == OptRef.Empty)
+    assert(OptRef[JInteger](3).zip(OptRef[JInteger](2)) == OptRef((3, 2)))
+    assert(OptRef.Empty.zip(OptRef[JInteger](2)) == OptRef.Empty)
+    assert(OptRef[JInteger](3).zip(OptRef.Empty) == OptRef.Empty)
   }
 }
