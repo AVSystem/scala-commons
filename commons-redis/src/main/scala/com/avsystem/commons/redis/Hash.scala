@@ -46,9 +46,9 @@ object Hash {
   )
 
   def slot(key: ByteString): Int = {
-    val tagStart = key.indexOf('{')
+    val tagStart = key.indexOf('{'.toByte) // .toByte to make both Scala 2.12 and 2.13 compiler happy
     val bytes = if (tagStart >= 0) {
-      val tagEnd = key.indexOf('}', tagStart + 1)
+      val tagEnd = key.indexOf('}'.toByte, tagStart + 1)
       if (tagEnd > tagStart + 1)
         key.iterator.slice(tagStart + 1, tagEnd)
       else key.iterator
