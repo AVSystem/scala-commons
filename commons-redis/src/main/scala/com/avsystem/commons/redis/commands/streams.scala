@@ -398,7 +398,7 @@ object XEntryId {
     CommandArg((enc, eid) => enc.add(eid.toString))
 }
 
-case class XEntry[Record](id: XEntryId, data: Record)
+case class XEntry[Rec](id: XEntryId, data: Rec)
 
 case class XMaxlen(maxlen: Long, approx: Boolean = true)
 object XMaxlen {

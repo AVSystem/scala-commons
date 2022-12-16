@@ -1051,7 +1051,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
     actualParamType(param.typeSignature)
 
   def actualParamType(tpe: Type): Type = tpe match {
-    case TypeRef(_, s, List(arg)) if s == definitions.RepeatedParamClass =>
+    case TypeRef(_, s, List(arg)) if s == definitions.RepeatedParamClass || s == definitions.JavaRepeatedParamClass =>
       getType(tq"$ScalaPkg.Seq[$arg]")
     case TypeRef(_, s, List(arg)) if s == definitions.ByNameParamClass =>
       arg
