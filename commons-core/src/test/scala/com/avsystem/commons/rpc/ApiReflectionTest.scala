@@ -75,7 +75,8 @@ class SimpleApi {
 }
 
 class ApiReflectionTest extends AnyFunSuite {
-  test("String API") {
+  test("String API JDK11") {
+    assume(System.getProperty("java.specification.version") == "11")
     assert(ApiInfo.materialize[String].repr ==
       """String {
         |  def length(): Int
@@ -135,6 +136,79 @@ class ApiReflectionTest extends AnyFunSuite {
         |  def toCharArray(): Array[Char]
         |  def intern(): String
         |  def repeat(x$1: Int): String
+        |  final def +(x$1: Any): String
+        |}""".stripMargin
+    )
+  }
+
+  test("String API JDK17") {
+    assume(System.getProperty("java.specification.version") == "17")
+    assert(ApiInfo.materialize[String].repr ==
+      """String {
+        |  def length(): Int
+        |  def isEmpty(): Boolean
+        |  def charAt(x$1: Int): Char
+        |  def codePointAt(x$1: Int): Int
+        |  def codePointBefore(x$1: Int): Int
+        |  def codePointCount(x$1: Int, x$2: Int): Int
+        |  def offsetByCodePoints(x$1: Int, x$2: Int): Int
+        |  def getChars(x$1: Int, x$2: Int, x$3: Array[Char], x$4: Int): Unit
+        |  def getBytes(x$1: Int, x$2: Int, x$3: Array[Byte], x$4: Int): Unit
+        |  def getBytes(x$1: String): Array[Byte]
+        |  def getBytes(x$1: java.nio.charset.Charset): Array[Byte]
+        |  def getBytes(): Array[Byte]
+        |  def contentEquals(x$1: StringBuffer): Boolean
+        |  def contentEquals(x$1: CharSequence): Boolean
+        |  def equalsIgnoreCase(x$1: String): Boolean
+        |  def compareTo(x$1: String): Int
+        |  def compareToIgnoreCase(x$1: String): Int
+        |  def regionMatches(x$1: Int, x$2: String, x$3: Int, x$4: Int): Boolean
+        |  def regionMatches(x$1: Boolean, x$2: Int, x$3: String, x$4: Int, x$5: Int): Boolean
+        |  def startsWith(x$1: String, x$2: Int): Boolean
+        |  def startsWith(x$1: String): Boolean
+        |  def endsWith(x$1: String): Boolean
+        |  def indexOf(x$1: Int): Int
+        |  def indexOf(x$1: Int, x$2: Int): Int
+        |  def lastIndexOf(x$1: Int): Int
+        |  def lastIndexOf(x$1: Int, x$2: Int): Int
+        |  def indexOf(x$1: String): Int
+        |  def indexOf(x$1: String, x$2: Int): Int
+        |  def lastIndexOf(x$1: String): Int
+        |  def lastIndexOf(x$1: String, x$2: Int): Int
+        |  def substring(x$1: Int): String
+        |  def substring(x$1: Int, x$2: Int): String
+        |  def subSequence(x$1: Int, x$2: Int): CharSequence
+        |  def concat(x$1: String): String
+        |  def replace(x$1: Char, x$2: Char): String
+        |  def matches(x$1: String): Boolean
+        |  def contains(x$1: CharSequence): Boolean
+        |  def replaceFirst(x$1: String, x$2: String): String
+        |  def replaceAll(x$1: String, x$2: String): String
+        |  def replace(x$1: CharSequence, x$2: CharSequence): String
+        |  def split(x$1: String, x$2: Int): Array[String]
+        |  def split(x$1: String): Array[String]
+        |  def toLowerCase(x$1: java.util.Locale): String
+        |  def toLowerCase(): String
+        |  def toUpperCase(x$1: java.util.Locale): String
+        |  def toUpperCase(): String
+        |  def trim(): String
+        |  def strip(): String
+        |  def stripLeading(): String
+        |  def stripTrailing(): String
+        |  def isBlank(): Boolean
+        |  def lines(): java.util.stream.Stream[String]
+        |  def indent(x$1: Int): String
+        |  def stripIndent(): String
+        |  def translateEscapes(): String
+        |  def transform[R](x$1: java.util.function.Function[_ >: String, _ <: R]): R
+        |  def chars(): java.util.stream.IntStream
+        |  def codePoints(): java.util.stream.IntStream
+        |  def toCharArray(): Array[Char]
+        |  def formatted(x$1: Seq[AnyRef]): String
+        |  def intern(): String
+        |  def repeat(x$1: Int): String
+        |  def describeConstable(): java.util.Optional[String]
+        |  def resolveConstantDesc(x$1: java.lang.invoke.MethodHandles.Lookup): String
         |  final def +(x$1: Any): String
         |}""".stripMargin
     )
