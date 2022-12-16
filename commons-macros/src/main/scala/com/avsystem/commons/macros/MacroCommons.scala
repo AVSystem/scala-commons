@@ -1409,16 +1409,9 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
       }
     }
 
-  def determineTypeParams(undetTpe: Type, detTpe: Type, typeParams: List[Symbol], debug: Boolean = false): Option[List[Type]] = {
+  def determineTypeParams(undetTpe: Type, detTpe: Type, typeParams: List[Symbol]): Option[List[Type]] = {
     val methodName = c.freshName(TermName("m"))
     val typeDefs = typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
-
-    if(debug) {
-        q"""
-        def $methodName[..$typeDefs](f: ${treeForType(undetTpe)} => $UnitCls): $UnitCls = ()
-        $methodName((_: $detTpe) => ())
-      """.debug("")
-    }
 
     val tree = typecheck(
       q"""
@@ -1426,8 +1419,6 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
         $methodName((_: $detTpe) => ())
       """, silent = true
     )
-
-    if(debug) println(tree)
 
     tree match {
       case Block(_, Apply(TypeApply(_, args), _)) => Some(args.map(_.tpe))
