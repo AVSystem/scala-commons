@@ -90,7 +90,7 @@ object Build extends BuildDef {
     githubWorkflowTargetTags ++= Seq("v*"),
 
     githubWorkflowEnv ++= Map(
-      "REDIS_VERSION" -> "7.0.7",
+      "REDIS_VERSION" -> "6.2.6",
     ),
     githubWorkflowJavaVersions := Seq("graalvm-ce-java11@21.1.0", "openjdk@1.17"),
     githubWorkflowBuildPreamble ++= Seq(
