@@ -7,6 +7,7 @@ import com.avsystem.commons.misc.TypedMap
 import com.avsystem.commons.mongo.typed.MongoPropertyRef.Separator
 import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization.TransparentWrapping
 import org.bson.{BsonDocument, BsonValue}
 
 /**
@@ -192,7 +193,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   private def computePath[T0](
     onlyUpToArray: Boolean,
     ref: MongoPropertyRef[E, T0],
-    acc: List[String]
+    acc: List[String],
   ): List[String] = ref match {
     case FieldRef(_: MongoToplevelRef[_, _], fieldName, _, _) =>
       KeyEscaper.escape(fieldName) :: acc
@@ -205,6 +206,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
       computePath(onlyUpToArray, prefix, newAcc)
 
     case GetFromOptional(prefix, _, _) =>
+      computePath(onlyUpToArray, prefix, acc)
+
+    case TransparentUnwrap(prefix, _, _) =>
       computePath(onlyUpToArray, prefix, acc)
 
     case PropertySubtypeRef(prefix, _, _, _) =>
@@ -232,6 +236,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
       if (index < array.size) array.get(index) else notFound
 
     case GetFromOptional(prefix, _, _) =>
+      prefix.extractBson(doc)
+
+    case TransparentUnwrap(prefix, _, _) =>
       prefix.extractBson(doc)
 
     case PropertySubtypeRef(prefix, _, _, _) =>
@@ -274,12 +281,23 @@ object MongoPropertyRef {
       MongoRef.GetFromOptional(ref, format.wrappedFormat, format.optionLike)
     }
   }
+
+  implicit def transparentRefOps[E, T, R](ref: MongoPropertyRef[E, T])(implicit wrapping: TransparentWrapping[R, T]): TransparentRefOps[E, T, R] =
+    new TransparentRefOps[E, T, R](ref)
+
+  class TransparentRefOps[E, T, R](private val ref: MongoPropertyRef[E, T]) extends AnyVal {
+    def unwrap: MongoPropertyRef[E, R] = {
+      val format = ref.format.assumeTransparent[R]
+      MongoRef.TransparentUnwrap(ref, format.wrappedFormat, format.wrapping)
+    }
+  }
+
 }
 
 object MongoRef {
   // Deliberately not calling this IdentityRef so that it doesn't get confused with IdRef (for database ID field)
   final case class RootRef[T](
-    format: MongoAdtFormat[T]
+    format: MongoAdtFormat[T],
   ) extends MongoToplevelRef[T, T] {
     def fullRef: RootRef[T] = this
     def compose[P](prefix: MongoRef[P, T]): MongoRef[P, T] = prefix
@@ -289,7 +307,7 @@ object MongoRef {
     fullRef: RootRef[E],
     caseFieldName: String,
     caseNames: List[String],
-    format: MongoAdtFormat[T]
+    format: MongoAdtFormat[T],
   ) extends MongoToplevelRef[E, T] {
     def compose[P](prefix: MongoRef[P, E]): MongoRef[P, T] = prefix match {
       case _: MongoToplevelRef[P, E] =>
@@ -304,7 +322,7 @@ object MongoRef {
     prefix: MongoRef[E, E0],
     fieldName: String,
     format: MongoFormat[T],
-    fallbackBson: Opt[BsonValue]
+    fallbackBson: Opt[BsonValue],
   ) extends MongoPropertyRef[E, T] {
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
       copy(prefix = this.prefix compose newPrefix)
@@ -313,7 +331,7 @@ object MongoRef {
   final case class ArrayIndexRef[E, C[X] <: Iterable[X], T](
     prefix: MongoPropertyRef[E, C[T]],
     index: Int,
-    format: MongoFormat[T]
+    format: MongoFormat[T],
   ) extends MongoPropertyRef[E, T] {
     require(index >= 0, "array index must be non-negative")
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
@@ -323,9 +341,18 @@ object MongoRef {
   final case class GetFromOptional[E, O, T](
     prefix: MongoPropertyRef[E, O],
     format: MongoFormat[T],
-    optionLike: OptionLike.Aux[O, T]
+    optionLike: OptionLike.Aux[O, T],
   ) extends MongoPropertyRef[E, T] {
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
+      copy(prefix = prefix compose newPrefix)
+  }
+
+  final case class TransparentUnwrap[E, R, T](
+    prefix: MongoPropertyRef[E, T],
+    format: MongoFormat[R],
+    transparentWrapping: TransparentWrapping[R, T],
+  ) extends MongoPropertyRef[E, R] {
+    def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, R] =
       copy(prefix = prefix compose newPrefix)
   }
 
@@ -333,7 +360,7 @@ object MongoRef {
     prefix: MongoPropertyRef[E, T0],
     caseFieldName: String,
     caseNames: List[String],
-    format: MongoAdtFormat[T]
+    format: MongoAdtFormat[T],
   ) extends MongoPropertyRef[E, T] {
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
       copy(prefix = prefix compose newPrefix)

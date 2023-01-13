@@ -33,6 +33,17 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
     }
   }
 
+  private def isTransparentUnwrap(prefixTpe: Type, fieldSym: Symbol): Boolean = {
+    val sym = prefixTpe.typeSymbol
+    sym.isClass && sym.asClass.isCaseClass && (primaryConstructorOf(prefixTpe).asMethod.paramLists match {
+      case List(param) :: _ if param.name == fieldSym.name =>
+        val paramTpe = fieldSym.typeSignatureIn(prefixTpe).finalResultType
+        val wrappingTpe = getType(tq"$SerializationPkg.TransparentWrapping[$paramTpe, $prefixTpe]")
+        inferImplicitValue(wrappingTpe) != EmptyTree
+      case _ => false
+    })
+  }
+
   def isOptionLike(fullTpe: Type, wrappedTpe: Type): Boolean =
     fullTpe != null && fullTpe != NoType && wrappedTpe != null && wrappedTpe != NoType &&
       c.inferImplicitValue(getType(tq"$CommonsPkg.meta.OptionLike.Aux[$fullTpe, $wrappedTpe]")) != EmptyTree
@@ -63,7 +74,9 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           val prefixTpe = prefix.tpe.widen
           val bodyTpe = body.tpe.widen
 
-          if (termSym.isCaseAccessor || isSealedHierarchySharedField(prefixTpe, body.symbol.asTerm))
+          if (isTransparentUnwrap(prefixTpe, body.symbol.asTerm))
+            q"$newPrefixRef.unwrap"
+          else if (termSym.isCaseAccessor || isSealedHierarchySharedField(prefixTpe, body.symbol.asTerm))
             q"$newPrefixRef.asAdtRef.fieldRefFor[$bodyTpe](${name.decodedName.toString})"
           else if (name == TermName("get") && isOptionLike(prefixTpe, bodyTpe))
             q"$newPrefixRef.get"
