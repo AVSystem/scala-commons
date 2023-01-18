@@ -11,8 +11,8 @@ addCompilerPlugin("com.avsystem.commons" %% "commons-analyzer" % avsCommonsVersi
 
 Analyzer runs after typechecker inside the Scala compiler and applies its rules on every file.
 Every rule can be disabled or enabled to yield a compilation error, warning or info.
-It is recommended to use warnings with `-Xfatal-warning` option for the Scala compiler enabled
-and [silencer](https://github.com/ghik/silencer) plugin for warning suppression.
+It is recommended to use warnings with `-Werror` option for the Scala compiler enabled
+and `@nowarn` annotation for warning suppression.
 
 Here's a list of currently supported rules:
 
