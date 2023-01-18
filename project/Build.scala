@@ -36,13 +36,13 @@ object Build extends BuildDef {
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
   val collectionCompatVersion = "2.5.0"
-  val guavaVersion = "30.1.1-jre"
+  val guavaVersion = "31.1-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.12"
   val scalatestplusScalacheckVersion = "3.2.12.0"
   val scalacheckVersion = "1.16.0"
-  val jettyVersion = "9.4.49.v20220914"
-  val mongoVersion = "4.7.2"
+  val jettyVersion = "9.4.50.v20221201"
+  val mongoVersion = "4.8.2"
   val springVersion = "4.3.26.RELEASE"
   val typesafeConfigVersion = "1.4.2"
   val commonsIoVersion = "1.3.2" // test only

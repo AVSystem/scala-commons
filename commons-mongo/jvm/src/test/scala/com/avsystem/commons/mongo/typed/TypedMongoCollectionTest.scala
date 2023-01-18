@@ -7,6 +7,7 @@ import com.mongodb.client.model.Aggregates
 import monix.eval.Task
 import monix.execution.Scheduler
 import org.bson.Document
+import org.scalactic.source.Position
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
@@ -22,7 +23,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     PatienceConfig(timeout = Span(10, Seconds), interval = Span(100, Milliseconds))
 
   implicit class taskOps[T](task: Task[T]) {
-    def value: T = task.runToFuture.futureValue
+    def value(implicit position: Position): T = task.runToFuture.futureValue
   }
 
   final val Rte = RecordTestEntity
