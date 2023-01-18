@@ -26,6 +26,9 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
       appendToPrefix(prefix.rawPath).addOperator(MongoQueryOperator.Ne(optionLike.none, prefix.format))
       addImpliedFilters(prefix)
 
+    case MongoRef.TransparentUnwrap(prefix, _, _) =>
+      addImpliedFilters(prefix)
+
     case MongoRef.FieldRef(prefix, _, _, _) =>
       addImpliedFilters(prefix)
 

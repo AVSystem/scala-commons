@@ -56,6 +56,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
       List(ir),
       Map(InnerId("iid") -> ir),
       Opt(Map(InnerId("iid") -> List(ir))),
+      Props(Map("foo" -> "bar")),
       i % 3 match {
         case 0 => CaseOne(s"uid$i", "ustr", i % 2 == 0)
         case 1 => CaseTwo(s"uid$i", "ustr", i, Rte.Example)

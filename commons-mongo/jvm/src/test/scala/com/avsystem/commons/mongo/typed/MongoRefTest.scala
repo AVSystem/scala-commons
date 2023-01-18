@@ -24,6 +24,7 @@ class MongoRefTest extends AnyFunSuite {
     assert(Rte.ref(_.inner.int).rawPath == "inner.int")
     assert(Rte.ref(_.complex.get.apply(InnerId("foo")).apply(5).int).rawPath == "complex.foo.5.int")
     assert(Rte.ref(_.complex).ref(_.get).ref(_.apply(InnerId("foo"))).ref(_.apply(5)).ref(_.int).rawPath == "complex.foo.5.int")
+    assert(Rte.ref(_.props.map("key")).rawPath == "props.key")
     assert(Rte.ref(_.union.str).rawPath == "union.str")
     assert(Rte.ref(_.union.as[CaseOne]).rawPath == "union")
     assert(Rte.ref(_.union.as[CaseOne].str).rawPath == "union.str")
