@@ -21,7 +21,7 @@ object BuildBuild extends AutoPlugin {
       addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.9.2"),
       addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.2"),
       addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "1.4.8"),
-      addSbtPlugin("com.codecommit" % "sbt-github-actions" % "0.9.5"),
+      addSbtPlugin("com.codecommit" % "sbt-github-actions" % "0.14.2"),
     )
 
   lazy val macros = project

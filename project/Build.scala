@@ -92,10 +92,10 @@ object Build extends BuildDef {
     githubWorkflowEnv ++= Map(
       "REDIS_VERSION" -> "6.2.6",
     ),
-    githubWorkflowJavaVersions := Seq("graalvm-ce-java11@21.1.0", "openjdk@1.17"),
+    githubWorkflowJavaVersions := Seq(JavaSpec.graalvm("21.1.0", "11"), JavaSpec.temurin("17")),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
-        "actions", "cache", "v2",
+        UseRef.Public("actions", "cache", "v2"),
         name = Some("Cache Redis"),
         params = Map(
           "path" -> "./redis-${{ env.REDIS_VERSION }}",
@@ -103,12 +103,12 @@ object Build extends BuildDef {
         )
       ),
       WorkflowStep.Use(
-        "actions", "setup-node", "v2",
+        UseRef.Public("actions", "setup-node", "v2"),
         name = Some("Setup Node.js"),
         params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        "supercharge", "mongodb-github-action", "1.7.0",
+        UseRef.Public("supercharge", "mongodb-github-action", "1.7.0"),
         name = Some("Setup MongoDB"),
         params = Map(
           "mongodb-version" -> "5.0.8",
