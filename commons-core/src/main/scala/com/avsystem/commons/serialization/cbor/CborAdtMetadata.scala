@@ -256,15 +256,11 @@ trait CborAdtInstances[T] {
 }
 
 trait CborAdtPolyInstances[C[_]] {
-  private val alreadyValidated = AtomicBoolean(false)
   def stdCodec[T: GenCodec]: GenObjectCodec[C[T]]
   def metadata[T: GenCodec]: CborAdtMetadata[C[T]]
-  def cborCodec[T: GenCodec]: GenObjectCodec[C[T]] =
+  def cborCodec[T: GenCodec](validate: Boolean): GenObjectCodec[C[T]] =
     metadata.setup { metadata =>
-      if (!alreadyValidated.get()) {
-        metadata.validate()
-        alreadyValidated.set(true)
-      }
+      if (validate) metadata.validate()
     }.adjustCodec(stdCodec)
 }
 
@@ -272,5 +268,11 @@ trait CborAdtPolyInstances[C[_]] {
   * Like [[HasCborCodec]] but for parameterized (generic) data types.
   */
 abstract class HasPolyCborCodec[C[_]](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]]) {
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = instances(CborOptimizedCodecs, this).cborCodec
+  private val alreadyValidated = AtomicBoolean(false)
+
+  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = {
+    val codec = instances(CborOptimizedCodecs, this).cborCodec(!alreadyValidated.get())
+    if (!alreadyValidated.get()) alreadyValidated.set(true)
+    codec
+  }
 }
