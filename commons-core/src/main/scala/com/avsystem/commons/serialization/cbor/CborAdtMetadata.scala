@@ -261,9 +261,9 @@ trait CborAdtPolyInstances[C[_]] {
   def metadata[T: GenCodec]: CborAdtMetadata[C[T]]
   def cborCodec[T: GenCodec]: GenObjectCodec[C[T]] =
     metadata.setup { metadata =>
-      alreadyValidated.transform { validated =>
-        if (!validated) metadata.validate()
-        true
+      if (!alreadyValidated.get()) {
+        metadata.validate()
+        alreadyValidated.set(true)
       }
     }.adjustCodec(stdCodec)
 }
