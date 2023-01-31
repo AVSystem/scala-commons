@@ -253,3 +253,17 @@ trait CborAdtInstances[T] {
   def cborCodec: GenObjectCodec[T] =
     metadata.setup(_.validate()).adjustCodec(stdCodec)
 }
+
+trait CborAdtPolyInstances[C[_]] {
+  def stdCodec[T: GenCodec]: GenObjectCodec[C[T]]
+  def metadata[T: GenCodec]: CborAdtMetadata[C[T]]
+  def cborCodec[T: GenCodec]: GenObjectCodec[C[T]] =
+    metadata.setup(_.validate()).adjustCodec(stdCodec)
+}
+
+/**
+  * Like [[HasCborCodec]] but for parameterized (generic) data types.
+  */
+abstract class HasPolyCborCodec[C[_]](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]]) {
+  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = instances(CborOptimizedCodecs, this).cborCodec
+}

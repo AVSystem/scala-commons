@@ -29,6 +29,16 @@ case class CustomKeysRecord(
 object CustomKeysRecord extends HasCborCodec[CustomKeysRecord]
 
 @cborDiscriminator(0)
+sealed trait GenericSealedTrait[+T]
+object GenericSealedTrait extends HasPolyCborCodec[GenericSealedTrait] {
+  @cborKey(0)
+  case class Success[+T](value: T) extends GenericSealedTrait[T]
+  @cborKey(1)
+  case class Failure(message: String) extends GenericSealedTrait[Nothing]
+
+}
+
+@cborDiscriminator(0)
 sealed trait CustomKeysFlatUnion extends Product with Serializable
 object CustomKeysFlatUnion extends HasCborCodec[CustomKeysFlatUnion] {
   @cborKey(1) case class IntCase(@cborKey(1) int: Int) extends CustomKeysFlatUnion
@@ -211,6 +221,19 @@ class CborInputOutputTest extends AnyFunSuite {
   test("chunked byte string") {
     assert(CborInput.readRawCbor[Bytes](RawCbor.fromHex("5F426162426162426162FF")) == Bytes("ababab"))
   }
+
+  test("generic sealed trait") {
+    val success = GenericSealedTrait.Success[Int](234)
+    val successCbor = CborOutput.writeRawCbor[GenericSealedTrait[Int]](success)
+    val decodedSuccess = CborInput.readRawCbor[GenericSealedTrait[Int]](successCbor)
+    assert(success == decodedSuccess)
+
+    val failure = GenericSealedTrait.Failure("error")
+    val failureCbor = CborOutput.writeRawCbor[GenericSealedTrait[String]](failure)
+    val decodedFailure = CborInput.readRawCbor[GenericSealedTrait[String]](failureCbor)
+    assert(failure == decodedFailure)
+  }
+
 }
 
 class CborGenCodecRoundtripTest extends GenCodecRoundtripTest {
