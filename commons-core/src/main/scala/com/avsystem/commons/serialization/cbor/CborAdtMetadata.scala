@@ -6,7 +6,6 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 import com.avsystem.commons.serialization._
-import monix.execution.atomic.AtomicBoolean
 
 /**
   * Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
@@ -268,11 +267,7 @@ trait CborAdtPolyInstances[C[_]] {
   * Like [[HasCborCodec]] but for parameterized (generic) data types.
   */
 abstract class HasPolyCborCodec[C[_]](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]]) {
-  private val alreadyValidated = AtomicBoolean(false)
+  private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing].validate())
 
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = {
-    val codec = instances(CborOptimizedCodecs, this).cborCodec(!alreadyValidated.get())
-    if (!alreadyValidated.get()) alreadyValidated.set(true)
-    codec
-  }
+  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = validatedInstances.cborCodec(false)
 }
