@@ -6,6 +6,7 @@ import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 import com.avsystem.commons.serialization._
+import monix.execution.atomic.AtomicBoolean
 
 /**
   * Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
@@ -255,10 +256,16 @@ trait CborAdtInstances[T] {
 }
 
 trait CborAdtPolyInstances[C[_]] {
+  private val alreadyValidated = AtomicBoolean(false)
   def stdCodec[T: GenCodec]: GenObjectCodec[C[T]]
   def metadata[T: GenCodec]: CborAdtMetadata[C[T]]
   def cborCodec[T: GenCodec]: GenObjectCodec[C[T]] =
-    metadata.setup(_.validate()).adjustCodec(stdCodec)
+    metadata.setup { metadata =>
+      alreadyValidated.transform { validated =>
+        if (!validated) metadata.validate()
+        true
+      }
+    }.adjustCodec(stdCodec)
 }
 
 /**
