@@ -29,6 +29,15 @@ case class CustomKeysRecord(
 object CustomKeysRecord extends HasCborCodec[CustomKeysRecord]
 
 @cborDiscriminator(0)
+sealed trait GenericSealedTrait[+T]
+object GenericSealedTrait extends HasPolyCborCodec[GenericSealedTrait] {
+  @cborKey(0)
+  case class Success[+T](@cborKey(1) value: T) extends GenericSealedTrait[T]
+  @cborKey(1)
+  case class Failure(@cborKey(1) message: String) extends GenericSealedTrait[Nothing]
+}
+
+@cborDiscriminator(0)
 sealed trait CustomKeysFlatUnion extends Product with Serializable
 object CustomKeysFlatUnion extends HasCborCodec[CustomKeysFlatUnion] {
   @cborKey(1) case class IntCase(@cborKey(1) int: Int) extends CustomKeysFlatUnion
@@ -211,6 +220,9 @@ class CborInputOutputTest extends AnyFunSuite {
   test("chunked byte string") {
     assert(CborInput.readRawCbor[Bytes](RawCbor.fromHex("5F426162426162426162FF")) == Bytes("ababab"))
   }
+
+  roundtrip[GenericSealedTrait[Int]](GenericSealedTrait.Success[Int](234), "A200000118EA")
+  roundtrip[GenericSealedTrait[Boolean]](GenericSealedTrait.Failure("error"), "A2000101656572726F72")
 }
 
 class CborGenCodecRoundtripTest extends GenCodecRoundtripTest {
