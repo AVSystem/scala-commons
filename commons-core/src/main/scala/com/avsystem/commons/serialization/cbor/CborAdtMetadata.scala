@@ -256,7 +256,7 @@ trait CborAdtInstances[T] {
 
 trait CborAdtPolyInstances[C[_]] {
   def stdCodec[T: GenCodec]: GenObjectCodec[C[T]]
-  def metadata[T: GenCodec]: CborAdtMetadata[C[T]]
+  def metadata[T]: CborAdtMetadata[C[T]]
 }
 
 /**
