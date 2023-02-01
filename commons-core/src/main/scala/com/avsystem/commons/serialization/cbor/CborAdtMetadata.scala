@@ -257,10 +257,6 @@ trait CborAdtInstances[T] {
 trait CborAdtPolyInstances[C[_]] {
   def stdCodec[T: GenCodec]: GenObjectCodec[C[T]]
   def metadata[T: GenCodec]: CborAdtMetadata[C[T]]
-  def cborCodec[T: GenCodec](validate: Boolean): GenObjectCodec[C[T]] =
-    metadata.setup { metadata =>
-      if (validate) metadata.validate()
-    }.adjustCodec(stdCodec)
 }
 
 /**
@@ -269,5 +265,5 @@ trait CborAdtPolyInstances[C[_]] {
 abstract class HasPolyCborCodec[C[_]](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]]) {
   private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing].validate())
 
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = validatedInstances.cborCodec(false)
+  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = validatedInstances.metadata[T].adjustCodec(validatedInstances.stdCodec[T])
 }
