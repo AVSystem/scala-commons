@@ -46,18 +46,3 @@
 * `commons-spring` - Spring framework utilities:
   * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using 
   [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md) format
-
-## Development
-
-* Introduce your changes
-* Write some unit tests
-* Bump the version number in `version.sbt` file
-* Submit a pull request
-
-### Test on local environment
-
-* Publish the artifact locally
-  * Use `sbt publishLocal` for projects managed by Ivy (e.g. SBT projects)
-  * Or `sbt publishM2` for projects managed by maven
-* Update avsystem-commons dependency version in your project and refresh
-  your project dependencies
