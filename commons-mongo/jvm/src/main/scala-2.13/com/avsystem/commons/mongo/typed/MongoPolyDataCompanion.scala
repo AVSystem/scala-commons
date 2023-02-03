@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.annotation.{bincompat, explicitGenerics}
+import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.meta.MacroInstances
 import com.avsystem.commons.mongo.BsonGenCodecs
 import com.avsystem.commons.serialization.{GenCodec, GenObjectCodec}
@@ -10,15 +10,15 @@ import scala.annotation.compileTimeOnly
 
 trait MongoPolyAdtInstances[D[_]] {
   def codec[T: GenCodec]: GenObjectCodec[D[T]]
-  def mkFormat[T: MongoFormat : GenCodec]: MongoAdtFormat[D[T]]
 
-  @bincompat
-  private[typed] final def format[T: MongoFormat]: MongoAdtFormat[D[T]] =
-    mkFormat[T](MongoFormat[T], MongoFormat[T].codec)
-
-  @bincompat
-  protected[typed] final def codecFromFormat[T: MongoFormat]: GenCodec[T] =
-    MongoFormat[T].codec
+  /**
+    * We need to accept an implicit `GenObjectCodec[D[T]]` because materialization of
+    * [[MongoAdtFormat]] requires it ([[MongoAdtFormat.codec]]). In practice, it can be derived
+    * from the `MongoFormat[T]` that is already accepted by this method but we don't want to do this in this
+    * trait to avoid problems with priorities of implicits. Because of that, this implicit is actually constructed
+    * by [[AbstractMongoPolyDataCompanion.format]].
+    */
+  def format[T: MongoFormat](implicit codec: GenObjectCodec[D[T]]): MongoAdtFormat[D[T]]
 }
 
 abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implicits)(
@@ -28,7 +28,7 @@ abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implic
 
   implicit def format[T: MongoFormat]: MongoAdtFormat[D[T]] = {
     implicit def tCodec: GenCodec[T] = MongoFormat[T].codec
-    instances(implicits, this).mkFormat[T]
+    instances(implicits, this).format[T]
   }
 
   implicit def isMongoAdtOrSubtype[C <: D[_]]: IsMongoAdtOrSubtype[C] = null
