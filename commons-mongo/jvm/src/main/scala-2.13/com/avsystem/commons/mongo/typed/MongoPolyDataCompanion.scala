@@ -12,13 +12,12 @@ trait MongoPolyAdtInstances[D[_]] {
   def codec[T: GenCodec]: GenObjectCodec[D[T]]
 
   /**
-    * We need to accept an implicit `GenObjectCodec[D[T]]` because materialization of
-    * [[MongoAdtFormat]] requires it ([[MongoAdtFormat.codec]]). In practice, it can be derived
-    * from the `MongoFormat[T]` that is already accepted by this method but we don't want to do this in this
-    * trait to avoid problems with priorities of implicits. Because of that, this implicit is actually constructed
-    * by [[AbstractMongoPolyDataCompanion.format]].
+    * We need to accept an implicit `GenCodec[T]` because materialization of
+    * [[MongoAdtFormat]] requires a [[GenObjectCodec]] ([[MongoAdtFormat.codec]]). In practice, it can be derived
+    * from the `MongoFormat[T]` that is already accepted by this method but we have to be careful about priority of
+    * implicits. Because of that, this implicit is actually provided by [[AbstractMongoPolyDataCompanion.format]].
     */
-  def format[T: MongoFormat](implicit codec: GenObjectCodec[D[T]]): MongoAdtFormat[D[T]]
+  def format[T: MongoFormat : GenCodec]: MongoAdtFormat[D[T]]
 }
 
 abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implicits)(

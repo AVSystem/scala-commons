@@ -19,5 +19,5 @@ abstract class CustomPolyDataCompanion[D[_]](
   * This class tests (through its compilation) if implicit resolution conflicts that were
   * previously present in [[MongoPolyAdtInstances]] are fixed.
   */
-case class PolyDataWithCustomImplicits[+T](wrappy: CustomWrappy, value: T)
+case class PolyDataWithCustomImplicits[+T](wrappy: CustomWrappy, value: List[T])
 object PolyDataWithCustomImplicits extends CustomPolyDataCompanion[PolyDataWithCustomImplicits]
