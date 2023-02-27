@@ -1,10 +1,7 @@
 package com.avsystem.commons
 package spring
 
-import java.{util => ju}
-
 import com.avsystem.commons.spring.AttrNames._
-import scala.annotation.nowarn
 import com.typesafe.config._
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder
@@ -12,6 +9,9 @@ import org.springframework.beans.factory.config.{BeanDefinitionHolder, Construct
 import org.springframework.beans.factory.support._
 import org.springframework.beans.{MutablePropertyValues, PropertyValue}
 import org.springframework.core.io.Resource
+
+import java.{util => ju}
+import scala.annotation.nowarn
 
 class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   extends AbstractBeanDefinitionReader(registry) {
@@ -344,8 +344,28 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     }
   }
 
+  private def readConditionals(list: ConfigList, config: ConfigObject): ConfigObject = {
+    list.asScala.foldLeft(config)((conf, conditionalConf) => {
+      val props = getProps(conditionalConf.asInstanceOf[ConfigObject])
+      val condition = props.get("condition")
+      val newConfig = props("beans").asInstanceOf[ConfigObject].get("beans")
+
+      if (condition.map(_.unwrapped().asInstanceOf[Boolean]).exists(identity)) {
+        newConfig.withFallback(conf).asInstanceOf[ConfigObject]
+      } else {
+        conf
+      }
+    })
+  }
+
   def loadBeanDefinitions(config: Config): Int = {
-    val beans = if (config.hasPath("beans")) config.getObject("beans") else ConfigFactory.empty.root
+    var beans = if (config.hasPath("beans")) config.getObject("beans") else ConfigFactory.empty.root
+
+    if (config.hasPath("conditionals")) {
+      val conditionals: ConfigList = config.getList("conditionals")
+      beans = readConditionals(conditionals, beans)
+    }
+
     val aliases = if (config.hasPath("aliases")) config.getObject("aliases") else ConfigFactory.empty.root
     val result = readBeans(beans)
     readAliases(aliases)
