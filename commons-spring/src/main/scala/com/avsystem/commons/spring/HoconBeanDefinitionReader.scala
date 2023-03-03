@@ -344,29 +344,24 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     }
   }
 
-  private def readConditionals(list: ConfigList, config: ConfigObject): ConfigObject = {
-    list.asScala.foldLeft(config)((conf, conditionalConf) => {
-      val props = getProps(conditionalConf.asInstanceOf[ConfigObject])
-      val condition = props.get("condition")
-      val newConfig = props("beans").asInstanceOf[ConfigObject].get("beans")
+  private def readConditionals(config: Config): Config = {
+    if (!config.hasPath("conditionals")) config
+    else config.getList("conditionals").asScala.foldLeft(config)((currentConfig, conditionalObject) => {
+      val props = getProps(conditionalObject.as[ConfigObject])
+      val newConfig = readConditionals(props("beans").as[Config])
 
-      if (condition.map(_.unwrapped().asInstanceOf[Boolean]).exists(identity)) {
-        newConfig.withFallback(conf).asInstanceOf[ConfigObject]
+      if (props.get("condition").map(_.unwrapped().asInstanceOf[Boolean]).exists(identity)) {
+        newConfig.withFallback(currentConfig)
       } else {
-        conf
+        currentConfig
       }
     })
   }
 
   def loadBeanDefinitions(config: Config): Int = {
-    var beans = if (config.hasPath("beans")) config.getObject("beans") else ConfigFactory.empty.root
-
-    if (config.hasPath("conditionals")) {
-      val conditionals: ConfigList = config.getList("conditionals")
-      beans = readConditionals(conditionals, beans)
-    }
-
-    val aliases = if (config.hasPath("aliases")) config.getObject("aliases") else ConfigFactory.empty.root
+    val configWithConditionals = readConditionals(config)
+    val beans = if (configWithConditionals.hasPath("beans")) configWithConditionals.getObject("beans") else ConfigFactory.empty.root
+    val aliases = if (configWithConditionals.hasPath("aliases")) configWithConditionals.getObject("aliases") else ConfigFactory.empty.root
     val result = readBeans(beans)
     readAliases(aliases)
     result
