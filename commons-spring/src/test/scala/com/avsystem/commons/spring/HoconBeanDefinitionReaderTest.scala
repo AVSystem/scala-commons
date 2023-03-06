@@ -2,6 +2,7 @@ package com.avsystem.commons
 package spring
 
 import com.typesafe.config.{Config, ConfigFactory}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.funsuite.AnyFunSuite
 import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.context.support.GenericApplicationContext
@@ -34,7 +35,7 @@ object ConditionalTestBean {
   var initializedCount = 0
 }
 
-class HoconBeanDefinitionReaderTest extends AnyFunSuite {
+class HoconBeanDefinitionReaderTest extends AnyFunSuite with BeforeAndAfterEach {
   def createContext(resource: String): GenericApplicationContext = {
     val beanFactory = new DefaultListableBeanFactory
     beanFactory.setParameterNameDiscoverer(new StandardReflectionParameterNameDiscoverer)
@@ -47,6 +48,10 @@ class HoconBeanDefinitionReaderTest extends AnyFunSuite {
     ctx.refresh()
 
     ctx
+  }
+
+  override def beforeEach(): Unit = {
+    ConditionalTestBean.initializedCount = 0
   }
 
   test("hocon bean definition reader should work") {
@@ -93,7 +98,6 @@ class HoconBeanDefinitionReaderTest extends AnyFunSuite {
   }
 
   test("file should be included with true condition") {
-    ConditionalTestBean.initializedCount = 0
     val ctx = createContext("conditionalsEnabled.conf")
     val testBean = ctx.getBean("beanFromConditional", classOf[ConditionalTestBean])
     assert(testBean != null)
@@ -101,7 +105,6 @@ class HoconBeanDefinitionReaderTest extends AnyFunSuite {
   }
 
   test("file should not be included with false condition") {
-    ConditionalTestBean.initializedCount = 0
     val ctx = createContext("conditionalsDisabled.conf")
     assert(!ctx.containsBean("beanFromConditional"))
     assertResult(0)(ConditionalTestBean.initializedCount)

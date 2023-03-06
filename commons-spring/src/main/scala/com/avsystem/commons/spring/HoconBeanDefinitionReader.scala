@@ -17,6 +17,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   extends AbstractBeanDefinitionReader(registry) {
 
   import com.typesafe.config.ConfigValueType._
+  import com.avsystem.commons.spring.HoconBeanDefinitionReader._
 
   private implicit class ConfigValueExtensions(value: ConfigValue) {
     def as[T: HoconType] =
@@ -345,12 +346,12 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   }
 
   private def readConditionals(config: Config): Config = {
-    if (!config.hasPath("conditionals")) config
-    else config.getList("conditionals").asScala.foldLeft(config.withoutPath("conditionals"))((currentConfig, conditionalObject) => {
+    if (!config.hasPath(Conditionals)) config
+    else config.getList(Conditionals).asScala.foldLeft(config.withoutPath(Conditionals))((currentConfig, conditionalObject) => {
       val props = getProps(conditionalObject.as[ConfigObject])
 
-      if (props.get("condition").map(_.unwrapped().asInstanceOf[Boolean]).exists(identity)) {
-        readConditionals(props("beans").as[Config]).withFallback(currentConfig)
+      if (props.get(Condition).exists(_.as[Boolean])) {
+        readConditionals(props(Config).as[Config]).withFallback(currentConfig)
       } else {
         currentConfig
       }
@@ -359,8 +360,8 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
 
   def loadBeanDefinitions(resourceConfig: Config): Int = {
     val config = readConditionals(resourceConfig)
-    val beans = if (config.hasPath("beans")) config.getObject("beans") else ConfigFactory.empty.root
-    val aliases = if (config.hasPath("aliases")) config.getObject("aliases") else ConfigFactory.empty.root
+    val beans = if (config.hasPath(Beans)) config.getObject(Beans) else ConfigFactory.empty.root
+    val aliases = if (config.hasPath(Aliases)) config.getObject(Aliases) else ConfigFactory.empty.root
     val result = readBeans(beans)
     readAliases(aliases)
     result
@@ -368,4 +369,11 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
 
   def loadBeanDefinitions(resource: Resource): Int =
     loadBeanDefinitions(ConfigFactory.parseURL(resource.getURL).resolve)
+}
+object HoconBeanDefinitionReader {
+  val Conditionals = "conditionals"
+  val Condition = "condition"
+  val Config = "config"
+  val Beans = "beans"
+  val Aliases = "aliases"
 }
