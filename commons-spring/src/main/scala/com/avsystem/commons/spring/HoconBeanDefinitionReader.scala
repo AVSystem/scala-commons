@@ -16,8 +16,8 @@ import scala.annotation.nowarn
 class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   extends AbstractBeanDefinitionReader(registry) {
 
+  import com.avsystem.commons.spring.HoconBeanDefinitionReader.Keys._
   import com.typesafe.config.ConfigValueType._
-  import com.avsystem.commons.spring.HoconBeanDefinitionReader._
 
   private implicit class ConfigValueExtensions(value: ConfigValue) {
     def as[T: HoconType] =
@@ -347,15 +347,14 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
 
   private def readConditionals(config: Config): Config = {
     if (!config.hasPath(Conditionals)) config
-    else config.getList(Conditionals).asScala.foldLeft(config.withoutPath(Conditionals))((currentConfig, conditionalObject) => {
+    else config.getList(Conditionals).asScala.foldLeft(config.withoutPath(Conditionals)) { (currentConfig, conditionalObject) =>
       val props = getProps(conditionalObject.as[ConfigObject])
 
-      if (props.get(Condition).exists(_.as[Boolean])) {
+      if (props(Condition).as[Boolean])
         readConditionals(props(Config).as[Config]).withFallback(currentConfig)
-      } else {
+      else
         currentConfig
-      }
-    })
+    }
   }
 
   def loadBeanDefinitions(resourceConfig: Config): Int = {
@@ -371,9 +370,11 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     loadBeanDefinitions(ConfigFactory.parseURL(resource.getURL).resolve)
 }
 object HoconBeanDefinitionReader {
-  val Conditionals = "conditionals"
-  val Condition = "condition"
-  val Config = "config"
-  val Beans = "beans"
-  val Aliases = "aliases"
+  object Keys {
+    final val Conditionals = "conditionals"
+    final val Condition = "condition"
+    final val Config = "config"
+    final val Beans = "beans"
+    final val Aliases = "aliases"
+  }
 }
