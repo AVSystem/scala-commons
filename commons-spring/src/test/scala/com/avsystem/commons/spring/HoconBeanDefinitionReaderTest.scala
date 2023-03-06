@@ -49,21 +49,6 @@ class HoconBeanDefinitionReaderTest extends AnyFunSuite {
     ctx
   }
 
-  test("file should be included with true condition") {
-    ConditionalTestBean.initializedCount = 0
-    val ctx = createContext("conditionalsEnabled.conf")
-    val testBean = ctx.getBean("beanFromConditional", classOf[ConditionalTestBean])
-    assert(testBean != null)
-    assertResult(1)(ConditionalTestBean.initializedCount)
-  }
-
-  test("file should not be included with false condition") {
-    ConditionalTestBean.initializedCount = 0
-    val ctx = createContext("conditionalsDisabled.conf")
-    assert(!ctx.containsBean("beanFromConditional"))
-    assertResult(0)(ConditionalTestBean.initializedCount)
-  }
-
   test("hocon bean definition reader should work") {
     val ctx = createContext("testBean.conf")
 
@@ -105,5 +90,26 @@ class HoconBeanDefinitionReaderTest extends AnyFunSuite {
     val testBeanFMDefAll = ctx.getBean("testBeanFMDefAll", classOf[TestBean])
     assert(testBeanFMDefAll.constrInt == -1)
     assert(testBeanFMDefAll.constrString == "factoryDefault")
+  }
+
+  test("file should be included with true condition") {
+    ConditionalTestBean.initializedCount = 0
+    val ctx = createContext("conditionalsEnabled.conf")
+    val testBean = ctx.getBean("beanFromConditional", classOf[ConditionalTestBean])
+    assert(testBean != null)
+    assertResult(1)(ConditionalTestBean.initializedCount)
+  }
+
+  test("file should not be included with false condition") {
+    ConditionalTestBean.initializedCount = 0
+    val ctx = createContext("conditionalsDisabled.conf")
+    assert(!ctx.containsBean("beanFromConditional"))
+    assertResult(0)(ConditionalTestBean.initializedCount)
+  }
+
+  test("hocon bean definition with nested conditionals should work") {
+    val ctx = createContext("conditionalsNested.conf")
+    val testBean = ctx.getBean("testBean", classOf[TestBean])
+    assert(testBean.int == 2)
   }
 }
