@@ -35,6 +35,15 @@ class BasePackageTest extends AnyFunSuite with AnalyzerTest {
         |""".stripMargin)
   }
 
+  test("base package object") {
+    assertNoErrors(
+      """
+        |package com.avsystem
+        |
+        |package object commons
+        |""".stripMargin)
+  }
+
   test("no base package") {
     assertErrors(1,
       """
