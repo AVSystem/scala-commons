@@ -30,14 +30,15 @@ Here's a list of currently supported rules:
 | `discardedMonixTask`       | warning       | Makes sure that expressions evaluating to Monix `Task`s are not accidentally discarded by conversion to `Unit`                                                                                       |
 | `throwableObjects`         | warning       | Makes sure that objects are never used as `Throwable`s (unless they have stack traces disabled)                                                                                                      |
 | `constantDeclarations`     | off           | Checks if constants are always declared as `final val`s with `UpperCamelCase` and no explicit type annotation for literal values                                                                     |
+| `basePackage               | warning       | Checks if all sources are within the specified base package                                                                                                                                          |
 
 Rules may be enabled and disabled in `build.sbt` with Scala compiler options:
 
 ```scala
-scalacOptions += "-P:AVSystemAnalyzer:<level><ruleName>,<level><ruleName>,..."
+scalacOptions += "-P:AVSystemAnalyzer:<level><ruleName>[:<arg>],<level><ruleName>[:<arg>],..."
 ```
 
-`<name>` must be one of the rule names listed above or `_` to apply to all rules.
+`<ruleName>` must be one of the rule names listed above or `_` to apply to all rules.
 
 `<level>` may be one of:
 
@@ -45,3 +46,13 @@ scalacOptions += "-P:AVSystemAnalyzer:<level><ruleName>,<level><ruleName>,..."
 * `*` for "info" level
 * _empty_ for "warning" level
 * `+` for "error" level
+
+`<arg>` is an argument specific for given rule
+
+For example, this options sets all rules on "error" level except for `constantDeclarations` which is disabled
+and `discardedMonixTask` which is lowered to "warning" level. The `basePackage` rule is also lowered to "warning" level
+and `com.avsystem.commons` is specified as the base package.
+
+```scala
+scalacOptions += "-P:AVSystemAnalyzer:+_,-constantDeclarations,discardedMonixTask,basePackage:com.avsystem.commons
+```
