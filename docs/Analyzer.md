@@ -38,7 +38,7 @@ Rules may be enabled and disabled in `build.sbt` with Scala compiler options:
 scalacOptions += "-P:AVSystemAnalyzer:<level><ruleName>[:<arg>],<level><ruleName>[:<arg>],..."
 ```
 
-`<name>` must be one of the rule names listed above or `_` to apply to all rules.
+`<ruleName>` must be one of the rule names listed above or `_` to apply to all rules.
 
 `<level>` may be one of:
 
