@@ -30,7 +30,7 @@ Here's a list of currently supported rules:
 | `discardedMonixTask`       | warning       | Makes sure that expressions evaluating to Monix `Task`s are not accidentally discarded by conversion to `Unit`                                                                                       |
 | `throwableObjects`         | warning       | Makes sure that objects are never used as `Throwable`s (unless they have stack traces disabled)                                                                                                      |
 | `constantDeclarations`     | off           | Checks if constants are always declared as `final val`s with `UpperCamelCase` and no explicit type annotation for literal values                                                                     |
-| `basePackage               | warning       | Checks if all sources are within the specified base package                                                                                                                                          |
+| `basePackage`              | warning       | Checks if all sources are within the specified base package                                                                                                                                          |
 
 Rules may be enabled and disabled in `build.sbt` with Scala compiler options:
 
