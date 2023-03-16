@@ -8,14 +8,10 @@ class BasePackage(g: Global) extends AnalyzerRule(g, "basePackage") {
 
   import global._
 
-  object ImportsOnlyOrEmptyList {
-    @tailrec def unapply(stats: List[Tree]): Option[Tree] = stats match {
-      case Nil => None
-      case List(stat) => Some(stat)
-      case head :: next => head match {
-        case Import(_, _) => unapply(next)
-        case _ => None
-      }
+  object SkipImports {
+    @tailrec def unapply(stats: List[Tree]): Some[List[Tree]] = stats match {
+      case Import(_, _) :: tail => unapply(tail)
+      case stats => Some(stats)
     }
   }
 
@@ -24,7 +20,7 @@ class BasePackage(g: Global) extends AnalyzerRule(g, "basePackage") {
 
     @tailrec def validate(tree: Tree): Unit = tree match {
       case PackageDef(pid, _) if pid.symbol.hasPackageFlag && pid.symbol.fullName == requiredBasePackage =>
-      case PackageDef(_, ImportsOnlyOrEmptyList(stat)) => validate(stat)
+      case PackageDef(_, SkipImports(List(stat))) => validate(stat)
       case t => report(t.pos, s"`$requiredBasePackage` must be one of the base packages in this file")
     }
 
