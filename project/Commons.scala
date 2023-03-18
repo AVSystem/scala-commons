@@ -1,4 +1,4 @@
-import com.github.ghik.plainsbt.ProjectGroup
+import com.github.ghik.sbt.nosbt.ProjectGroup
 import com.typesafe.tools.mima.plugin.MimaKeys._
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import org.scalajs.jsenv.nodejs.NodeJSEnv
