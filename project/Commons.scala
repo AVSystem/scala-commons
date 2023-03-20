@@ -16,8 +16,6 @@ import sbtunidoc.ScalaUnidocPlugin
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
 import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
 
-import scala.language.experimental.macros
-
 object Commons extends ProjectGroup("commons") {
   // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
   // idea.managed property is set by IntelliJ when running SBT (shell or import), idea.runid is set only for IntelliJ's
