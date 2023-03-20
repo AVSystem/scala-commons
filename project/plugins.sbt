@@ -3,7 +3,7 @@ val scalaJSVersion: String =
 
 logLevel := Level.Warn
 
-addSbtPlugin("com.github.ghik" % "sbt-nosbt" % "0.1.1")
+addSbtPlugin("com.github.ghik" % "sbt-nosbt" % "0.2.1")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % scalaJSVersion)
 addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.1")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.0")
