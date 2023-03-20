@@ -86,7 +86,7 @@ jobs:
         run: sbt ++${{ matrix.scala }} test
 
       - name: Compress target directories
-        run: tar cf targets.tar commons-macros/target commons-core/js/target commons-benchmark/js/target commons-core/target commons-benchmark/target commons-spring/target commons-analyzer/target commons-mongo/target commons-redis/target commons-hocon/target .js/target target commons-jetty/target .jvm/target commons-mongo/js/target project/target
+        run: tar cf targets.tar macros/target core/js/target benchmark/js/target core/target benchmark/target spring/target analyzer/target mongo/target redis/target hocon/target .js/target target jetty/target .jvm/target mongo/js/target project/target
 
       - name: Upload target directories
         uses: actions/upload-artifact@v2

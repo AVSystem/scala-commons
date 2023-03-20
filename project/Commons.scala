@@ -1,3 +1,4 @@
+import com.github.ghik.sbt.nosbt.ProjectGroup
 import com.typesafe.tools.mima.plugin.MimaKeys._
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 import org.scalajs.jsenv.nodejs.NodeJSEnv
@@ -15,20 +16,7 @@ import sbtunidoc.ScalaUnidocPlugin
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
 import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
 
-import scala.language.experimental.macros
-
-trait BuildDef extends AutoPlugin {
-  protected def rootProject: Project
-  protected def discoverProjects: Seq[Project] = macro BuildMacros.discoverProjectsImpl
-
-  final def root: Project =
-    rootProject.in(file(".")).enablePlugins(this)
-}
-
-object Build extends BuildDef {
-  def rootProject: Project = commons
-  override def extraProjects: Seq[Project] = discoverProjects
-
+object Commons extends ProjectGroup("commons") {
   // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
   // idea.managed property is set by IntelliJ when running SBT (shell or import), idea.runid is set only for IntelliJ's
   // SBT shell. In order for this technique to work, you MUST NOT set the "Use the sbt shell for build and import"
@@ -59,12 +47,12 @@ object Build extends BuildDef {
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
 
-  override val globalSettings = Seq(
+  override def globalSettings: Seq[Def.Setting[_]] = Seq(
     cancelable := true,
     excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject),
   )
 
-  override val buildSettings = Seq(
+  override def buildSettings: Seq[Def.Setting[_]] = Seq(
     organization := "com.avsystem.commons",
     homepage := Some(url("https://github.com/AVSystem/scala-commons")),
     organizationName := "AVSystem",
@@ -134,7 +122,7 @@ object Build extends BuildDef {
     )),
   )
 
-  val commonSettings = Seq(
+  override def commonSettings: Seq[Def.Setting[_]] = Seq(
     Compile / scalacOptions ++= Seq(
       "-encoding", "utf-8",
       "-Yrangepos",
@@ -181,7 +169,7 @@ object Build extends BuildDef {
     Test / fork := true,
   )
 
-  val jvmCommonSettings = commonSettings ++ Seq(
+  val jvmCommonSettings = Seq(
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
     ),
@@ -193,7 +181,7 @@ object Build extends BuildDef {
     )),
   )
 
-  val jsCommonSettings = commonSettings ++ Seq(
+  val jsCommonSettings = Seq(
     scalacOptions += {
       val localDir = (ThisBuild / baseDirectory).value.toURI.toString
       val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
@@ -209,7 +197,7 @@ object Build extends BuildDef {
   )
 
   val aggregateProjectSettings =
-    commonSettings ++ noPublishSettings ++ Seq(
+    noPublishSettings ++ Seq(
       ideSkipProject := true,
       ideExcludedDirectories := Seq(baseDirectory.value)
     )
@@ -217,53 +205,52 @@ object Build extends BuildDef {
   val CompileAndTest = "compile->compile;test->test"
   val OptionalCompileAndTest = "optional->compile;test->test"
 
-  lazy val commons = project
+  lazy val root = mkRootProject
     .enablePlugins(ScalaUnidocPlugin)
     .aggregate(
-      `commons-jvm`,
-      `commons-js`,
+      jvm,
+      js,
     )
     .settings(
-      commonSettings,
       noPublishSettings,
       name := "commons",
       ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
       ScalaUnidoc / unidoc / scalacOptions += "-Ymacro-expand:none",
       ScalaUnidoc / unidoc / unidocProjectFilter :=
         inAnyProject -- inProjects(
-          `commons-analyzer`,
-          `commons-macros`,
-          `commons-core-js`,
-          `commons-benchmark`,
-          `commons-benchmark-js`,
-          `commons-comprof`,
+          analyzer,
+          macros,
+          `core-js`,
+          benchmark,
+          `benchmark-js`,
+          comprof,
         ),
     )
 
-  lazy val `commons-jvm` = project.in(file(".jvm"))
+  lazy val jvm = mkSubProject.in(file(".jvm"))
     .aggregate(
-      `commons-analyzer`,
-      `commons-macros`,
-      `commons-core`,
-      `commons-jetty`,
-      `commons-mongo`,
-      `commons-hocon`,
-      `commons-spring`,
-      `commons-redis`,
-      `commons-benchmark`,
+      analyzer,
+      macros,
+      core,
+      jetty,
+      mongo,
+      hocon,
+      spring,
+      redis,
+      benchmark,
     )
     .settings(aggregateProjectSettings)
 
-  lazy val `commons-js` = project.in(file(".js"))
+  lazy val js = mkSubProject.in(file(".js"))
     .aggregate(
-      `commons-core-js`,
-      `commons-mongo-js`,
-      `commons-benchmark-js`,
+      `core-js`,
+      `mongo-js`,
+      `benchmark-js`,
     )
     .settings(aggregateProjectSettings)
 
-  lazy val `commons-analyzer` = project
-    .dependsOn(`commons-core` % Test)
+  lazy val analyzer = mkSubProject
+    .dependsOn(core % Test)
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
@@ -289,13 +276,13 @@ object Build extends BuildDef {
     if (forIdeaImport) Seq.empty
     else Seq(name := (proj / name).value)
 
-  lazy val `commons-macros` = project.settings(
+  lazy val macros = mkSubProject.settings(
     jvmCommonSettings,
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   )
 
-  lazy val `commons-core` = project
-    .dependsOn(`commons-macros`)
+  lazy val core = mkSubProject
+    .dependsOn(macros)
     .settings(
       jvmCommonSettings,
       sourceDirsSettings(_ / "jvm"),
@@ -308,13 +295,13 @@ object Build extends BuildDef {
       ),
     )
 
-  lazy val `commons-core-js` = project.in(`commons-core`.base / "js")
+  lazy val `core-js` = mkSubProject.in(core.base / "js")
     .enablePlugins(ScalaJSPlugin)
-    .configure(p => if (forIdeaImport) p.dependsOn(`commons-core`) else p)
-    .dependsOn(`commons-macros`)
+    .configure(p => if (forIdeaImport) p.dependsOn(core) else p)
+    .dependsOn(macros)
     .settings(
       jsCommonSettings,
-      sameNameAs(`commons-core`),
+      sameNameAs(core),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
         "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
@@ -322,8 +309,8 @@ object Build extends BuildDef {
       )
     )
 
-  lazy val `commons-mongo` = project
-    .dependsOn(`commons-core` % CompileAndTest)
+  lazy val mongo = mkSubProject
+    .dependsOn(core % CompileAndTest)
     .settings(
       jvmCommonSettings,
       sourceDirsSettings(_ / "jvm"),
@@ -338,18 +325,18 @@ object Build extends BuildDef {
     )
 
   // only to allow @mongoId & MongoEntity to be usedJS/JVM cross-compiled code
-  lazy val `commons-mongo-js` = project.in(`commons-mongo`.base / "js")
+  lazy val `mongo-js` = mkSubProject.in(mongo.base / "js")
     .enablePlugins(ScalaJSPlugin)
-    .configure(p => if (forIdeaImport) p.dependsOn(`commons-mongo`) else p)
-    .dependsOn(`commons-core-js`)
+    .configure(p => if (forIdeaImport) p.dependsOn(mongo) else p)
+    .dependsOn(`core-js`)
     .settings(
       jsCommonSettings,
-      sameNameAs(`commons-mongo`),
+      sameNameAs(mongo),
       sourceDirsSettings(_.getParentFile),
     )
 
-  lazy val `commons-redis` = project
-    .dependsOn(`commons-core` % CompileAndTest)
+  lazy val redis = mkSubProject
+    .dependsOn(core % CompileAndTest)
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
@@ -362,8 +349,8 @@ object Build extends BuildDef {
       Test / parallelExecution := false,
     )
 
-  lazy val `commons-hocon` = project
-    .dependsOn(`commons-core` % CompileAndTest)
+  lazy val hocon = mkSubProject
+    .dependsOn(core % CompileAndTest)
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
@@ -371,8 +358,8 @@ object Build extends BuildDef {
       ),
     )
 
-  lazy val `commons-spring` = project
-    .dependsOn(`commons-hocon` % CompileAndTest)
+  lazy val spring = mkSubProject
+    .dependsOn(hocon % CompileAndTest)
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
@@ -380,8 +367,8 @@ object Build extends BuildDef {
       ),
     )
 
-  lazy val `commons-jetty` = project
-    .dependsOn(`commons-core` % CompileAndTest)
+  lazy val jetty = mkSubProject
+    .dependsOn(core % CompileAndTest)
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
@@ -394,8 +381,8 @@ object Build extends BuildDef {
       ),
     )
 
-  lazy val `commons-benchmark` = project
-    .dependsOn(`commons-redis`, `commons-mongo`)
+  lazy val benchmark = mkSubProject
+    .dependsOn(redis, mongo)
     .enablePlugins(JmhPlugin)
     .settings(
       jvmCommonSettings,
@@ -411,14 +398,14 @@ object Build extends BuildDef {
       ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
     )
 
-  lazy val `commons-benchmark-js` = project.in(`commons-benchmark`.base / "js")
+  lazy val `benchmark-js` = mkSubProject.in(benchmark.base / "js")
     .enablePlugins(ScalaJSPlugin)
-    .configure(p => if (forIdeaImport) p.dependsOn(`commons-benchmark`) else p)
-    .dependsOn(`commons-core-js`)
+    .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
+    .dependsOn(`core-js`)
     .settings(
       jsCommonSettings,
       noPublishSettings,
-      sameNameAs(`commons-benchmark`),
+      sameNameAs(benchmark),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
         "io.circe" %%% "circe-core" % circeVersion,
@@ -430,9 +417,9 @@ object Build extends BuildDef {
       scalaJSUseMainModuleInitializer := true,
     )
 
-  lazy val `commons-comprof` = project
+  lazy val comprof = mkSubProject
     .disablePlugins(GenerativePlugin)
-    .dependsOn(`commons-core`)
+    .dependsOn(core)
     .settings(
       jvmCommonSettings,
       noPublishSettings,
@@ -446,7 +433,7 @@ object Build extends BuildDef {
         "-Ystatistics:typer",
       ),
       Compile / sourceGenerators += Def.task {
-        val originalSrc = (`commons-core` / sourceDirectory).value /
+        val originalSrc = (core / sourceDirectory).value /
           "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
         val originalContent = IO.read(originalSrc)
         (0 until 100).map { i =>
