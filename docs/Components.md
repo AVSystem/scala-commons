@@ -165,4 +165,6 @@ object MyApp extends Components {
 
 ## Complete example
 
-See [ComponentsExample.scala](https://github.com/AVSystem/scala-commons/blob/master/commons-core/src/test/scala/com/avsystem/commons/di/ComponentsExample.scala)
+See [ComponentsExample.scala](https://github.com/AVSystem/scala-commons/blob/master/core/jvm/src/test/scala/com/avsystem/commons/di/ComponentsExample.scala)
+
+
