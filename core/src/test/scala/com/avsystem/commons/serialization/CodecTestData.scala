@@ -380,7 +380,7 @@ object CodecTestData {
     @generated def abstractUpper: String
   }
   case class Generator(value: String) extends GeneratorBase {
-    @generated def abstractUpper: String = value.toUpperCase
+    def abstractUpper: String = value.toUpperCase
     @generated val valUpper: String = value.toUpperCase
     @generated var varUpper: String = value.toUpperCase
     @generated val lazyValUpper: String = value.toUpperCase
