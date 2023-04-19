@@ -80,7 +80,7 @@ object CodecTestData {
     @mongoId def id: String
     @generated @name("upper_id") def upperId: String = id.toUpperCase
   }
-  object FlatSealedBase {
+  object FlatSealedBase extends HasGenCodec[FlatSealedBase] {
     case class FirstCase(id: String, int: Int = 42) extends FlatSealedBase
     case class SecondCase(id: String, dbl: Double, moar: Double*) extends FlatSealedBase
     case object ThirdCase extends FlatSealedBase {
@@ -88,8 +88,6 @@ object CodecTestData {
     }
     case class RecursiveCase(id: String, sub: Opt[FlatSealedBase]) extends FlatSealedBase
     case class LocallyRecursiveCase(id: String, sub: Opt[LocallyRecursiveCase]) extends FlatSealedBase
-    // for Scala 2.11
-    implicit val codec: GenCodec[FlatSealedBase] = GenCodec.materialize
   }
 
   @flatten sealed trait TransparentFlatSealedBase

@@ -9,6 +9,7 @@ import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.TransparentWrapping
 import org.bson.{BsonDocument, BsonValue}
+import scala.annotation.tailrec
 
 /**
   * Represents a reference to a particular "place" in a MongoDB document. The "place" may be an actual path
@@ -188,9 +189,7 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def twoDimIndex: MongoIndex[E] = index(MongoIndexType.TwoDim)
   def twoDimSphereIndex: MongoIndex[E] = index(MongoIndexType.TwoDimSphere)
 
-  //noinspection NoTailRecursionAnnotation
-  //no @tailrec because Scala 2.11 has problems with it
-  private def computePath[T0](
+  @tailrec private def computePath[T0](
     onlyUpToArray: Boolean,
     ref: MongoPropertyRef[E, T0],
     acc: List[String],
