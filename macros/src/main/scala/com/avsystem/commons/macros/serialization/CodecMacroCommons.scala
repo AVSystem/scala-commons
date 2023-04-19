@@ -61,7 +61,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
   def isGenerated(sym: Symbol): Boolean = sym.isTerm && {
     val ts = sym.asTerm
     // do not treat val/var's underlying field as a generated member,
-    // pretend that the annotation is actually applied on its getter and setter
+    // pretend that the annotation is actually applied on its getter
     ts.getter == NoSymbol && hasAnnotation(sym, GeneratedAnnotType) ||
       ts.isGetter && hasAnnotation(ts.accessed, GeneratedAnnotType)
   }
