@@ -393,6 +393,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
         "upper" -> "V",
         "abstractUpper" -> "V",
         "valUpper" -> "V",
+        "getterUpper" -> "V",
         "varUpper" -> "V",
         "lazyValUpper" -> "V"
       )

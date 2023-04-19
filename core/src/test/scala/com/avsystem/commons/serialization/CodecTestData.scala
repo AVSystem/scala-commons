@@ -5,6 +5,8 @@ import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
 
+import scala.annotation.meta.getter
+
 object CodecTestData {
   def col[T <: JCollection[Int]](col: T): T = {
     col.add(1)
@@ -382,6 +384,7 @@ object CodecTestData {
   case class Generator(value: String) extends GeneratorBase {
     def abstractUpper: String = value.toUpperCase
     @generated val valUpper: String = value.toUpperCase
+    @(generated@getter) val getterUpper: String = value.toUpperCase
     @generated var varUpper: String = value.toUpperCase
     @generated val lazyValUpper: String = value.toUpperCase
   }

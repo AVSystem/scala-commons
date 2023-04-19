@@ -62,7 +62,7 @@ abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCom
     val ts = sym.asTerm
     // do not treat val/var's underlying field as a generated member,
     // pretend that the annotation is actually applied on its getter
-    ts.getter == NoSymbol && hasAnnotation(sym, GeneratedAnnotType) ||
+    (ts.getter == ts || ts.getter == NoSymbol) && hasAnnotation(ts, GeneratedAnnotType) ||
       ts.isGetter && hasAnnotation(ts.accessed, GeneratedAnnotType)
   }
 }
