@@ -373,4 +373,17 @@ object CodecTestData {
     case class LocalStuff()
     object LocalStuff extends HasGenCodec[LocalStuff]()(MacroInstances.materialize)
   }
+
+  trait GeneratorBase {
+    def value: String
+    @generated def upper: String = value.toUpperCase
+    @generated def abstractUpper: String
+  }
+  case class Generator(value: String) extends GeneratorBase {
+    @generated def abstractUpper: String = value.toUpperCase
+    @generated val valUpper: String = value.toUpperCase
+    @generated var varUpper: String = value.toUpperCase
+    @generated val lazyValUpper: String = value.toUpperCase
+  }
+  object Generator extends HasGenCodec[Generator]
 }
