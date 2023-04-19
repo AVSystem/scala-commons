@@ -384,4 +384,19 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     testWrite[BuildablePojo](BuildablePojo.builder().setStr("foo").setFlags(JList(true, false)).setCool(false).build(),
       Map("str" -> "foo", "flags" -> List(true, false), "cool" -> false))
   }
+
+  test("generated fields") {
+    testWrite[Generator](
+      Generator("v"),
+      Map(
+        "value" -> "v",
+        "upper" -> "V",
+        "abstractUpper" -> "V",
+        "valUpper" -> "V",
+        "getterUpper" -> "V",
+        "varUpper" -> "V",
+        "lazyValUpper" -> "V"
+      )
+    )
+  }
 }
