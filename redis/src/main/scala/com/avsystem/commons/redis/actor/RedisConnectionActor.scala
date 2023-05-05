@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, Cancellable}
 import akka.stream.scaladsl._
 import akka.stream.{CompletionStrategy, IgnoreComplete, Materializer, SystemMaterializer}
 import akka.util.ByteString
@@ -92,6 +92,18 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
   }
 
+  /**
+    * Without separate "reconnecting" state we would not be able to drop old messages
+    * (especially Connected message if arrived after ConnectionClosed because of some race conditions).
+    * Without this state, we would process old ones instead of dropping them and creating a new connection.
+    */
+  private def reconnecting(retryStrategy: RetryStrategy): Receive = {
+    case Connect =>
+      become(connecting(retryStrategy, Opt.Empty))
+      doConnect()
+    case _: TcpEvent => // Ignore old messages
+  }
+
   private def connecting(retryStrategy: RetryStrategy, readInitSender: Opt[ActorRef]): Receive = {
     case open: Open =>
       onOpen(open)
@@ -107,8 +119,8 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       //TODO: use dedicated retry strategy for initialization instead of reconnection strategy
       new ConnectedTo(connection, localAddress, remoteAddress).initialize(config.reconnectionStrategy)
       readInitSender.foreach(_ ! ReadAck)
-    case _: ConnectionFailed =>
-      log.error(s"Connection attempt to Redis at $address failed")
+    case _: ConnectionFailed | _: ConnectionClosed =>
+      log.error(s"Connection attempt to Redis at $address failed or was closed")
       tryReconnect(retryStrategy, new ConnectionFailedException(address))
     case Close(cause, stopSelf) =>
       close(cause, stopSelf, tcpConnecting = true)
@@ -178,7 +190,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         if (delay > Duration.Zero) {
           log.info(s"Next reconnection attempt to $address in $delay")
         }
-        become(connecting(nextStrategy, Opt.Empty))
+        become(reconnecting(nextStrategy))
         system.scheduler.scheduleOnce(delay, self, Connect)
       case Opt.Empty =>
         close(failureCause, stopSelf = false)
@@ -214,17 +226,19 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       // Make sure that at least PING is sent so that LOADING errors are detected
       val initBatch = config.initCommands *> RedisApi.Batches.StringTyped.ping
       val initBuffer = ByteBuffer.allocate(initBatch.rawCommandPacks.encodedSize)
+      // schedule a Cancellable RetryInit in case we do not receive a response for our request
+      val scheduledRetry = system.scheduler.scheduleOnce(config.initTimeout, self, RetryInit(retryStrategy.next))
       new ReplyCollector(initBatch.rawCommandPacks, initBuffer, onInitResult(_, retryStrategy))
         .sendEmptyReplyOr { collector =>
           flip(initBuffer)
           val data = ByteString(initBuffer)
           logWrite(data)
           connection ! data
-          become(initializing(collector, retryStrategy))
+          become(initializing(collector, retryStrategy, scheduledRetry))
         }
     }
 
-    def initializing(collector: ReplyCollector, retryStrategy: RetryStrategy): Receive = {
+    def initializing(collector: ReplyCollector, retryStrategy: RetryStrategy, scheduledRetry: Cancellable): Receive = {
       case open: Open =>
         onOpen(open)
       case IncomingPacks(packs) =>
@@ -232,11 +246,13 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       case Release if reservedBy.contains(sender()) =>
         handleRelease()
       case cc: ConnectionClosed =>
+        scheduledRetry.cancel()
         onConnectionClosed(cc)
-        tryReconnect(config.reconnectionStrategy, new ConnectionClosedException(address, cc.error))
+        tryReconnect(retryStrategy, new ConnectionClosedException(address, cc.error))
       case WriteAck =>
       case data: ByteString =>
         logReceived(data)
+        scheduledRetry.cancel()
         try decoder.decodeMore(data)(collector.processMessage(_, this)) catch {
           case NonFatal(cause) =>
             // TODO: is there a possibility to NOT receive WriteAck up to this point? currently assuming that no
@@ -247,8 +263,10 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       case ReadInit =>
         sender() ! ReadAck
       case RetryInit(newStrategy) =>
+        scheduledRetry.cancel()
         initialize(newStrategy)
       case Close(cause, stop) =>
+        scheduledRetry.cancel()
         close(cause, stop)
     }
 
