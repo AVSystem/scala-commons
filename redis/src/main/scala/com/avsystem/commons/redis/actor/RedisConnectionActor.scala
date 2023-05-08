@@ -227,7 +227,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       val initBatch = config.initCommands *> RedisApi.Batches.StringTyped.ping
       val initBuffer = ByteBuffer.allocate(initBatch.rawCommandPacks.encodedSize)
       // schedule a Cancellable RetryInit in case we do not receive a response for our request
-      val scheduledRetry = system.scheduler.scheduleOnce(config.initTimeout, self, RetryInit(retryStrategy.next))
+      val scheduledRetry = system.scheduler.scheduleOnce(config.initResponseTimeout, self, RetryInit(retryStrategy.next))
       new ReplyCollector(initBatch.rawCommandPacks, initBuffer, onInitResult(_, retryStrategy))
         .sendEmptyReplyOr { collector =>
           flip(initBuffer)

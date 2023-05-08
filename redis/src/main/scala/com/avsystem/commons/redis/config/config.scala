@@ -155,7 +155,7 @@ case class NodeConfig(
   * @param idleTimeout          maximum idle time for the connection
   * @param maxWriteSizeHint     hint for maximum number of bytes sent in a single network write message (the actual number
   *                             of bytes sent may be slightly larger)
-  * @param initTimeout          maximum time to wait for Redis response while initializing the client
+  * @param initResponseTimeout  maximum time to wait for Redis response while initializing the client
   * @param reconnectionStrategy a [[RetryStrategy]] used to determine what delay should be used when reconnecting
   *                             a failed connection. NOTE: `reconnectionStrategy` is ignored by `RedisConnectionClient`
   * @param debugListener        listener for traffic going through this connection. Only for debugging and testing
@@ -170,7 +170,7 @@ case class ConnectionConfig(
   connectTimeout: OptArg[FiniteDuration] = OptArg.Empty,
   idleTimeout: OptArg[FiniteDuration] = OptArg.Empty,
   maxWriteSizeHint: OptArg[Int] = 50000,
-  initTimeout: FiniteDuration = 5.seconds,
+  initResponseTimeout: FiniteDuration = 15.seconds,
   reconnectionStrategy: RetryStrategy = immediately.andThen(exponentially(1.seconds)).maxDelay(8.seconds),
   debugListener: DebugListener = DevNullListener
 )
