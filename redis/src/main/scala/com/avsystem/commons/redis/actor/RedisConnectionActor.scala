@@ -18,6 +18,7 @@ import java.nio.{Buffer, ByteBuffer}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
+import scala.util.Random
 
 final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   extends Actor with ActorLazyLogging { actor =>
@@ -35,6 +36,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
   }
 
+  private val random = new Random
   private var mustInitiallyConnect: Boolean = _
   private var initPromise: Promise[Unit] = _
 
@@ -42,6 +44,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
   private var incarnation = 0
   private var reservedBy = Opt.empty[ActorRef]
   private var reservationIncarnation = Opt.empty[Int]
+  private var currentConnectionId = Opt.empty[Int]
 
   private val queuedToReserve = new JArrayDeque[QueuedPacks]
   private val queuedToWrite = new JArrayDeque[QueuedPacks]
@@ -92,18 +95,6 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
   }
 
-  /**
-    * Without separate "reconnecting" state we would not be able to drop old messages
-    * (especially Connected message if arrived after ConnectionClosed because of some race conditions).
-    * Without this state, we would process old ones instead of dropping them and creating a new connection.
-    */
-  private def reconnecting(retryStrategy: RetryStrategy): Receive = {
-    case Connect =>
-      become(connecting(retryStrategy, Opt.Empty))
-      doConnect()
-    case _: TcpEvent => // Ignore old messages
-  }
-
   private def connecting(retryStrategy: RetryStrategy, readInitSender: Opt[ActorRef]): Receive = {
     case open: Open =>
       onOpen(open)
@@ -119,9 +110,13 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       //TODO: use dedicated retry strategy for initialization instead of reconnection strategy
       new ConnectedTo(connection, localAddress, remoteAddress).initialize(config.reconnectionStrategy)
       readInitSender.foreach(_ ! ReadAck)
-    case _: ConnectionFailed | _: ConnectionClosed =>
-      log.error(s"Connection attempt to Redis at $address failed or was closed")
-      tryReconnect(retryStrategy, new ConnectionFailedException(address))
+    case cf: ConnectionFailure =>
+      if (currentConnectionId.forall(_ != cf.connectionId)){
+        log.error(s"Received ConnectionFailure for connection different than currently trying to establish")
+      } else {
+        log.error(s"Connection attempt to Redis at $address failed or was closed")
+        tryReconnect(retryStrategy, new ConnectionFailedException(address))
+      }
     case Close(cause, stopSelf) =>
       close(cause, stopSelf, tcpConnecting = true)
     case ReadInit =>
@@ -165,12 +160,18 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       )
     }
 
+    // create connection Id to match connection failures message with
+    // corresponding connections. It prevents against handling old failures
+    // in context of new connections.
+    val connectionId = random.nextInt()
+    currentConnectionId = connectionId.opt
+
     val sink = Sink.actorRefWithBackpressure(
       ref = self,
       onInitMessage = ReadInit,
       ackMessage = ReadAck,
-      onCompleteMessage = ConnectionClosed(Opt.Empty),
-      onFailureMessage = cause => ConnectionClosed(Opt(cause))
+      onCompleteMessage = ConnectionClosed(Opt.Empty, connectionId),
+      onFailureMessage = cause => ConnectionClosed(Opt(cause), connectionId)
     )
 
     val (actorRef, connFuture) = src.viaMat(conn)((_, _)).to(sink).run()
@@ -178,7 +179,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       case Success(Tcp.OutgoingConnection(remoteAddress, localAddress)) =>
         self ! Connected(actorRef, remoteAddress, localAddress)
       case Failure(cause) =>
-        self ! ConnectionFailed(cause)
+        self ! ConnectionFailed(cause, connectionId)
     }
   }
 
@@ -190,7 +191,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         if (delay > Duration.Zero) {
           log.info(s"Next reconnection attempt to $address in $delay")
         }
-        become(reconnecting(nextStrategy))
+        become(connecting(nextStrategy, Opt.Empty))
         system.scheduler.scheduleOnce(delay, self, Connect)
       case Opt.Empty =>
         close(failureCause, stopSelf = false)
@@ -471,6 +472,9 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
 
     def onConnectionClosed(cc: ConnectionClosed): Unit = {
+      if (currentConnectionId.forall(_ != cc.connectionId)){
+        log.error(s"Received ConnectionClosed for connection different than currently handling")
+      }
       open = false
       incarnation += 1
       subscribed.foreach { receiver =>
@@ -553,8 +557,9 @@ object RedisConnectionActor {
     localAddress: InetSocketAddress
   ) extends TcpEvent
 
-  private case class ConnectionFailed(cause: Throwable) extends TcpEvent
-  private case class ConnectionClosed(error: Opt[Throwable]) extends TcpEvent
+  private sealed abstract class ConnectionFailure(val connectionId: Int) extends TcpEvent
+  private case class ConnectionFailed(cause: Throwable, id: Int) extends ConnectionFailure(id)
+  private case class ConnectionClosed(error: Opt[Throwable], id: Int) extends ConnectionFailure(id)
 
   private case class CloseConnection(immediate: Boolean = false) extends TcpEvent
 
