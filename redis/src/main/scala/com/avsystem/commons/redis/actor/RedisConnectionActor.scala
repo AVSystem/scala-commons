@@ -105,15 +105,20 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     case Connect =>
       log.debug(s"Connecting to $address")
       doConnect()
-    case Connected(connection, remoteAddress, localAddress) =>
-      log.debug(s"Connected to Redis at $address")
-      //TODO: use dedicated retry strategy for initialization instead of reconnection strategy
-      new ConnectedTo(connection, localAddress, remoteAddress).initialize(config.reconnectionStrategy)
-      readInitSender.foreach(_ ! ReadAck)
+    case Connected(connection, remoteAddress, localAddress, connectionId) =>
+      if (currentConnectionId.forall(_ != connectionId)) {
+        log.error(s"Received Connected for connection different than currently trying to establish")
+        connection ! CloseConnection(immediate = true)
+      } else {
+        //TODO: use dedicated retry strategy for initialization instead of reconnection strategy
+        new ConnectedTo(connection, localAddress, remoteAddress).initialize(retryStrategy)
+        readInitSender.foreach(_ ! ReadAck)
+      }
     case cf: ConnectionFailure =>
-      if (currentConnectionId.forall(_ != cf.connectionId)){
+      if (currentConnectionId.forall(_ != cf.connectionId)) {
         log.error(s"Received ConnectionFailure for connection different than currently trying to establish")
       } else {
+        currentConnectionId = Opt.Empty
         log.error(s"Connection attempt to Redis at $address failed or was closed")
         tryReconnect(retryStrategy, new ConnectionFailedException(address))
       }
@@ -160,7 +165,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       )
     }
 
-    // create connection Id to match connection failures message with
+    // create connection Id to match connection message with
     // corresponding connections. It prevents against handling old failures
     // in context of new connections.
     val connectionId = random.nextInt()
@@ -177,7 +182,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     val (actorRef, connFuture) = src.viaMat(conn)((_, _)).to(sink).run()
     connFuture.onCompleteNow {
       case Success(Tcp.OutgoingConnection(remoteAddress, localAddress)) =>
-        self ! Connected(actorRef, remoteAddress, localAddress)
+        self ! Connected(actorRef, remoteAddress, localAddress, connectionId)
       case Failure(cause) =>
         self ! ConnectionFailed(cause, connectionId)
     }
@@ -219,7 +224,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
 
     def become(receive: Receive): Unit =
       context.become(receive unless {
-        case Connected(oldConnection, _, _) if oldConnection != connection =>
+        case Connected(oldConnection, _, _, _) if oldConnection != connection =>
           oldConnection ! CloseConnection(immediate = true)
       })
 
@@ -472,7 +477,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
 
     def onConnectionClosed(cc: ConnectionClosed): Unit = {
-      if (currentConnectionId.forall(_ != cc.connectionId)){
+      if (currentConnectionId.forall(_ != cc.connectionId)) {
         log.error(s"Received ConnectionClosed for connection different than currently handling")
       }
       open = false
@@ -527,7 +532,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     case IncomingPacks(packs) =>
       packs.reply(PacksResult.Failure(cause))
     case Release => // ignore
-    case Connected(connection, _, _) if tcpConnecting =>
+    case Connected(connection, _, _, _) if tcpConnecting =>
       // failure may have happened while connecting, simply close the connection
       connection ! CloseConnection(immediate = true)
       become(closed(cause, tcpConnecting = false))
@@ -554,7 +559,8 @@ object RedisConnectionActor {
   private case class Connected(
     connection: ActorRef,
     remoteAddress: InetSocketAddress,
-    localAddress: InetSocketAddress
+    localAddress: InetSocketAddress,
+    connectionId: Int,
   ) extends TcpEvent
 
   private sealed abstract class ConnectionFailure(val connectionId: Int) extends TcpEvent
