@@ -26,7 +26,15 @@ trait UsesPreconfiguredCluster extends UsesActorSystem with UsesClusterServers {
 
     val clients = addresses.map(addr => new RedisConnectionClient(addr))
     val commands = clients.map(client => RedisApi.Connection.Async.BinaryTyped(client))
-    val initFuture = Future.traverse(commands)(c => waitUntil(c.clusterInfo.map(_.stateOk), 500.millis))
+    val initFuture = Future.traverse(commands) { c =>
+      waitUntil(
+        for {
+          stateOk <- c.clusterInfo.map(_.stateOk)
+          slavesHaveSlots <- c.clusterSlots.map(_.forall(_.slaves.nonEmpty))
+        } yield stateOk && slavesHaveSlots,
+        500.millis,
+      )
+    }
 
     Await.result(initFuture, 30.seconds)
 
