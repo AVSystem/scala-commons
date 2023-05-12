@@ -110,6 +110,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         log.error(s"Received Connected for connection different than currently trying to establish")
         connection ! CloseConnection(immediate = true)
       } else {
+        log.debug(s"Connected to Redis at $address")
         //TODO: use dedicated retry strategy for initialization instead of reconnection strategy
         new ConnectedTo(connection, localAddress, remoteAddress).initialize(retryStrategy)
         readInitSender.foreach(_ ! ReadAck)
