@@ -45,9 +45,15 @@ sealed trait MongoUpdate[T] {
         case ArrayElementsQualifier.FirstMatching() => "$"
         case ArrayElementsQualifier.Each() => "$[]"
         case ArrayElementsQualifier.Filtered(filter) =>
-          val name = s"filter${arrayFilters.size}"
-          arrayFilters.add(Bson.document(name, filter.toBson))
-          s"$$[$name]"
+          val identifier = s"filter${arrayFilters.size}"
+          val (name, query) = filter match {
+            case MongoFilter.PropertyValueFilter(prop, filter) =>
+              identifier + MongoPropertyRef.Separator + prop.rawPath -> filter
+            case filter =>
+              identifier -> filter
+          }
+          arrayFilters.add(Bson.document(name, query.toBson))
+          s"$$[$identifier]"
       }
 
       val newPath = path + MongoPropertyRef.Separator + rawQualifier
