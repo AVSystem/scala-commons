@@ -47,8 +47,9 @@ sealed trait MongoUpdate[T] {
         case ArrayElementsQualifier.Filtered(filter) =>
           val identifier = s"filter${arrayFilters.size}"
           val (name, query) = filter match {
-            case MongoFilter.PropertyValueFilter(prop, filter) =>
-              identifier + MongoPropertyRef.Separator + prop.rawPath -> filter
+            case MongoFilter.PropertyValueFilter(prop, propertyFilter) =>
+              // https://www.mongodb.com/docs/manual/reference/operator/update/positional-filtered/#update-all-documents-that-match-arrayfilters-in-an-array
+              identifier + MongoPropertyRef.Separator + prop.rawPath -> propertyFilter
             case filter =>
               identifier -> filter
           }
