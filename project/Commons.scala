@@ -80,7 +80,7 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowEnv ++= Map(
       "REDIS_VERSION" -> "6.2.12",
     ),
-    githubWorkflowJavaVersions := Seq(JavaSpec.graalvm("21.1.0", "11"), JavaSpec.temurin("17")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
         UseRef.Public("actions", "cache", "v2"),
@@ -96,10 +96,10 @@ object Commons extends ProjectGroup("commons") {
         params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        UseRef.Public("supercharge", "mongodb-github-action", "1.7.0"),
+        UseRef.Public("supercharge", "mongodb-github-action", "1.9.0"),
         name = Some("Setup MongoDB"),
         params = Map(
-          "mongodb-version" -> "5.0.8",
+          "mongodb-version" -> "6.0",
           "mongodb-replica-set" -> "test-rs",
         )
       ),
