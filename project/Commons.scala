@@ -71,7 +71,7 @@ object Commons extends ProjectGroup("commons") {
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
 
-    crossScalaVersions := Seq("2.13.10", "2.12.17"),
+    crossScalaVersions := Seq("2.13.11", "2.12.18"),
     scalaVersion := crossScalaVersions.value.head,
     compileOrder := CompileOrder.Mixed,
 
