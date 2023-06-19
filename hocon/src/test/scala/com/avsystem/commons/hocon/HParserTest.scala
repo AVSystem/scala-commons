@@ -1,4 +1,5 @@
-package com.avsystem.commons.hocon
+package com.avsystem.commons
+package hocon
 
 import com.avsystem.commons.testutil.FileBasedSuite
 

@@ -11,7 +11,7 @@ import com.avsystem.commons.redis.protocol.{BulkStringMsg, NullBulkStringMsg}
   * Example which shows how to execute LUA scripts.
   */
 object ScriptingExample extends App {
-  implicit val actorSystem = ActorSystem()
+  implicit val actorSystem: ActorSystem = ActorSystem()
 
   val client = new RedisNodeClient
   val api = RedisApi.Node.Async.StringTyped(client)
