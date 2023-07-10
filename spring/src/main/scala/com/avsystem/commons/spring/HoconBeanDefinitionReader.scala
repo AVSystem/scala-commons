@@ -20,7 +20,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   import com.typesafe.config.ConfigValueType._
 
   private implicit class ConfigValueExtensions(value: ConfigValue) {
-    def as[T: HoconType] =
+    def as[T: HoconType]: T =
       implicitly[HoconType[T]].get(value)
   }
 

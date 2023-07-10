@@ -31,7 +31,7 @@ object Commons extends ProjectGroup("commons") {
   val scalacheckVersion = "1.16.0"
   val jettyVersion = "9.4.51.v20230217"
   val mongoVersion = "4.9.1"
-  val springVersion = "4.3.26.RELEASE"
+  val springVersion = "5.3.28"
   val typesafeConfigVersion = "1.4.2"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.5"
@@ -341,7 +341,6 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion,
-        "com.typesafe.akka" %% "akka-actor" % akkaVersion,
         "com.typesafe.akka" %% "akka-stream" % akkaVersion,
         "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
         "io.monix" %% "monix" % monixVersion,
@@ -364,6 +363,7 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "org.springframework" % "spring-context" % springVersion,
+        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       ),
     )
 
