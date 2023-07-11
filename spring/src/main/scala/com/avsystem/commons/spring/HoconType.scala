@@ -5,7 +5,7 @@ import com.typesafe.config._
 
 trait HoconType[T] {
 
-  protected def requireNonNull(value: ConfigValue) = {
+  protected def requireNonNull(value: ConfigValue): ConfigValue = {
     require(value != null, s"No value found")
     value
   }
