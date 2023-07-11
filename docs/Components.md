@@ -1,6 +1,7 @@
 # Components and Dependency Injection Library
 
-`commons-core` module of AVSystem commons library contains a mimimallistic framework for initialization of application components ("beans")
+`commons-core` module of AVSystem commons library contains a minimalistic framework for initialization of application
+components ("beans")
 and dependency injection. This framework can be summarized as "lazy vals on steroids" and features:
 
 * defining application components in plain Scala (e.g. constructor invocations)
