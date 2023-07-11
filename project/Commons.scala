@@ -219,8 +219,6 @@ object Commons extends ProjectGroup("commons") {
           analyzer,
           macros,
           `core-js`,
-          benchmark,
-          `benchmark-js`,
           comprof,
         ),
     )
@@ -235,7 +233,6 @@ object Commons extends ProjectGroup("commons") {
       hocon,
       spring,
       redis,
-      benchmark,
     )
     .settings(aggregateProjectSettings)
 
@@ -243,7 +240,6 @@ object Commons extends ProjectGroup("commons") {
     .aggregate(
       `core-js`,
       `mongo-js`,
-      `benchmark-js`,
     )
     .settings(aggregateProjectSettings)
 
@@ -385,11 +381,12 @@ object Commons extends ProjectGroup("commons") {
     .settings(
       jvmCommonSettings,
       noPublishSettings,
+      crossScalaVersions := crossScalaVersions.value.take(1),
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
         "io.circe" %% "circe-core" % circeVersion,
         "io.circe" %% "circe-generic" % circeVersion,
-        "io.circe" %% "circe-jawn" % circeVersion,
+        "io.circe" %% "circe-jlawn" % circeVersion,
         "io.circe" %% "circe-parser" % circeVersion,
         "com.lihaoyi" %% "upickle" % upickleVersion,
       ),
@@ -403,6 +400,7 @@ object Commons extends ProjectGroup("commons") {
     .settings(
       jsCommonSettings,
       noPublishSettings,
+      crossScalaVersions := crossScalaVersions.value.take(1),
       sameNameAs(benchmark),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
