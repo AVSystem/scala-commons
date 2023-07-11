@@ -79,6 +79,7 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowEnv ++= Map(
       "REDIS_VERSION" -> "6.2.12",
     ),
+    githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
@@ -386,7 +387,7 @@ object Commons extends ProjectGroup("commons") {
       libraryDependencies ++= Seq(
         "io.circe" %% "circe-core" % circeVersion,
         "io.circe" %% "circe-generic" % circeVersion,
-        "io.circe" %% "circe-jlawn" % circeVersion,
+        "io.circe" %% "circe-jawn" % circeVersion,
         "io.circe" %% "circe-parser" % circeVersion,
         "com.lihaoyi" %% "upickle" % upickleVersion,
       ),

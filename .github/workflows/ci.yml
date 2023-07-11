@@ -75,15 +75,6 @@ jobs:
       - name: Build project
         run: sbt '++ ${{ matrix.scala }}' test
 
-      - name: Compress target directories
-        run: tar cf targets.tar macros/target core/js/target benchmark/js/target core/target benchmark/target spring/target analyzer/target mongo/target redis/target hocon/target .js/target target jetty/target .jvm/target mongo/js/target project/target
-
-      - name: Upload target directories
-        uses: actions/upload-artifact@v3
-        with:
-          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
-          path: targets.tar
-
   publish:
     name: Publish Artifacts
     needs: [build]
@@ -115,26 +106,6 @@ jobs:
           distribution: temurin
           java-version: 17
           cache: sbt
-
-      - name: Download target directories (2.13.11)
-        uses: actions/download-artifact@v3
-        with:
-          name: target-${{ matrix.os }}-2.13.11-${{ matrix.java }}
-
-      - name: Inflate target directories (2.13.11)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
-
-      - name: Download target directories (2.12.18)
-        uses: actions/download-artifact@v3
-        with:
-          name: target-${{ matrix.os }}-2.12.18-${{ matrix.java }}
-
-      - name: Inflate target directories (2.12.18)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
 
       - env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
