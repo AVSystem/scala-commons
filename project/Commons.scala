@@ -23,14 +23,14 @@ object Commons extends ProjectGroup("commons") {
   // option in IntelliJ's SBT settings.
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-  val collectionCompatVersion = "2.5.0"
-  val guavaVersion = "31.1-jre"
+  val collectionCompatVersion = "2.11.0"
+  val guavaVersion = "32.1.1-jre"
   val jsr305Version = "3.0.2"
-  val scalatestVersion = "3.2.12"
-  val scalatestplusScalacheckVersion = "3.2.12.0"
-  val scalacheckVersion = "1.16.0"
+  val scalatestVersion = "3.2.16"
+  val scalatestplusScalacheckVersion = "3.2.14.0"
+  val scalacheckVersion = "1.17.0"
   val jettyVersion = "9.4.51.v20230217"
-  val mongoVersion = "4.9.1"
+  val mongoVersion = "4.10.1"
   val springVersion = "5.3.28"
   val typesafeConfigVersion = "1.4.2"
   val commonsIoVersion = "1.3.2" // test only
@@ -38,10 +38,9 @@ object Commons extends ProjectGroup("commons") {
   val akkaVersion = "2.6.19"
   val monixVersion = "3.4.1"
   val monixBioVersion = "1.2.0"
-  val mockitoVersion = "3.9.0"
-  val circeVersion = "0.13.0" // benchmark only
-  val upickleVersion = "1.3.11" // benchmark only
-  val scalajsBenchmarkVersion = "0.9.0"
+  val circeVersion = "0.14.5" // benchmark only
+  val upickleVersion = "3.1.2" // benchmark only
+  val scalajsBenchmarkVersion = "0.10.0"
   val slf4jVersion = "1.7.36"
 
   // for binary compatibility checking
@@ -80,6 +79,7 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowEnv ++= Map(
       "REDIS_VERSION" -> "6.2.12",
     ),
+    githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
@@ -161,7 +161,6 @@ object Commons extends ProjectGroup("commons") {
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
       "org.scalatestplus" %%% "scalacheck-1-16" % scalatestplusScalacheckVersion % Test,
-      "org.mockito" % "mockito-core" % mockitoVersion % Test,
     ),
     ideBasePackages := Seq(organization.value),
     Compile / ideOutputDirectory := Some(target.value.getParentFile / "out/production"),
@@ -221,8 +220,6 @@ object Commons extends ProjectGroup("commons") {
           analyzer,
           macros,
           `core-js`,
-          benchmark,
-          `benchmark-js`,
           comprof,
         ),
     )
@@ -237,7 +234,6 @@ object Commons extends ProjectGroup("commons") {
       hocon,
       spring,
       redis,
-      benchmark,
     )
     .settings(aggregateProjectSettings)
 
@@ -245,7 +241,6 @@ object Commons extends ProjectGroup("commons") {
     .aggregate(
       `core-js`,
       `mongo-js`,
-      `benchmark-js`,
     )
     .settings(aggregateProjectSettings)
 

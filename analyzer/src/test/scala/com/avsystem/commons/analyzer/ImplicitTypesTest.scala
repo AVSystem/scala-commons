@@ -4,7 +4,7 @@ package analyzer
 import org.scalatest.funsuite.AnyFunSuite
 
 class ImplicitTypesTest extends AnyFunSuite with AnalyzerTest {
-  ignore("implicit definitions without explicit types should be rejected") {
+  test("implicit definitions without explicit types should be rejected") {
     assertErrors(2,
       """
         |object whatever {
