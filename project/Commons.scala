@@ -382,7 +382,6 @@ object Commons extends ProjectGroup("commons") {
     .settings(
       jvmCommonSettings,
       noPublishSettings,
-      crossScalaVersions := crossScalaVersions.value.take(1),
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
         "io.circe" %% "circe-core" % circeVersion,
@@ -401,7 +400,6 @@ object Commons extends ProjectGroup("commons") {
     .settings(
       jsCommonSettings,
       noPublishSettings,
-      crossScalaVersions := crossScalaVersions.value.take(1),
       sameNameAs(benchmark),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
