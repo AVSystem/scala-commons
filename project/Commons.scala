@@ -40,7 +40,7 @@ object Commons extends ProjectGroup("commons") {
   val monixBioVersion = "1.2.0"
   val mockitoVersion = "3.9.0"
   val circeVersion = "0.13.0" // benchmark only
-  val upickleVersion = "1.3.11" // benchmark only
+  val upickleVersion = "1.3.15" // benchmark only
   val scalajsBenchmarkVersion = "0.9.0"
   val slf4jVersion = "1.7.36"
 
