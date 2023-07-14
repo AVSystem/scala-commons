@@ -171,6 +171,7 @@ object Commons extends ProjectGroup("commons") {
   val jvmCommonSettings = Seq(
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
     ),
     mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
       organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
@@ -372,7 +373,6 @@ object Commons extends ProjectGroup("commons") {
         "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
 
         "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
-        "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
       ),
     )
 
