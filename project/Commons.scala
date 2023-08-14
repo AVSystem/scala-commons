@@ -37,7 +37,6 @@ object Commons extends ProjectGroup("commons") {
   val scalaLoggingVersion = "3.9.5"
   val akkaVersion = "2.6.19"
   val monixVersion = "3.4.1"
-  val monixBioVersion = "1.2.0"
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
   val scalajsBenchmarkVersion = "0.10.0"
@@ -287,7 +286,6 @@ object Commons extends ProjectGroup("commons") {
         "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
-        "io.monix" %% "monix-bio" % monixBioVersion % Optional,
       ),
     )
 

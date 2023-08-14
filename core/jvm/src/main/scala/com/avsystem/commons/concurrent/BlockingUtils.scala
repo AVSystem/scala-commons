@@ -5,7 +5,6 @@ import com.avsystem.commons.collection.CloseableIterator
 import monix.eval.Task
 import monix.execution.Scheduler
 import monix.reactive.Observable
-import monix.bio.IO
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -38,9 +37,6 @@ abstract class BlockingUtils {
     */
   def asTask[T](blockingCode: => T): Task[T] =
     Task.eval(blockingCode).executeOn(ioScheduler, forceAsync = true)
-
-  def asIO[A, B](blockingCode: => Either[A, B]): IO[A, B] =
-    IO.deferTotal(IO.fromEither(blockingCode)).executeOn(ioScheduler, forceAsync = true)
 
   def await[T](future: Future[T]): T =
     await(future, defaultTimeout)
