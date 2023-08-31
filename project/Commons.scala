@@ -1,6 +1,7 @@
 import com.github.ghik.sbt.nosbt.ProjectGroup
 import com.typesafe.tools.mima.plugin.MimaKeys.*
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
+import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.*
@@ -388,7 +389,7 @@ object Commons extends ProjectGroup("commons") {
     )
 
   lazy val `benchmark-js` = mkSubProject.in(benchmark.base / "js")
-    .enablePlugins(ScalaJSPlugin)
+    .enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
     .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
     .dependsOn(`core-js`)
     .settings(
