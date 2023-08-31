@@ -5,9 +5,8 @@ import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.protocol.RedisReply
 
 import scala.annotation.implicitNotFound
-import scala.collection.compat._
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.{BuildFrom, mutable}
 
 /**
   * Typeclass for easy merging ("sequencing") of multiple [[RedisBatch]] instances into one. This is done in

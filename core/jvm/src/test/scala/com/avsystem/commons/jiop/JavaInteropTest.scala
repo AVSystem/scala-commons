@@ -1,13 +1,11 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
-
 import com.avsystem.commons.jiop.GuavaInterop._
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.collection.compat._
+import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 

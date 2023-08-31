@@ -2,7 +2,7 @@ package com.avsystem.commons
 package jiop
 
 import scala.annotation.unchecked.{uncheckedVariance => uV}
-import scala.collection.compat._
+import scala.collection.Factory
 
 final class ScalaJStream[+A](private val jStream: JStream[A@uV]) extends AnyVal {
   def asJava[B >: A]: JStream[B] =

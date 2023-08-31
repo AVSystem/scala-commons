@@ -2,11 +2,9 @@ package com.avsystem.commons
 
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc._
-import scala.annotation.nowarn
 
-import scala.annotation.tailrec
-import scala.collection.compat._
-import scala.collection.{AbstractIterator, mutable}
+import scala.annotation.{nowarn, tailrec}
+import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
 
 trait SharedExtensions {
 
@@ -536,19 +534,6 @@ object SharedExtensionsUtils extends SharedExtensions {
   class IterableOnceOps[C[X] <: IterableOnce[X], A](private val coll: C[A]) extends AnyVal {
     private def it: Iterator[A] = coll.iterator
 
-    /**
-      * Provided as a Scala 2.12 "backport" of Scala 2.13 regular method.
-      * In Scala 2.13 this extension method is always be hidden by an actual method available on `IterableOnce`.
-      */
-    def knownSize: Int = coll match {
-      case c: BIterable[_] if c.isEmpty => 0
-      case is: BIndexedSeq[_] => is.size
-      case _: IListMap[_, _] => -1
-      case m: BMap[_, _] => m.size
-      case s: BSet[_] => s.size
-      case _ => -1
-    }
-
     def toSized[To](fac: Factory[A, To], sizeHint: Int): To = {
       val b = fac.newBuilder
       b.sizeHint(sizeHint)
@@ -748,9 +733,6 @@ object SharedExtensionsUtils extends SharedExtensions {
       }
 
     def distinct: Iterator[A] = distinctBy(identity)
-
-    //overloaded to avoid eager iterator consumption in 2.12
-    def flatCollect[B](f: PartialFunction[A, IterableOnce[B]]): Iterator[B] = it.collect(f).flatten
   }
 
   object IteratorCompanionOps {

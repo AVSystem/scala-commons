@@ -5,7 +5,7 @@ import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 import com.avsystem.commons.serialization._
 
-import scala.collection.compat._
+import scala.collection.Factory
 
 trait CborOptimizedCodecs {
   /**

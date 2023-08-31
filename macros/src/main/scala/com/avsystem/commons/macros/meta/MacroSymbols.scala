@@ -17,7 +17,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final def RpcUtils = q"$RpcPackage.RpcUtils"
   final def OptionLikeCls = tq"$MetaPackage.OptionLike"
   final def AutoOptionalParamCls = tq"$MetaPackage.AutoOptionalParam"
-  final def FactoryCls = tq"$CollectionPkg.compat.Factory"
+  final def FactoryCls = tq"$CollectionPkg.Factory"
   final lazy val RpcArityAT: Type = staticType(tq"$MetaPackage.SymbolArity")
   final lazy val SingleArityAT: Type = staticType(tq"$MetaPackage.single")
   final lazy val OptionalArityAT: Type = staticType(tq"$MetaPackage.optional")

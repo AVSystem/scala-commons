@@ -1,15 +1,13 @@
 package com.avsystem.commons
 package redis.protocol
 
-import java.nio.ByteBuffer
-
 import akka.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.Sam
 import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
 import com.avsystem.commons.redis.util.SizedArraySeqBuilder
 
+import java.nio.ByteBuffer
 import scala.annotation.tailrec
-import scala.collection.compat._
 import scala.collection.immutable.VectorBuilder
 
 /**

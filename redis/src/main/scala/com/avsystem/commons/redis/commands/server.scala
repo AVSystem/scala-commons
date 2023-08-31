@@ -8,8 +8,6 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.BulkStringMsg
 
-import scala.collection.compat._
-
 trait NodeServerApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/bgrewriteaof BGREWRITEAOF]] */
   def bgrewriteaof: Result[String] =

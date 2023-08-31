@@ -6,8 +6,7 @@ import com.avsystem.commons.redis.util.SizedArraySeqFactory
 import com.avsystem.commons.serialization.GenObjectCodec
 
 import scala.annotation.implicitNotFound
-import scala.collection.compat._
-import scala.collection.mutable
+import scala.collection.{Factory, mutable}
 
 @implicitNotFound("${T} has no RedisRecordCodec. It can be derived from GenObjectCodec which can be provided " +
   "by making your case class companion extend HasGenObjectCodec")

@@ -2,8 +2,7 @@ package com.avsystem.commons
 package jiop
 
 import java.util.LongSummaryStatistics
-
-import scala.collection.compat._
+import scala.collection.Factory
 
 final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def asJava: JLongStream = jStream
