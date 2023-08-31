@@ -1,6 +1,6 @@
 # AVSystem Commons Library for Scala
 
-[![Build Status](https://travis-ci.org/AVSystem/scala-commons.svg?branch=master)](https://travis-ci.org/AVSystem/scala-commons)
+[![Continuous Integration](https://github.com/AVSystem/scala-commons/actions/workflows/ci.yml/badge.svg)](https://github.com/AVSystem/scala-commons/actions/workflows/ci.yml)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.13)
 
 **[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/index.html)**
