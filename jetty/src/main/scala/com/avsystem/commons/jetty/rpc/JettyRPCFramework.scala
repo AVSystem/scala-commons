@@ -2,15 +2,15 @@ package com.avsystem.commons
 package jetty.rpc
 
 import java.nio.charset.StandardCharsets
-
 import com.avsystem.commons.rpc.StandardRPCFramework
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput, RawJson}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
 import com.typesafe.scalalogging.LazyLogging
+
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.HttpClient
 import org.eclipse.jetty.client.api.Result
-import org.eclipse.jetty.client.util.{BufferingResponseListener, StringContentProvider}
+import org.eclipse.jetty.client.util.{BufferingResponseListener, StringContentProvider, StringRequestContent}
 import org.eclipse.jetty.http.{HttpMethod, HttpStatus, MimeTypes}
 import org.eclipse.jetty.server.handler.AbstractHandler
 import org.eclipse.jetty.server.{Handler, Request}
@@ -68,7 +68,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
         }
       }
 
-      val contentProvider = new StringContentProvider(
+      val content = new StringRequestContent(
         MimeTypes.Type.APPLICATION_JSON.asString(),
         write(call).s,
         StandardCharsets.UTF_8
@@ -76,7 +76,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
 
       httpClient.newRequest(uri)
         .method(method)
-        .content(contentProvider)
+        .body(content)
         .send(listener)
 
       promise.future
