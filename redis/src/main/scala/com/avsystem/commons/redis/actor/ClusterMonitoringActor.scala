@@ -9,7 +9,6 @@ import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, ErrorReplyException}
 import com.avsystem.commons.redis.util.{ActorLazyLogging, SingletonSeq}
 
-import scala.collection.compat._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._

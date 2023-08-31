@@ -3,9 +3,9 @@ package mongo
 
 import com.mongodb.client.model.{Filters => F}
 import org.bson.conversions.Bson
-import org.bson.{BsonArray, BsonDateTime, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
+import org.bson._
 
-import _root_.scala.collection.compat._
+import _root_.scala.collection.Factory
 
 /**
   * @author MKej

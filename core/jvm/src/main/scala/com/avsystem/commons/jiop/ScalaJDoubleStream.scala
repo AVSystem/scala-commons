@@ -2,8 +2,7 @@ package com.avsystem.commons
 package jiop
 
 import java.util.DoubleSummaryStatistics
-
-import scala.collection.compat._
+import scala.collection.Factory
 
 final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVal {
   def asJava: JDoubleStream = jStream

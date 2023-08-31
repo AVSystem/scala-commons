@@ -1,16 +1,17 @@
 import com.github.ghik.sbt.nosbt.ProjectGroup
-import com.typesafe.tools.mima.plugin.MimaKeys._
-import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
+import com.typesafe.tools.mima.plugin.MimaKeys.*
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
+import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 import org.scalajs.sbtplugin.ScalaJSPlugin
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.*
 import pl.project13.scala.sbt.JmhPlugin
-import pl.project13.scala.sbt.JmhPlugin.JmhKeys._
-import sbt.Keys._
-import sbt._
+import pl.project13.scala.sbt.JmhPlugin.JmhKeys.*
+import sbt.*
+import sbt.Keys.*
 import sbtghactions.GenerativePlugin
-import sbtghactions.GenerativePlugin.autoImport._
-import sbtide.Keys._
+import sbtghactions.GenerativePlugin.autoImport.*
+import sbtide.Keys.*
 import sbtunidoc.BaseUnidocPlugin.autoImport.{unidoc, unidocProjectFilter}
 import sbtunidoc.ScalaUnidocPlugin
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
@@ -23,7 +24,6 @@ object Commons extends ProjectGroup("commons") {
   // option in IntelliJ's SBT settings.
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-  val collectionCompatVersion = "2.11.0"
   val guavaVersion = "32.1.2-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.16"
@@ -69,8 +69,7 @@ object Commons extends ProjectGroup("commons") {
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
 
-    crossScalaVersions := Seq("2.13.11", "2.12.18"),
-    scalaVersion := crossScalaVersions.value.head,
+    scalaVersion := "2.13.11",
     compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
@@ -282,7 +281,6 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
-        "org.scala-lang.modules" %% "scala-collection-compat" % collectionCompatVersion,
         "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
@@ -298,7 +296,6 @@ object Commons extends ProjectGroup("commons") {
       sameNameAs(core),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
-        "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
         "io.monix" %%% "monix" % monixVersion % Optional,
       )
     )
@@ -392,7 +389,7 @@ object Commons extends ProjectGroup("commons") {
     )
 
   lazy val `benchmark-js` = mkSubProject.in(benchmark.base / "js")
-    .enablePlugins(ScalaJSPlugin)
+    .enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
     .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
     .dependsOn(`core-js`)
     .settings(

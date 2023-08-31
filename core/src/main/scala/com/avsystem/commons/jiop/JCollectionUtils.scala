@@ -2,8 +2,7 @@ package com.avsystem.commons
 package jiop
 
 import java.{lang => jl, util => ju}
-
-import scala.collection.compat._
+import scala.collection.Factory
 
 trait JCollectionUtils extends JFactories {
   type JIterator[T] = ju.Iterator[T]

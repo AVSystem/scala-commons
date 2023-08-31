@@ -9,7 +9,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.collection.compat._
+import scala.collection.Factory
 
 class ObservableExtensionsTest extends AnyFunSuite with Matchers
   with ScalaCheckDrivenPropertyChecks with ObservableExtensions with ScalaFutures {
@@ -56,7 +56,7 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
       testFactory(Seq)
       testFactory(Vector)
       testFactory(Iterable)
-      testFactory(immutable.LazyList)
+      testFactory(LazyList)
       testFactory(IHashMap)
       testFactory(IListMap)
       testFactory(ITreeMap)

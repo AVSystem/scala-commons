@@ -9,7 +9,6 @@ import com.avsystem.commons.redis.commands.{Cursor, ReplyDecoder}
 import com.avsystem.commons.redis.exception.{ErrorReplyException, UnexpectedReplyException}
 import com.avsystem.commons.redis.protocol._
 
-import scala.collection.compat._
 import scala.collection.mutable
 
 trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>

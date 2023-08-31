@@ -2,8 +2,7 @@ package com.avsystem.commons
 package jiop
 
 import java.util.IntSummaryStatistics
-
-import scala.collection.compat._
+import scala.collection.Factory
 
 final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def asJava: JIntStream = jStream

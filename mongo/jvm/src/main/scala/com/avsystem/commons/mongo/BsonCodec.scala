@@ -1,12 +1,11 @@
 package com.avsystem.commons
 package mongo
 
-import java.time.Instant
-
 import org.bson.types.ObjectId
-import org.bson.{BsonArray, BsonBinary, BsonBoolean, BsonDateTime, BsonDocument, BsonDouble, BsonInt32, BsonInt64, BsonObjectId, BsonString, BsonValue}
+import org.bson._
 
-import _root_.scala.collection.compat._
+import java.time.Instant
+import _root_.scala.collection.Factory
 import _root_.scala.language.higherKinds
 
 /**

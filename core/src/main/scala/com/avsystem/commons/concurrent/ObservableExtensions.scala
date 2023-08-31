@@ -5,6 +5,7 @@ import com.avsystem.commons.concurrent.ObservableExtensions.ObservableOps
 import monix.eval.Task
 import monix.reactive.Observable
 
+import scala.collection.Factory
 import scala.util.Sorting
 
 trait ObservableExtensions {
@@ -13,8 +14,6 @@ trait ObservableExtensions {
 
 object ObservableExtensions extends ObservableExtensions {
   final class ObservableOps[T](private val obs: Observable[T]) extends AnyVal {
-
-    import scala.collection.compat._
 
     /** Creates a [[monix.eval.Task Task]] that upon execution
       * will signal the first generated element of the source observable.
@@ -51,7 +50,7 @@ object ObservableExtensions extends ObservableExtensions {
         .toL(Array)
         .map { arr =>
           Sorting.stableSort(arr)
-          immutable.ArraySeq.unsafeWrapArray(arr)
+          IArraySeq.unsafeWrapArray(arr)
         }
 
     /** Given a function that returns a key for each element emitted by the source Observable,

@@ -7,7 +7,6 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol.SimpleStringMsg
 
-import scala.collection.compat._
 import scala.collection.mutable
 
 trait KeyedClusterApi extends ApiSubset {
