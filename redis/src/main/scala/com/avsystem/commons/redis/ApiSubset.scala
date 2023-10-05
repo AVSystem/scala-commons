@@ -160,7 +160,7 @@ trait RedisMonixApi extends RedisExecutedApi {
   type Result[A] = Task[A]
 
   def execute[A](command: RedisCommand[A]): Task[A] = Task.deferFutureAction { scheduler =>
-    executor.executeBatch(command, execConfig.copy(decodeOn = scheduler))
+    executor.executeBatch(command.batchOrFallback, execConfig.copy(decodeOn = scheduler))
   }
 
   def recoverWith[A](executed: => Task[A])(fun: PartialFunction[Throwable, Task[A]]): Task[A] =
