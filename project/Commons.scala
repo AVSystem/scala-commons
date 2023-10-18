@@ -40,7 +40,7 @@ object Commons extends ProjectGroup("commons") {
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
   val scalajsBenchmarkVersion = "0.10.0"
-  val slf4jVersion = "2.0.9"
+  val slf4jVersion = "2.0.9" // test only
 
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
@@ -69,7 +69,7 @@ object Commons extends ProjectGroup("commons") {
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
 
-    scalaVersion := "2.13.11",
+    scalaVersion := "2.13.12",
     compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
