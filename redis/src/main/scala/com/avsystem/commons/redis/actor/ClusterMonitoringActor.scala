@@ -7,6 +7,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{NodeInfo, SlotRange, SlotRangeMapping}
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, ErrorReplyException}
+import com.avsystem.commons.redis.monitoring.ClusterStateObserver
 import com.avsystem.commons.redis.util.{ActorLazyLogging, SingletonSeq}
 
 import scala.collection.mutable
@@ -19,7 +20,8 @@ final class ClusterMonitoringActor(
   config: ClusterConfig,
   onClusterInitFailure: Throwable => Any,
   onNewClusterState: ClusterState => Any,
-  onTemporaryClient: RedisNodeClient => Any
+  onTemporaryClient: RedisNodeClient => Any,
+  clusterStateObserver: Opt[ClusterStateObserver],
 ) extends Actor with ActorLazyLogging {
 
   import ClusterMonitoringActor._
@@ -38,8 +40,16 @@ final class ClusterMonitoringActor(
     val initPromise = Promise[Unit]()
     val connection = connections.getOrElseUpdate(addr, createConnection(addr))
     connection ! RedisConnectionActor.Open(seed, initPromise)
-    initPromise.future
+    val initResult = initPromise.future
+    clusterStateObserver.foreach(registerConnectionInitResult(addr, initResult))
+    initResult
   }
+
+  private def registerConnectionInitResult(addr: NodeAddress, initResult: Future[Unit])(observer: ClusterStateObserver): Unit =
+    initResult.onComplete {
+      case Success(_) => observer.onOpenedConnection(addr.toString)
+      case Failure(_) => observer.onConnectionInitFailure(addr.toString)
+    }
 
   private def createClient(addr: NodeAddress, clusterNode: Boolean = true) =
     new RedisNodeClient(addr, config.nodeConfigs(addr), clusterNode)
@@ -127,6 +137,7 @@ final class ClusterMonitoringActor(
         fallbackToSeedsAfter = config.refreshUsingSeedNodesAfter.fromNow
 
         (connections.keySet diff masters).foreach { addr =>
+          clusterStateObserver.foreach(_.onRemovedMaster(addr.toString))
           connections.remove(addr).foreach(context.stop)
         }
         (clients.keySet diff mappedMasters).foreach { addr =>
@@ -137,7 +148,7 @@ final class ClusterMonitoringActor(
         }
 
       case Success(_) =>
-        // obsolete cluster state, ignore
+      // obsolete cluster state, ignore
 
       case Failure(err: ErrorReplyException)
         if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
@@ -159,9 +170,11 @@ final class ClusterMonitoringActor(
         log.error("Failed to refresh cluster state", cause)
         if (state.isEmpty) {
           seedFailures += cause
+          clusterStateObserver.foreach(_.onSeedNodeFailure())
           if (seedFailures.size == seedNodes.size) {
             val failure = new ClusterInitializationException(seedNodes)
             seedFailures.foreach(failure.addSuppressed)
+            clusterStateObserver.foreach(_.onClusterInitFailure())
             onClusterInitFailure(failure)
           }
         }
