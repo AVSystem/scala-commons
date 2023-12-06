@@ -97,7 +97,7 @@ final class RedisClusterClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, config, initPromise.failure, onNewState, onTemporaryClient, observer.toOpt)))
+    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, config, initPromise.failure, onNewState, onTemporaryClient, observer)))
 
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1

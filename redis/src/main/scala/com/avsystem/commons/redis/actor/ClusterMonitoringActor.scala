@@ -21,35 +21,24 @@ final class ClusterMonitoringActor(
   onClusterInitFailure: Throwable => Any,
   onNewClusterState: ClusterState => Any,
   onTemporaryClient: RedisNodeClient => Any,
-  clusterStateObserver: Opt[ClusterStateObserver],
+  clusterStateObserver: OptArg[ClusterStateObserver] = OptArg.Empty,
 ) extends Actor with ActorLazyLogging {
 
   import ClusterMonitoringActor._
   import context._
 
   private def createConnection(addr: NodeAddress): ActorRef =
-    actorOf(Props(new RedisConnectionActor(addr, config.monitoringConnectionConfigs(addr))))
+    actorOf(Props(new RedisConnectionActor(addr, config.monitoringConnectionConfigs(addr), clusterStateObserver)))
 
   private def getConnection(addr: NodeAddress, seed: Boolean): ActorRef =
-    connections.getOrElse(addr, {
-      openConnection(addr, seed)
-      getConnection(addr, seed)
-    })
+    connections.getOrElse(addr, openConnection(addr, seed))
 
-  private def openConnection(addr: NodeAddress, seed: Boolean): Future[Unit] = {
+  private def openConnection(addr: NodeAddress, seed: Boolean): ActorRef = {
     val initPromise = Promise[Unit]()
     val connection = connections.getOrElseUpdate(addr, createConnection(addr))
     connection ! RedisConnectionActor.Open(seed, initPromise)
-    val initResult = initPromise.future
-    clusterStateObserver.foreach(registerConnectionInitResult(addr, initResult))
-    initResult
+    connection
   }
-
-  private def registerConnectionInitResult(addr: NodeAddress, initResult: Future[Unit])(observer: ClusterStateObserver): Unit =
-    initResult.onComplete {
-      case Success(_) => observer.onOpenedConnection(addr.toString)
-      case Failure(_) => observer.onConnectionInitFailure(addr.toString)
-    }
 
   private def createClient(addr: NodeAddress, clusterNode: Boolean = true) =
     new RedisNodeClient(addr, config.nodeConfigs(addr), clusterNode)
@@ -103,6 +92,7 @@ final class ClusterMonitoringActor(
     case pr: PacksResult => Try(StateRefresh.decodeReplies(pr)) match {
       case Success((slotRangeMapping, NodeInfosWithMyself(nodeInfos, thisNodeInfo)))
         if thisNodeInfo.configEpoch >= lastEpoch =>
+        clusterStateObserver.foreach(_.onClusterRefresh())
 
         lastEpoch = thisNodeInfo.configEpoch
 
@@ -137,7 +127,6 @@ final class ClusterMonitoringActor(
         fallbackToSeedsAfter = config.refreshUsingSeedNodesAfter.fromNow
 
         (connections.keySet diff masters).foreach { addr =>
-          clusterStateObserver.foreach(_.onRemovedMaster(addr.toString))
           connections.remove(addr).foreach(context.stop)
         }
         (clients.keySet diff mappedMasters).foreach { addr =>
@@ -168,9 +157,9 @@ final class ClusterMonitoringActor(
 
       case Failure(cause) =>
         log.error("Failed to refresh cluster state", cause)
+        clusterStateObserver.foreach(_.onClusterRefreshFailure())
         if (state.isEmpty) {
           seedFailures += cause
-          clusterStateObserver.foreach(_.onSeedNodeFailure())
           if (seedFailures.size == seedNodes.size) {
             val failure = new ClusterInitializationException(seedNodes)
             seedFailures.foreach(failure.addSuppressed)
