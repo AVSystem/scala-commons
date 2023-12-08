@@ -163,7 +163,6 @@ final class ClusterMonitoringActor(
           if (seedFailures.size == seedNodes.size) {
             val failure = new ClusterInitializationException(seedNodes)
             seedFailures.foreach(failure.addSuppressed)
-            clusterStateObserver.foreach(_.onClusterInitFailure())
             onClusterInitFailure(failure)
           }
         }

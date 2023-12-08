@@ -62,9 +62,12 @@ final class RedisClusterClient(
 
   private val initPromise = Promise[Unit]()
 
-  initPromise.future.foreachNow { _ =>
-    observer.foreach(_.onClusterInitialized())
-    initSuccess = true
+  initPromise.future.onCompleteNow {
+    case Success(_) =>
+      observer.foreach(_.onClusterInitialized())
+      initSuccess = true
+    case Failure(_) =>
+      observer.foreach(_.onClusterInitFailure())
   }
 
   private def ifReady[T](code: => Future[T]): Future[T] = failure match {

@@ -523,7 +523,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     if (stopSelf) {
       stop(self)
     } else {
-      become(closed(cause, tcpConnecting))
+      become(watchedClosed(cause, tcpConnecting))
     }
   }
 
@@ -552,7 +552,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig,
     case Connected(connection, _, _, _) if tcpConnecting =>
       // failure may have happened while connecting, simply close the connection
       connection ! CloseConnection(immediate = true)
-      become(closed(cause, tcpConnecting = false))
+      become(watchedClosed(cause, tcpConnecting = false))
     case _: TcpEvent => // ignore
     case Close(_, true) =>
       stop(self)

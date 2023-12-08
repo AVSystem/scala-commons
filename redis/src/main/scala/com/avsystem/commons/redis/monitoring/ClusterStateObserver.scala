@@ -11,4 +11,3 @@ trait ClusterStateObserver extends ConnectionStateObserver {
   def onClusterInitialized(): Unit
   def onClusterInitFailure(): Unit
 }
-
