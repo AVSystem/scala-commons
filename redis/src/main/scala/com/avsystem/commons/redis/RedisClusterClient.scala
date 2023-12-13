@@ -61,7 +61,14 @@ final class RedisClusterClient(
   @volatile private[this] var failure = Opt.empty[Throwable]
 
   private val initPromise = Promise[Unit]()
-  initPromise.future.foreachNow(_ => initSuccess = true)
+
+  initPromise.future.onCompleteNow {
+    case Success(_) =>
+      observer.foreach(_.onClusterInitialized())
+      initSuccess = true
+    case Failure(_) =>
+      observer.foreach(_.onClusterInitFailure())
+  }
 
   private def ifReady[T](code: => Future[T]): Future[T] = failure match {
     case Opt.Empty if initSuccess => code

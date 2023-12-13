@@ -8,6 +8,6 @@ package redis.monitoring
 trait ClusterStateObserver extends ConnectionStateObserver {
   def onClusterRefresh(): Unit
   def onClusterRefreshFailure(): Unit
+  def onClusterInitialized(): Unit
   def onClusterInitFailure(): Unit
 }
-
