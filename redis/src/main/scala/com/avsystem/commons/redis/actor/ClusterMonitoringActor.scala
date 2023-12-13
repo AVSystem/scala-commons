@@ -34,9 +34,8 @@ final class ClusterMonitoringActor(
     connections.getOrElse(addr, openConnection(addr, seed))
 
   private def openConnection(addr: NodeAddress, seed: Boolean): ActorRef = {
-    val initPromise = Promise[Unit]()
     val connection = connections.getOrElseUpdate(addr, createConnection(addr))
-    connection ! RedisConnectionActor.Open(seed, initPromise)
+    connection ! RedisConnectionActor.Open(seed, Promise[Unit]())
     connection
   }
 
