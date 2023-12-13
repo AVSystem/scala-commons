@@ -8,6 +8,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.SentinelsMonitoringActor
 import com.avsystem.commons.redis.config.{ExecutionConfig, MasterSlaveConfig}
 import com.avsystem.commons.redis.exception.{ClientStoppedException, NoMasterException, NodeRemovedException}
+import com.avsystem.commons.redis.monitoring.SentinelStateObserver
 import com.avsystem.commons.redis.protocol.{ErrorMsg, RedisReply, TransactionReply}
 import com.avsystem.commons.redis.util.DelayedFuture
 
@@ -21,7 +22,8 @@ import com.avsystem.commons.redis.util.DelayedFuture
 final class RedisMasterSlaveClient(
   val masterName: String,
   val seedSentinels: Seq[NodeAddress] = Seq(NodeAddress.DefaultSentinel),
-  val config: MasterSlaveConfig = MasterSlaveConfig()
+  val config: MasterSlaveConfig = MasterSlaveConfig(),
+  val stateObserver: OptArg[SentinelStateObserver] = OptArg.Empty
 )(implicit system: ActorSystem) extends RedisClient with RedisNodeExecutor {
 
   require(seedSentinels.nonEmpty, "No seed sentinel nodes provided")
@@ -45,6 +47,7 @@ final class RedisMasterSlaveClient(
   private def onNewMaster(newMaster: RedisNodeClient): Unit = {
     master = newMaster
     masterListener(master)
+    stateObserver.foreach(_.onMasterChange(newMaster))
     if (!initSuccess) {
       import system.dispatcher
       newMaster.initialized.onComplete { result =>
@@ -58,7 +61,7 @@ final class RedisMasterSlaveClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new SentinelsMonitoringActor(masterName, seedSentinels, config, initPromise.failure, onNewMaster)))
+    system.actorOf(Props(new SentinelsMonitoringActor(masterName, seedSentinels, config, initPromise.failure, onNewMaster, stateObserver)))
 
   def setMasterListener(listener: RedisNodeClient => Unit)(implicit executor: ExecutionContext): Unit =
     masterListener = newMaster => executor.execute(jRunnable(listener(newMaster)))
