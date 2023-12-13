@@ -21,8 +21,11 @@ import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
-final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig, connectionStateObserver: OptArg[ConnectionStateObserver] = OptArg.Empty)
-  extends Actor with ActorLazyLogging { actor =>
+final class RedisConnectionActor(
+  address: NodeAddress,
+  config: ConnectionConfig,
+  connectionStateObserver: OptArg[ConnectionStateObserver] = OptArg.Empty
+) extends Actor with ActorLazyLogging { actor =>
 
   import RedisConnectionActor._
   import context._
