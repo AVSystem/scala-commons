@@ -42,11 +42,13 @@ import scala.concurrent.duration._
   *
   * @param seedNodes nodes used to fetch initial cluster state from. You don't need to list all cluster nodes, it is
   *                  only required that at least one of the seed nodes is available during startup.
+  * @param config    client configuration - [[ClusterConfig]]
+  * @param clusterStateObserver optional observer for monitoring client's state and connections - [[ClusterStateObserver]]
   */
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
   val config: ClusterConfig = ClusterConfig(),
-  val observer: OptArg[ClusterStateObserver] = OptArg.Empty,
+  val clusterStateObserver: OptArg[ClusterStateObserver] = OptArg.Empty,
 )(implicit system: ActorSystem) extends RedisClient with RedisKeyedExecutor {
 
   require(seedNodes.nonEmpty, "No seed nodes provided")
@@ -64,10 +66,10 @@ final class RedisClusterClient(
 
   initPromise.future.onCompleteNow {
     case Success(_) =>
-      observer.foreach(_.onClusterInitialized())
+      clusterStateObserver.foreach(_.onClusterInitialized())
       initSuccess = true
     case Failure(_) =>
-      observer.foreach(_.onClusterInitFailure())
+      clusterStateObserver.foreach(_.onClusterInitFailure())
   }
 
   private def ifReady[T](code: => Future[T]): Future[T] = failure match {
@@ -104,7 +106,7 @@ final class RedisClusterClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, config, initPromise.failure, onNewState, onTemporaryClient, observer)))
+    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, config, initPromise.failure, onNewState, onTemporaryClient, clusterStateObserver)))
 
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1

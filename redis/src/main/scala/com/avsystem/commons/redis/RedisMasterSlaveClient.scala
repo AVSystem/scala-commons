@@ -16,14 +16,16 @@ import com.avsystem.commons.redis.util.DelayedFuture
   * Redis client implementation for master-slave installations with Redis Sentinels.
   * [[RedisMasterSlaveClient]] is able to execute the same set of commands as [[RedisNodeClient]].
   *
-  * @param masterName    name of the master, as configured in the sentinels
-  * @param seedSentinels sentinel seed addresses - must point to at least one reachable sentinel
+  * @param masterName            name of the master, as configured in the sentinels
+  * @param seedSentinels         sentinel seed addresses - must point to at least one reachable sentinel
+  * @param config                client configuration - [[MasterSlaveConfig]]
+  * @param sentinelStateObserver optional observer of client's state and connections - [[SentinelStateObserver]]
   */
 final class RedisMasterSlaveClient(
   val masterName: String,
   val seedSentinels: Seq[NodeAddress] = Seq(NodeAddress.DefaultSentinel),
   val config: MasterSlaveConfig = MasterSlaveConfig(),
-  val stateObserver: OptArg[SentinelStateObserver] = OptArg.Empty
+  val sentinelStateObserver: OptArg[SentinelStateObserver] = OptArg.Empty
 )(implicit system: ActorSystem) extends RedisClient with RedisNodeExecutor {
 
   require(seedSentinels.nonEmpty, "No seed sentinel nodes provided")
@@ -47,7 +49,7 @@ final class RedisMasterSlaveClient(
   private def onNewMaster(newMaster: RedisNodeClient): Unit = {
     master = newMaster
     masterListener(master)
-    stateObserver.foreach(_.onMasterChange(newMaster.address))
+    sentinelStateObserver.foreach(_.onMasterChange(newMaster.address))
     if (!initSuccess) {
       import system.dispatcher
       newMaster.initialized.onComplete { result =>
@@ -61,7 +63,7 @@ final class RedisMasterSlaveClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new SentinelsMonitoringActor(masterName, seedSentinels, config, initPromise.failure, onNewMaster, stateObserver)))
+    system.actorOf(Props(new SentinelsMonitoringActor(masterName, seedSentinels, config, initPromise.failure, onNewMaster, sentinelStateObserver)))
 
   def setMasterListener(listener: RedisNodeClient => Unit)(implicit executor: ExecutionContext): Unit =
     masterListener = newMaster => executor.execute(jRunnable(listener(newMaster)))
