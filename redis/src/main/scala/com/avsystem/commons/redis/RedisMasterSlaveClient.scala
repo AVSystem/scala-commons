@@ -25,7 +25,7 @@ final class RedisMasterSlaveClient(
   val masterName: String,
   val seedSentinels: Seq[NodeAddress] = Seq(NodeAddress.DefaultSentinel),
   val config: MasterSlaveConfig = MasterSlaveConfig(),
-  val sentinelStateObserver: OptArg[SentinelStateObserver] = OptArg.Empty
+  val sentinelStateObserver: OptArg[SentinelStateObserver] = OptArg.Empty,
 )(implicit system: ActorSystem) extends RedisClient with RedisNodeExecutor {
 
   require(seedSentinels.nonEmpty, "No seed sentinel nodes provided")

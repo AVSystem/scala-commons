@@ -26,7 +26,7 @@ import com.avsystem.commons.redis.exception.ClientStoppedException
   */
 final class RedisConnectionClient(
   val address: NodeAddress = NodeAddress.Default,
-  val config: ConnectionConfig = ConnectionConfig()
+  val config: ConnectionConfig = ConnectionConfig(),
 )
   (implicit system: ActorSystem) extends RedisClient with RedisConnectionExecutor { self =>
 
