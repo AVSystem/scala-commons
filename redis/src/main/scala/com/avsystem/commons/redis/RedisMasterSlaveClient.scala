@@ -47,7 +47,7 @@ final class RedisMasterSlaveClient(
   private def onNewMaster(newMaster: RedisNodeClient): Unit = {
     master = newMaster
     masterListener(master)
-    stateObserver.foreach(_.onMasterChange(newMaster))
+    stateObserver.foreach(_.onMasterChange(newMaster.address))
     if (!initSuccess) {
       import system.dispatcher
       newMaster.initialized.onComplete { result =>

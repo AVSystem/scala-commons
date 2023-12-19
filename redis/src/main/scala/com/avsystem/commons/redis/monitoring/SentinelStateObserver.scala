@@ -1,8 +1,12 @@
 package com.avsystem.commons
 package redis.monitoring
 
-import com.avsystem.commons.redis.RedisNodeClient
+import com.avsystem.commons.redis.NodeAddress
 
+/**
+  * Intended for monitoring Redis Sentinel client connections.
+  * Should be non-blocking and handle internal exceptions by itself.
+  */
 trait SentinelStateObserver extends ConnectionStateObserver {
-  def onMasterChange(master: RedisNodeClient): Unit
+  def onMasterChange(master: NodeAddress): Unit
 }
