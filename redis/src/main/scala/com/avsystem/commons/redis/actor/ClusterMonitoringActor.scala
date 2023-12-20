@@ -7,6 +7,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{NodeInfo, SlotRange, SlotRangeMapping}
 import com.avsystem.commons.redis.config.ClusterConfig
 import com.avsystem.commons.redis.exception.{ClusterInitializationException, ErrorReplyException}
+import com.avsystem.commons.redis.monitoring.ClusterStateObserver
 import com.avsystem.commons.redis.util.{ActorLazyLogging, SingletonSeq}
 
 import scala.collection.mutable
@@ -19,26 +20,23 @@ final class ClusterMonitoringActor(
   config: ClusterConfig,
   onClusterInitFailure: Throwable => Any,
   onNewClusterState: ClusterState => Any,
-  onTemporaryClient: RedisNodeClient => Any
+  onTemporaryClient: RedisNodeClient => Any,
+  clusterStateObserver: OptArg[ClusterStateObserver] = OptArg.Empty,
 ) extends Actor with ActorLazyLogging {
 
   import ClusterMonitoringActor._
   import context._
 
   private def createConnection(addr: NodeAddress): ActorRef =
-    actorOf(Props(new RedisConnectionActor(addr, config.monitoringConnectionConfigs(addr))))
+    actorOf(Props(new RedisConnectionActor(addr, config.monitoringConnectionConfigs(addr), clusterStateObserver)))
 
   private def getConnection(addr: NodeAddress, seed: Boolean): ActorRef =
-    connections.getOrElse(addr, {
-      openConnection(addr, seed)
-      getConnection(addr, seed)
-    })
+    connections.getOrElse(addr, openConnection(addr, seed))
 
-  private def openConnection(addr: NodeAddress, seed: Boolean): Future[Unit] = {
-    val initPromise = Promise[Unit]()
+  private def openConnection(addr: NodeAddress, seed: Boolean): ActorRef = {
     val connection = connections.getOrElseUpdate(addr, createConnection(addr))
-    connection ! RedisConnectionActor.Open(seed, initPromise)
-    initPromise.future
+    connection ! RedisConnectionActor.Open(seed, Promise[Unit]())
+    connection
   }
 
   private def createClient(addr: NodeAddress, clusterNode: Boolean = true) =
@@ -93,6 +91,7 @@ final class ClusterMonitoringActor(
     case pr: PacksResult => Try(StateRefresh.decodeReplies(pr)) match {
       case Success((slotRangeMapping, NodeInfosWithMyself(nodeInfos, thisNodeInfo)))
         if thisNodeInfo.configEpoch >= lastEpoch =>
+        clusterStateObserver.foreach(_.onClusterRefresh())
 
         lastEpoch = thisNodeInfo.configEpoch
 
@@ -137,7 +136,7 @@ final class ClusterMonitoringActor(
         }
 
       case Success(_) =>
-        // obsolete cluster state, ignore
+      // obsolete cluster state, ignore
 
       case Failure(err: ErrorReplyException)
         if state.isEmpty && seedNodes.size == 1 && config.fallbackToSingleNode &&
@@ -157,6 +156,7 @@ final class ClusterMonitoringActor(
 
       case Failure(cause) =>
         log.error("Failed to refresh cluster state", cause)
+        clusterStateObserver.foreach(_.onClusterRefreshFailure())
         if (state.isEmpty) {
           seedFailures += cause
           if (seedFailures.size == seedNodes.size) {

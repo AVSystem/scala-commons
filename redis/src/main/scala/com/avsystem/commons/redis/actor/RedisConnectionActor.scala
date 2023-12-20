@@ -10,6 +10,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.{PubSubCommand, PubSubEvent, ReplyDecoders}
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception._
+import com.avsystem.commons.redis.monitoring.{ConnectionState, ConnectionStateObserver}
 import com.avsystem.commons.redis.protocol.{RedisMsg, RedisReply, ValidRedisMsg}
 import com.avsystem.commons.redis.util.ActorLazyLogging
 
@@ -20,8 +21,11 @@ import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.util.Random
 
-final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
-  extends Actor with ActorLazyLogging { actor =>
+final class RedisConnectionActor(
+  address: NodeAddress,
+  config: ConnectionConfig,
+  connectionStateObserver: OptArg[ConnectionStateObserver] = OptArg.Empty,
+) extends Actor with ActorLazyLogging { actor =>
 
   import RedisConnectionActor._
   import context._
@@ -56,7 +60,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       handlePacks(packs)
     case open: Open =>
       onOpen(open)
-      become(connecting(config.reconnectionStrategy, Opt.Empty))
+      become(watchedConnecting(config.reconnectionStrategy, Opt.Empty))
       self ! Connect
   }
 
@@ -95,6 +99,11 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     }
   }
 
+  private def watchedConnecting(retryStrategy: RetryStrategy, readInitSender: Opt[ActorRef]): Receive = {
+    connectionStateObserver.foreach(_.onConnectionStateChange(address, ConnectionState.Connecting))
+    connecting(retryStrategy, readInitSender)
+  }
+
   private def connecting(retryStrategy: RetryStrategy, readInitSender: Opt[ActorRef]): Receive = {
     case open: Open =>
       onOpen(open)
@@ -128,7 +137,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     case ReadInit =>
       // not sure if it's possible to receive ReadInit before Connected but just to be safe
       // delay replying with ReadAck until Connected is received
-      become(connecting(retryStrategy, Opt(sender())))
+      become(watchedConnecting(retryStrategy, Opt(sender())))
     case _: TcpEvent => //ignore, this is from previous connection
   }
 
@@ -197,7 +206,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         if (delay > Duration.Zero) {
           log.info(s"Next reconnection attempt to $address in $delay")
         }
-        become(connecting(nextStrategy, Opt.Empty))
+        become(watchedConnecting(nextStrategy, Opt.Empty))
         system.scheduler.scheduleOnce(delay, self, Connect)
       case Opt.Empty =>
         close(failureCause, stopSelf = false)
@@ -282,7 +291,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
         config.initCommands.decodeReplies(packsResult)
         log.debug(s"Successfully initialized Redis connection $localAddr->$remoteAddr")
         initPromise.trySuccess(())
-        become(ready)
+        become(watchedReady)
         writeIfPossible()
       } catch {
         // https://github.com/antirez/redis/issues/4624
@@ -299,6 +308,11 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     def failInit(cause: Throwable): Unit = {
       log.error(s"Failed to initialize Redis connection $localAddr->$remoteAddr", cause)
       close(new ConnectionInitializationFailure(cause), stopSelf = false)
+    }
+
+    def watchedReady: Receive = {
+      connectionStateObserver.foreach(_.onConnectionStateChange(address, ConnectionState.Connected))
+      ready
     }
 
     def ready: Receive = {
@@ -338,7 +352,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
       case open: Open =>
         onOpen(open)
         initPromise.success(())
-        become(ready)
+        become(watchedReady)
       case IncomingPacks(packs) =>
         packs.reply(PacksResult.Failure(cause))
       case Release => //ignore
@@ -512,7 +526,7 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     if (stopSelf) {
       stop(self)
     } else {
-      become(closed(cause, tcpConnecting))
+      become(watchedClosed(cause, tcpConnecting))
     }
   }
 
@@ -522,11 +536,16 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     drain(queuedToReserve)(_.reply(failure))
   }
 
+  private def watchedClosed(cause: Throwable, tcpConnecting: Boolean): Receive = {
+    connectionStateObserver.foreach(_.onConnectionStateChange(address, ConnectionState.Closed))
+    closed(cause, tcpConnecting)
+  }
+
   private def closed(cause: Throwable, tcpConnecting: Boolean): Receive = {
     case open: Open =>
       onOpen(open)
       incarnation = 0
-      become(connecting(config.reconnectionStrategy, Opt.Empty))
+      become(watchedConnecting(config.reconnectionStrategy, Opt.Empty))
       if (!tcpConnecting) {
         self ! Connect
       }
@@ -536,10 +555,18 @@ final class RedisConnectionActor(address: NodeAddress, config: ConnectionConfig)
     case Connected(connection, _, _, _) if tcpConnecting =>
       // failure may have happened while connecting, simply close the connection
       connection ! CloseConnection(immediate = true)
-      become(closed(cause, tcpConnecting = false))
+      become(watchedClosed(cause, tcpConnecting = false))
     case _: TcpEvent => // ignore
     case Close(_, true) =>
       stop(self)
+  }
+
+  override def preStart(): Unit = {
+    connectionStateObserver.foreach(_.onConnectionStateChange(address, ConnectionState.Created))
+  }
+
+  override def postStop(): Unit = {
+    connectionStateObserver.foreach(_.onConnectionStateChange(address, ConnectionState.Removed))
   }
 }
 

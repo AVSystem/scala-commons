@@ -13,6 +13,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{Asking, SlotRange}
 import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig}
 import com.avsystem.commons.redis.exception._
+import com.avsystem.commons.redis.monitoring.ClusterStateObserver
 import com.avsystem.commons.redis.protocol._
 import com.avsystem.commons.redis.util.DelayedFuture
 
@@ -41,10 +42,13 @@ import scala.concurrent.duration._
   *
   * @param seedNodes nodes used to fetch initial cluster state from. You don't need to list all cluster nodes, it is
   *                  only required that at least one of the seed nodes is available during startup.
+  * @param config    client configuration - [[ClusterConfig]]
+  * @param clusterStateObserver optional observer for monitoring client's state and connections - [[ClusterStateObserver]]
   */
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
-  val config: ClusterConfig = ClusterConfig()
+  val config: ClusterConfig = ClusterConfig(),
+  val clusterStateObserver: OptArg[ClusterStateObserver] = OptArg.Empty,
 )(implicit system: ActorSystem) extends RedisClient with RedisKeyedExecutor {
 
   require(seedNodes.nonEmpty, "No seed nodes provided")
@@ -59,7 +63,14 @@ final class RedisClusterClient(
   @volatile private[this] var failure = Opt.empty[Throwable]
 
   private val initPromise = Promise[Unit]()
-  initPromise.future.foreachNow(_ => initSuccess = true)
+
+  initPromise.future.onCompleteNow {
+    case Success(_) =>
+      clusterStateObserver.foreach(_.onClusterInitialized())
+      initSuccess = true
+    case Failure(_) =>
+      clusterStateObserver.foreach(_.onClusterInitFailure())
+  }
 
   private def ifReady[T](code: => Future[T]): Future[T] = failure match {
     case Opt.Empty if initSuccess => code
@@ -95,7 +106,7 @@ final class RedisClusterClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, config, initPromise.failure, onNewState, onTemporaryClient)))
+    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, config, initPromise.failure, onNewState, onTemporaryClient, clusterStateObserver)))
 
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1

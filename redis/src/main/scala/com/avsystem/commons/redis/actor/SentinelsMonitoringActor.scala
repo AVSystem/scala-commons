@@ -6,6 +6,7 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{PubSubEvent, Subscribe}
 import com.avsystem.commons.redis.config.MasterSlaveConfig
 import com.avsystem.commons.redis.exception.MasterSlaveInitializationException
+import com.avsystem.commons.redis.monitoring.SentinelStateObserver
 import com.avsystem.commons.redis.protocol.BulkStringMsg
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{NodeAddress, RedisApi, RedisBatch, RedisNodeClient}
@@ -15,7 +16,8 @@ final class SentinelsMonitoringActor(
   seedSentinels: Seq[NodeAddress],
   config: MasterSlaveConfig,
   onInitFailure: Throwable => Unit,
-  onMasterChange: RedisNodeClient => Unit
+  onMasterChange: RedisNodeClient => Unit,
+  stateObserver: OptArg[SentinelStateObserver] = OptArg.Empty,
 ) extends Actor with ActorLazyLogging {
 
   import RedisApi.Batches.StringTyped._
@@ -40,7 +42,7 @@ final class SentinelsMonitoringActor(
 
   private def openConnection(addr: NodeAddress, seed: Boolean): ActorRef = {
     log.debug(s"Opening monitoring connection to sentinel $addr")
-    val conn = actorOf(Props(new RedisConnectionActor(addr, config.sentinelConnectionConfigs(addr))))
+    val conn = actorOf(Props(new RedisConnectionActor(addr, config.sentinelConnectionConfigs(addr), stateObserver)))
     sentinels(addr) = conn
     conn ! RedisConnectionActor.Open(seed, Promise[Unit]())
     onReconnection(conn)
