@@ -1,7 +1,7 @@
 # AVSystem Commons Library for Scala
 
-[![Build Status](https://travis-ci.org/AVSystem/scala-commons.svg?branch=master)](https://travis-ci.org/AVSystem/scala-commons)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.12)
+[![Continuous Integration](https://github.com/AVSystem/scala-commons/actions/workflows/ci.yml/badge.svg)](https://github.com/AVSystem/scala-commons/actions/workflows/ci.yml)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.13)
 
 **[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/index.html)**
 
@@ -28,12 +28,12 @@
     * Universal extension methods - [`SharedExtensions`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/SharedExtensions$.html)
   * Lightweight alternatives for Scala `Option` -
     [`Opt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/Opt.html) - guarantees no `null`s,
-    [`OptArg`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptArg.html), 
-    [`NOpt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NOpt.html), 
-    [`OptRef`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptRef.html) (implemented as value classes)
+    [`OptArg`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptArg.html),
+    [`NOpt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NOpt.html),
+    [`OptRef`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptRef.html) (implemented as value
+    classes)
+  * [Components](docs/Components.md) and Dependency Injection library
 * `commons-redis` - [Scala driver for Redis](docs/RedisDriver.md)
-* `commons-akka` - Akka utilities, primarily [`AkkaRPCFramework`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/rpc/akka/AkkaRPCFramework$.html)
-  which supports methods returning Monix `Observable`s
 * `commons-macros` contains implementations of macros used in other modules and reusable macro utilities:
   * `MacroCommons` trait with several convenience functions for implementing macros
   * `TypeClassDerivation` - implements infrastructure for automatic type class derivation

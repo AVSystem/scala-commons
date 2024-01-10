@@ -108,18 +108,6 @@ object CodecTestData {
     override def hashCode(): Int = args.hashCode()
   }
 
-  trait Framework {
-    type Field
-
-    case class Stuff(field: Field)
-  }
-
-  trait BetterFramework extends Framework {
-    implicit def fieldCodec: GenCodec[Field]
-
-    implicit val stuffCodec: GenCodec[Stuff] = GenCodec.materialize
-  }
-
   object SomeObject {
     @generated def random: Int = 42
     implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]

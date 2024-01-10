@@ -3,7 +3,7 @@ package rpc
 
 import com.avsystem.commons.macros.misc.MiscMacros
 
-import scala.collection.compat._
+import scala.collection.Factory
 
 class InvalidRpcCall(msg: String, cause: Throwable = null)
   extends RuntimeException(msg, cause)

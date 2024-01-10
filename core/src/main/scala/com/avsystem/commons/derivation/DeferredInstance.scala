@@ -1,6 +1,6 @@
 package com.avsystem.commons
 package derivation
 
-trait DeferredInstance[T] {this: T =>
+trait DeferredInstance[T] { this: T =>
   var underlying: T = _
 }

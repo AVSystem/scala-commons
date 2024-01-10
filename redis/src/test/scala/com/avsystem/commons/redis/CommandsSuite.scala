@@ -10,7 +10,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import scala.collection.compat.BuildFrom
+import scala.collection.BuildFrom
 import scala.concurrent.Await
 import scala.concurrent.duration._
 

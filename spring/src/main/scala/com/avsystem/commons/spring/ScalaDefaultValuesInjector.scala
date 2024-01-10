@@ -2,12 +2,12 @@ package com.avsystem.commons
 package spring
 
 import java.lang.reflect.{Constructor, Method, Modifier}
-
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder
 import org.springframework.beans.factory.config.{BeanDefinition, BeanDefinitionHolder, ConfigurableListableBeanFactory}
 import org.springframework.beans.factory.support._
 import org.springframework.core.{ParameterNameDiscoverer, StandardReflectionParameterNameDiscoverer}
 
+import scala.annotation.tailrec
 import scala.beans.BeanProperty
 import scala.reflect.{ScalaLongSignature, ScalaSignature}
 
@@ -48,6 +48,7 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
       .foreach(n => traverse(registry.getBeanDefinition(n)))
   }
 
+  @tailrec
   private def isScalaClass(cls: Class[_]): Boolean = cls.getEnclosingClass match {
     case null => cls.getAnnotation(classOf[ScalaSignature]) != null ||
       cls.getAnnotation(classOf[ScalaLongSignature]) != null

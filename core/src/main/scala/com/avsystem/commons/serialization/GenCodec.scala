@@ -9,7 +9,7 @@ import com.avsystem.commons.misc.{Bytes, Timestamp}
 
 import java.util.UUID
 import scala.annotation.{implicitNotFound, tailrec}
-import scala.collection.compat._
+import scala.collection.Factory
 
 /**
   * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
@@ -511,7 +511,6 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   // these are covered by the generic `seqCodec` and `setCodec` but making them explicit may be easier
   // for the compiler and also make IntelliJ less confused
-  // https://github.com/scala/bug/issues/11027 - only for Scala 2.12
   implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] = seqCodec[BSeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
   implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] = seqCodec[ISeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
   implicit def mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]

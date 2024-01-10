@@ -68,6 +68,10 @@ class MongoUpdateTest extends AnyFunSuite {
       """{"$set": {"intList.$[filter0]": 5}}, [{"filter0": {"$lt": 0}}]""")
     assert(toString(Rte.ref(_.innerList).updateAll(_.ref(_.int).set(5))) ==
       """{"$set": {"innerList.$[].int": 5}}, []""")
+    assert(toString(Rte.ref(_.innerList).updateFiltered(_.ref(_.int).lt(0), _.ref(_.int).set(5))) ==
+      """{"$set": {"innerList.$[filter0].int": 5}}, [{"filter0.int": {"$lt": 0}}]""")
+    assert(toString(Rte.ref(_.innerList).updateFiltered(_.ref(_.intMap("abc")).lt(0), _.ref(_.int).set(5))) ==
+      """{"$set": {"innerList.$[filter0].int": 5}}, [{"filter0.intMap.abc": {"$lt": 0}}]""")
   }
 
   test("compound updates") {

@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import java.util.Objects
-
 // this should be written in Java but it was rewritten to Scala in order to make Scala.js linker happy
 object BuildablePojo {
   def builder(): Builder = new Builder

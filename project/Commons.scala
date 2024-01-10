@@ -1,16 +1,17 @@
 import com.github.ghik.sbt.nosbt.ProjectGroup
-import com.typesafe.tools.mima.plugin.MimaKeys._
-import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
+import com.typesafe.tools.mima.plugin.MimaKeys.*
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
+import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 import org.scalajs.sbtplugin.ScalaJSPlugin
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.*
 import pl.project13.scala.sbt.JmhPlugin
-import pl.project13.scala.sbt.JmhPlugin.JmhKeys._
-import sbt.Keys._
-import sbt._
+import pl.project13.scala.sbt.JmhPlugin.JmhKeys.*
+import sbt.*
+import sbt.Keys.*
 import sbtghactions.GenerativePlugin
-import sbtghactions.GenerativePlugin.autoImport._
-import sbtide.Keys._
+import sbtghactions.GenerativePlugin.autoImport.*
+import sbtide.Keys.*
 import sbtunidoc.BaseUnidocPlugin.autoImport.{unidoc, unidocProjectFilter}
 import sbtunidoc.ScalaUnidocPlugin
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
@@ -23,26 +24,23 @@ object Commons extends ProjectGroup("commons") {
   // option in IntelliJ's SBT settings.
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-  val collectionCompatVersion = "2.5.0"
-  val guavaVersion = "31.1-jre"
+  val guavaVersion = "32.1.3-jre"
   val jsr305Version = "3.0.2"
-  val scalatestVersion = "3.2.12"
-  val scalatestplusScalacheckVersion = "3.2.12.0"
-  val scalacheckVersion = "1.16.0"
-  val jettyVersion = "9.4.50.v20221201"
-  val mongoVersion = "4.9.0"
-  val springVersion = "4.3.26.RELEASE"
-  val typesafeConfigVersion = "1.4.2"
+  val scalatestVersion = "3.2.17"
+  val scalatestplusScalacheckVersion = "3.2.14.0"
+  val scalacheckVersion = "1.17.0"
+  val jettyVersion = "10.0.18"
+  val mongoVersion = "4.11.1"
+  val springVersion = "5.3.31"
+  val typesafeConfigVersion = "1.4.3"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.5"
   val akkaVersion = "2.6.19"
   val monixVersion = "3.4.1"
-  val monixBioVersion = "1.2.0"
-  val mockitoVersion = "3.9.0"
-  val circeVersion = "0.13.0" // benchmark only
-  val upickleVersion = "1.3.11" // benchmark only
-  val scalajsBenchmarkVersion = "0.9.0"
-  val slf4jVersion = "1.7.36"
+  val circeVersion = "0.14.5" // benchmark only
+  val upickleVersion = "3.1.2" // benchmark only
+  val scalajsBenchmarkVersion = "0.10.0"
+  val slf4jVersion = "2.0.9" // test only
 
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
@@ -71,8 +69,7 @@ object Commons extends ProjectGroup("commons") {
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
 
-    crossScalaVersions := Seq("2.13.10", "2.12.17"),
-    scalaVersion := crossScalaVersions.value.head,
+    scalaVersion := "2.13.12",
     compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
@@ -80,7 +77,8 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowEnv ++= Map(
       "REDIS_VERSION" -> "7.0.11",
     ),
-    githubWorkflowJavaVersions := Seq(JavaSpec.graalvm("21.1.0", "11"), JavaSpec.temurin("17")),
+    githubWorkflowArtifactUpload := false,
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
         UseRef.Public("actions", "cache", "v2"),
@@ -96,10 +94,10 @@ object Commons extends ProjectGroup("commons") {
         params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        UseRef.Public("supercharge", "mongodb-github-action", "1.7.0"),
+        UseRef.Public("supercharge", "mongodb-github-action", "1.9.0"),
         name = Some("Setup MongoDB"),
         params = Map(
-          "mongodb-version" -> "5.0.8",
+          "mongodb-version" -> "6.0",
           "mongodb-replica-set" -> "test-rs",
         )
       ),
@@ -161,7 +159,6 @@ object Commons extends ProjectGroup("commons") {
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
       "org.scalatestplus" %%% "scalacheck-1-16" % scalatestplusScalacheckVersion % Test,
-      "org.mockito" % "mockito-core" % mockitoVersion % Test,
     ),
     ideBasePackages := Seq(organization.value),
     Compile / ideOutputDirectory := Some(target.value.getParentFile / "out/production"),
@@ -172,6 +169,7 @@ object Commons extends ProjectGroup("commons") {
   val jvmCommonSettings = Seq(
     libraryDependencies ++= Seq(
       "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
+      "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
     ),
     mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
       organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
@@ -221,8 +219,6 @@ object Commons extends ProjectGroup("commons") {
           analyzer,
           macros,
           `core-js`,
-          benchmark,
-          `benchmark-js`,
           comprof,
         ),
     )
@@ -237,7 +233,6 @@ object Commons extends ProjectGroup("commons") {
       hocon,
       spring,
       redis,
-      benchmark,
     )
     .settings(aggregateProjectSettings)
 
@@ -245,7 +240,6 @@ object Commons extends ProjectGroup("commons") {
     .aggregate(
       `core-js`,
       `mongo-js`,
-      `benchmark-js`,
     )
     .settings(aggregateProjectSettings)
 
@@ -287,11 +281,9 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
-        "org.scala-lang.modules" %% "scala-collection-compat" % collectionCompatVersion,
         "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
-        "io.monix" %% "monix-bio" % monixBioVersion % Optional,
       ),
     )
 
@@ -304,7 +296,6 @@ object Commons extends ProjectGroup("commons") {
       sameNameAs(core),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
-        "org.scala-lang.modules" %%% "scala-collection-compat" % collectionCompatVersion,
         "io.monix" %%% "monix" % monixVersion % Optional,
       )
     )
@@ -341,7 +332,6 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion,
-        "com.typesafe.akka" %% "akka-actor" % akkaVersion,
         "com.typesafe.akka" %% "akka-stream" % akkaVersion,
         "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
         "io.monix" %% "monix" % monixVersion,
@@ -364,6 +354,7 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "org.springframework" % "spring-context" % springVersion,
+        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       ),
     )
 
@@ -377,7 +368,6 @@ object Commons extends ProjectGroup("commons") {
         "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
 
         "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
-        "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
       ),
     )
 
@@ -399,7 +389,7 @@ object Commons extends ProjectGroup("commons") {
     )
 
   lazy val `benchmark-js` = mkSubProject.in(benchmark.base / "js")
-    .enablePlugins(ScalaJSPlugin)
+    .enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
     .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
     .dependsOn(`core-js`)
     .settings(

@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package collection
 
-import scala.collection.compat.{immutable => scci}
 import scala.collection.{immutable => sci, mutable => scm}
 import scala.{collection => sc}
 
@@ -37,8 +36,8 @@ trait CollectionAliases {
 
   type MArraySeq[A] = scm.ArraySeq[A]
   final def MArraySeq: scm.ArraySeq.type = scm.ArraySeq
-  type IArraySeq[+A] = scci.ArraySeq[A]
-  final def IArraySeq: scci.ArraySeq.type = scci.ArraySeq
+  type IArraySeq[+A] = sci.ArraySeq[A]
+  final def IArraySeq: sci.ArraySeq.type = sci.ArraySeq
 
   type BLinearSeq[+A] = sc.LinearSeq[A]
   final def BLinearSeq: sc.LinearSeq.type = sc.LinearSeq

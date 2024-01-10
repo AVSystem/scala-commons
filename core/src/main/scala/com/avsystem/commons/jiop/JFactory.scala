@@ -3,7 +3,6 @@ package jiop
 
 import com.avsystem.commons.collection.{CrossBuilder, CrossFactory}
 
-import scala.collection.compat._
 import scala.collection.mutable
 
 trait JFactory[-Elem, +To] extends CrossFactory[Elem, To] {

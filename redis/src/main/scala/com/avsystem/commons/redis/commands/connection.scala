@@ -50,6 +50,10 @@ trait ConnectionConnectionApi extends NodeConnectionApi {
 
   private final class Auth(username: Opt[String], password: String) extends RedisUnitCommand with ConnectionCommand {
     val encoded: Encoded = encoder("AUTH").optAdd(username).add(password).result
+
+    // hide password value in error messages
+    override def toString: String =
+      s""""AUTH" ${username.mapOr("", u => s""""$u" """)}"<password>""""
   }
 
   private object Quit extends RedisUnitCommand with ConnectionCommand {
@@ -60,4 +64,3 @@ trait ConnectionConnectionApi extends NodeConnectionApi {
     val encoded: Encoded = encoder("SELECT").add(index).result
   }
 }
-

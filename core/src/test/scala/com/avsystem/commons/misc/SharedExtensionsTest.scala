@@ -154,7 +154,12 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("sourceCode") {
-    assert(123.sourceCode == "123")
+    // for some magical reason does not work on 'Int' type in Scala 2.13.12:
+    // java.lang.NullPointerException: Cannot invoke "scala.reflect.internal.Symbols$Symbol.owner()" because the return value of "scala.reflect.internal.Trees$Tree.symbol()" is null
+    // scala.tools.nsc.typechecker.Typers$Typer.checkDubiousAdaptation$1(Typers.scala:5330)
+    // assert(123.sourceCode == "123")
+
+    assert(123.123.sourceCode == "123.123")
 
     val src = {
       println(123)
@@ -169,7 +174,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("withSourceCode") {
-    assert(123.withSourceCode == (123, "123"))
+    assert(123.123.withSourceCode == (123.123, "123.123"))
   }
 
   test("flatCollect") {

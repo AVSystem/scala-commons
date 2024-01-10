@@ -3,9 +3,9 @@ package mongo
 
 import com.mongodb.client.model.{Filters => F}
 import org.bson.conversions.Bson
-import org.bson.{BsonArray, BsonDateTime, BsonDouble, BsonInt32, BsonInt64, BsonString, BsonValue}
+import org.bson._
 
-import _root_.scala.collection.compat._
+import _root_.scala.collection.Factory
 
 /**
   * @author MKej
@@ -54,10 +54,10 @@ object Filter {
     trait CanCompare[BSON <: BsonValue]
     object CanCompare {
       def create[BSON <: BsonValue]: CanCompare[BSON] = new CanCompare[BSON] {}
-      implicit val date = create[BsonDateTime]
-      implicit val int32 = create[BsonInt32]
-      implicit val int64 = create[BsonInt64]
-      implicit val double = create[BsonDouble]
+      implicit val date: CanCompare[BsonDateTime] = create[BsonDateTime]
+      implicit val int32: CanCompare[BsonInt32] = create[BsonInt32]
+      implicit val int64: CanCompare[BsonInt64] = create[BsonInt64]
+      implicit val double: CanCompare[BsonDouble] = create[BsonDouble]
     }
   }
 }
