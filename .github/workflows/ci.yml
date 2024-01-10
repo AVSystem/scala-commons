@@ -16,7 +16,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  REDIS_VERSION: 7.0.11
+  REDIS_VERSION: 7.0.15
 
 jobs:
   build:
