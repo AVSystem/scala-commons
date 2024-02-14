@@ -75,7 +75,7 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowTargetTags ++= Seq("v*"),
 
     githubWorkflowEnv ++= Map(
-      "REDIS_VERSION" -> "7.0.15",
+      "REDIS_VERSION" -> "7.2.4",
     ),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
