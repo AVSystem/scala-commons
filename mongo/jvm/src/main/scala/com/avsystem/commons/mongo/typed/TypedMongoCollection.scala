@@ -91,7 +91,7 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
     * to be used for database operations not covered directly by [[TypedMongoCollection]].
     */
   def multiResultNativeOp[T](operation: MongoCollection[E] => Publisher[T]): Observable[T] =
-    Observable.fromReactivePublisher(operation(nativeCollection))
+    multi(operation(nativeCollection))
 
   def drop(): Task[Unit] =
     empty(optionalizeFirstArg(nativeCollection.drop(sessionOrNull)))
@@ -155,7 +155,7 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
     }
 
     def toObservable[X](publisher: FindPublisher[X]): Observable[X] =
-      Observable.fromReactivePublisher(setupPublisher(publisher))
+      multi(setupPublisher(publisher))
 
     projection match {
       case SelfRef =>
@@ -242,7 +242,6 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
     filter: MongoDocumentFilter[E] = MongoFilter.empty,
     setupOptions: DistinctPublisher[Any] => DistinctPublisher[Any] = identity,
   ): Observable[T] = {
-
     val publisher =
       optionalizeFirstArg(nativeCollection.distinct(sessionOrNull, property.rawPath, classOf[BsonValue]))
         .filter(filter.toFilterBson(Opt.Empty, property.projectionRefs))
@@ -250,7 +249,7 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
     val publisherWithOptions =
       setupOptions(publisher.asInstanceOf[DistinctPublisher[Any]]).asInstanceOf[DistinctPublisher[BsonValue]]
 
-    Observable.fromReactivePublisher(publisherWithOptions).map(property.format.readBson)
+    multi(publisherWithOptions).map(property.format.readBson)
   }
 
   def insertOne(

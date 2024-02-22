@@ -7,18 +7,13 @@ import monix.reactive.Observable
 import org.reactivestreams.Publisher
 
 trait TypedMongoUtils {
-  protected final def empty(publisher: Publisher[Void]): Task[Unit] =
-    Observable.fromReactivePublisher(publisher, 1).completedL
+  import com.avsystem.commons.mongo.reactive.ReactiveMongoExtensions._
 
-  protected final def single[T](publisher: Publisher[T]): Task[T] =
-    Observable.fromReactivePublisher(publisher, 1).firstL
-
+  protected final def empty(publisher: Publisher[Void]): Task[Unit] = publisher.completedL
+  protected final def single[T](publisher: Publisher[T]): Task[T] = publisher.headL
   // handles both an empty Publisher and and a single null item
-  protected final def singleOpt[T](publisher: Publisher[T]): Task[Option[T]] =
-    Observable.fromReactivePublisher(publisher, 1).filter(_ != null).firstOptionL
-
-  protected final def multi[T](publisher: Publisher[T]): Observable[T] =
-    Observable.fromReactivePublisher(publisher)
+  protected final def singleOpt[T](publisher: Publisher[T]): Task[Option[T]] = publisher.headOptionL
+  protected final def multi[T](publisher: Publisher[T]): Observable[T] = publisher.asMonix
 
   /**
     * Transforms an expression `method(nullableArg, moreArgs)` into
