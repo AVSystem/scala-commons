@@ -20,11 +20,19 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
       Observable.fromIterable(ints).headOptL.runToFuture.futureValue shouldBe ints.headOpt
     }
   }
+
+  test("findOptL") {
+    forAll { ints: List[Int] =>
+      Observable.fromIterable(ints).findOptL(_ > 1).runToFuture.futureValue shouldBe ints.findOpt(_ > 1)
+    }
+  }
+
   test("distinct") {
     forAll { ints: List[Int] =>
       Observable.fromIterable(ints).distinct.toListL.runToFuture.futureValue shouldBe ints.distinct
     }
   }
+
   test("distinctBy") {
     forAll { ints: List[Int] =>
       val f: Int => Int = _ % 256
@@ -33,17 +41,20 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
         ints.foldLeft(MLinkedHashMap.empty[Int, Int])((map, v) => f(v) |> (key => map.applyIf(!_.contains(key))(_ += key -> v))).valuesIterator.toList
     }
   }
+
   test("sortedL") {
     forAll { ints: List[Int] =>
       Observable.fromIterable(ints).sortedL.runToFuture.futureValue shouldBe ints.sorted
     }
   }
+
   test("sortedByL") {
     forAll { ints: List[Int] =>
       val f: Int => Int = _ % 256
       Observable.fromIterable(ints).sortedByL(f).runToFuture.futureValue shouldBe ints.sortBy(f)
     }
   }
+
   test("toL") {
     forAll { ints: List[(Int, Int)] =>
       def testFactory[T](factory: Factory[(Int, Int), T])(implicit position: Position) =
@@ -78,4 +89,9 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
     }
   }
 
+  test("mkMapL") {
+    forAll { ints: List[Int] =>
+      Observable.fromIterable(ints).mkMapL(_ % 3, _ + 2).runToFuture.futureValue shouldBe ints.mkMap(_ % 3, _ + 2)
+    }
+  }
 }

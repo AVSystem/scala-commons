@@ -22,6 +22,11 @@ object ObservableExtensions extends ObservableExtensions {
       */
     def headOptL: Task[Opt[T]] = obs.headOptionL.map(_.toOpt)
 
+    /**
+      * Returns a [[monix.eval.Task Task]] which emits the first item for which the predicate holds.
+      */
+    def findOptL(p: T => Boolean): Task[Opt[T]] = obs.findL(p).map(_.toOpt)
+
     /** Suppress the duplicate elements emitted by the source Observable.
       *
       * WARNING: this requires unbounded buffering.
@@ -79,5 +84,15 @@ object ObservableExtensions extends ObservableExtensions {
       obs
         .foldLeftL(factory.newBuilder)(_ += _)
         .map(_.result())
+
+    /** Returns a [[monix.eval.Task Task]] that upon evaluation
+      * will collect all items from the source into a [[Map]] instance
+      * using provided functions to compute keys and values.
+      *
+      * WARNING: for infinite streams the process will eventually blow up
+      * with an out of memory error.
+      */
+    def mkMapL[K, V](keyFun: T => K, valueFun: T => V): Task[Map[K, V]] =
+      obs.foldLeftL(Map.newBuilder[K, V])({ case (res, a) => res += ((keyFun(a), valueFun(a))) }).map(_.result())
   }
 }
