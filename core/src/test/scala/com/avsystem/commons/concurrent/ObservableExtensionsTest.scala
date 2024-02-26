@@ -21,10 +21,20 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
     }
   }
 
+  test("headOptL - null handling") {
+    Observable.fromIterable(Seq(null, "abc", "xyz")) .headOptL.runToFuture.futureValue shouldBe Opt.Empty
+  }
+
   test("findOptL") {
     forAll { ints: List[Int] =>
       Observable.fromIterable(ints).findOptL(_ > 1).runToFuture.futureValue shouldBe ints.findOpt(_ > 1)
     }
+  }
+
+  test("findOptL - null handling") {
+    Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.some("abc")
+    Observable.fromIterable(Seq(null, null)).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.Empty
+    Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_.startsWith("x")).runToFuture.futureValue shouldBe Opt.some("xyz")
   }
 
   test("distinct") {

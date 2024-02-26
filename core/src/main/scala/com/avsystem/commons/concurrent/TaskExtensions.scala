@@ -18,7 +18,7 @@ trait TaskExtensions {
 object TaskExtensions extends TaskExtensions {
   final class TaskOps[T](private val task: Task[T]) extends AnyVal {
     /**
-      * Like regular `timeout` but [[TimeoutException]] is created lazily (for performance).
+      * Similar to [[Task.timeoutWith]] but exception instance is created lazily (for performance)
       */
     def lazyTimeout(after: FiniteDuration, msg: => String): Task[T] =
       task.timeoutTo(after, Task.raiseError(new TimeoutException(msg)))

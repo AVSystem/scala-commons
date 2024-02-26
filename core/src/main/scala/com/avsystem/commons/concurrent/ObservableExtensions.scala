@@ -23,9 +23,9 @@ object ObservableExtensions extends ObservableExtensions {
     def headOptL: Task[Opt[T]] = obs.headOptionL.map(_.toOpt)
 
     /**
-      * Returns a [[monix.eval.Task Task]] which emits the first item for which the predicate holds.
+      * Returns a [[monix.eval.Task Task]] which emits the first <b>non-null</b> item for which the predicate holds.
       */
-    def findOptL(p: T => Boolean): Task[Opt[T]] = obs.findL(p).map(_.toOpt)
+    def findOptL(p: T => Boolean): Task[Opt[T]] = obs.findL(e => e != null && p(e)).map(_.toOpt)
 
     /** Suppress the duplicate elements emitted by the source Observable.
       *
