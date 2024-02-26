@@ -21,7 +21,7 @@ object TaskExtensions extends TaskExtensions {
       * Similar to [[Task.timeoutWith]] but exception instance is created lazily (for performance)
       */
     def lazyTimeout(after: FiniteDuration, msg: => String): Task[T] =
-      task.timeoutTo(after, Task.raiseError(new TimeoutException(msg)))
+      task.timeoutTo(after, Task.defer(Task.raiseError(new TimeoutException(msg))))
 
     /**
       * Similar to [[Task.tapEval]], accepts simple consumer function as an argument
