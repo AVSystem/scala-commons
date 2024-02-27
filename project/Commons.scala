@@ -69,7 +69,7 @@ object Commons extends ProjectGroup("commons") {
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
 
-    scalaVersion := "2.13.12",
+    scalaVersion := "2.13.13",
     compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
