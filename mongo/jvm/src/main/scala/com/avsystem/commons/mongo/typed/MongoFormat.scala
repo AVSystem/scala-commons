@@ -170,8 +170,8 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
       }
       // using collect (not map) because apparently scalac thinks the match is not exhaustive
       casesPerClass.valuesIterator.collect {
-        case (parent: SealedParent[p], cases) =>
-          val subUnion = new UnionFormat(parent.info, codec.asInstanceOf[GenObjectCodec[p]], parent.classTag, flattenAnnot, cases.result())
+        case (parent: SealedParent[p], parentCases) =>
+          val subUnion = new UnionFormat(parent.info, codec.asInstanceOf[GenObjectCodec[p]], parent.classTag, flattenAnnot, parentCases.result())
           (parent.classTag.runtimeClass, subUnion)
       }.toMap
     }

@@ -13,11 +13,11 @@ import scala.collection.mutable.ListBuffer
 trait GeoApi extends ApiSubset {
   /** Executes [[http://redis.io/commands/geoadd GEOADD]] */
   def geoadd(key: Key, member: Value, point: GeoPoint): Result[Boolean] =
-    execute(new Geoadd(key, Opt.Empty, false, (member, point).single).map(_ > 0))
+    execute(new Geoadd(key, Opt.Empty, changed = false, (member, point).single).map(_ > 0))
 
   /** Executes [[http://redis.io/commands/geoadd GEOADD]] */
   def geoadd(key: Key, item: (Value, GeoPoint), items: (Value, GeoPoint)*): Result[Int] =
-    execute(new Geoadd(key, Opt.Empty, false, item +:: items))
+    execute(new Geoadd(key, Opt.Empty, changed = false, item +:: items))
 
   /** Executes [[http://redis.io/commands/geoadd GEOADD]]
     * or simply returns 0 when `items` is empty, without sending the command to Redis */

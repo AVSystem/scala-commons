@@ -192,7 +192,7 @@ class CborInputOutputTest extends AnyFunSuite {
     List(
       CustomKeysFlatUnion.IntCase(42),
       CustomKeysFlatUnion.StrCase("foo"),
-      CustomKeysFlatUnion.BoolCase(true),
+      CustomKeysFlatUnion.BoolCase(bool = true),
       CustomKeysFlatUnion.EmptyCase
     ),
     "9FA2000101182AA200020163666F6FA20068426F6F6C4361736564626F6F6CF5A10003FF"
@@ -202,7 +202,7 @@ class CborInputOutputTest extends AnyFunSuite {
     List(
       CustomKeysNestedUnion.IntCase(42),
       CustomKeysNestedUnion.StrCase("foo"),
-      CustomKeysNestedUnion.BoolCase(true),
+      CustomKeysNestedUnion.BoolCase(bool = true),
       CustomKeysNestedUnion.EmptyCase
     ),
     "9FA101A101182AA102A10163666F6FA168426F6F6C43617365A164626F6F6CF5A103A0FF"

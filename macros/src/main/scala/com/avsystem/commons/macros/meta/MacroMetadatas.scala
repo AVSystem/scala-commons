@@ -196,7 +196,7 @@ private[commons] trait MacroMetadatas extends MacroSymbols {
       """
 
     protected def cast[C <: MetadataConstructor : ClassTag]: C = this match {
-      case c: C => c
+      case constructor: C => constructor
       case _ => throw new Exception(s"Metadata constructor $this is not a ${classTag[C].runtimeClass.getSimpleName}")
     }
 
