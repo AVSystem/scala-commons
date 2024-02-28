@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.protocol
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import scala.annotation.nowarn
 import org.scalacheck.util.Buildable
 import org.scalacheck.{Arbitrary, Gen, Shrink}

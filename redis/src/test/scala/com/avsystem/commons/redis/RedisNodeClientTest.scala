@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.commands.`package`.ReplyDecoder
 import com.avsystem.commons.redis.commands.{RedisScript, ReplyDecoders}
 import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}

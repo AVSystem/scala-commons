@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.exception.ErrorReplyException
 import com.avsystem.commons.redis.{RedisApi, RedisConnectionCommandsSuite}
 

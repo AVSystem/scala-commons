@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import com.avsystem.commons.serialization.{GenCodecRoundtripTest, Input, Output}
 
 class RedisDataGenCodecRoundtripTest extends GenCodecRoundtripTest {

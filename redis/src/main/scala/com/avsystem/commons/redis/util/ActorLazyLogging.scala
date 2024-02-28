@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package redis.util
 
-import akka.actor.Actor
-import akka.event.LoggingAdapter
+import org.apache.pekko.actor.Actor
+import org.apache.pekko.event.LoggingAdapter
 
 /**
   * Author: ghik
@@ -10,7 +10,7 @@ import akka.event.LoggingAdapter
   */
 trait ActorLazyLogging { self: Actor =>
   object log {
-    val rawLog: LoggingAdapter = akka.event.Logging(context.system, self)
+    val rawLog: LoggingAdapter = org.apache.pekko.event.Logging(context.system, self)
 
     def error(msg: => String, cause: Throwable = null): Unit =
       if (rawLog.isErrorEnabled) {

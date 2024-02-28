@@ -1,10 +1,10 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{Actor, ActorRef, Cancellable}
-import akka.stream.scaladsl._
-import akka.stream.{CompletionStrategy, IgnoreComplete, Materializer, SystemMaterializer}
-import akka.util.ByteString
+import org.apache.pekko.actor.{Actor, ActorRef, Cancellable}
+import org.apache.pekko.stream.scaladsl._
+import org.apache.pekko.stream.{CompletionStrategy, IgnoreComplete, Materializer, SystemMaterializer}
+import org.apache.pekko.util.ByteString
 import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.{PubSubCommand, PubSubEvent, ReplyDecoders}
@@ -141,7 +141,7 @@ final class RedisConnectionActor(
     case _: TcpEvent => //ignore, this is from previous connection
   }
 
-  // previously this was implemented using Akka IO, now using Akka Streams in a way that mimics Akka IO
+  // previously this was implemented using Akka IO, now using Pekko Streams in a way that mimics Akka IO
   private def doConnect(): Unit = {
     // using Akka IO, this was implemented as:
     // IO(Tcp) ! Tcp.Connect(address.socketAddress,

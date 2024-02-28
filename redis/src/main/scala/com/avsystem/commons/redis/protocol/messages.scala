@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.protocol
 
-import akka.util.{ByteString, ByteStringBuilder}
+import org.apache.pekko.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.Sam
 import com.avsystem.commons.redis.exception.{InvalidDataException, RedisException}
 import com.avsystem.commons.redis.util.SizedArraySeqBuilder

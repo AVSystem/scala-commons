@@ -29,7 +29,7 @@ libraryDependencies += "com.avsystem.commons" %% "commons-redis" % avsCommonsVer
 
 The module `commons-redis` contains from-the-scratch implementation of Scala driver for Redis. Its most important goals
 and characteristics are:
-* non-blocking network communication (based on Akka IO)
+* non-blocking network communication (based on Pekko IO)
 * asynchronous API
 * support for Redis Cluster
 * type safety
@@ -66,7 +66,7 @@ Missing features:
 ### Quickstart example
 
 ```scala
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.avsystem.commons.redis._
 
 import scala.concurrent.ExecutionContext.Implicits.global

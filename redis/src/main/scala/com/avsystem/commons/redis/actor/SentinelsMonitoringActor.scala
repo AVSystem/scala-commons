@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{Actor, ActorRef, Props}
+import org.apache.pekko.actor.{Actor, ActorRef, Props}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{PubSubEvent, Subscribe}
 import com.avsystem.commons.redis.config.MasterSlaveConfig

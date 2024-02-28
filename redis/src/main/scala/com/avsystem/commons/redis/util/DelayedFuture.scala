@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.util
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.avsystem.commons.concurrent.RunNowEC
 
 import scala.concurrent.duration.{Duration, FiniteDuration}

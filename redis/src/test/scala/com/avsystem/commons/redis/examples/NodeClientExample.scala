@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.examples
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.avsystem.commons.redis._
 
 // Global execution context is used for the sake of simplicity of this example,
@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Basic example showing how to execute simple command on [[RedisNodeClient]].
   */
 object NodeClientExample extends App {
-  // The driver is implemented using Akka IO, so we need actor system
+  // The driver is implemented using Pekko IO, so we need actor system
   implicit val actorSystem: ActorSystem = ActorSystem()
   // The client is the object that actually talks to Redis, but does not expose Redis API
   val client = new RedisNodeClient

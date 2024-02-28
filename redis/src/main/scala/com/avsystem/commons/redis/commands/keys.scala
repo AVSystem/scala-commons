@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import akka.util.{ByteString, ByteStringBuilder}
+import org.apache.pekko.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
 import com.avsystem.commons.redis._

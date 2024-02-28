@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package redis
 
-import akka.actor.{ActorSystem, Props}
-import akka.util.Timeout
+import org.apache.pekko.actor.{ActorSystem, Props}
+import org.apache.pekko.util.Timeout
 import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.actor.SentinelsMonitoringActor
