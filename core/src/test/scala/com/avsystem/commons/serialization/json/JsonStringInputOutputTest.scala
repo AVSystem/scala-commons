@@ -84,7 +84,7 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
 
   roundtrip("strings")("", "a።bc\u0676ąቢść➔Ĳ")
 
-  roundtrip("simple case classes")(TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil))
+  roundtrip("simple case classes")(TestCC(5, 123L, 432, b = true, "bla", 'a' :: 'b' :: Nil))
 
   roundtrip("null")(null)
 
@@ -189,8 +189,8 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   }
 
   test("serialize and deserialize nested case classes") {
-    val test: TestCC = TestCC(5, 123L, 432, true, "bla", 'a' :: 'b' :: Nil)
-    val test2: TestCC = TestCC(-35, 1L, 432, true, "blsddf sdg  \"{,}[,]\"a", 'a' :: 'b' :: Nil)
+    val test: TestCC = TestCC(5, 123L, 432, b = true, "bla", 'a' :: 'b' :: Nil)
+    val test2: TestCC = TestCC(-35, 1L, 432, b = true, "blsddf sdg  \"{,}[,]\"a", 'a' :: 'b' :: Nil)
     val nested: NestedTestCC = NestedTestCC(-123, test, test2)
     val serialized = write(nested)
     val deserialized = read[NestedTestCC](serialized)

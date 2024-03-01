@@ -97,9 +97,9 @@ private[commons] trait MacroSymbols extends MacroCommons {
       else param.reportProblem(s"forbidden RPC arity annotation: $at")
     }
 
-    case class Single(collectedType: Type) extends ParamArity(true) with Arity.Single
-    case class Optional(collectedType: Type) extends ParamArity(true) with Arity.Optional
-    case class Multi(collectedType: Type, named: Boolean) extends ParamArity(false) with Arity.Multi
+    case class Single(collectedType: Type) extends ParamArity(verbatimByDefault = true) with Arity.Single
+    case class Optional(collectedType: Type) extends ParamArity(verbatimByDefault = true) with Arity.Optional
+    case class Multi(collectedType: Type, named: Boolean) extends ParamArity(verbatimByDefault = false) with Arity.Multi
   }
 
   sealed abstract class MethodArity(val verbatimByDefault: Boolean) extends Arity
@@ -112,9 +112,9 @@ private[commons] trait MacroSymbols extends MacroCommons {
       else method.reportProblem(s"unrecognized RPC method arity annotation: $at")
     }
 
-    case object Single extends MethodArity(true) with Arity.Single
-    case object Optional extends MethodArity(true) with Arity.Optional
-    case object Multi extends MethodArity(false) with Arity.Multi
+    case object Single extends MethodArity(verbatimByDefault = true) with Arity.Single
+    case object Optional extends MethodArity(verbatimByDefault = true) with Arity.Optional
+    case object Multi extends MethodArity(verbatimByDefault = false) with Arity.Multi
   }
 
   abstract class MacroSymbol {

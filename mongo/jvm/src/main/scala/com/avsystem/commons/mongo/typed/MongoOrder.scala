@@ -16,8 +16,8 @@ sealed trait MongoOrder[T] {
 object MongoOrder {
   def unspecified[E]: MongoDocumentOrder[E] = MongoDocumentOrder.unspecified[E]
 
-  def ascending[T]: MongoOrder[T] = Simple(true)
-  def descending[T]: MongoOrder[T] = Simple(false)
+  def ascending[T]: MongoOrder[T] = Simple(ascending = true)
+  def descending[T]: MongoOrder[T] = Simple(ascending = false)
 
   def simple[T](ascending: Boolean): MongoOrder[T] = Simple(ascending)
 

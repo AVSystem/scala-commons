@@ -22,7 +22,7 @@ case class GenParamInfo[T](
 
   @bincompat private[commons] def this(
     sourceName: String, annotName: Opt[name], hasWhenAbsent: Boolean, transientDefault: Boolean, outOfOrder: Boolean, flags: ParamFlags
-  ) = this(sourceName, annotName, false, hasWhenAbsent, transientDefault, outOfOrder, flags)
+  ) = this(sourceName, annotName, optional = false, hasWhenAbsent, transientDefault, outOfOrder, flags)
 }
 
 sealed trait GenCodecStructure[T] extends GenInfo[T] {
