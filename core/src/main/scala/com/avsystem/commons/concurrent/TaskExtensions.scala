@@ -45,8 +45,14 @@ object TaskExtensions extends TaskExtensions {
 
     def fromOpt[A](maybeTask: Opt[Task[A]]): Task[Opt[A]] = maybeTask match {
       case Opt(task) => task.map(_.opt)
-      case Opt.Empty => optEmpty
+      case Opt.Empty => Task.optEmpty
     }
+
+    def traverseMap[K, V, A, B](map: Map[K, V])(f: (K, V) => Task[(A, B)]): Task[Map[A, B]] =
+      Task.traverse(map.toSeq)({ case (key, value) => f(key, value) }).map(_.toMap)
+
+    def traverseMapValues[K, A, B](map: Map[K, A])(f: (K, A) => Task[B]): Task[Map[K, B]] =
+      traverseMap(map)({ case (key, value) => f(key, value).map(key -> _) })
 
     def currentTimestamp: Task[Timestamp] =
       Task.clock.realTime(TimeUnit.MILLISECONDS).map(Timestamp(_))

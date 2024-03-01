@@ -93,6 +93,6 @@ object ObservableExtensions extends ObservableExtensions {
       * with an out of memory error.
       */
     def mkMapL[K, V](keyFun: T => K, valueFun: T => V): Task[Map[K, V]] =
-      obs.foldLeftL(Map.newBuilder[K, V])({ case (res, a) => res += ((keyFun(a), valueFun(a))) }).map(_.result())
+      obs.map(v => (keyFun(v), valueFun(v))).toL(Map)
   }
 }
