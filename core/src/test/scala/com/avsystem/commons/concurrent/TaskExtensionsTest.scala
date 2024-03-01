@@ -14,10 +14,10 @@ import scala.concurrent.duration._
 class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ScalaFutures {
   import com.avsystem.commons.concurrent.TaskExtensions._
 
-  private implicit val scheduler: Scheduler = Scheduler(RunNowEC)
+  private implicit val scheduler: Scheduler = Scheduler.global
 
   test("lazyTimeout") {
-    val result = Task.never.lazyTimeout(100.millis, "Lazy timeout").runToFuture.failed.futureValue
+    val result = Task.never.lazyTimeout(50.millis, "Lazy timeout").runToFuture.failed.futureValue
     result shouldBe a[TimeoutException]
     result.getMessage shouldBe "Lazy timeout"
   }
