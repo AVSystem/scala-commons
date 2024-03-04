@@ -4,6 +4,7 @@ package concurrent
 import com.avsystem.commons.concurrent.TaskExtensions.{TaskCompanionOps, TaskOps}
 import com.avsystem.commons.misc.Timestamp
 import monix.eval.Task
+import monix.reactive.Observable
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.TimeoutException
@@ -37,6 +38,8 @@ object TaskExtensions extends TaskExtensions {
   }
 
   object TaskCompanionOps {
+    import com.avsystem.commons.concurrent.ObservableExtensions.observableOps
+
     /** A [[Task]] of [[Opt.Empty]] */
     def optEmpty[A]: Task[Opt[A]] = Task.pure(Opt.Empty)
 
@@ -49,7 +52,7 @@ object TaskExtensions extends TaskExtensions {
     }
 
     def traverseMap[K, V, A, B](map: Map[K, V])(f: (K, V) => Task[(A, B)]): Task[Map[A, B]] =
-      Task.traverse(map.toSeq)({ case (key, value) => f(key, value) }).map(_.toMap)
+      Observable.fromIterable(map).mapEval({ case (key, value) => f(key, value) }).toL(Map)
 
     def traverseMapValues[K, A, B](map: Map[K, A])(f: (K, A) => Task[B]): Task[Map[K, B]] =
       traverseMap(map)({ case (key, value) => f(key, value).map(key -> _) })
