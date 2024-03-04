@@ -6,8 +6,8 @@ import java.security.{KeyStore, SecureRandom}
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 
-import akka.actor.ActorSystem
-import akka.util.{ByteString, Timeout}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.util.{ByteString, Timeout}
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.redis.RedisClientBenchmark._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener

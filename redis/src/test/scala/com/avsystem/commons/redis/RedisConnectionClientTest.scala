@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.config.ConnectionConfig
 import com.avsystem.commons.redis.exception.{ConnectionFailedException, ConnectionInitializationFailure}
 import org.scalatest.concurrent.ScalaFutures

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 
 /**
   * Implementation of key hashing function used in Redis Cluster, as specified in

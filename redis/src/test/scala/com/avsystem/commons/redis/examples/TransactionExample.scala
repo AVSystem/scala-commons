@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.examples
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.{NodeRemovedException, OptimisticLockException}
 

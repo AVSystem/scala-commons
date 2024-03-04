@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.examples
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.avsystem.commons.redis._
 
 // Global execution context is used for the sake of simplicity of this example,

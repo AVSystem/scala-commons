@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{Actor, ActorRef}
+import org.apache.pekko.actor.{Actor, ActorRef}
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{Release, Reserving}

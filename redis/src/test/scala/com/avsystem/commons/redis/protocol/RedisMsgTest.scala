@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.protocol
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.protocol.RedisMsgScalacheck._
 import org.scalacheck.Gen
 import org.scalatest.funsuite.AnyFunSuite

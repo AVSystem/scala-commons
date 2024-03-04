@@ -35,7 +35,7 @@ object Commons extends ProjectGroup("commons") {
   val typesafeConfigVersion = "1.4.3"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.5"
-  val akkaVersion = "2.6.19"
+  val pekkoVersion = "1.0.2"
   val monixVersion = "3.4.1"
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
@@ -332,7 +332,7 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion,
-        "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+        "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
         "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
         "io.monix" %% "monix" % monixVersion,
       ),

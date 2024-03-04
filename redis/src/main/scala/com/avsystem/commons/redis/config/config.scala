@@ -2,8 +2,8 @@ package com.avsystem.commons
 package redis.config
 
 import java.net.InetSocketAddress
-import akka.io.Inet
-import akka.util.Timeout
+import org.apache.pekko.io.Inet
+import org.apache.pekko.util.Timeout
 import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.concurrent.RetryStrategy._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}

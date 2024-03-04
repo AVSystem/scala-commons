@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis
 
-import akka.util.{ByteString, ByteStringBuilder}
+import org.apache.pekko.util.{ByteString, ByteStringBuilder}
 import com.avsystem.commons.misc.SourceInfo
 import com.avsystem.commons.redis.config._
 import org.scalactic.source.Position

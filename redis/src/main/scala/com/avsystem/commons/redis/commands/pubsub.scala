@@ -1,6 +1,6 @@
 package com.avsystem.commons.redis.commands
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.{RawCommandPack, RawCommandPacks, RedisBatch, UnsafeCommand}
 import com.avsystem.commons.redis.protocol.{BulkStringMsg, ValidRedisMsg}
 

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{Actor, ActorRef, Cancellable, Props}
+import org.apache.pekko.actor.{Actor, ActorRef, Cancellable, Props}
 import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{NodeInfo, SlotRange, SlotRangeMapping}

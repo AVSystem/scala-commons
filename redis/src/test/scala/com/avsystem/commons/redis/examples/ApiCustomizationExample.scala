@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package redis.examples
 
-import akka.actor.ActorSystem
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis._
 import com.avsystem.commons.serialization.GenCodec
 

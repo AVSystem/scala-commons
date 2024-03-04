@@ -4,9 +4,9 @@ package redis
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicLong
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.pattern.ask
-import akka.util.Timeout
+import org.apache.pekko.actor.{Actor, ActorRef, ActorSystem, Props}
+import org.apache.pekko.pattern.ask
+import org.apache.pekko.util.Timeout
 import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.redis.actor.ConnectionPoolActor.QueuedConn
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
@@ -118,7 +118,7 @@ final class RedisNodeClient(
 
   /**
     * Executes a [[RedisBatch]] on this client by sending its commands to the Redis node in a single network
-    * message (technically, a single `akka.io.Tcp.Write` message). Therefore it's also naturally guaranteed that
+    * message (technically, a single `org.apache.pekko.io.Tcp.Write` message). Therefore it's also naturally guaranteed that
     * all commands in a batch are executed on the same connection.
     *
     * Note that even though connection used by [[RedisNodeClient]] are automatically reconnected, it's still possible

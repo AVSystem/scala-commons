@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.actor
 
-import akka.actor.{Actor, ActorRef, Props}
+import org.apache.pekko.actor.{Actor, ActorRef, Props}
 import com.avsystem.commons.redis.NodeAddress
 import com.avsystem.commons.redis.actor.ConnectionPoolActor._
 import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}

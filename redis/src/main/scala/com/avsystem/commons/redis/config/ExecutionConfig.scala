@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.config
 
-import akka.util.Timeout
+import org.apache.pekko.util.Timeout
 import com.avsystem.commons.concurrent.RunNowEC
 
 import scala.concurrent.duration._
