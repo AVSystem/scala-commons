@@ -51,28 +51,28 @@ class SimpleValueOutput(
   def this(consumer: Any => Unit) =
     this(consumer, new MHashMap[String, Any], new ListBuffer[Any])
 
-  def writeNull(): Unit = consumer(null)
-  def writeBoolean(boolean: Boolean): Unit = consumer(boolean)
-  def writeString(str: String): Unit = consumer(str)
-  def writeInt(int: Int): Unit = consumer(int)
-  def writeLong(long: Long): Unit = consumer(long)
-  def writeDouble(double: Double): Unit = consumer(double)
-  def writeBigInt(bigInt: BigInt): Unit = consumer(bigInt)
-  def writeBigDecimal(bigDecimal: BigDecimal): Unit = consumer(bigDecimal)
-  def writeBinary(binary: Array[Byte]): Unit = consumer(binary)
+  override def writeNull(): Unit = consumer(null)
+  override def writeBoolean(boolean: Boolean): Unit = consumer(boolean)
+  override def writeString(str: String): Unit = consumer(str)
+  override def writeInt(int: Int): Unit = consumer(int)
+  override def writeLong(long: Long): Unit = consumer(long)
+  override def writeDouble(double: Double): Unit = consumer(double)
+  override def writeBigInt(bigInt: BigInt): Unit = consumer(bigInt)
+  override def writeBigDecimal(bigDecimal: BigDecimal): Unit = consumer(bigDecimal)
+  override def writeBinary(binary: Array[Byte]): Unit = consumer(binary)
 
   def writeList(): ListOutput = new ListOutput {
     private val buffer = newListRepr
     override def declareSize(size: Int): Unit = buffer.sizeHint(size)
-    def writeElement() = new SimpleValueOutput(buffer += _, newObjectRepr, newListRepr)
-    def finish(): Unit = consumer(buffer.result())
+    override def writeElement(): SimpleValueOutput = new SimpleValueOutput(buffer += _, newObjectRepr, newListRepr)
+    override def finish(): Unit = consumer(buffer.result())
   }
 
   def writeObject(): ObjectOutput = new ObjectOutput {
     private val result = newObjectRepr
     override def declareSize(size: Int): Unit = result.sizeHint(size)
-    def writeField(key: String) = new SimpleValueOutput(v => result += ((key, v)), newObjectRepr, newListRepr)
-    def finish(): Unit = consumer(result)
+    override def writeField(key: String): SimpleValueOutput = new SimpleValueOutput(v => result += ((key, v)), newObjectRepr, newListRepr)
+    override def finish(): Unit = consumer(result)
   }
 }
 
@@ -95,15 +95,15 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
     case _ => throw new ReadFailure(s"Expected ${classTag[B].runtimeClass} but got ${value.getClass}")
   }
 
-  def readNull(): Boolean = value == null
-  def readBoolean(): Boolean = doReadUnboxed[Boolean, JBoolean]
-  def readString(): String = doRead[String]
-  def readInt(): Int = doReadUnboxed[Int, JInteger]
-  def readLong(): Long = doReadUnboxed[Long, JLong]
-  def readDouble(): Double = doReadUnboxed[Double, JDouble]
-  def readBigInt(): BigInt = doRead[JBigInteger]
-  def readBigDecimal(): BigDecimal = doRead[JBigDecimal]
-  def readBinary(): Array[Byte] = doRead[Array[Byte]]
+  override def readNull(): Boolean = value == null
+  override def readBoolean(): Boolean = doReadUnboxed[Boolean, JBoolean]
+  override def readString(): String = doRead[String]
+  override def readInt(): Int = doReadUnboxed[Int, JInteger]
+  override def readLong(): Long = doReadUnboxed[Long, JLong]
+  override def readDouble(): Double = doReadUnboxed[Double, JDouble]
+  override def readBigInt(): BigInt = doRead[JBigInteger]
+  override def readBigDecimal(): BigDecimal = doRead[JBigDecimal]
+  override def readBinary(): Array[Byte] = doRead[Array[Byte]]
 
   def readObject(): ObjectInput =
     new ObjectInput {
@@ -112,10 +112,10 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
         case (k, v) => new SimpleValueFieldInput(k, v)
       }
       override def knownSize: Int = if(map.isEmpty) 0 else map.knownSize
-      def nextField(): SimpleValueFieldInput = it.next()
+      override def nextField(): SimpleValueFieldInput = it.next()
       override def peekField(name: String): Opt[SimpleValueFieldInput] =
         map.get(name).map(new SimpleValueFieldInput(name, _)).toOpt // values may be null!
-      def hasNext: Boolean = it.hasNext
+      override def hasNext: Boolean = it.hasNext
     }
 
   def readList(): ListInput =
@@ -123,11 +123,11 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
       private val inputSeq: BSeq[Any] = doRead[BSeq[Any]]
       private val it = inputSeq.iterator.map(new SimpleValueInput(_))
       override def knownSize: Int = if(inputSeq.isEmpty) 0 else inputSeq.knownSize
-      def nextElement(): SimpleValueInput = it.next()
-      def hasNext: Boolean = it.hasNext
+      override def nextElement(): SimpleValueInput = it.next()
+      override def hasNext: Boolean = it.hasNext
     }
 
-  def skip(): Unit = ()
+  override def skip(): Unit = ()
 }
 
 class SimpleValueFieldInput(val fieldName: String, value: Any)

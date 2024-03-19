@@ -281,7 +281,7 @@ case class NodeInfo(infoLine: String) {
   val address: NodeAddress = NodeAddress.parse(splitAddr(0))
   val clusterPort: Opt[String] = splitAddr.opt.filter(_.length > 1).map(_.apply(1))
   val flags: NodeFlags = NodeFlags(splitLine(2))
-  val master: Opt[NodeId] = Opt(splitLine(3)).filter(_ != "-").map(NodeId)
+  val master: Opt[NodeId] = Opt(splitLine(3)).filter(_ != "-").map(NodeId.apply)
   val pingSent: Long = splitLine(4).toLong
   val pongRecv: Long = splitLine(5).toLong
   val configEpoch: Long = splitLine(6).toLong

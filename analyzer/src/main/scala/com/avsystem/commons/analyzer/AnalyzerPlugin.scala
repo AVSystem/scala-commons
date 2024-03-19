@@ -75,7 +75,7 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
 
     import global._
 
-    def newPhase(prev: Phase) = new StdPhase(prev) {
+    def newPhase(prev: Phase): StdPhase = new StdPhase(prev) {
       def apply(unit: CompilationUnit): Unit =
         rules.foreach(rule => if (rule.level != Level.Off) rule.analyze(unit.asInstanceOf[rule.global.CompilationUnit]))
     }

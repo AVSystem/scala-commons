@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package mongo
 
-import java.nio.ByteBuffer
+import com.avsystem.commons.ser.{Nested, Toplevel}
 
-import com.avsystem.commons.rpc.akka.serialization.{Nested, Something}
+import java.nio.ByteBuffer
 import org.bson.codecs.{BsonDocumentCodec, DecoderContext, EncoderContext}
 import org.bson.io.BasicOutputBuffer
 import org.bson.{BsonArray, BsonBinaryReader, BsonBinaryWriter, BsonDocument, BsonInt32, BsonString}
@@ -18,11 +18,11 @@ class BsonCodecBenchmark {
 
   import BsonCodecBenchmark._
 
-  private val something = Something(42, Nested(List(4, 8, 15, 16, 23, 42, 0), 131), "lol")
+  private val something = Toplevel(42, Nested(List(4, 8, 15, 16, 23, 42, 0), 131), "lol")
   private val doc = somethingCodec.toDocument(something)
   private val bytes = binaryEncode(something)
 
-  def binaryEncode(something: Something): Array[Byte] = {
+  def binaryEncode(something: Toplevel): Array[Byte] = {
     val output = new BasicOutputBuffer()
     val writer = new BsonBinaryWriter(output)
     val doc = somethingCodec.toDocument(something)
@@ -36,7 +36,7 @@ class BsonCodecBenchmark {
   }
 
   @Benchmark
-  def binaryDecoding(): Something = {
+  def binaryDecoding(): Toplevel = {
     val reader = new BsonBinaryReader(ByteBuffer.wrap(bytes))
     val doc = bsonDocumentCodec.decode(reader, DecoderContext.builder().build())
     somethingCodec.fromDocument(new Doc(doc))
@@ -48,7 +48,7 @@ class BsonCodecBenchmark {
   }
 
   @Benchmark
-  def decoding(): Something = {
+  def decoding(): Toplevel = {
     somethingCodec.fromDocument(doc)
   }
 }
@@ -76,13 +76,13 @@ object BsonCodecBenchmark {
 
   val nestedKey: DocKey[Nested, BsonDocument] = nestedCodec.bsonCodec.key("nested")
 
-  val somethingCodec = new DocumentCodec[Something] {
-    override def toDocument(t: Something): Doc = Doc()
+  val somethingCodec = new DocumentCodec[Toplevel] {
+    override def toDocument(t: Toplevel): Doc = Doc()
       .put(intKey, t.int)
       .put(nestedKey, t.nested)
       .put(strKey, t.str)
 
-    override def fromDocument(doc: Doc): Something = Something(
+    override def fromDocument(doc: Doc): Toplevel = Toplevel(
       int = doc.require(intKey),
       nested = doc.require(nestedKey),
       str = doc.require(strKey)

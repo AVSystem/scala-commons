@@ -192,7 +192,7 @@ trait ReplicationInfo extends RedisInfo {
   /**
     * @param slaveId ranges from 0 to [[connectedSlaves]]-1
     */
-  def slaveInfo(slaveId: Int): Opt[SlaveInfo] = get(s"slave$slaveId").map(SlaveInfo)
+  def slaveInfo(slaveId: Int): Opt[SlaveInfo] = get(s"slave$slaveId").map(SlaveInfo.apply)
   def masterReplOffset: Opt[Long] = get("master_repl_offset").map(_.toLong)
   def replBacklogActive: Opt[Boolean] = get("repl_backlog_active").map(_ == "1")
   def replBacklogSize: Opt[Long] = get("repl_backlog_size").map(_.toLong)
@@ -227,7 +227,7 @@ trait CommandstatsInfo extends RedisInfo {
   override protected def indexedPrefixes: List[String] = "cmdstat_" :: super.indexedPrefixes
 
   lazy val executedCommands: BSeq[String] = keysByPrefix.getOrElse("cmdstat_", Nil).map(_.stripPrefix("cmdstat_"))
-  def commandStat(command: String): Opt[CommandStat] = get(s"cmdstat_$command").map(CommandStat)
+  def commandStat(command: String): Opt[CommandStat] = get(s"cmdstat_$command").map(CommandStat.apply)
 }
 object CommandstatsInfo extends RedisInfoSection[CommandstatsInfo]("commandstats")
 
@@ -246,7 +246,7 @@ trait KeyspaceInfo extends RedisInfo {
   override protected def indexedPrefixes: List[String] = "db" :: super.indexedPrefixes
 
   lazy val nonEmptyDbs: Seq[Int] = keysByPrefix.getOrElse("db", Nil).iterator.map(_.stripPrefix("db").toInt).toList
-  def dbStat(dbId: Int): Opt[DbStat] = get(s"db$dbId").map(DbStat)
+  def dbStat(dbId: Int): Opt[DbStat] = get(s"db$dbId").map(DbStat.apply)
 }
 object KeyspaceInfo extends RedisInfoSection[KeyspaceInfo]("keyspace")
 

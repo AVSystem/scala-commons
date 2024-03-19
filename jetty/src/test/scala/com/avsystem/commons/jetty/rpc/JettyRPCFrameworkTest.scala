@@ -53,7 +53,7 @@ class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers 
   val impl: SomeApi = new SomeApi {
     override def keks: Future[Long] = Future.successful(keksResult)
     override def isTop(keks: Long): Future[Boolean] = Future.successful(keks == Int.MaxValue)
-    override val topper = new TopperImpl("%s", topKeksResult)
+    override val topper: TopperImpl = new TopperImpl("%s", topKeksResult)
     override def differentTopper(helloPattern: String): Topper = new TopperImpl(helloPattern, topKeksResult)
     override def erroneousKeks: Future[Int] = Future.failed(new RuntimeException("cannot into"))
   }
