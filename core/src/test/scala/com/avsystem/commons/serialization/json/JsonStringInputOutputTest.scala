@@ -205,7 +205,7 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   }
 
   test("serialize all types") {
-    forAll { item: CompleteItem =>
+    forAll { (item: CompleteItem) =>
       val serialized = write(item)
       val deserialized = read[CompleteItem](serialized)
 
@@ -363,7 +363,7 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
         Gen.sized(sz => sized(math.min(sz, 1)))
       }
 
-    forAll { dncc: DeepNestedTestCC =>
+    forAll { (dncc: DeepNestedTestCC) =>
       val serialized = write(dncc)
       val deserialized = read[DeepNestedTestCC](serialized)
 

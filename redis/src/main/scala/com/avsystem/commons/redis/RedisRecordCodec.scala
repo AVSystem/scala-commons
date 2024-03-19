@@ -38,7 +38,7 @@ object RedisRecordCodec extends LowPriorityRedisRecordCodecs {
 
   private def bulks[F: RedisDataCodec, V: RedisDataCodec](it: Iterator[(F, V)], size: Int): IndexedSeq[BulkStringMsg] =
     it.flatMap { case (f, v) => List(RedisDataCodec.write(f), RedisDataCodec.write(v)) }
-      .map(BulkStringMsg).to(new SizedArraySeqFactory[BulkStringMsg](size))
+      .map(BulkStringMsg.apply).to(new SizedArraySeqFactory[BulkStringMsg](size))
 }
 sealed trait LowPriorityRedisRecordCodecs { this: RedisRecordCodec.type =>
   implicit def fromApplyUnapplyCodec[T](implicit codec: GenObjectCodec[T]): RedisRecordCodec[T] =

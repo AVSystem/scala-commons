@@ -16,7 +16,7 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
   private implicit val scheduler: Scheduler = Scheduler(RunNowEC)
 
   test("headOptL") {
-    forAll { ints: List[Int] =>
+    forAll { (ints: List[Int]) =>
       Observable.fromIterable(ints).headOptL.runToFuture.futureValue shouldBe ints.headOpt
     }
   }
@@ -26,7 +26,7 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
   }
 
   test("findOptL") {
-    forAll { ints: List[Int] =>
+    forAll { (ints: List[Int]) =>
       Observable.fromIterable(ints).findOptL(_ > 1).runToFuture.futureValue shouldBe ints.findOpt(_ > 1)
     }
   }
@@ -38,13 +38,13 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
   }
 
   test("distinct") {
-    forAll { ints: List[Int] =>
+    forAll { (ints: List[Int]) =>
       Observable.fromIterable(ints).distinct.toListL.runToFuture.futureValue shouldBe ints.distinct
     }
   }
 
   test("distinctBy") {
-    forAll { ints: List[Int] =>
+    forAll { (ints: List[Int]) =>
       val f: Int => Int = _ % 256
 
       Observable.fromIterable(ints).distinctBy(f).toListL.runToFuture.futureValue shouldBe
@@ -53,20 +53,20 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
   }
 
   test("sortedL") {
-    forAll { ints: List[Int] =>
+    forAll { (ints: List[Int]) =>
       Observable.fromIterable(ints).sortedL.runToFuture.futureValue shouldBe ints.sorted
     }
   }
 
   test("sortedByL") {
-    forAll { ints: List[Int] =>
+    forAll { (ints: List[Int]) =>
       val f: Int => Int = _ % 256
       Observable.fromIterable(ints).sortedByL(f).runToFuture.futureValue shouldBe ints.sortBy(f)
     }
   }
 
   test("toL") {
-    forAll { ints: List[(Int, Int)] =>
+    forAll { (ints: List[(Int, Int)]) =>
       def testFactory[T](factory: Factory[(Int, Int), T])(implicit position: Position) =
         Observable.fromIterable(ints).toL(factory).runToFuture.futureValue shouldBe factory.fromSpecific(ints)
 
@@ -100,7 +100,7 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
   }
 
   test("mkMapL") {
-    forAll { ints: List[Int] =>
+    forAll { (ints: List[Int]) =>
       Observable.fromIterable(ints).mkMapL(_ % 3, _ + 2).runToFuture.futureValue shouldBe ints.mkMap(_ % 3, _ + 2)
     }
   }

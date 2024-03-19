@@ -26,7 +26,7 @@ class IsoInstantTest extends AnyFunSuite with ScalaCheckPropertyChecks {
 
   test("roundtrip") {
     val genTstamp = Gen.choose[Long](-(1L << 50), 1L << 50)
-    forAll(genTstamp) { l: Long =>
+    forAll(genTstamp) { (l: Long) =>
       assert(IsoInstant.parse(IsoInstant.format(l)) == l)
     }
   }

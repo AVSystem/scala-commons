@@ -8,7 +8,7 @@ case class CustomWrappy(value: String)
 
 object CustomImplicits {
   implicit val customWrappyCodec: GenCodec[CustomWrappy] =
-    GenCodec.transformed[CustomWrappy, String](_.value, CustomWrappy)
+    GenCodec.transformed[CustomWrappy, String](_.value, CustomWrappy.apply)
 }
 
 abstract class CustomPolyDataCompanion[D[_]](

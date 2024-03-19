@@ -81,7 +81,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
           }
           singleError orElse
             errors.map(a => TransactionReply(IArraySeq.unsafeWrapArray(a))) orElse
-            normalResult.map(TransactionReply)
+            normalResult.map(TransactionReply.apply)
         case i =>
           message match {
             case RedisMsg.Queued =>

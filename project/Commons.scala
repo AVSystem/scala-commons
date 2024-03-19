@@ -134,6 +134,7 @@ object Commons extends ProjectGroup("commons") {
       "-language:experimental.macros",
       "-language:higherKinds",
       "-Xfatal-warnings",
+      "-Xsource:3",
       "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
       "-Ycache-plugin-class-loader:last-modified",
       "-Ycache-macro-class-loader:last-modified",

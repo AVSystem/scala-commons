@@ -94,7 +94,7 @@ object ReplyDecoders {
 
   val bulkAsNodeInfos: ReplyDecoder[Seq[NodeInfo]] = {
     case BulkStringMsg(nodeInfos) =>
-      nodeInfos.utf8String.split("\n").iterator.filter(_.nonEmpty).map(NodeInfo).toIndexedSeq
+      nodeInfos.utf8String.split("\n").iterator.filter(_.nonEmpty).map(NodeInfo.apply).toIndexedSeq
   }
 
   val bulkAsNodeInfo: ReplyDecoder[NodeInfo] =

@@ -179,7 +179,7 @@ trait KeyedKeysApi extends ApiSubset {
     override def immediateResult: Opt[Int] = whenEmpty(keys, 0)
   }
 
-  private final class Dump(key: Key) extends RedisOptCommand[Dumped](bulk(Dumped)) with NodeCommand {
+  private final class Dump(key: Key) extends RedisOptCommand[Dumped](bulk(Dumped.apply)) with NodeCommand {
     val encoded: Encoded = encoder("DUMP").key(key).result
   }
 
