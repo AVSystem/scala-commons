@@ -243,7 +243,7 @@ object ReplyDecoders {
   }
 
   val multiBulkAsSlowlogEntry: ReplyDecoder[SlowlogEntry] = {
-    case msg@ArrayMsg(IndexedSeq(IntegerMsg(id), IntegerMsg(timestamp), IntegerMsg(duration), ArrayMsg(rawCommand), rest@_*)) =>
+    case msg@ArrayMsg(IndexedSeq(IntegerMsg(id), IntegerMsg(timestamp), IntegerMsg(duration), ArrayMsg(rawCommand), rest*)) =>
       val commandArgs = rawCommand.map {
         case BulkStringMsg(arg) => arg
         case el => throw new UnexpectedReplyException(s"Unexpected message for SLOWLOG command argument: $el")
@@ -263,7 +263,7 @@ object ReplyDecoders {
   }
 
   val multiBulkAsSlotRangeMapping: ReplyDecoder[SlotRangeMapping] = {
-    case ArrayMsg(IndexedSeq(IntegerMsg(from), IntegerMsg(to), master, slaves@_*)) =>
+    case ArrayMsg(IndexedSeq(IntegerMsg(from), IntegerMsg(to), master, slaves*)) =>
       val range = SlotRange(from.toInt, to.toInt)
       def parseNode(rr: RedisMsg) = rr match {
         case ArrayMsg(IndexedSeq(BulkStringMsg(ip), IntegerMsg(port), BulkStringMsg(nodeId), _*)) =>
