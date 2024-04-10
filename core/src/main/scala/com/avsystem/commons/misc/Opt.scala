@@ -28,6 +28,20 @@ object Opt {
     def foreach[U](f: A => U): Unit = self filter p foreach f
     def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }
+
+  final class LazyOptOps[A](private val opt: () => Opt[A]) extends AnyVal {
+    /** When a given condition is true, evaluates the `opt` argument and returns it.
+      * When the condition is false, `opt` is not evaluated and `Opt.Empty` is
+      * returned.
+      */
+    def when(cond: Boolean): Opt[A] = if (cond) opt() else Opt.Empty
+    /** Unless a given condition is true, this will evaluate the `opt` argument and
+      * return it. Otherwise, `opt` is not evaluated and `Opt.Empty` is returned.
+      */
+    @inline def unless(cond: Boolean): Opt[A] = when(!cond)
+  }
+
+  implicit def lazyOptOps[A](opt: => Opt[A]): LazyOptOps[A] = new LazyOptOps(() => opt)
 }
 
 /**
@@ -41,7 +55,8 @@ object Opt {
   * Please be aware of that tradeoff.
   */
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
-  import Opt._
+
+  import Opt.*
 
   private def value: A = rawValue.asInstanceOf[A]
 
@@ -140,7 +155,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
     if (isEmpty) Iterator.empty else Iterator.single(value)
 
   @inline def toList: List[A] =
-    if (isEmpty) List() else new ::(value, Nil)
+    if (isEmpty) List() else value :: Nil
 
   @inline def toRight[X](left: => X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
