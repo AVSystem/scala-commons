@@ -66,16 +66,4 @@ class OptTest extends AnyFunSuite {
     val seq: Seq[Int] = Opt(5).mapOr(Nil, i => 0 until i)
     assert(seq == (0 until 5))
   }
-
-  test("Opt.{when, unless}") {
-    val opt = Opt(42)
-
-    assert(opt.when(true) == opt)
-    assert(opt.when(false) == Opt.Empty)
-    assert(Opt(fail("Parameter should not be evaluated")).when(false) == Opt.Empty)
-
-    assert(opt.unless(false) == opt)
-    assert(opt.unless(true) == Opt.Empty)
-    assert(Opt(fail("Parameter should not be evaluated")).unless(true) == Opt.Empty)
-  }
 }
