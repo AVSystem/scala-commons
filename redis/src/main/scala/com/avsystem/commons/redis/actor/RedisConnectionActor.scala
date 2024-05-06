@@ -623,7 +623,7 @@ object RedisConnectionActor {
       val packsResultOpt = preprocessors match {
         case null => Opt(PacksResult.Empty)
         case prep: ReplyPreprocessor =>
-          prep.preprocess(message, state).map(PacksResult.Single)
+          prep.preprocess(message, state).map(PacksResult.Single.apply)
         case queue: mutable.Queue[ReplyPreprocessor@unchecked] =>
           queue.front.preprocess(message, state).flatMap { preprocessedMsg =>
             if (replies == null) {
