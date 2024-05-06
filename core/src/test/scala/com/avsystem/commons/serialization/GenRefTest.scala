@@ -30,13 +30,13 @@ case class GenericCase[T](thing: T) extends GenericUnion[T]
 class GenRefTest extends AnyFunSuite {
   test("simple raw ref") {
     val path = RawRef.create[TransparentToplevel].ref(_.toplevel.middle.get.bottom.mapa("str")).normalize.toList
-    assert(path == List("middle", "bot", "mapa", "str").map(RawRef.Field))
+    assert(path == List("middle", "bot", "mapa", "str").map(RawRef.Field.apply))
   }
 
   test("transparent wrapper field ref") {
     val path1 = RawRef.create[Toplevel].ref(_.middle.get.bottom.wrappy).normalize.toList
     val path2 = RawRef.create[Toplevel].ref(_.middle.get.bottom.wrappy.value).normalize.toList
-    assert(path1 == List("middle", "bot", "wrappy").map(RawRef.Field))
+    assert(path1 == List("middle", "bot", "wrappy").map(RawRef.Field.apply))
     assert(path2 == path1)
   }
 
@@ -52,13 +52,13 @@ class GenRefTest extends AnyFunSuite {
     val ref2 = subRef andThen GenRef.create[Middle].ref(_.bottom.mapa("str"))
     val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42), Wrappy("oof"))).opt))
     assert(ref1(obj) == 42)
-    assert(ref1.rawRef.normalize.toList == List("middle", "bot", "mapa", "str").map(RawRef.Field))
+    assert(ref1.rawRef.normalize.toList == List("middle", "bot", "mapa", "str").map(RawRef.Field.apply))
     assert(ref2(obj) == 42)
-    assert(ref2.rawRef.normalize.toList == List("middle", "bot", "mapa", "str").map(RawRef.Field))
+    assert(ref2.rawRef.normalize.toList == List("middle", "bot", "mapa", "str").map(RawRef.Field.apply))
   }
 
   test("gen ref implicits test") {
-    import GenRef.Implicits._
+    import GenRef.Implicits.*
 
     val codecRef = CodecRef((_: TransparentToplevel).toplevel.middle.get.bottom.mapa("str"))
     val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42), Wrappy("oof"))).opt))
@@ -67,7 +67,7 @@ class GenRefTest extends AnyFunSuite {
 
   test("sealed trait common field test") {
     val ref = GenRef.create[Toplevel].ref(_.seal.id)
-    assert(ref.rawRef.normalize.toList == List("seal", "_id").map(RawRef.Field))
+    assert(ref.rawRef.normalize.toList == List("seal", "_id").map(RawRef.Field.apply))
   }
 
   test("generic sealed trait common field test") {
