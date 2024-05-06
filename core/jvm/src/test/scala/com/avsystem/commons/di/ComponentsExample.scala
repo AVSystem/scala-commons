@@ -14,7 +14,7 @@ case class BulbulatorConfig(
 )
 
 abstract class MyComponent {
-  println(s"starting $this initialization on ${Thread.currentThread().getId}")
+  println(s"starting $this initialization on ${Thread.currentThread()}")
   Thread.sleep(100)
   println(s"finished $this initialization")
 
