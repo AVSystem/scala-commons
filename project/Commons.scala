@@ -78,7 +78,7 @@ object Commons extends ProjectGroup("commons") {
       "REDIS_VERSION" -> "6.2.12",
     ),
     githubWorkflowArtifactUpload := false,
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21")),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
         UseRef.Public("actions", "cache", "v2"),
