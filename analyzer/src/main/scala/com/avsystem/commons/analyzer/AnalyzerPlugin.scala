@@ -56,6 +56,7 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     new Any2StringAdd(global),
     new ThrowableObjects(global),
     new DiscardedMonixTask(global),
+    new ThrownExceptionNotInMonixScope(global),
     new BadSingletonComponent(global),
     new ConstantDeclarations(global),
     new BasePackage(global),
