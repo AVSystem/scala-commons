@@ -1,13 +1,27 @@
 package com.avsystem.commons
 package hocon
 
-import java.time.{Duration, Period}
-
 import com.avsystem.commons.serialization.json.JsonStringOutput
 import com.avsystem.commons.serialization.{GenCodecRoundtripTest, Input, Output}
-import com.typesafe.config.{ConfigFactory, ConfigMemorySize, ConfigValue, ConfigValueFactory, ConfigValueType}
+import com.typesafe.config.*
+
+import java.time.{Duration, Period}
+import scala.concurrent.duration.*
+
+object HoconInputTest {
+  case class CustomCodecsClass(
+    duration: FiniteDuration,
+    fileSize: SizeInBytes,
+    embeddedConfig: Config,
+    clazz: Class[?],
+  )
+  object CustomCodecsClass extends ConfigCompanion[CustomCodecsClass]
+}
 
 class HoconInputTest extends GenCodecRoundtripTest {
+
+  import HoconInputTest.*
+
   type Raw = ConfigValue
 
   def writeToOutput(write: Output => Unit): ConfigValue = {
@@ -55,5 +69,25 @@ class HoconInputTest extends GenCodecRoundtripTest {
 
   test("number reading") {
     assert(rawInput(42.0).readNumber().doubleValue == 42.0)
+  }
+
+  test("class reading") {
+    val config = ConfigFactory.parseString(
+      """{
+        |  duration = 1m
+        |  fileSize = 1KiB
+        |  embeddedConfig {
+        |    something = "abc"
+        |  }
+        |  clazz = "com.avsystem.commons.hocon.HoconInputTest"
+        |}""".stripMargin
+    )
+    val expected = CustomCodecsClass(
+      duration = 1.minute,
+      fileSize = SizeInBytes.`1KiB`,
+      embeddedConfig = ConfigFactory.parseMap(JMap("something" -> "abc")),
+      clazz = classOf[HoconInputTest],
+    )
+    assert(CustomCodecsClass.read(config) == expected)
   }
 }
