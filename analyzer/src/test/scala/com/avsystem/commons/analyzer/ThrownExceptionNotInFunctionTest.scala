@@ -8,14 +8,17 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
 
   Seq(
     ("Option[_]", "map"),
+    ("Option[_]", "flatMap"),
     ("List[_]", "map"),
     ("Seq[_]", "map"),
     ("Set[_]", "map"),
     ("Map[_, _]", "map"),
     ("scala.concurrent.Future[_]", "map"),
+    ("scala.concurrent.Future[_]", "flatMap"),
     ("scala.util.Try[_]", "map"),
     ("Either[_, _]", "map"),
     ("monix.eval.Task[_]", "map"),
+    ("monix.eval.Task[_]", "flatMap"),
     ("com.avsystem.commons.misc.Opt[_]", "map"),
     ("String => Int", "andThen"),
     ("String => Nothing", "andThen"),
