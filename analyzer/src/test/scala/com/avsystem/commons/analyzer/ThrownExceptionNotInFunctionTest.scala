@@ -6,6 +6,24 @@ import org.scalatest.funsuite.AnyFunSuite
 final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTest {
   settings.pluginOptions.value ++= List("AVSystemAnalyzer:-discardedMonixTask")
 
+
+  test("Testing simple methods") {
+    assertErrors(1,
+      //language=Scala
+      """
+        |object whatever {
+        |  def ex: Exception = ???
+        |
+        |  def f0(x1: Int => Int) = ???
+        |
+        |  //not ok
+        |  f0(throw ex)
+        |
+        |  //ok
+        |  f0(identity)
+        |}""".stripMargin)
+  }
+
   Seq(
     ("Option[_]", "map"),
     ("Option[_]", "flatMap"),
@@ -26,7 +44,7 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
     ("String => Int", "compose"),
     ("Seq[_]", "foreach"),
   ).foreach { case (tpe, function) =>
-    test(s"Testing $function of $tpe") {
+    test(s"Testing method $function of $tpe") {
       assertErrors(10,
         //language=Scala
         s"""
@@ -79,4 +97,57 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
       )
     }
   }
+
+  test("Testing multiple arguments") {
+    assertErrors(10,
+      //language=Scala
+      """
+        |object whatever {
+        |  def ex: Exception = ???
+        |
+        |  def f1(x1: Int => Int, x2: String => String) = ???
+        |  def f2(x1: Int => Int)(x2: String => String) = ???
+        |  def f3(x1: Int => Int)(x2: Int)(x3: String => String) = ???
+        |  def f4(x1: Int, x2: Int, x3: String => String) = ???
+        |
+        |  //not ok
+        |  f1(throw ex, throw ex)
+        |  f1(identity, throw ex)
+        |  f1(throw ex, identity)
+        |
+        |  f2(throw ex)(throw ex)
+        |  f2(identity)(throw ex)
+        |  f2(throw ex)(identity)
+        |
+        |  f3(throw ex)(42)(throw ex)
+        |  f3(throw ex)(42)(identity)
+        |  f3(identity)(42)(throw ex)
+        |
+        |  f4(42, 42, throw ex)
+        |
+        |  //ok
+        |  f1(identity, identity)
+        |  f2(identity)(identity)
+        |  f3(identity)(42)(identity)
+        |  f4(42, 42, identity)
+        |}""".stripMargin
+    )
+  }
+
+  test("Testing constructor invocation") {
+    assertErrors(1,
+      //language=Scala
+      s"""
+         |object whatever {
+         |  def ex: Exception = ???
+         |
+         |  class A(f: String => Int)
+         |
+         |  new A(throw ex)
+         |}
+         |""".stripMargin
+    )
+  }
+
+
 }
