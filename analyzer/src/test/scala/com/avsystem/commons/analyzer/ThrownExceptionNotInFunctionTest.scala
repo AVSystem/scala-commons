@@ -130,24 +130,64 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
         |  f2(identity)(identity)
         |  f3(identity)(42)(identity)
         |  f4(42, 42, identity)
+        |
+        |  class A {
+        |    def f1(x1: Int => Int, x2: String => String) = ???
+        |    def f2(x1: Int => Int)(x2: String => String) = ???
+        |    def f3(x1: Int => Int)(x2: Int)(x3: String => String) = ???
+        |    def f4(x1: Int, x2: Int, x3: String => String) = ???
+        |  }
+        |  final val a = new A
+        |
+        |  //not ok
+        |  a.f1(throw ex, throw ex)
+        |  a.f1(identity, throw ex)
+        |  a.f1(throw ex, identity)
+        |
+        |  a.f2(throw ex)(throw ex)
+        |  a.f2(identity)(throw ex)
+        |  a.f2(throw ex)(identity)
+        |
+        |  a.f3(throw ex)(42)(throw ex)
+        |  a.f3(throw ex)(42)(identity)
+        |  a.f3(identity)(42)(throw ex)
+        |
+        |  a.f4(42, 42, throw ex)
+        |
+        |  //ok
+        |  a.f1(identity, identity)
+        |  a.f2(identity)(identity)
+        |  a.f3(identity)(42)(identity)
+        |  a.f4(42, 42, identity)
         |}""".stripMargin
     )
   }
 
   test("Testing constructor invocation") {
-    assertErrors(1,
+    assertErrors(7,
       //language=Scala
       s"""
          |object whatever {
          |  def ex: Exception = ???
          |
-         |  class A(f: String => Int)
+         |  class A(f: Int => Int)
          |
          |  new A(throw ex)
+         |
+         |  class B(f: Int => Int)(g: Int => Int)
+         |
+         |  new B(throw ex)(identity)
+         |  new B(identity)(throw ex)
+         |  new B(throw ex)(throw ex)
+         |
+         |  class C(f: Int => Int, g: Int => Int)
+         |
+         |  new C(throw ex, identity)
+         |  new C(identity, throw ex)
+         |  new C(throw ex, throw ex)
          |}
          |""".stripMargin
     )
   }
-
-
 }
+
