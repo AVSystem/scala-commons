@@ -8,7 +8,11 @@ final class ThrownExceptionNotInFunction(g: Global) extends AnalyzerRule(g, "thr
   import global.*
 
   def analyze(unit: CompilationUnit): Unit = unit.body.foreach(analyzeTree {
-    case t@Apply(f: TypeApply, List(Throw(_))) if definitions.isFunctionType(f.tpe.params.head.tpe) =>
-      report(t.pos, "exception thrown in place of function definition")
+    case Apply(f: TypeApply, args: List[Tree]) =>
+      args.zip(f.tpe.params).foreach {
+        case (arg: Throw, param) if definitions.isFunctionType(param.tpe) =>
+          report(arg.pos, "exception thrown in place of function definition")
+        case (_, _) =>
+      }
   })
 }

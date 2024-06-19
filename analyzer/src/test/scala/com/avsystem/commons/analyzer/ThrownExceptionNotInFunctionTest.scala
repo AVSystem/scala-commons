@@ -80,4 +80,3 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
     }
   }
 }
-
