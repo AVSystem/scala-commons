@@ -20,7 +20,7 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
         |  f0(throw ex)
         |
         |  //ok
-//        |  f0(identity)
+        |  f0(identity)
         |}""".stripMargin)
   }
 
