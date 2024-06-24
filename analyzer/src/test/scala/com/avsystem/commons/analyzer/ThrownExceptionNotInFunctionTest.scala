@@ -20,7 +20,7 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
         |  f0(throw ex)
         |
         |  //ok
-        |  f0(identity)
+//        |  f0(identity)
         |}""".stripMargin)
   }
 
@@ -99,7 +99,7 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
   }
 
   test("Testing multiple arguments") {
-    assertErrors(10,
+    assertErrors(26,
       //language=Scala
       """
         |object whatever {
@@ -164,7 +164,7 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
   }
 
   test("Testing constructor invocation") {
-    assertErrors(7,
+    assertErrors(9,
       //language=Scala
       s"""
          |object whatever {
@@ -189,5 +189,21 @@ final class ThrownExceptionNotInFunctionTest extends AnyFunSuite with AnalyzerTe
          |""".stripMargin
     )
   }
-}
 
+  test("Testing indirect exception throwing") {
+    assertErrors(1,
+      //language=Scala
+      """
+        |object whatever {
+        |  def throwEx: Nothing = ???
+        |
+        |  def f0(x1: Int => Int) = ???
+        |
+        |  //not ok
+        |  f0(throwEx)
+        |
+        |  //ok
+        |  f0(identity)
+        |}""".stripMargin)
+  }
+}
