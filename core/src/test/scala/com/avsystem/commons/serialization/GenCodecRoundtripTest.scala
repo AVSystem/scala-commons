@@ -72,6 +72,11 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip(StringId("lolfuu"), "lolfuu")
   }
 
+  test("opaque and subopaque") {
+    testRoundtrip(SomeOpaque(42))
+    testRoundtrip(SomeSubopaque(42))
+  }
+
   test("case class") {
     testRoundtrip(SomeCaseClass("dafuq", List(1, 2, 3)))
   }

@@ -4,6 +4,7 @@ package serialization
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
+import com.avsystem.commons.opaque.{Opaque, Subopaque}
 
 import scala.annotation.meta.getter
 
@@ -133,6 +134,9 @@ object CodecTestData {
 
   @transparent case class StringId(id: String)
   object StringId extends TransparentWrapperCompanion[String, StringId]
+
+  object SomeOpaque extends Opaque.Default[Int]
+  object SomeSubopaque extends Subopaque.Default[Int]
 
   trait HasSomeStr {
     @name("some.str") def str: String

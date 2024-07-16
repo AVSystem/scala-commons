@@ -1,9 +1,7 @@
 package com.avsystem.commons
 package opaque
 
-private[opaque] final class Castable[A, B] {
-  @inline def apply(a: A): B = a.asInstanceOf[B]
-}
+private[opaque] final class Castable[A, B]
 private[opaque] object Castable {
   type <:>[A, B] = Castable[A, B]
   def apply[A, B](implicit ev: A <:> B): Castable[A, B] = ev
