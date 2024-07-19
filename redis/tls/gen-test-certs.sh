@@ -25,7 +25,7 @@ generate_cert() {
             -CAkey ca.key \
             -CAserial ca.txt \
             -CAcreateserial \
-            -days 365 \
+            -days 3650 \
             $opts \
             -out $certfile
 }

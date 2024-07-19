@@ -26,16 +26,16 @@ object Commons extends ProjectGroup("commons") {
 
   val guavaVersion = "33.2.1-jre"
   val jsr305Version = "3.0.2"
-  val scalatestVersion = "3.2.18"
+  val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
   val scalacheckVersion = "1.18.0"
-  val jettyVersion = "10.0.21"
-  val mongoVersion = "5.1.0"
-  val springVersion = "5.3.36"
+  val jettyVersion = "10.0.22"
+  val mongoVersion = "5.1.2"
+  val springVersion = "5.3.37"
   val typesafeConfigVersion = "1.4.3"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.5"
-  val pekkoVersion = "1.0.2"
+  val pekkoVersion = "1.0.3"
   val monixVersion = "3.4.1"
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
