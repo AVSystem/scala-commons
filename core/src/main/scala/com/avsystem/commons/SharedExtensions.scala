@@ -461,6 +461,19 @@ object SharedExtensionsUtils extends SharedExtensions {
       */
     def toOptArg: OptArg[A] =
       if (tr.isFailure) OptArg.Empty else OptArg(tr.get)
+
+    /**
+      * Apply side-effect only if Try is a failure.
+      *
+      * Don't use .failed projection here, because it unnecessarily creates Exception in case of Success,
+      * which is an expensive operation.
+      */
+    def tapFailure(action: Throwable => Unit): Try[A] = tr match {
+      case Success(_) => tr
+      case Failure(throwable) =>
+        action(throwable)
+        tr
+    }
   }
 
   class LazyTryOps[A](private val tr: () => Try[A]) extends AnyVal {
