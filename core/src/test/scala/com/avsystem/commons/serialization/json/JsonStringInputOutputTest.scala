@@ -60,6 +60,12 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
     assert(resBuilder.result() == jsons)
   }
 
+  test("WrappedJson") {
+    val json = "{\"a\": 123, \"b\": 3.14}"
+    assert(JsonStringOutput.write(WrappedJson(json)) == json)
+    assert(JsonStringInput.read[WrappedJson](json) == WrappedJson(json))
+  }
+
   def roundtrip[T: GenCodec](name: String)(values: T*)(implicit pos: Position): Unit = {
     test(name) {
       val serialized = values.map(write[T](_))
