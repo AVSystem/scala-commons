@@ -61,7 +61,7 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   }
 
   test("WrappedJson") {
-    val json = "{\"a\": 123, \"b\": 3.14}"
+    val json = """{"a": 123, "b": 3.14}"""
     assert(JsonStringOutput.write(WrappedJson(json)) == json)
     assert(JsonStringInput.read[WrappedJson](json) == WrappedJson(json))
   }

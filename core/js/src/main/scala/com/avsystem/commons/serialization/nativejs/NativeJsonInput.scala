@@ -32,46 +32,49 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
     }
 
   override def readLong(): Long = {
-    def longFromString(s: String): Long =
+    def fromString(s: String): Long =
       try s.toLong
       catch {
         case e: NumberFormatException => throw new ReadFailure(s"Cannot read Long", e)
       }
     (value: Any) match {
-      case s: String => longFromString(s)
+      case s: String => fromString(s)
       case i: Int => i
       case d: Double if d.isWhole => d.toLong
-      case b: js.BigInt => longFromString(b.toString)
-      case b if js.typeOf(b) == "bigint" => longFromString(b.asInstanceOf[js.BigInt].toString)
+      case b: js.BigInt => fromString(b.toString)
+      case b if js.typeOf(b) == "bigint" => fromString(b.asInstanceOf[js.BigInt].toString)
       case o => throw new ReadFailure(s"Cannot read Long, got: ${js.typeOf(o)}")
     }
   }
 
   override def readBigInt(): BigInt = {
-    def fail = throw new ReadFailure(s"BigInt expected.")
+    def fromString(s: String): BigInt =
+      try BigInt(s)
+      catch {
+        case e: NumberFormatException => throw new ReadFailure(s"Cannot read BitInt", e)
+      }
+
     (value: Any) match {
-      case s: String =>
-        try BigInt(s)
-        catch {
-          case _: NumberFormatException => fail
-        }
+      case s: String => fromString(s)
       case i: Int => BigInt(i)
       case d: Double if d.isWhole => BigInt(d.toLong)
-      case _ => fail
+      case b: js.BigInt => fromString(b.toString)
+      case b if js.typeOf(b) == "bigint" => fromString(b.asInstanceOf[js.BigInt].toString)
+      case o => throw new ReadFailure(s"Cannot read BitInt, got: ${js.typeOf(o)}")
     }
   }
 
   override def readBigDecimal(): BigDecimal = {
-    def fail = throw new ReadFailure(s"BigDecimal expected.")
+    def fromString(s: String): BigDecimal =
+      try BigDecimal(s)
+      catch {
+        case e: NumberFormatException => throw new ReadFailure(s"Cannot read BigDecimal", e)
+      }
     (value: Any) match {
-      case s: String =>
-        try BigDecimal(s)
-        catch {
-          case _: NumberFormatException => fail
-        }
+      case s: String => fromString(s)
       case i: Int => BigDecimal(i)
       case d: Double => BigDecimal(d)
-      case _ => fail
+      case o => throw new ReadFailure(s"Cannot read BigDecimal, got: ${js.typeOf(o)}")
     }
   }
 
@@ -102,7 +105,9 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
   override def skip(): Unit = ()
 
   override def readBinary(): Array[Byte] =
-    readList().iterator(_.readSimple().readInt().toByte).toArray
+    read("List") {
+      case array: js.Array[Int @unchecked] => array.iterator.map(_.toByte).toArray
+    }
 
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
     typeMarker match {
@@ -120,7 +125,6 @@ final class JsonListInput(list: js.Array[js.Any], options: NativeFormatOptions) 
     it < list.length
 
   override def nextElement(): Input = {
-    js.BigInt
     val in = new NativeJsonInput(list(it), options)
     it += 1
     in
@@ -128,7 +132,7 @@ final class JsonListInput(list: js.Array[js.Any], options: NativeFormatOptions) 
 }
 
 final class JsonObjectInput(dict: js.Dictionary[js.Any], options: NativeFormatOptions) extends ObjectInput {
-  val it = dict.keysIterator
+  val it = dict.iterator
 
   override def hasNext: Boolean =
     it.hasNext
@@ -137,8 +141,8 @@ final class JsonObjectInput(dict: js.Dictionary[js.Any], options: NativeFormatOp
     if (dict.contains(name)) Opt(new NativeJsonFieldInput(name, dict(name), options)) else Opt.Empty
 
   override def nextField(): FieldInput = {
-    val key = it.next()
-    new NativeJsonFieldInput(key, dict.apply(key), options)
+    val (key, value) = it.next()
+    new NativeJsonFieldInput(key, value, options)
   }
 }
 

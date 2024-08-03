@@ -30,8 +30,10 @@ final class NativeJsonOutput(
     case NativeLongFormat.JsBigInt => writeRaw(js.BigInt(long.toString))
   }
 
-  override def writeBigInt(bigInt: BigInt): Unit =
-    writeString(bigInt.toString)
+  override def writeBigInt(bigInt: BigInt): Unit = options.bigIntFormat match {
+    case NativeBitIntFormat.RawString => writeString(bigInt.toString)
+    case NativeBitIntFormat.JsBigInt => writeRaw(js.BigInt(bigInt.toString))
+  }
 
   override def writeBigDecimal(bigDecimal: BigDecimal): Unit =
     writeString(bigDecimal.toString)
@@ -46,9 +48,8 @@ final class NativeJsonOutput(
     new NativeJsonObjectOutput(valueConsumer, options)
 
   override def writeBinary(binary: Array[Byte]): Unit = {
-    val l = writeList()
-    binary.foreach(b => l.writeElement().writeSimple().writeInt(b))
-    l.finish()
+    import js.JSConverters._
+    valueConsumer(binary.toJSArray)
   }
 
   override def writeTimestamp(millis: Long): Unit = options.dateFormat match {

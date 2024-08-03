@@ -26,14 +26,28 @@ object NativeDateFormat extends AbstractValueEnumCompanion[NativeDateFormat] {
 }
 
 /**
+  * Specifies format used by `NativeJsonOutput.writeBigInt` / `NativeJsonInput.readBigInt`
+  * to represent [[BigInt]].
+  *
+  * Note that [[scala.scalajs.js.JSON.stringify]] does not know how to serialize a BigInt and throws an error
+  */
+final class NativeBitIntFormat(implicit ctx: EnumCtx) extends AbstractValueEnum
+object NativeBitIntFormat extends AbstractValueEnumCompanion[NativeBitIntFormat] {
+  final val RawString: Value = new NativeBitIntFormat
+  final val JsBigInt: Value = new NativeBitIntFormat
+}
+
+/**
   * Adjusts format produced by [[NativeJsonOutput]].
   *
   * @param longFormat format used to [[Long]]
   * @param dateFormat format used to represent timestamps
+  * @param bigIntFormat format used to represent [[BigInt]]
   */
 final case class NativeFormatOptions(
   longFormat: NativeLongFormat = NativeLongFormat.RawString,
   dateFormat: NativeDateFormat = NativeDateFormat.RawString,
+  bigIntFormat: NativeBitIntFormat = NativeBitIntFormat.RawString,
 )
 object NativeFormatOptions {
   final val RawString = NativeFormatOptions()
