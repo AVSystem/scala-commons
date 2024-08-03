@@ -11,7 +11,7 @@ import scala.scalajs.js.JSON
 
 class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends InputAndSimpleInput { self =>
   private def read[T](expected: String)(matcher: PartialFunction[Any, T]): T =
-    matcher.applyOrElse(value, (_: Any) => throw new ReadFailure(s"$expected expected."))
+    matcher.applyOrElse(value, (o: Any) => throw new ReadFailure(s"Cannot read $expected, got: ${js.typeOf(o)}"))
 
   override def readNull(): Boolean =
     value == null
@@ -37,13 +37,13 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
       catch {
         case e: NumberFormatException => throw new ReadFailure(s"Cannot read Long", e)
       }
-    (value: Any) match {
+    read("Long") {
       case s: String => fromString(s)
       case i: Int => i
       case d: Double if d.isWhole => d.toLong
       case b: js.BigInt => fromString(b.toString)
+      // for some reason pattern match on js.BigInt type does not seem to work, check type manually
       case b if js.typeOf(b) == "bigint" => fromString(b.asInstanceOf[js.BigInt].toString)
-      case o => throw new ReadFailure(s"Cannot read Long, got: ${js.typeOf(o)}")
     }
   }
 
@@ -54,13 +54,13 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
         case e: NumberFormatException => throw new ReadFailure(s"Cannot read BitInt", e)
       }
 
-    (value: Any) match {
+    read("BitInt") {
       case s: String => fromString(s)
       case i: Int => BigInt(i)
       case d: Double if d.isWhole => BigInt(d.toLong)
       case b: js.BigInt => fromString(b.toString)
+      // for some reason pattern match on js.BigInt type does not seem to work, check type manually
       case b if js.typeOf(b) == "bigint" => fromString(b.asInstanceOf[js.BigInt].toString)
-      case o => throw new ReadFailure(s"Cannot read BitInt, got: ${js.typeOf(o)}")
     }
   }
 
@@ -70,11 +70,10 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
       catch {
         case e: NumberFormatException => throw new ReadFailure(s"Cannot read BigDecimal", e)
       }
-    (value: Any) match {
+    read("BitInt") {
       case s: String => fromString(s)
       case i: Int => BigDecimal(i)
       case d: Double => BigDecimal(d)
-      case o => throw new ReadFailure(s"Cannot read BigDecimal, got: ${js.typeOf(o)}")
     }
   }
 
@@ -85,12 +84,12 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
 
   override def readList(): ListInput =
     read("List") {
-      case array: js.Array[js.Any @unchecked] => new JsonListInput(array, options)
+      case array: js.Array[js.Any @unchecked] => new NativeJsonListInput(array, options)
     }
 
   override def readObject(): ObjectInput =
     read("Object") {
-      case obj: js.Object => new JsonObjectInput(obj.asInstanceOf[js.Dictionary[js.Any]], options)
+      case obj: js.Object => new NativeJsonObjectInput(obj.asInstanceOf[js.Dictionary[js.Any]], options)
     }
 
   override def readTimestamp(): Long = options.dateFormat match {
@@ -105,7 +104,7 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
   override def skip(): Unit = ()
 
   override def readBinary(): Array[Byte] =
-    read("List") {
+    read("Binary") {
       case array: js.Array[Int @unchecked] => array.iterator.map(_.toByte).toArray
     }
 
@@ -118,21 +117,21 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
   def readRaw(): js.Any = value
 }
 
-final class JsonListInput(list: js.Array[js.Any], options: NativeFormatOptions) extends ListInput {
-  var it = 0
+final class NativeJsonListInput(array: js.Array[js.Any], options: NativeFormatOptions) extends ListInput {
+  private var it = 0
 
   override def hasNext: Boolean =
-    it < list.length
+    it < array.length
 
   override def nextElement(): Input = {
-    val in = new NativeJsonInput(list(it), options)
+    val in = new NativeJsonInput(array(it), options)
     it += 1
     in
   }
 }
 
-final class JsonObjectInput(dict: js.Dictionary[js.Any], options: NativeFormatOptions) extends ObjectInput {
-  val it = dict.iterator
+final class NativeJsonObjectInput(dict: js.Dictionary[js.Any], options: NativeFormatOptions) extends ObjectInput {
+  private val it = dict.iterator
 
   override def hasNext: Boolean =
     it.hasNext
