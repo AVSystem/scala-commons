@@ -31,10 +31,10 @@ object NativeDateFormat extends AbstractValueEnumCompanion[NativeDateFormat] {
   *
   * Note that [[scala.scalajs.js.JSON.stringify]] does not know how to serialize a BigInt and throws an error
   */
-final class NativeBitIntFormat(implicit ctx: EnumCtx) extends AbstractValueEnum
-object NativeBitIntFormat extends AbstractValueEnumCompanion[NativeBitIntFormat] {
-  final val RawString: Value = new NativeBitIntFormat
-  final val JsBigInt: Value = new NativeBitIntFormat
+final class NativeBigIntFormat(implicit ctx: EnumCtx) extends AbstractValueEnum
+object NativeBigIntFormat extends AbstractValueEnumCompanion[NativeBigIntFormat] {
+  final val RawString: Value = new NativeBigIntFormat
+  final val JsBigInt: Value = new NativeBigIntFormat
 }
 
 /**
@@ -47,7 +47,7 @@ object NativeBitIntFormat extends AbstractValueEnumCompanion[NativeBitIntFormat]
 final case class NativeFormatOptions(
   longFormat: NativeLongFormat = NativeLongFormat.RawString,
   dateFormat: NativeDateFormat = NativeDateFormat.RawString,
-  bigIntFormat: NativeBitIntFormat = NativeBitIntFormat.RawString,
+  bigIntFormat: NativeBigIntFormat = NativeBigIntFormat.RawString,
 )
 object NativeFormatOptions {
   final val RawString = NativeFormatOptions()

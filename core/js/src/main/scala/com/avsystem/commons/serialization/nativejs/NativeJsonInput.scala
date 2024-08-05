@@ -51,10 +51,10 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
     def fromString(s: String): BigInt =
       try BigInt(s)
       catch {
-        case e: NumberFormatException => throw new ReadFailure(s"Cannot read BitInt", e)
+        case e: NumberFormatException => throw new ReadFailure(s"Cannot read BigInt", e)
       }
 
-    read("BitInt") {
+    read("BigInt") {
       case s: String => fromString(s)
       case i: Int => BigInt(i)
       case d: Double if d.isWhole => BigInt(d.toLong)
@@ -70,7 +70,7 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
       catch {
         case e: NumberFormatException => throw new ReadFailure(s"Cannot read BigDecimal", e)
       }
-    read("BitInt") {
+    read("BigDecimal") {
       case s: String => fromString(s)
       case i: Int => BigDecimal(i)
       case d: Double => BigDecimal(d)

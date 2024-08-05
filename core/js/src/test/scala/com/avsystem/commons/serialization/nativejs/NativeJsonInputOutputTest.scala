@@ -40,7 +40,7 @@ class NativeJsonInputOutputTest extends AnyFunSuite {
       NativeFormatOptions(
         longFormat = NativeLongFormat.JsBigInt,
         NativeDateFormat.JsDate,
-        bigIntFormat = NativeBitIntFormat.JsBigInt,
+        bigIntFormat = NativeBigIntFormat.JsBigInt,
       ),
       testStringRepr = false, // scala.scalajs.js.JavaScriptException: TypeError: Do not know how to serialize a BigInt
     ),

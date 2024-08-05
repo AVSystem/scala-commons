@@ -31,8 +31,8 @@ final class NativeJsonOutput(
   }
 
   override def writeBigInt(bigInt: BigInt): Unit = options.bigIntFormat match {
-    case NativeBitIntFormat.RawString => writeString(bigInt.toString)
-    case NativeBitIntFormat.JsBigInt => writeRaw(js.BigInt(bigInt.toString))
+    case NativeBigIntFormat.RawString => writeString(bigInt.toString)
+    case NativeBigIntFormat.JsBigInt => writeRaw(js.BigInt(bigInt.toString))
   }
 
   override def writeBigDecimal(bigDecimal: BigDecimal): Unit =
