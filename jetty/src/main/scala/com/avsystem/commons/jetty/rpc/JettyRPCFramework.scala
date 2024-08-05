@@ -109,15 +109,17 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
               code
               asyncContext.complete()
             }
-          completeWith(Future.fromTry(call).flatMapNow(handlePost).andThenNow {
+          Future.fromTry(call).flatMapNow(handlePost).onCompleteNow {
             case Success(responseContent) =>
-              response.setContentType(MimeTypes.Type.APPLICATION_JSON.asString())
-              response.setCharacterEncoding(StandardCharsets.UTF_8.name())
-              response.getWriter.write(responseContent.s)
+              completeWith {
+                response.setContentType(MimeTypes.Type.APPLICATION_JSON.asString())
+                response.setCharacterEncoding(StandardCharsets.UTF_8.name())
+                response.getWriter.write(responseContent.s)
+              }
             case Failure(t) =>
-              response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage)
+              completeWith(response.sendError(HttpStatus.INTERNAL_SERVER_ERROR_500, t.getMessage))
               logger.error("Failed to handle RPC call", t)
-          })
+          }
         case HttpMethod.PUT =>
           call.map(handlePut).get
         case _ =>
