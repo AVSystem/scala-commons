@@ -29,7 +29,7 @@ object Commons extends ProjectGroup("commons") {
   val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
   val scalacheckVersion = "1.18.0"
-  val jettyVersion = "10.0.22"
+  val jettyVersion = "12.0.12"
   val mongoVersion = "5.1.2"
   val springVersion = "5.3.37"
   val typesafeConfigVersion = "1.4.3"
@@ -365,10 +365,8 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "org.eclipse.jetty" % "jetty-client" % jettyVersion,
-        "org.eclipse.jetty" % "jetty-server" % jettyVersion,
+        "org.eclipse.jetty.ee10" % "jetty-ee10-servlet" % jettyVersion,
         "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-
-        "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
       ),
     )
 
