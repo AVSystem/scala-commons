@@ -40,7 +40,7 @@ object Commons extends ProjectGroup("commons") {
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
   val scalajsBenchmarkVersion = "0.10.0"
-  val slf4jVersion = "2.0.13" // test only
+  val slf4jVersion = "2.0.16" // test only
 
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
