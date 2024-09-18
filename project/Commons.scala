@@ -28,7 +28,7 @@ object Commons extends ProjectGroup("commons") {
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
-  val scalacheckVersion = "1.18.0"
+  val scalacheckVersion = "1.18.1"
   val jettyVersion = "12.0.13"
   val mongoVersion = "5.1.4"
   val springVersion = "5.3.39"
