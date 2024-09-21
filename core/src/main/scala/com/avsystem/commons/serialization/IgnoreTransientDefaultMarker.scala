@@ -7,9 +7,9 @@ package serialization
   * representation. Deserialization behavior remains <b>unchanged</b>. If a field is missing from the input, the default
   * value will be used as usual.
   *
-  * This annotation can be helpful when using the same model class in multiple contexts with different serialization
+  * This marker can be helpful when using the same model class in multiple contexts with different serialization
   * formats that have conflicting requirements for handling default values.
   *
-  * @see [[CustomMarkersOutputWrapper]]
+  * @see [[CustomMarkersOutputWrapper]] for an easy way to add markers to existing [[Output]] implementations
   */
 object IgnoreTransientDefaultMarker extends CustomEventMarker[Unit]
