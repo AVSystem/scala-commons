@@ -177,10 +177,19 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         if (isTransientDefault(p)) Some(p.defaultValue)
         else p.optionLike.map(ol => q"${ol.reference(Nil)}.none")
 
-      val writeArgs = q"output" :: q"${p.idx}" :: value :: transientValue.toList
+      val writeArgsNoTransient = q"output" :: q"${p.idx}" :: List(value)
+      val writeArgs = writeArgsNoTransient ::: transientValue.toList
       val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
-      q"writeField[..$writeTargs](..$writeArgs)"
+      q"""
+        if (ignoreTransientDefault)
+          writeField[..$writeTargs](..$writeArgsNoTransient)
+        else
+          writeField[..$writeTargs](..$writeArgs)
+       """
     }
+
+    def ignoreTransientDefaultCheck: Tree =
+      q"val ignoreTransientDefault = output.customEvent($SerializationPkg.IgnoreTransientDefaultMarker, ())"
 
     def writeFields: Tree = params match {
       case Nil =>
@@ -194,20 +203,32 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case List(p: ApplyParam) =>
         if (canUseFields)
-          writeField(p, q"value.${p.sym.name}")
+          q"""
+            $ignoreTransientDefaultCheck
+            ${writeField(p, q"value.${p.sym.name}")}
+           """
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else ${writeField(p, q"unapplyRes.get")}
+            if (unapplyRes.isEmpty) unapplyFailed
+            else {
+              $ignoreTransientDefaultCheck
+              ${writeField(p, q"unapplyRes.get")}
+            }
            """
       case _ =>
         if (canUseFields)
-          q"..${params.map(p => writeField(p, q"value.${p.sym.name}"))}"
+          q"""
+            $ignoreTransientDefaultCheck
+            ..${params.map(p => writeField(p, q"value.${p.sym.name}"))}
+           """
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else {
+            if (unapplyRes.isEmpty) unapplyFailed
+            else {
               val t = unapplyRes.get
+              $ignoreTransientDefaultCheck
               ..${params.map(p => writeField(p, q"t.${tupleGet(p.idx)}"))}
             }
            """
