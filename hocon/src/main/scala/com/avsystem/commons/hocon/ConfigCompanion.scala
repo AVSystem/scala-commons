@@ -6,11 +6,14 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, GenObjectCodec}
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject}
 
+import java.time.{Period, Duration as JDuration}
 import scala.concurrent.duration.*
 
 trait HoconGenCodecs {
   implicit def configCodec: GenCodec[Config] = HoconGenCodecs.ConfigCodec
   implicit def finiteDurationCodec: GenCodec[FiniteDuration] = HoconGenCodecs.FiniteDurationCodec
+  implicit def jDurationCodec: GenCodec[JDuration] = HoconGenCodecs.JavaDurationCodec
+  implicit def periodCodec: GenCodec[Period] = HoconGenCodecs.PeriodCodec
   implicit def sizeInBytesCodec: GenCodec[SizeInBytes] = HoconGenCodecs.SizeInBytesCodec
   implicit def classKeyCodec: GenKeyCodec[Class[?]] = HoconGenCodecs.ClassKeyCodec
   implicit def classCodec: GenCodec[Class[?]] = HoconGenCodecs.ClassCodec
@@ -31,6 +34,16 @@ object HoconGenCodecs {
   implicit final val FiniteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
     input => input.readCustom(DurationMarker).fold(input.readSimple().readLong())(_.toMillis).millis,
     (output, value) => output.writeSimple().writeLong(value.toMillis),
+  )
+
+  implicit val JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(
+    input => input.readCustom(DurationMarker).getOrElse(JDuration.ofMillis(input.readSimple().readLong())),
+    (output, value) => output.writeSimple().writeLong(value.toMillis),
+  )
+
+  implicit final val PeriodCodec: GenCodec[Period] = GenCodec.nullable(
+    input => input.readCustom(PeriodMarker).getOrElse(Period.parse(input.readSimple().readString())),
+    (output, value) => output.writeSimple().writeString(value.toString),
   )
 
   implicit final val SizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(

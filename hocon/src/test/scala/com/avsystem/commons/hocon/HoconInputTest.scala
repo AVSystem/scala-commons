@@ -11,8 +11,10 @@ import scala.concurrent.duration.*
 object HoconInputTest {
   case class CustomCodecsClass(
     duration: FiniteDuration,
+    jDuration: Duration,
     fileSize: SizeInBytes,
     embeddedConfig: Config,
+    period: Period,
     clazz: Class[?],
     clazzMap: Map[Class[?], String],
   )
@@ -76,11 +78,13 @@ class HoconInputTest extends GenCodecRoundtripTest {
     val config = ConfigFactory.parseString(
       """{
         |  duration = 1m
+        |  jDuration = 5m
         |  fileSize = 1KiB
         |  embeddedConfig {
         |    something = "abc"
         |  }
-        |  clazz = "com.avsystem.commons.hocon.HoconInputTest",
+        |  period = "7d"
+        |  clazz = "com.avsystem.commons.hocon.HoconInputTest"
         |  clazzMap {
         |    "com.avsystem.commons.hocon.HoconInputTest" = "abc"
         |  }
@@ -88,10 +92,12 @@ class HoconInputTest extends GenCodecRoundtripTest {
     )
     val expected = CustomCodecsClass(
       duration = 1.minute,
+      jDuration = Duration.ofMinutes(5),
       fileSize = SizeInBytes.`1KiB`,
       embeddedConfig = ConfigFactory.parseMap(JMap("something" -> "abc")),
+      period = Period.ofDays(7),
       clazz = classOf[HoconInputTest],
-      clazzMap = Map(classOf[HoconInputTest] -> "abc")
+      clazzMap = Map(classOf[HoconInputTest] -> "abc"),
     )
     assert(CustomCodecsClass.read(config) == expected)
   }
