@@ -12,7 +12,7 @@ class SingletonCodec[T <: Singleton](
 ) extends ErrorReportingCodec[T] with OOOFieldsObjectCodec[T] {
   final def nullable = true
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = singletonValue
-  def size(value: T): Int = 0
+  def size(value: T, output: Opt[SequentialOutput]): Int = 0
   def writeFields(output: ObjectOutput, value: T): Unit = ()
 }
 
@@ -109,7 +109,7 @@ abstract class ProductCodec[T <: Product](
   nullable: Boolean,
   fieldNames: Array[String]
 ) extends ApplyUnapplyCodec[T](typeRepr, nullable, fieldNames) {
-  def size(value: T): Int = value.productArity
+  def size(value: T, output: Opt[SequentialOutput]): Int = value.productArity
 
   final def writeFields(output: ObjectOutput, value: T): Unit = {
     val size = value.productArity

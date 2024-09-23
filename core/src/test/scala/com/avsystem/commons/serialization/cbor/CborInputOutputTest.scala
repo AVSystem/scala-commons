@@ -28,6 +28,18 @@ case class CustomKeysRecord(
 )
 object CustomKeysRecord extends HasCborCodec[CustomKeysRecord]
 
+case class CustomKeysRecordWithDefaults(
+  @transientDefault @cborKey(1) first: Int = 0,
+  @cborKey(true) second: Boolean,
+)
+object CustomKeysRecordWithDefaults extends HasCborCodec[CustomKeysRecordWithDefaults]
+
+case class CustomKeysRecordWithNoDefaults(
+  @cborKey(1) first: Int = 0,
+  @cborKey(true) second: Boolean,
+)
+object CustomKeysRecordWithNoDefaults extends HasCborCodec[CustomKeysRecordWithNoDefaults]
+
 @cborDiscriminator(0)
 sealed trait GenericSealedTrait[+T]
 object GenericSealedTrait extends HasPolyCborCodec[GenericSealedTrait] {
@@ -61,13 +73,21 @@ class CborInputOutputTest extends AnyFunSuite {
     keyCodec: CborKeyCodec = CborKeyCodec.Default
   )(implicit pos: Position): Unit =
     test(s"${pos.lineNumber}: $value") {
-      val baos = new ByteArrayOutputStream
-      val output = new CborOutput(new DataOutputStream(baos), keyCodec, SizePolicy.Optional)
-      GenCodec.write[T](output, value)
-      val bytes = baos.toByteArray
-      assert(Bytes(bytes).toString == binary)
-      assert(RawCbor(bytes).readAs[T](keyCodec) == value)
+      assertRoundtrip(value, binary, keyCodec)
     }
+
+  private def assertRoundtrip[T: GenCodec](
+    value: T,
+    binary: String,
+    keyCodec: CborKeyCodec = CborKeyCodec.Default
+  )(implicit pos: Position): Unit = {
+    val baos = new ByteArrayOutputStream
+    val output = new CborOutput(new DataOutputStream(baos), keyCodec, SizePolicy.Optional)
+    GenCodec.write[T](output, value)
+    val bytes = baos.toByteArray
+    assert(Bytes(bytes).toString == binary)
+    assert(RawCbor(bytes).readAs[T](keyCodec) == value)
+  }
 
   // binary representation from cbor.me
 
@@ -211,6 +231,22 @@ class CborInputOutputTest extends AnyFunSuite {
   test("writing with CBOR optimized codec to non-CBOR output") {
     assert(JsonStringOutput.write(CustomKeysRecord(42, second = true, "foo", Map("foo" -> 1), Map(1 -> "foo"))) ==
       """{"first":42,"second":true,"third":"foo","strMap":{"foo":1},"intMap":{"1":"foo"}}""")
+  }
+
+  test("writing with IgnoreTransientDefaultMarker to CBOR output") {
+    val baos = new ByteArrayOutputStream
+    val output = CustomMarkersOutputWrapper(
+      new CborOutput(new DataOutputStream(baos), keyCodec, SizePolicy.Optional),
+      IgnoreTransientDefaultMarker,
+    )
+    val value = CustomKeysRecordWithDefaults(first = 0, second = true)
+    GenCodec.write(output, value)
+    val bytes = Bytes(baos.toByteArray)
+    assert(bytes.toString == "A20100F5F5")
+    assert(RawCbor(bytes.bytes).readAs[CustomKeysRecordWithDefaults](keyCodec) == value)
+
+    // should be the same as model with @transientDefault and serialization ignoring it
+    assertRoundtrip(CustomKeysRecordWithNoDefaults(first = 0, second = true), "A20100F5F5")
   }
 
   test("chunked text string") {

@@ -313,8 +313,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       def sizeMethod: List[Tree] = if (useProductCodec) Nil else {
         val res =
           q"""
-            def size(value: $dtpe): $IntCls =
-              ${params.size} + ${generated.size} - $countTransientFields
+            def size(value: $dtpe, output: $OptCls[$SerializationPkg.SequentialOutput]): $IntCls =
+              ${params.size} + ${generated.size} - output.filter(_.customEvent($SerializationPkg.IgnoreTransientDefaultMarker, ())).mapOr($countTransientFields, _ => 0)
           """
         List(res)
       }

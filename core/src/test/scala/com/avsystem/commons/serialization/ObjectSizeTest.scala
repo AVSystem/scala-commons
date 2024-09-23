@@ -34,4 +34,19 @@ class ObjectSizeTest extends AnyFunSuite {
     assert(CustomWrapper.codec.size(CustomWrapper()) == 0)
     assert(CustomWrapper.codec.size(CustomWrapper("fuu")) == 1)
   }
+
+  test("computing object size with custom output") {
+    val defaultIgnoringOutput = new SequentialOutput {
+      override def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean =
+        marker match {
+          case IgnoreTransientDefaultMarker => true
+          case _ =>  super.customEvent(marker, event)
+        }
+      override def finish(): Unit = ()
+    }
+    assert(RecordWithDefaults.codec.size(RecordWithDefaults(), defaultIgnoringOutput.opt) == 3)
+    assert(RecordWithDefaults.codec.size(RecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 3)
+    assert(CustomRecordWithDefaults.codec.size(CustomRecordWithDefaults(), defaultIgnoringOutput.opt) == 2)
+    assert(CustomRecordWithDefaults.codec.size(CustomRecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 2)
+  }
 }
