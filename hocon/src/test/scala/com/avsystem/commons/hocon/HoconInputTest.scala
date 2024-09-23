@@ -14,8 +14,9 @@ object HoconInputTest {
     fileSize: SizeInBytes,
     embeddedConfig: Config,
     clazz: Class[?],
+    clazzMap: Map[Class[?], String],
   )
-  object CustomCodecsClass extends ConfigCompanion[CustomCodecsClass]
+  object CustomCodecsClass extends DefaultConfigCompanion[CustomCodecsClass]
 }
 
 class HoconInputTest extends GenCodecRoundtripTest {
@@ -79,7 +80,10 @@ class HoconInputTest extends GenCodecRoundtripTest {
         |  embeddedConfig {
         |    something = "abc"
         |  }
-        |  clazz = "com.avsystem.commons.hocon.HoconInputTest"
+        |  clazz = "com.avsystem.commons.hocon.HoconInputTest",
+        |  clazzMap {
+        |    "com.avsystem.commons.hocon.HoconInputTest" = "abc"
+        |  }
         |}""".stripMargin
     )
     val expected = CustomCodecsClass(
@@ -87,6 +91,7 @@ class HoconInputTest extends GenCodecRoundtripTest {
       fileSize = SizeInBytes.`1KiB`,
       embeddedConfig = ConfigFactory.parseMap(JMap("something" -> "abc")),
       clazz = classOf[HoconInputTest],
+      clazzMap = Map(classOf[HoconInputTest] -> "abc")
     )
     assert(CustomCodecsClass.read(config) == expected)
   }

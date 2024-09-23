@@ -2,21 +2,25 @@ package com.avsystem.commons
 package hocon
 
 import com.avsystem.commons.meta.MacroInstances
-import com.avsystem.commons.misc.ValueOf
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, GenObjectCodec, HasGenObjectCodecWithDeps}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, GenObjectCodec}
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject}
 
 import scala.concurrent.duration.*
 
-trait CommonsHoconCodecs {
-  implicit final val configCodec: GenCodec[Config] = GenCodec.nullable(
+trait HoconGenCodecs {
+  implicit def configCodec: GenCodec[Config] = HoconGenCodecs.ConfigCodec
+  implicit def finiteDurationCodec: GenCodec[FiniteDuration] = HoconGenCodecs.FiniteDurationCodec
+  implicit def sizeInBytesCodec: GenCodec[SizeInBytes] = HoconGenCodecs.SizeInBytesCodec
+  implicit def classKeyCodec: GenKeyCodec[Class[?]] = HoconGenCodecs.ClassKeyCodec
+  implicit def classCodec: GenCodec[Class[?]] = HoconGenCodecs.ClassCodec
+}
+object HoconGenCodecs {
+  implicit final val ConfigCodec: GenCodec[Config] = GenCodec.nullable(
     input =>
-      input.readCustom(ConfigValueMarker).map {
+      input.readCustom(ConfigValueMarker).fold(ConfigFactory.parseString(input.readSimple().readString())) {
         case obj: ConfigObject => obj.toConfig
         case v => throw new ReadFailure(s"expected a config OBJECT, got ${v.valueType}")
-      }.getOrElse {
-        ConfigFactory.parseString(input.readSimple().readString())
       },
     (output, value) =>
       if (!output.writeCustom(ConfigValueMarker, value.root)) {
@@ -24,46 +28,45 @@ trait CommonsHoconCodecs {
       },
   )
 
-  implicit final val finiteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
+  implicit final val FiniteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
     input => input.readCustom(DurationMarker).fold(input.readSimple().readLong())(_.toMillis).millis,
     (output, value) => output.writeSimple().writeLong(value.toMillis),
   )
 
-  implicit final val sizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(
+  implicit final val SizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(
     input => SizeInBytes(input.readCustom(SizeInBytesMarker).getOrElse(input.readSimple().readLong())),
     (output, value) => output.writeSimple().writeLong(value.bytes),
   )
 
-  implicit final val classKeyCodec: GenKeyCodec[Class[?]] =
+  implicit final val ClassKeyCodec: GenKeyCodec[Class[?]] =
     GenKeyCodec.create(Class.forName, _.getName)
 
-  implicit final val classCodec: GenCodec[Class[?]] =
+  implicit final val ClassCodec: GenCodec[Class[?]] =
     GenCodec.nullableString(Class.forName, _.getName)
 }
-object CommonsHoconCodecs extends CommonsHoconCodecs
+
+object DefaultHoconGenCodecs extends HoconGenCodecs
+
+trait ConfigObjectCodec[T] {
+  def objectCodec: GenObjectCodec[T]
+}
+
+abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
+  implicits: Implicits
+)(implicit instances: MacroInstances[Implicits, ConfigObjectCodec[T]]
+) {
+  implicit lazy val codec: GenCodec[T] = instances(implicits, this).objectCodec
+
+  final def read(config: Config): T = HoconInput.read[T](config)
+}
 
 /**
   * Base class for companion objects of configuration case classes and sealed traits
   * (typically deserialized from HOCON files).
   *
-  * [[ConfigCompanion]] is equivalent to [[com.avsystem.commons.serialization.HasGenCodec HasGenCodec]]
-  * except that it automatically imports codecs from [[CommonsHoconCodecs]] - codecs for third party types often used
+  * [[DefaultConfigCompanion]] is equivalent to [[com.avsystem.commons.serialization.HasGenCodec HasGenCodec]]
+  * except that it automatically imports codecs from [[HoconGenCodecs]] - codecs for third party types often used
   * in configuration.
   */
-abstract class ConfigCompanion[T](implicit
-  macroCodec: MacroInstances[CommonsHoconCodecs.type, () => GenObjectCodec[T]],
-) extends HasGenObjectCodecWithDeps[CommonsHoconCodecs.type, T] {
-  final def read(config: Config): T = HoconInput.read[T](config)
-}
-
-/**
-  * A version of [[ConfigCompanion]] which injects additional implicits into macro materialization.
-  * Implicits are imported from an object specified with type parameter `D`.
-  * It must be a singleton object type, i.e. `SomeObject.type`.
-  */
-abstract class ConfigCompanionWithDeps[T, D <: CommonsHoconCodecs](implicit
-  deps: ValueOf[D],
-  macroCodec: MacroInstances[D, () => GenObjectCodec[T]],
-) extends HasGenObjectCodecWithDeps[D, T] {
-  final def read(config: Config): T = HoconInput.read[T](config)
-}
+abstract class DefaultConfigCompanion[T](implicit macroCodec: MacroInstances[HoconGenCodecs, ConfigObjectCodec[T]])
+  extends AbstractConfigCompanion[HoconGenCodecs, T](DefaultHoconGenCodecs)
