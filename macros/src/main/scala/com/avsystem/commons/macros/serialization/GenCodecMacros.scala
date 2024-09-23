@@ -251,38 +251,66 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     def anyParamHasTransientDefault: Boolean =
       params.exists(isTransientDefault)
 
+    def isOptionLike(p: ApplyParam): Boolean =
+      p.optionLike.nonEmpty
+
     def mayBeTransient(p: ApplyParam): Boolean =
-      p.optionLike.nonEmpty || isTransientDefault(p)
+      isOptionLike(p) || isTransientDefault(p)
 
     def transientValue(p: ApplyParam): Tree = p.optionLike match {
       case Some(optionLike) => q"${optionLike.reference(Nil)}.none"
       case None => p.defaultValue
     }
 
-    def countTransientFields: Tree =
-      if (canUseFields)
-        params.filter(mayBeTransient).foldLeft[Tree](q"0") {
-          (acc, p) => q"$acc + (if(value.${p.sym.name} == ${transientValue(p)}) 1 else 0)"
+    // assumes usage in in size(value, output) method implementation
+    def countTransientFields: Tree = {
+      def checkIgnoreTransientDefaultMarker: Tree =
+        q"output.isDefined && output.get.customEvent($SerializationPkg.IgnoreTransientDefaultMarker, ())"
+
+      def doCount(paramsToCount: List[ApplyParam], accessor: ApplyParam => Tree): Tree =
+        paramsToCount.foldLeft[Tree](q"0") {
+          (acc, p) => q"$acc + (if(${accessor(p)} == ${transientValue(p)}) 1 else 0)"
         }
-      else if (!params.exists(mayBeTransient)) q"0"
-      else params match {
-        case List(p: ApplyParam) =>
-          q"""
-            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else if(unapplyRes.get == ${transientValue(p)}) 1 else 0
-          """
-        case _ =>
-          val res = params.filter(mayBeTransient).foldLeft[Tree](q"0") {
-            (acc, p) => q"$acc + (if(t.${tupleGet(p.idx)} == ${transientValue(p)}) 1 else 0)"
-          }
-          q"""
-            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else {
-              val t = unapplyRes.get
-              $res
-            }
-           """
-      }
+
+      def countOnlyOptionLike(accessor: ApplyParam => Tree): Tree =
+        doCount(params.filter(isOptionLike), accessor)
+
+      def countTransient(accessor: ApplyParam => Tree): Tree =
+        doCount(params.filter(mayBeTransient), accessor)
+
+      def countMultipleParams(accessor: ApplyParam => Tree): Tree =
+        if (anyParamHasTransientDefault)
+          q"if($checkIgnoreTransientDefaultMarker) ${countOnlyOptionLike(accessor)} else ${countTransient(accessor)}"
+        else
+          countTransient(accessor)
+
+      def countSingleParam(param: ApplyParam, value: Tree): Tree =
+        if (isTransientDefault(param))
+          q"if(!$checkIgnoreTransientDefaultMarker && $value == ${transientValue(param)}) 1 else 0"
+        else
+          q"if($value == ${transientValue(param)}) 1 else 0"
+
+      if (canUseFields)
+        countMultipleParams(p => q"value.${p.sym.name}")
+      else if (!params.exists(mayBeTransient))
+        q"0"
+      else
+        params match {
+          case List(p: ApplyParam) =>
+            q"""
+              val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
+              if(unapplyRes.isEmpty) unapplyFailed else { ${countSingleParam(p, q"unapplyRes.get")} }
+             """
+          case _ =>
+            q"""
+              val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
+              if(unapplyRes.isEmpty) unapplyFailed else {
+                val t = unapplyRes.get
+                ${countMultipleParams(p => q"t.${tupleGet(p.idx)}")}
+              }
+             """
+        }
+    }
 
     if (isTransparent(dtpe.typeSymbol)) params match {
       case List(p: ApplyParam) =>
@@ -331,7 +359,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         val res =
           q"""
             def size(value: $dtpe, output: $OptCls[$SerializationPkg.SequentialOutput]): $IntCls =
-              ${params.size} + ${generated.size} - output.filter(_.customEvent($SerializationPkg.IgnoreTransientDefaultMarker, ())).mapOr($countTransientFields, _ => 0)
+              ${params.size} + ${generated.size} - { $countTransientFields }
           """
         List(res)
       }
