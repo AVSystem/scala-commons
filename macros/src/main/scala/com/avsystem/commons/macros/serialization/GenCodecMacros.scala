@@ -120,7 +120,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       q"""
         new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $safeSingleValue) {
           ..${generated.map({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
-          override def size(value: $tpe): $IntCls = ${generated.size}
+          override def size(value: $tpe, output: $OptCls[$SerializationPkg.SequentialOutput]): $IntCls = ${generated.size}
           override def writeFields(output: $SerializationPkg.ObjectOutput, value: $tpe): $UnitCls = {
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
           }
