@@ -172,24 +172,48 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       }
     }
 
-    def writeField(p: ApplyParam, value: Tree): Tree = {
+    def doWriteField(p: ApplyParam, value: Tree, transientValue: Option[Tree]): Tree = {
+      val writeArgs = q"output" :: q"${p.idx}" :: value :: transientValue.toList
+      val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
+      q"writeField[..$writeTargs](..$writeArgs)"
+    }
+
+    def writeFieldNoTransientDefault(p: ApplyParam, value: Tree): Tree = {
+      val transientValue = p.optionLike.map(ol => q"${ol.reference(Nil)}.none")
+      doWriteField(p, value, transientValue)
+    }
+
+    def writeFieldTransientDefaultPossible(p: ApplyParam, value: Tree): Tree = {
       val transientValue =
         if (isTransientDefault(p)) Some(p.defaultValue)
         else p.optionLike.map(ol => q"${ol.reference(Nil)}.none")
-
-      val writeArgsNoTransient = q"output" :: q"${p.idx}" :: List(value)
-      val writeArgs = writeArgsNoTransient ::: transientValue.toList
-      val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
-      q"""
-        if (ignoreTransientDefault)
-          writeField[..$writeTargs](..$writeArgsNoTransient)
-        else
-          writeField[..$writeTargs](..$writeArgs)
-       """
+      doWriteField(p, value, transientValue)
     }
 
+    def writeField(p: ApplyParam, value: Tree, ignoreTransientDefault: Tree): Tree =
+      if (isTransientDefault(p))
+        q"""
+          if ($ignoreTransientDefault) ${writeFieldNoTransientDefault(p, value)}
+          else ${writeFieldTransientDefaultPossible(p, value)}
+         """
+      else
+        writeFieldNoTransientDefault(p, value)
+
     def ignoreTransientDefaultCheck: Tree =
-      q"val ignoreTransientDefault = output.customEvent($SerializationPkg.IgnoreTransientDefaultMarker, ())"
+      q"output.customEvent($SerializationPkg.IgnoreTransientDefaultMarker, ())"
+
+    // when params size is 1
+    def writeSingle(p: ApplyParam, value: Tree): Tree =
+      writeField(p, value, ignoreTransientDefaultCheck)
+
+    // when params size is greater than 1
+    def writeMultiple(value: ApplyParam => Tree): Tree =
+      if (anyParamHasTransientDefault) {
+        q"""
+          val ignoreTransientDefault = $ignoreTransientDefaultCheck
+          ..${params.map(p => writeField(p, value(p), q"ignoreTransientDefault"))}
+         """
+      } else q"..${params.map(p => writeFieldNoTransientDefault(p, value(p)))}"
 
     def writeFields: Tree = params match {
       case Nil =>
@@ -203,36 +227,29 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case List(p: ApplyParam) =>
         if (canUseFields)
-          q"""
-            $ignoreTransientDefaultCheck
-            ${writeField(p, q"value.${p.sym.name}")}
-           """
+          q"${writeSingle(p, q"value.${p.sym.name}")}"
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if (unapplyRes.isEmpty) unapplyFailed
-            else {
-              $ignoreTransientDefaultCheck
-              ${writeField(p, q"unapplyRes.get")}
-            }
+            else ${writeSingle(p, q"unapplyRes.get")}
            """
       case _ =>
         if (canUseFields)
-          q"""
-            $ignoreTransientDefaultCheck
-            ..${params.map(p => writeField(p, q"value.${p.sym.name}"))}
-           """
+          q"${writeMultiple(p => q"value.${p.sym.name}")}"
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if (unapplyRes.isEmpty) unapplyFailed
             else {
               val t = unapplyRes.get
-              $ignoreTransientDefaultCheck
-              ..${params.map(p => writeField(p, q"t.${tupleGet(p.idx)}"))}
+              ${writeMultiple(p => q"t.${tupleGet(p.idx)}")}
             }
            """
     }
+
+    def anyParamHasTransientDefault: Boolean =
+      params.exists(isTransientDefault)
 
     def mayBeTransient(p: ApplyParam): Boolean =
       p.optionLike.nonEmpty || isTransientDefault(p)
