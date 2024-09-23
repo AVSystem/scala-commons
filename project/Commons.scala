@@ -24,23 +24,23 @@ object Commons extends ProjectGroup("commons") {
   // option in IntelliJ's SBT settings.
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-  val guavaVersion = "33.1.0-jre"
+  val guavaVersion = "33.3.0-jre"
   val jsr305Version = "3.0.2"
-  val scalatestVersion = "3.2.18"
+  val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
-  val scalacheckVersion = "1.17.0"
-  val jettyVersion = "10.0.20"
-  val mongoVersion = "5.0.1"
-  val springVersion = "5.3.33"
+  val scalacheckVersion = "1.18.1"
+  val jettyVersion = "12.0.13"
+  val mongoVersion = "5.1.4"
+  val springVersion = "5.3.39"
   val typesafeConfigVersion = "1.4.3"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.5"
-  val pekkoVersion = "1.0.2"
+  val pekkoVersion = "1.1.1"
   val monixVersion = "3.4.1"
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
   val scalajsBenchmarkVersion = "0.10.0"
-  val slf4jVersion = "2.0.12" // test only
+  val slf4jVersion = "2.0.16" // test only
 
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
@@ -69,7 +69,7 @@ object Commons extends ProjectGroup("commons") {
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
 
-    scalaVersion := "2.13.13",
+    scalaVersion := "2.13.14",
     compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
@@ -78,7 +78,7 @@ object Commons extends ProjectGroup("commons") {
       "REDIS_VERSION" -> "6.2.12",
     ),
     githubWorkflowArtifactUpload := false,
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21")),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
         UseRef.Public("actions", "cache", "v2"),
@@ -94,10 +94,10 @@ object Commons extends ProjectGroup("commons") {
         params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        UseRef.Public("supercharge", "mongodb-github-action", "1.9.0"),
+        UseRef.Public("supercharge", "mongodb-github-action", "1.10.0"),
         name = Some("Setup MongoDB"),
         params = Map(
-          "mongodb-version" -> "6.0",
+          "mongodb-version" -> "7.0",
           "mongodb-replica-set" -> "test-rs",
         )
       ),
@@ -365,10 +365,8 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "org.eclipse.jetty" % "jetty-client" % jettyVersion,
-        "org.eclipse.jetty" % "jetty-server" % jettyVersion,
+        "org.eclipse.jetty.ee10" % "jetty-ee10-servlet" % jettyVersion,
         "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-
-        "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
       ),
     )
 

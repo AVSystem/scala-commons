@@ -295,7 +295,7 @@ final class RedisClusterClient(
     val client = currentState.clientForSlot(slot)
     val result = client.executeRaw(pack).mapNow(_.apply(0))
     handleRedirection(pack, slot, result, config.redirectionStrategy, config.tryagainStrategy)
-      .mapNow(PacksResult.Single)
+      .mapNow(PacksResult.Single.apply)
   }
 
   private def executeClusteredPacks[A](packs: RawCommandPacks, currentState: ClusterState)(implicit timeout: Timeout) = {
