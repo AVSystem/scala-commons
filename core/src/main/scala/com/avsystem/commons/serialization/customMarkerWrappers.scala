@@ -1,25 +1,30 @@
 package com.avsystem.commons
 package serialization
 
+trait AcceptsAdditionalCustomMarkers extends AcceptsCustomEvents {
+
+  protected def markers: Set[CustomEventMarker[_]]
+
+  override def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean =
+    marker match {
+      case marker if markers(marker) => true
+      case _ => super.customEvent(marker, event)
+    }
+}
+
 /**
   * [[Input]] implementation that adds additional markers [[CustomEventMarker]] to the provided [[Input]] instance
   */
 final class CustomMarkersInputWrapper(
   override protected val wrapped: Input,
-  markers: Set[CustomEventMarker[_]],
-) extends InputWrapper {
+  override protected val markers: Set[CustomEventMarker[_]],
+) extends InputWrapper with AcceptsAdditionalCustomMarkers {
 
   override def readList(): ListInput =
     new CustomMarkersInputWrapper.AdjustedListInput(super.readList(), markers)
 
   override def readObject(): ObjectInput =
     new CustomMarkersInputWrapper.AdjustedObjectInput(super.readObject(), markers)
-
-  override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean =
-    marker match {
-      case marker if markers(marker) => true
-      case _ => super.customEvent(marker, value)
-    }
 }
 object CustomMarkersInputWrapper {
   def apply(input: Input, markers: CustomEventMarker[_]*): CustomMarkersInputWrapper =
@@ -27,46 +32,28 @@ object CustomMarkersInputWrapper {
 
   private final class AdjustedListInput(
     override protected val wrapped: ListInput,
-    markers: Set[CustomEventMarker[_]],
-  ) extends ListInputWrapper {
+    override protected val markers: Set[CustomEventMarker[_]],
+  ) extends ListInputWrapper with AcceptsAdditionalCustomMarkers {
     override def nextElement(): Input = new CustomMarkersInputWrapper(super.nextElement(), markers)
-    override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean =
-      marker match {
-        case marker if markers(marker) => true
-        case _ => super.customEvent(marker, value)
-      }
   }
 
   private final class AdjustedFieldInput(
     override protected val wrapped: FieldInput,
-    markers: Set[CustomEventMarker[_]],
-  ) extends FieldInputWrapper {
+    override protected val markers: Set[CustomEventMarker[_]],
+  ) extends FieldInputWrapper with AcceptsAdditionalCustomMarkers {
 
     override def readList(): ListInput = new AdjustedListInput(super.readList(), markers)
     override def readObject(): ObjectInput = new AdjustedObjectInput(super.readObject(), markers)
-
-    override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean =
-      marker match {
-        case marker if markers(marker) => true
-        case _ => super.customEvent(marker, value)
-      }
   }
 
   private final class AdjustedObjectInput(
     override protected val wrapped: ObjectInput,
-    markers: Set[CustomEventMarker[_]],
-  ) extends ObjectInputWrapper {
+    override protected val markers: Set[CustomEventMarker[_]],
+  ) extends ObjectInputWrapper with AcceptsAdditionalCustomMarkers {
 
     override def nextField(): FieldInput = new AdjustedFieldInput(super.nextField(), markers)
-
     override def peekField(name: String): Opt[FieldInput] =
       super.peekField(name).map(new AdjustedFieldInput(_, markers))
-
-    override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean =
-      marker match {
-        case marker if markers(marker) => true
-        case _ => super.customEvent(marker, value)
-      }
   }
 }
 
@@ -75,8 +62,8 @@ object CustomMarkersInputWrapper {
   */
 final class CustomMarkersOutputWrapper(
   override protected val wrapped: Output,
-  markers: Set[CustomEventMarker[_]],
-) extends OutputWrapper {
+  override protected val markers: Set[CustomEventMarker[_]],
+) extends OutputWrapper with AcceptsAdditionalCustomMarkers {
 
   override def writeSimple(): SimpleOutput =
     new CustomMarkersOutputWrapper.AdjustedSimpleOutput(super.writeSimple(), markers)
@@ -86,12 +73,6 @@ final class CustomMarkersOutputWrapper(
 
   override def writeObject(): ObjectOutput =
     new CustomMarkersOutputWrapper.AdjustedObjectOutput(super.writeObject(), markers)
-
-  override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean =
-    marker match {
-      case marker if markers(marker) => true
-      case _ => super.customEvent(marker, value)
-    }
 }
 
 object CustomMarkersOutputWrapper {
@@ -100,40 +81,24 @@ object CustomMarkersOutputWrapper {
 
   private final class AdjustedSimpleOutput(
     override protected val wrapped: SimpleOutput,
-    markers: Set[CustomEventMarker[_]],
-  ) extends SimpleOutputWrapper {
-    override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean =
-      marker match {
-        case marker if markers(marker) => true
-        case _ => super.customEvent(marker, value)
-      }
-  }
+    override protected val markers: Set[CustomEventMarker[_]],
+  ) extends SimpleOutputWrapper with AcceptsAdditionalCustomMarkers
 
   private final class AdjustedListOutput(
     override protected val wrapped: ListOutput,
-    markers: Set[CustomEventMarker[_]],
-  ) extends ListOutputWrapper {
+    override protected val markers: Set[CustomEventMarker[_]],
+  ) extends ListOutputWrapper with AcceptsAdditionalCustomMarkers {
+
     override def writeElement(): Output =
       new CustomMarkersOutputWrapper(super.writeElement(), markers)
-
-    override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean =
-      marker match {
-        case marker if markers(marker) => true
-        case _ => super.customEvent(marker, value)
-      }
   }
 
   private final class AdjustedObjectOutput(
     override protected val wrapped: ObjectOutput,
-    markers: Set[CustomEventMarker[_]],
-  ) extends ObjectOutputWrapper {
+    override protected val markers: Set[CustomEventMarker[_]],
+  ) extends ObjectOutputWrapper with AcceptsAdditionalCustomMarkers {
+
     override def writeField(key: String): Output =
       new CustomMarkersOutputWrapper(super.writeField(key), markers)
-
-    override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean =
-      marker match {
-        case marker if markers(marker) => true
-        case _ => super.customEvent(marker, value)
-      }
   }
 }
