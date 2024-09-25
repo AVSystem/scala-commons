@@ -20,13 +20,13 @@ object IgnoreTransientDefaultMarkerTest {
 }
 
 class IgnoreTransientDefaultMarkerTest extends AbstractCodecTest {
-  import IgnoreTransientDefaultMarkerTest._
+  import IgnoreTransientDefaultMarkerTest.*
 
   override type Raw = Any
 
   def writeToOutput(write: Output => Unit): Any = {
     var result: Any = null
-    write(CustomMarkersOutputWrapper(new SimpleValueOutput(result = _), IgnoreTransientDefaultMarker))
+    write(CustomMarkersOutputWrapper(new SimpleValueOutput(v => result = v), IgnoreTransientDefaultMarker))
     result
   }
 
@@ -40,6 +40,7 @@ class IgnoreTransientDefaultMarkerTest extends AbstractCodecTest {
     testWrite(HasDefaults(str = "dafuq"), Map("str" -> "dafuq", "int" -> 42))
   }
 
+  //noinspection RedundantDefaultArgument
   test("read case class with default values") {
     testRead(Map("str" -> "lol", "int" -> 42), HasDefaults(str = "lol", int = 42))
     testRead(Map("str" -> "lol"), HasDefaults(str = "lol", int = 42))
@@ -54,6 +55,7 @@ class IgnoreTransientDefaultMarkerTest extends AbstractCodecTest {
     testWrite(HasOptParam(), Map("flag" -> false))
   }
 
+  //noinspection RedundantDefaultArgument
   test("write nested case class with default values") {
     testWrite(
       value = NestedHasDefaults(

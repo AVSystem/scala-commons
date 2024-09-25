@@ -10,7 +10,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import java.io.{ByteArrayOutputStream, DataOutputStream}
 
-case class Record(
+final case class Record(
   b: Boolean,
   i: Int,
   l: List[String],
@@ -19,7 +19,7 @@ case class Record(
 )
 object Record extends HasGenCodec[Record]
 
-case class CustomKeysRecord(
+final case class CustomKeysRecord(
   @cborKey(1) first: Int,
   @cborKey(true) second: Boolean,
   @cborKey(Vector(1, 2, 3)) third: String,
@@ -28,13 +28,13 @@ case class CustomKeysRecord(
 )
 object CustomKeysRecord extends HasCborCodec[CustomKeysRecord]
 
-case class CustomKeysRecordWithDefaults(
+final case class CustomKeysRecordWithDefaults(
   @transientDefault @cborKey(1) first: Int = 0,
   @cborKey(true) second: Boolean,
 )
 object CustomKeysRecordWithDefaults extends HasCborCodec[CustomKeysRecordWithDefaults]
 
-case class CustomKeysRecordWithNoDefaults(
+final case class CustomKeysRecordWithNoDefaults(
   @cborKey(1) first: Int = 0,
   @cborKey(true) second: Boolean,
 )
@@ -242,11 +242,13 @@ class CborInputOutputTest extends AnyFunSuite {
     val value = CustomKeysRecordWithDefaults(first = 0, second = true)
     GenCodec.write(output, value)
     val bytes = Bytes(baos.toByteArray)
-    assert(bytes.toString == "A20100F5F5")
+
+    val expectedRawValue = "A20100F5F5"
+    assert(bytes.toString == expectedRawValue)
     assert(RawCbor(bytes.bytes).readAs[CustomKeysRecordWithDefaults](keyCodec) == value)
 
     // should be the same as model with @transientDefault and serialization ignoring it
-    assertRoundtrip(CustomKeysRecordWithNoDefaults(first = 0, second = true), "A20100F5F5")
+    assertRoundtrip(CustomKeysRecordWithNoDefaults(first = 0, second = true), expectedRawValue)
   }
 
   test("chunked text string") {

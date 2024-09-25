@@ -3,21 +3,18 @@ package serialization
 
 trait AcceptsAdditionalCustomMarkers extends AcceptsCustomEvents {
 
-  protected def markers: Set[CustomEventMarker[_]]
+  protected def markers: Set[CustomEventMarker[?]]
 
   override def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean =
-    marker match {
-      case marker if markers(marker) => true
-      case _ => super.customEvent(marker, event)
-    }
+    markers(marker) || super.customEvent(marker, event)
 }
 
 /**
   * [[Input]] implementation that adds additional markers [[CustomEventMarker]] to the provided [[Input]] instance
   */
-final class CustomMarkersInputWrapper(
+final class CustomMarkersInputWrapper private(
   override protected val wrapped: Input,
-  override protected val markers: Set[CustomEventMarker[_]],
+  override protected val markers: Set[CustomEventMarker[?]],
 ) extends InputWrapper with AcceptsAdditionalCustomMarkers {
 
   override def readList(): ListInput =
@@ -27,19 +24,22 @@ final class CustomMarkersInputWrapper(
     new CustomMarkersInputWrapper.AdjustedObjectInput(super.readObject(), markers)
 }
 object CustomMarkersInputWrapper {
-  def apply(input: Input, markers: CustomEventMarker[_]*): CustomMarkersInputWrapper =
-    new CustomMarkersInputWrapper(input, markers.toSet)
+  def apply(input: Input, markers: CustomEventMarker[?]*): CustomMarkersInputWrapper =
+    CustomMarkersInputWrapper(input, markers.toSet)
+
+  def apply(input: Input, markers: Set[CustomEventMarker[?]]): CustomMarkersInputWrapper =
+    new CustomMarkersInputWrapper(input, markers)
 
   private final class AdjustedListInput(
     override protected val wrapped: ListInput,
-    override protected val markers: Set[CustomEventMarker[_]],
+    override protected val markers: Set[CustomEventMarker[?]],
   ) extends ListInputWrapper with AcceptsAdditionalCustomMarkers {
     override def nextElement(): Input = new CustomMarkersInputWrapper(super.nextElement(), markers)
   }
 
   private final class AdjustedFieldInput(
     override protected val wrapped: FieldInput,
-    override protected val markers: Set[CustomEventMarker[_]],
+    override protected val markers: Set[CustomEventMarker[?]],
   ) extends FieldInputWrapper with AcceptsAdditionalCustomMarkers {
 
     override def readList(): ListInput = new AdjustedListInput(super.readList(), markers)
@@ -48,7 +48,7 @@ object CustomMarkersInputWrapper {
 
   private final class AdjustedObjectInput(
     override protected val wrapped: ObjectInput,
-    override protected val markers: Set[CustomEventMarker[_]],
+    override protected val markers: Set[CustomEventMarker[?]],
   ) extends ObjectInputWrapper with AcceptsAdditionalCustomMarkers {
 
     override def nextField(): FieldInput = new AdjustedFieldInput(super.nextField(), markers)
@@ -60,9 +60,9 @@ object CustomMarkersInputWrapper {
 /**
   * [[Output]] implementation that adds additional markers [[CustomEventMarker]] to the provided [[Output]] instance
   */
-final class CustomMarkersOutputWrapper(
+final class CustomMarkersOutputWrapper private(
   override protected val wrapped: Output,
-  override protected val markers: Set[CustomEventMarker[_]],
+  override protected val markers: Set[CustomEventMarker[?]],
 ) extends OutputWrapper with AcceptsAdditionalCustomMarkers {
 
   override def writeSimple(): SimpleOutput =
@@ -76,17 +76,20 @@ final class CustomMarkersOutputWrapper(
 }
 
 object CustomMarkersOutputWrapper {
-  def apply(output: Output, markers: CustomEventMarker[_]*): CustomMarkersOutputWrapper =
-    new CustomMarkersOutputWrapper(output, markers.toSet)
+  def apply(output: Output, markers: CustomEventMarker[?]*): CustomMarkersOutputWrapper =
+    CustomMarkersOutputWrapper(output, markers.toSet)
+
+  def apply(output: Output, markers: Set[CustomEventMarker[?]]): CustomMarkersOutputWrapper =
+    new CustomMarkersOutputWrapper(output, markers)
 
   private final class AdjustedSimpleOutput(
     override protected val wrapped: SimpleOutput,
-    override protected val markers: Set[CustomEventMarker[_]],
+    override protected val markers: Set[CustomEventMarker[?]],
   ) extends SimpleOutputWrapper with AcceptsAdditionalCustomMarkers
 
   private final class AdjustedListOutput(
     override protected val wrapped: ListOutput,
-    override protected val markers: Set[CustomEventMarker[_]],
+    override protected val markers: Set[CustomEventMarker[?]],
   ) extends ListOutputWrapper with AcceptsAdditionalCustomMarkers {
 
     override def writeElement(): Output =
@@ -95,7 +98,7 @@ object CustomMarkersOutputWrapper {
 
   private final class AdjustedObjectOutput(
     override protected val wrapped: ObjectOutput,
-    override protected val markers: Set[CustomEventMarker[_]],
+    override protected val markers: Set[CustomEventMarker[?]],
   ) extends ObjectOutputWrapper with AcceptsAdditionalCustomMarkers {
 
     override def writeField(key: String): Output =

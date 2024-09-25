@@ -3,7 +3,7 @@ package serialization
 
 import org.scalatest.funsuite.AnyFunSuite
 
-case class RecordWithDefaults(
+final case class RecordWithDefaults(
   @transientDefault a: String = "",
   b: Int = 42
 ) {
@@ -11,7 +11,7 @@ case class RecordWithDefaults(
 }
 object RecordWithDefaults extends HasApplyUnapplyCodec[RecordWithDefaults]
 
-class CustomRecordWithDefaults(val a: String, val b: Int)
+final class CustomRecordWithDefaults(val a: String, val b: Int)
 object CustomRecordWithDefaults extends HasApplyUnapplyCodec[CustomRecordWithDefaults] {
   def apply(@transientDefault a: String = "", b: Int = 42): CustomRecordWithDefaults =
     new CustomRecordWithDefaults(a, b)
@@ -19,23 +19,23 @@ object CustomRecordWithDefaults extends HasApplyUnapplyCodec[CustomRecordWithDef
     Opt((crwd.a, crwd.b))
 }
 
-class CustomWrapper(val a: String)
+final class CustomWrapper(val a: String)
 object CustomWrapper extends HasApplyUnapplyCodec[CustomWrapper] {
   def apply(@transientDefault a: String = ""): CustomWrapper = new CustomWrapper(a)
   def unapply(cw: CustomWrapper): Opt[String] = Opt(cw.a)
 }
 
-case class RecordWithOpts(
+final case class RecordWithOpts(
   @optionalParam abc: Opt[String] = Opt.Empty,
   @transientDefault flag: Opt[Boolean] = Opt.Empty,
   b: Int = 42,
 )
 object RecordWithOpts extends HasApplyUnapplyCodec[RecordWithOpts]
 
-case class SingleFieldRecordWithOpts(@optionalParam abc: Opt[String] = Opt.Empty)
+final case class SingleFieldRecordWithOpts(@optionalParam abc: Opt[String] = Opt.Empty)
 object SingleFieldRecordWithOpts extends HasApplyUnapplyCodec[SingleFieldRecordWithOpts]
 
-case class SingleFieldRecordWithTD(@transientDefault abc: String = "abc")
+final case class SingleFieldRecordWithTD(@transientDefault abc: String = "abc")
 object SingleFieldRecordWithTD extends HasApplyUnapplyCodec[SingleFieldRecordWithTD]
 
 class ObjectSizeTest extends AnyFunSuite {

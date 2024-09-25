@@ -10,6 +10,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   import c.universe._
 
+  private def IgnoreTransientDefaultMarkerObj: Tree = q"$SerializationPkg.IgnoreTransientDefaultMarker"
+
   override def allowOptionalParams: Boolean = true
 
   def mkTupleCodec[T: WeakTypeTag](elementCodecs: Tree*): Tree = instrument {
@@ -183,24 +185,21 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       doWriteField(p, value, transientValue)
     }
 
-    def writeFieldTransientDefaultPossible(p: ApplyParam, value: Tree): Tree = {
-      val transientValue =
-        if (isTransientDefault(p)) Some(p.defaultValue)
-        else p.optionLike.map(ol => q"${ol.reference(Nil)}.none")
-      doWriteField(p, value, transientValue)
-    }
+    def writeFieldTransientDefaultPossible(p: ApplyParam, value: Tree): Tree =
+      if (isTransientDefault(p)) doWriteField(p, value, Some(p.defaultValue))
+      else writeFieldNoTransientDefault(p, value)
 
     def writeField(p: ApplyParam, value: Tree, ignoreTransientDefault: Tree): Tree =
-      if (isTransientDefault(p))
+      if (isTransientDefault(p)) // optimize code to avoid calling 'output.customEvent' when param does not have @transientDefault
         q"""
-          if ($ignoreTransientDefault) ${writeFieldNoTransientDefault(p, value)}
+          if($ignoreTransientDefault) ${writeFieldNoTransientDefault(p, value)}
           else ${writeFieldTransientDefaultPossible(p, value)}
          """
       else
         writeFieldNoTransientDefault(p, value)
 
     def ignoreTransientDefaultCheck: Tree =
-      q"output.customEvent($SerializationPkg.IgnoreTransientDefaultMarker, ())"
+      q"output.customEvent($IgnoreTransientDefaultMarkerObj, ())"
 
     // when params size is 1
     def writeSingle(p: ApplyParam, value: Tree): Tree =
@@ -208,12 +207,15 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
     // when params size is greater than 1
     def writeMultiple(value: ApplyParam => Tree): Tree =
-      if (anyParamHasTransientDefault) {
+      // optimize code to avoid calling 'output.customEvent' when there no params with @transientDefault
+      // extracted to `val` to avoid calling 'output.customEvent' multiple times
+      if (anyParamHasTransientDefault)
         q"""
           val ignoreTransientDefault = $ignoreTransientDefaultCheck
           ..${params.map(p => writeField(p, value(p), q"ignoreTransientDefault"))}
          """
-      } else q"..${params.map(p => writeFieldNoTransientDefault(p, value(p)))}"
+      else
+        q"..${params.map(p => writeFieldNoTransientDefault(p, value(p)))}"
 
     def writeFields: Tree = params match {
       case Nil =>
@@ -231,7 +233,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if (unapplyRes.isEmpty) unapplyFailed
+            if(unapplyRes.isEmpty) unapplyFailed
             else ${writeSingle(p, q"unapplyRes.get")}
            """
       case _ =>
@@ -240,7 +242,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if (unapplyRes.isEmpty) unapplyFailed
+            if(unapplyRes.isEmpty) unapplyFailed
             else {
               val t = unapplyRes.get
               ${writeMultiple(p => q"t.${tupleGet(p.idx)}")}
@@ -262,10 +264,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       case None => p.defaultValue
     }
 
-    // assumes usage in in size(value, output) method implementation
+    // assumes usage in SizedCodec.size(value, output) method implementation
     def countTransientFields: Tree = {
       def checkIgnoreTransientDefaultMarker: Tree =
-        q"output.isDefined && output.get.customEvent($SerializationPkg.IgnoreTransientDefaultMarker, ())"
+        q"output.isDefined && output.get.customEvent($IgnoreTransientDefaultMarkerObj, ())"
 
       def doCount(paramsToCount: List[ApplyParam], accessor: ApplyParam => Tree): Tree =
         paramsToCount.foldLeft[Tree](q"0") {
