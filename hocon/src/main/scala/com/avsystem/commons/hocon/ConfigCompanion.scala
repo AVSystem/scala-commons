@@ -8,6 +8,7 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigObject}
 
 import java.time.{Period, Duration as JDuration}
 import scala.concurrent.duration.*
+import scala.jdk.javaapi.DurationConverters
 
 trait HoconGenCodecs {
   implicit def configCodec: GenCodec[Config] = HoconGenCodecs.ConfigCodec
@@ -32,23 +33,23 @@ object HoconGenCodecs {
   )
 
   implicit final val FiniteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
-    input => input.readCustom(DurationMarker).fold(input.readSimple().readLong())(_.toMillis).millis,
-    (output, value) => output.writeSimple().writeLong(value.toMillis),
+    input => input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
+    (output, value) => if (!output.writeCustom(DurationMarker, DurationConverters.toJava(value))) output.writeSimple().writeLong(value.toMillis),
   )
 
-  implicit val JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(
+  implicit final val JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(
     input => input.readCustom(DurationMarker).getOrElse(JDuration.ofMillis(input.readSimple().readLong())),
-    (output, value) => output.writeSimple().writeLong(value.toMillis),
+    (output, value) => if (!output.writeCustom(DurationMarker, value)) output.writeSimple().writeLong(value.toMillis),
   )
 
   implicit final val PeriodCodec: GenCodec[Period] = GenCodec.nullable(
     input => input.readCustom(PeriodMarker).getOrElse(Period.parse(input.readSimple().readString())),
-    (output, value) => output.writeSimple().writeString(value.toString),
+    (output, value) => if (!output.writeCustom(PeriodMarker, value)) output.writeSimple().writeString(value.toString),
   )
 
   implicit final val SizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(
     input => SizeInBytes(input.readCustom(SizeInBytesMarker).getOrElse(input.readSimple().readLong())),
-    (output, value) => output.writeSimple().writeLong(value.bytes),
+    (output, value) => if (!output.writeCustom(SizeInBytesMarker, value.bytes)) output.writeSimple().writeLong(value.bytes),
   )
 
   implicit final val ClassKeyCodec: GenKeyCodec[Class[?]] =

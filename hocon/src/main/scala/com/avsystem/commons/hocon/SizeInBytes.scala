@@ -2,8 +2,10 @@ package com.avsystem.commons
 package hocon
 
 /**
-  * Use this type in data deserialized from HOCON to in order to read size in bytes represented with
-  * [[https://github.com/lightbend/config/blob/master/HOCON.md#size-in-bytes-format HOCON's nice representation]].
+  * To read the size in bytes represented in [[https://github.com/lightbend/config/blob/master/HOCON.md#size-in-bytes-format HOCON format]],
+  * use this type together with [[com.avsystem.commons.hocon.SizeInBytesMarker]] when deserializing data from HOCON.
+  *
+  * @see [[com.avsystem.commons.hocon.HoconGenCodecs.SizeInBytesCodec]]
   */
 final case class SizeInBytes(bytes: Long)
 object SizeInBytes {
