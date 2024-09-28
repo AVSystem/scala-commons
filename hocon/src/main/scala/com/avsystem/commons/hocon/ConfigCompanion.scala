@@ -4,7 +4,7 @@ package hocon
 import com.avsystem.commons.meta.MacroInstances
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, GenObjectCodec}
-import com.typesafe.config.{Config, ConfigFactory, ConfigObject}
+import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigRenderOptions}
 
 import java.time.{Period, Duration as JDuration}
 import scala.concurrent.duration.*
@@ -28,7 +28,8 @@ object HoconGenCodecs {
       },
     (output, value) =>
       if (!output.writeCustom(ConfigValueMarker, value.root)) {
-        output.writeSimple().writeString(value.root.render)
+        val renderOptions = ConfigRenderOptions.defaults().setOriginComments(false)
+        output.writeSimple().writeString(value.root.render(renderOptions))
       },
   )
 
