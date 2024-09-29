@@ -3,7 +3,8 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
+final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest:
+
   test("inferred generic should be rejected") {
     assertErrors(
       """
@@ -28,7 +29,6 @@ class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
     )
   }
 
-
   test("explicit generic should not be rejected") {
     assertNoErrors(
       """
@@ -52,4 +52,5 @@ class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin
     )
   }
-}
+
+end ExplicitGenericsTest

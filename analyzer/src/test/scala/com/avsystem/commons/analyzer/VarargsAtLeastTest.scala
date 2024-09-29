@@ -3,7 +3,8 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class VarargsAtLeastTest extends AnyFunSuite with AnalyzerTest {
+final class VarargsAtLeastTest extends AnyFunSuite with AnalyzerTest:
+
   test("too few varargs parameters should be rejected") {
     assertErrors(
       """
@@ -40,4 +41,5 @@ class VarargsAtLeastTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin
     )
   }
-}
+
+end VarargsAtLeastTest

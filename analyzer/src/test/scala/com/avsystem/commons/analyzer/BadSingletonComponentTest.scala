@@ -3,9 +3,11 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class BadSingletonComponentTest extends AnyFunSuite with AnalyzerTest {
+final class BadSingletonComponentTest extends AnyFunSuite with AnalyzerTest:
+
   test("general") {
-    assertErrors(5,
+    assertErrors(
+      5,
       """
         |import com.avsystem.commons.di._
         |
@@ -26,4 +28,5 @@ class BadSingletonComponentTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin
     )
   }
-}
+
+end BadSingletonComponentTest

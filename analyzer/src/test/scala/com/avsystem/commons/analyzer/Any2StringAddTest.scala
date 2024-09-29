@@ -3,7 +3,8 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class Any2StringAddTest extends AnyFunSuite with AnalyzerTest {
+final class Any2StringAddTest extends AnyFunSuite with AnalyzerTest:
+
   test("any2stringadd should be rejected") {
     assertErrors(
       """
@@ -33,4 +34,5 @@ class Any2StringAddTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin
     )
   }
-}
+
+end Any2StringAddTest

@@ -3,7 +3,8 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest {
+final class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest:
+
   test("macro private method invoked directly should be rejected") {
     assertErrors(
       """
@@ -56,4 +57,5 @@ class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin
     )
   }
-}
+
+end CheckMacroPrivateTest

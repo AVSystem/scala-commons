@@ -3,9 +3,11 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
+final class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest:
+
   test("simple") {
-    assertErrors(10,
+    assertErrors(
+      10,
       """
         |import monix.eval.Task
         |
@@ -34,4 +36,5 @@ class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin
     )
   }
-}
+
+end DiscardedMonixTaskTest

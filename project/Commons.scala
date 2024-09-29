@@ -1,15 +1,11 @@
 import com.github.ghik.sbt.nosbt.ProjectGroup
 import com.typesafe.tools.mima.plugin.MimaKeys.*
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
-import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
 import org.scalajs.jsenv.nodejs.NodeJSEnv
-import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.*
-import pl.project13.scala.sbt.JmhPlugin
 import pl.project13.scala.sbt.JmhPlugin.JmhKeys.*
 import sbt.*
 import sbt.Keys.*
-import sbtghactions.GenerativePlugin
 import sbtghactions.GenerativePlugin.autoImport.*
 import sbtide.Keys.*
 import sbtunidoc.BaseUnidocPlugin.autoImport.{unidoc, unidocProjectFilter}
@@ -41,9 +37,9 @@ object Commons extends ProjectGroup("commons") {
   val upickleVersion = "3.1.2" // benchmark only
   val scalajsBenchmarkVersion = "0.10.0"
   val slf4jVersion = "2.0.13" // test only
-
-  // for binary compatibility checking
-  val previousCompatibleVersions: Set[String] = Set("2.2.4")
+//
+//  // for binary compatibility checking
+//  val previousCompatibleVersions: Set[String] = Set("2.2.4")
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(
     cancelable := true,
@@ -69,7 +65,8 @@ object Commons extends ProjectGroup("commons") {
       Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
     ),
 
-    scalaVersion := "2.13.14",
+//    scalaVersion := "2.13.14",
+    scalaVersion := "3.5.0",
     compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
@@ -123,7 +120,7 @@ object Commons extends ProjectGroup("commons") {
   override def commonSettings: Seq[Def.Setting[_]] = Seq(
     Compile / scalacOptions ++= Seq(
       "-encoding", "utf-8",
-      "-Yrangepos",
+//      "-Yrangepos",
       "-explaintypes",
       "-feature",
       "-deprecation",
@@ -133,11 +130,11 @@ object Commons extends ProjectGroup("commons") {
       "-language:dynamics",
       "-language:experimental.macros",
       "-language:higherKinds",
-      "-Xfatal-warnings",
-      "-Xsource:3",
-      "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-      "-Ycache-plugin-class-loader:last-modified",
-      "-Ycache-macro-class-loader:last-modified",
+//      "-Xfatal-warnings",
+//      "-Xsource:3",
+//      "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+//      "-Ycache-plugin-class-loader:last-modified",
+//      "-Ycache-macro-class-loader:last-modified",
     ),
 
     Compile / scalacOptions ++= {
@@ -172,9 +169,9 @@ object Commons extends ProjectGroup("commons") {
       "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
     ),
-    mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
-      organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
-    },
+//    mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
+//      organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
+//    },
     Test / jsEnv := new NodeJSEnv(NodeJSEnv.Config().withEnv(Map(
       "RESOURCES_DIR" -> (Test / resourceDirectory).value.absolutePath)
     )),
@@ -208,7 +205,7 @@ object Commons extends ProjectGroup("commons") {
     .enablePlugins(ScalaUnidocPlugin)
     .aggregate(
       jvm,
-      js,
+//      js,
     )
     .settings(
       noPublishSettings,
@@ -218,38 +215,38 @@ object Commons extends ProjectGroup("commons") {
       ScalaUnidoc / unidoc / unidocProjectFilter :=
         inAnyProject -- inProjects(
           analyzer,
-          macros,
-          `core-js`,
-          comprof,
+//          macros,
+//          `core-js`,
+//          comprof,
         ),
     )
 
   lazy val jvm = mkSubProject.in(file(".jvm"))
     .aggregate(
       analyzer,
-      macros,
-      core,
-      jetty,
-      mongo,
-      hocon,
-      spring,
-      redis,
+//      macros,
+//      core,
+//      jetty,
+//      mongo,
+//      hocon,
+//      spring,
+//      redis,
     )
     .settings(aggregateProjectSettings)
-
-  lazy val js = mkSubProject.in(file(".js"))
-    .aggregate(
-      `core-js`,
-      `mongo-js`,
-    )
-    .settings(aggregateProjectSettings)
+//
+//  lazy val js = mkSubProject.in(file(".js"))
+//    .aggregate(
+//      `core-js`,
+//      `mongo-js`,
+//    )
+//    .settings(aggregateProjectSettings)
 
   lazy val analyzer = mkSubProject
-    .dependsOn(core % Test)
+//    .dependsOn(core % Test)
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
-        "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+        "org.scala-lang" % "scala3-compiler_3" % scalaVersion.value,
         "io.monix" %% "monix" % monixVersion % Test,
       ),
     )
@@ -271,169 +268,169 @@ object Commons extends ProjectGroup("commons") {
     if (forIdeaImport) Seq.empty
     else Seq(name := (proj / name).value)
 
-  lazy val macros = mkSubProject.settings(
-    jvmCommonSettings,
-    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-  )
-
-  lazy val core = mkSubProject
-    .dependsOn(macros)
-    .settings(
-      jvmCommonSettings,
-      sourceDirsSettings(_ / "jvm"),
-      libraryDependencies ++= Seq(
-        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
-        "com.google.guava" % "guava" % guavaVersion % Optional,
-        "io.monix" %% "monix" % monixVersion % Optional,
-      ),
-    )
-
-  lazy val `core-js` = mkSubProject.in(core.base / "js")
-    .enablePlugins(ScalaJSPlugin)
-    .configure(p => if (forIdeaImport) p.dependsOn(core) else p)
-    .dependsOn(macros)
-    .settings(
-      jsCommonSettings,
-      sameNameAs(core),
-      sourceDirsSettings(_.getParentFile),
-      libraryDependencies ++= Seq(
-        "io.monix" %%% "monix" % monixVersion % Optional,
-      )
-    )
-
-  lazy val mongo = mkSubProject
-    .dependsOn(core % CompileAndTest)
-    .settings(
-      jvmCommonSettings,
-      sourceDirsSettings(_ / "jvm"),
-      libraryDependencies ++= Seq(
-        "com.google.guava" % "guava" % guavaVersion,
-        "io.monix" %% "monix" % monixVersion,
-        "org.mongodb" % "mongodb-driver-core" % mongoVersion,
-        "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
-        "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
-        "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
-      ),
-    )
-
-  // only to allow @mongoId & MongoEntity to be usedJS/JVM cross-compiled code
-  lazy val `mongo-js` = mkSubProject.in(mongo.base / "js")
-    .enablePlugins(ScalaJSPlugin)
-    .configure(p => if (forIdeaImport) p.dependsOn(mongo) else p)
-    .dependsOn(`core-js`)
-    .settings(
-      jsCommonSettings,
-      sameNameAs(mongo),
-      sourceDirsSettings(_.getParentFile),
-    )
-
-  lazy val redis = mkSubProject
-    .dependsOn(core % CompileAndTest)
-    .settings(
-      jvmCommonSettings,
-      libraryDependencies ++= Seq(
-        "com.google.guava" % "guava" % guavaVersion,
-        "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
-        "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-        "io.monix" %% "monix" % monixVersion,
-      ),
-      Test / parallelExecution := false,
-    )
-
-  lazy val hocon = mkSubProject
-    .dependsOn(core % CompileAndTest)
-    .settings(
-      jvmCommonSettings,
-      libraryDependencies ++= Seq(
-        "com.typesafe" % "config" % typesafeConfigVersion,
-      ),
-    )
-
-  lazy val spring = mkSubProject
-    .dependsOn(hocon % CompileAndTest)
-    .settings(
-      jvmCommonSettings,
-      libraryDependencies ++= Seq(
-        "org.springframework" % "spring-context" % springVersion,
-        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
-      ),
-    )
-
-  lazy val jetty = mkSubProject
-    .dependsOn(core % CompileAndTest)
-    .settings(
-      jvmCommonSettings,
-      libraryDependencies ++= Seq(
-        "org.eclipse.jetty" % "jetty-client" % jettyVersion,
-        "org.eclipse.jetty" % "jetty-server" % jettyVersion,
-        "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-
-        "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
-      ),
-    )
-
-  lazy val benchmark = mkSubProject
-    .dependsOn(redis, mongo)
-    .enablePlugins(JmhPlugin)
-    .settings(
-      jvmCommonSettings,
-      noPublishSettings,
-      sourceDirsSettings(_ / "jvm"),
-      libraryDependencies ++= Seq(
-        "io.circe" %% "circe-core" % circeVersion,
-        "io.circe" %% "circe-generic" % circeVersion,
-        "io.circe" %% "circe-jawn" % circeVersion,
-        "io.circe" %% "circe-parser" % circeVersion,
-        "com.lihaoyi" %% "upickle" % upickleVersion,
-      ),
-      ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
-    )
-
-  lazy val `benchmark-js` = mkSubProject.in(benchmark.base / "js")
-    .enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
-    .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
-    .dependsOn(`core-js`)
-    .settings(
-      jsCommonSettings,
-      noPublishSettings,
-      sameNameAs(benchmark),
-      sourceDirsSettings(_.getParentFile),
-      libraryDependencies ++= Seq(
-        "io.circe" %%% "circe-core" % circeVersion,
-        "io.circe" %%% "circe-generic" % circeVersion,
-        "io.circe" %%% "circe-parser" % circeVersion,
-        "com.lihaoyi" %%% "upickle" % upickleVersion,
-        "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
-      ),
-      scalaJSUseMainModuleInitializer := true,
-    )
-
-  lazy val comprof = mkSubProject
-    .disablePlugins(GenerativePlugin)
-    .dependsOn(core)
-    .settings(
-      jvmCommonSettings,
-      noPublishSettings,
-      ideSkipProject := true,
-      addCompilerPlugin("ch.epfl.scala" %% "scalac-profiling" % "1.0.0"),
-      scalacOptions ++= Seq(
-        s"-P:scalac-profiling:sourceroot:${baseDirectory.value}",
-        "-P:scalac-profiling:generate-macro-flamegraph",
-        "-P:scalac-profiling:no-profiledb",
-        "-Xmacro-settings:statsEnabled",
-        "-Ystatistics:typer",
-      ),
-      Compile / sourceGenerators += Def.task {
-        val originalSrc = (core / sourceDirectory).value /
-          "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
-        val originalContent = IO.read(originalSrc)
-        (0 until 100).map { i =>
-          val pkg = f"oa$i%02d"
-          val newContent = originalContent.replace("package rest", s"package rest\npackage $pkg")
-          val newFile = (Compile / sourceManaged).value / pkg / "RestTestApi.scala"
-          IO.write(newFile, newContent)
-          newFile
-        }
-      }.taskValue
-    )
+//  lazy val macros = mkSubProject.settings(
+//    jvmCommonSettings,
+//    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+//  )
+//
+//  lazy val core = mkSubProject
+//    .dependsOn(macros)
+//    .settings(
+//      jvmCommonSettings,
+//      sourceDirsSettings(_ / "jvm"),
+//      libraryDependencies ++= Seq(
+//        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
+//        "com.google.guava" % "guava" % guavaVersion % Optional,
+//        "io.monix" %% "monix" % monixVersion % Optional,
+//      ),
+//    )
+//
+//  lazy val `core-js` = mkSubProject.in(core.base / "js")
+//    .enablePlugins(ScalaJSPlugin)
+//    .configure(p => if (forIdeaImport) p.dependsOn(core) else p)
+//    .dependsOn(macros)
+//    .settings(
+//      jsCommonSettings,
+//      sameNameAs(core),
+//      sourceDirsSettings(_.getParentFile),
+//      libraryDependencies ++= Seq(
+//        "io.monix" %%% "monix" % monixVersion % Optional,
+//      )
+//    )
+//
+//  lazy val mongo = mkSubProject
+//    .dependsOn(core % CompileAndTest)
+//    .settings(
+//      jvmCommonSettings,
+//      sourceDirsSettings(_ / "jvm"),
+//      libraryDependencies ++= Seq(
+//        "com.google.guava" % "guava" % guavaVersion,
+//        "io.monix" %% "monix" % monixVersion,
+//        "org.mongodb" % "mongodb-driver-core" % mongoVersion,
+//        "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
+//        "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
+//        "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
+//      ),
+//    )
+//
+//  // only to allow @mongoId & MongoEntity to be usedJS/JVM cross-compiled code
+//  lazy val `mongo-js` = mkSubProject.in(mongo.base / "js")
+//    .enablePlugins(ScalaJSPlugin)
+//    .configure(p => if (forIdeaImport) p.dependsOn(mongo) else p)
+//    .dependsOn(`core-js`)
+//    .settings(
+//      jsCommonSettings,
+//      sameNameAs(mongo),
+//      sourceDirsSettings(_.getParentFile),
+//    )
+//
+//  lazy val redis = mkSubProject
+//    .dependsOn(core % CompileAndTest)
+//    .settings(
+//      jvmCommonSettings,
+//      libraryDependencies ++= Seq(
+//        "com.google.guava" % "guava" % guavaVersion,
+//        "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
+//        "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+//        "io.monix" %% "monix" % monixVersion,
+//      ),
+//      Test / parallelExecution := false,
+//    )
+//
+//  lazy val hocon = mkSubProject
+//    .dependsOn(core % CompileAndTest)
+//    .settings(
+//      jvmCommonSettings,
+//      libraryDependencies ++= Seq(
+//        "com.typesafe" % "config" % typesafeConfigVersion,
+//      ),
+//    )
+//
+//  lazy val spring = mkSubProject
+//    .dependsOn(hocon % CompileAndTest)
+//    .settings(
+//      jvmCommonSettings,
+//      libraryDependencies ++= Seq(
+//        "org.springframework" % "spring-context" % springVersion,
+//        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
+//      ),
+//    )
+//
+//  lazy val jetty = mkSubProject
+//    .dependsOn(core % CompileAndTest)
+//    .settings(
+//      jvmCommonSettings,
+//      libraryDependencies ++= Seq(
+//        "org.eclipse.jetty" % "jetty-client" % jettyVersion,
+//        "org.eclipse.jetty" % "jetty-server" % jettyVersion,
+//        "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+//
+//        "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
+//      ),
+//    )
+//
+//  lazy val benchmark = mkSubProject
+//    .dependsOn(redis, mongo)
+//    .enablePlugins(JmhPlugin)
+//    .settings(
+//      jvmCommonSettings,
+//      noPublishSettings,
+//      sourceDirsSettings(_ / "jvm"),
+//      libraryDependencies ++= Seq(
+//        "io.circe" %% "circe-core" % circeVersion,
+//        "io.circe" %% "circe-generic" % circeVersion,
+//        "io.circe" %% "circe-jawn" % circeVersion,
+//        "io.circe" %% "circe-parser" % circeVersion,
+//        "com.lihaoyi" %% "upickle" % upickleVersion,
+//      ),
+//      ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
+//    )
+//
+//  lazy val `benchmark-js` = mkSubProject.in(benchmark.base / "js")
+//    .enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
+//    .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
+//    .dependsOn(`core-js`)
+//    .settings(
+//      jsCommonSettings,
+//      noPublishSettings,
+//      sameNameAs(benchmark),
+//      sourceDirsSettings(_.getParentFile),
+//      libraryDependencies ++= Seq(
+//        "io.circe" %%% "circe-core" % circeVersion,
+//        "io.circe" %%% "circe-generic" % circeVersion,
+//        "io.circe" %%% "circe-parser" % circeVersion,
+//        "com.lihaoyi" %%% "upickle" % upickleVersion,
+//        "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
+//      ),
+//      scalaJSUseMainModuleInitializer := true,
+//    )
+//
+//  lazy val comprof = mkSubProject
+//    .disablePlugins(GenerativePlugin)
+//    .dependsOn(core)
+//    .settings(
+//      jvmCommonSettings,
+//      noPublishSettings,
+//      ideSkipProject := true,
+//      addCompilerPlugin("ch.epfl.scala" %% "scalac-profiling" % "1.0.0"),
+//      scalacOptions ++= Seq(
+//        s"-P:scalac-profiling:sourceroot:${baseDirectory.value}",
+//        "-P:scalac-profiling:generate-macro-flamegraph",
+//        "-P:scalac-profiling:no-profiledb",
+//        "-Xmacro-settings:statsEnabled",
+//        "-Ystatistics:typer",
+//      ),
+//      Compile / sourceGenerators += Def.task {
+//        val originalSrc = (core / sourceDirectory).value /
+//          "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
+//        val originalContent = IO.read(originalSrc)
+//        (0 until 100).map { i =>
+//          val pkg = f"oa$i%02d"
+//          val newContent = originalContent.replace("package rest", s"package rest\npackage $pkg")
+//          val newFile = (Compile / sourceManaged).value / pkg / "RestTestApi.scala"
+//          IO.write(newFile, newContent)
+//          newFile
+//        }
+//      }.taskValue
+//    )
 }

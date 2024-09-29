@@ -3,7 +3,8 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class ImportJavaUtilTest extends AnyFunSuite with AnalyzerTest {
+final class ImportJavaUtilTest extends AnyFunSuite with AnalyzerTest:
+
   test("import java.util should be rejected") {
     assertErrors(
       """
@@ -13,4 +14,5 @@ class ImportJavaUtilTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin
     )
   }
-}
+
+end ImportJavaUtilTest

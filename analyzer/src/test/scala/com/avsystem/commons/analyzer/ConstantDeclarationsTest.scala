@@ -3,9 +3,11 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
+final class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest:
+
   test("literal-valued constants should be non-lazy final vals with UpperCamelCase and no type annotation") {
-    assertErrors(4,
+    assertErrors(
+      4,
       """
         |object Whatever {
         |  // bad
@@ -17,11 +19,13 @@ class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
         |  // good
         |  final val E = 10
         |}
-      """.stripMargin)
+      """.stripMargin
+    )
   }
 
   test("effectively final, non-literal UpperCamelCase vals should be final") {
-    assertErrors(1,
+    assertErrors(
+      1,
       """
         |object Whatever {
         |  // bad
@@ -31,12 +35,12 @@ class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
         |  final val B = "foo".trim
         |  val c = "foo".trim
         |}
-      """.stripMargin)
+      """.stripMargin
+    )
   }
 
   test("no constant checking in traits or non-final classes") {
-    assertNoErrors(
-      """
+    assertNoErrors("""
         |trait Whatever {
         |  val a = 10
         |  val B = 10
@@ -56,8 +60,7 @@ class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("no constant checking for overrides") {
-    assertNoErrors(
-      """
+    assertNoErrors("""
         |trait Whatever {
         |  def a: Int
         |}
@@ -69,8 +72,7 @@ class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("no constant checking for privates") {
-    assertNoErrors(
-      """
+    assertNoErrors("""
         |object Whatever {
         |  private val a = 10
         |  private val B = 10
@@ -80,4 +82,5 @@ class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
         |}
       """.stripMargin)
   }
-}
+
+end ConstantDeclarationsTest
