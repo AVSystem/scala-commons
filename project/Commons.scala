@@ -24,13 +24,13 @@ object Commons extends ProjectGroup("commons") {
   // option in IntelliJ's SBT settings.
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-  val guavaVersion = "33.3.0-jre"
+  val guavaVersion = "33.3.1-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
   val scalacheckVersion = "1.18.1"
   val jettyVersion = "12.0.13"
-  val mongoVersion = "5.1.4"
+  val mongoVersion = "5.2.0"
   val springVersion = "5.3.39"
   val typesafeConfigVersion = "1.4.3"
   val commonsIoVersion = "1.3.2" // test only
