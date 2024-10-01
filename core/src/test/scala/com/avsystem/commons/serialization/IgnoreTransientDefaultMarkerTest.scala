@@ -3,6 +3,8 @@ package serialization
 
 import com.avsystem.commons.serialization.CodecTestData.HasDefaults
 
+import scala.annotation.nowarn
+
 object IgnoreTransientDefaultMarkerTest {
   final case class NestedHasDefaults(
     @transientDefault flag: Boolean = false,
@@ -19,6 +21,7 @@ object IgnoreTransientDefaultMarkerTest {
   object HasOptParam extends HasGenCodec[HasOptParam]
 }
 
+@nowarn("msg=a type was inferred to be `Any`")
 class IgnoreTransientDefaultMarkerTest extends AbstractCodecTest {
   import IgnoreTransientDefaultMarkerTest.*
 
