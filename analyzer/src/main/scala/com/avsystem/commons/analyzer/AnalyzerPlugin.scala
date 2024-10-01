@@ -1,43 +1,28 @@
 package com.avsystem.commons
 package analyzer
 
-import dotty.tools.dotc.ast.tpd
-import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Contexts.{Context, ctx}
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.reporting.Diagnostic
-import dotty.tools.dotc.transform.{Pickler, Staging}
 import dotty.tools.dotc.util.NoSourcePosition
 
-final class AnalyzerPlugin extends StandardPlugin:
-  plugin =>
+final class AnalyzerPlugin extends StandardPlugin { plugin =>
 
   private lazy val rules = List(
-//    new ImportJavaUtil(global),
-//    new VarargsAtLeast
-//    new CheckMacroPrivate(global),
-//    new ExplicitGenerics(global),
-//    new ValueEnumExhaustiveMatch(global),
-//    new ShowAst(global),
-//    new FindUsages(global),
-//    new CheckBincompat(global),
-    new ImportJavaUtil
-//    new ThrowableObjects(global),
-//    new DiscardedMonixTask(global),
-//    new BadSingletonComponent(global),
-//    new ConstantDeclarations(global),
-//    new BasePackage(global)
+    new ImportJavaUtil,
+    new ExplicitGenerics
   )
 
   override val description = "AVSystem custom Scala static analyzer"
   val name = "AVSystemAnalyzer"
 
-  override def initialize(options: List[String])(using ctx: Context): List[PluginPhase] =
+  override def initialize(options: List[String])(using Context): List[PluginPhase] =
     parseOptions(options)
     rules
 
   end initialize
 
-  private def parseOptions(options: List[String])(using ctx: Context): Unit =
+  private def parseOptions(options: List[String])(using Context): Unit =
     lazy val rulesByName = rules.map(r => (r.name, r)).toMap
     options.foreach { option =>
       if option.startsWith("requireJDK=") then validateJdk(option)
@@ -48,7 +33,7 @@ final class AnalyzerPlugin extends StandardPlugin:
         else
           val (name, arg) = nameArg.split(":", 2) match
             case Array(n, a) => (n, a)
-            case Array(n)    => (n, null)
+            case Array(n) => (n, null)
           rulesByName.get(name) match
             case Some(rule) =>
               rule.level = level
@@ -67,7 +52,7 @@ final class AnalyzerPlugin extends StandardPlugin:
 
   end parseOptions
 
-  private def validateJdk(option: String)(using ctx: Context): Unit =
+  private def validateJdk(option: String)(using Context): Unit =
     val jdkVersionRegex = option.substring(option.indexOf('=') + 1)
     val javaVersion = System.getProperty("java.version", "")
     if !javaVersion.matches(jdkVersionRegex) then
@@ -81,5 +66,4 @@ final class AnalyzerPlugin extends StandardPlugin:
     end if
 
   end validateJdk
-
-end AnalyzerPlugin
+}

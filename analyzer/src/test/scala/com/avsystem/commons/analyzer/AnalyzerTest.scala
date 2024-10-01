@@ -13,35 +13,34 @@ trait AnalyzerTest:
   analyzer: Assertions =>
 
   lazy val compiler = new Compiler
-//  val compiler: Global = new Global(settings):
-//    global =>
 
-//
-//  settings.Yrangepos.value = true
   protected val pluginOptions: List[String] = Nil
 
-  protected final def assertErrors(source: String)(using pos: Position, ctx: Context): Unit =
+  protected final def assertErrors(source: String)(using Position): Unit =
+    given ctx: Context = compilerContext
     compile(source)
     assert(ctx.reporter.hasErrors)
 
   end assertErrors
 
-  protected final def assertErrors(errors: Int, source: String)(using pos: Position, ctx: Context): Unit =
+  protected final def assertErrors(errors: Int, source: String)(using  Position): Unit =
+    given ctx: Context = compilerContext
     compile(source)
     assert(ctx.reporter.errorCount == errors)
 
   end assertErrors
 
-  protected final def assertNoErrors(source: String)(using pos: Position, ctx: Context): Unit =
+  protected final def assertNoErrors(source: String)(using Position): Unit =
+    given ctx: Context = compilerContext
     compile(source)
     assert(!ctx.reporter.hasErrors)
 
   end assertNoErrors
 
-  private def compile(source: String)(using pos: Position, ctx: Context): Unit =
+  private def compile(source: String)(using Position, Context): Unit =
     compiler.newRun.compileFromStrings(source :: Nil)
 
-  protected given compilerContext: Context =
+  private def compilerContext: Context =
     val base = new ContextBase:
       override protected def loadRoughPluginsList(using Context): List[Plugin] =
         new AnalyzerPlugin :: super.loadRoughPluginsList

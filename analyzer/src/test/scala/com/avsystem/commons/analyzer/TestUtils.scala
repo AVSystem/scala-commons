@@ -1,27 +1,29 @@
 package com.avsystem.commons
 package analyzer
 
-//import com.avsystem.commons.annotation.{atLeast, explicitGenerics, macroPrivate}
+import com.avsystem.commons.annotation.explicitGenerics
 
-//object TestUtils:
-//  def need3Params(@atLeast(3) args: Any*) = ()
-//
-//  @macroPrivate
-//  def macroPrivateMethod = 42
-//  def genericMacroImpl[T](c: blackbox.Context)(arg: c.Tree): c.Tree = arg
-//  @explicitGenerics
-//  def genericMethod[T](arg: T): T = arg
-//  def invokeMacroPrivateMethod: Int = macro invokeMacroPrivateMethodImpl
-//  def invokeMacroPrivateMethodImpl(c: blackbox.Context): c.Tree =
-//    import c.universe.*
-//    q"${c.prefix}.macroPrivateMethod"
-//
-//  end invokeMacroPrivateMethodImpl
-//  @explicitGenerics
-//  def genericMacro[T](arg: T): T = macro genericMacroImpl[T]
-//  object Extractor:
-//    @macroPrivate def unapply(any: Any): Option[Any] = None
-//
-//  end Extractor
-//
-//end TestUtils
+import scala.quoted.{Expr, Quotes}
+
+object TestUtils:
+  //  def need3Params(@atLeast(3) args: Any*) = ()
+  //
+  //  @macroPrivate
+  //  def macroPrivateMethod = 42
+  def genericMacroImpl[T](arg: Expr[T])(using Quotes): Expr[T] = arg
+  @explicitGenerics
+  def genericMethod[T](arg: T): T = arg
+  //  def invokeMacroPrivateMethod: Int = macro invokeMacroPrivateMethodImpl
+  //  def invokeMacroPrivateMethodImpl(c: blackbox.Context): c.Tree =
+  //    import c.universe.*
+  //    q"${c.prefix}.macroPrivateMethod"
+  //
+  //  end invokeMacroPrivateMethodImpl
+  @explicitGenerics
+  inline def genericMacro[T](arg: T): T = ${ genericMacroImpl[T]('{ arg }) }
+  //  object Extractor:
+  //    @macroPrivate def unapply(any: Any): Option[Any] = None
+  //
+  //  end Extractor
+
+end TestUtils

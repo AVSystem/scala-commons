@@ -13,34 +13,27 @@ import dotty.tools.dotc.util.SourcePosition
 import scala.compiletime.uninitialized
 
 abstract class AnalyzerRule(val name: String, defaultLevel: Level = Level.Warn) extends PluginPhase:
+
   import tpd.*
 
-//  final def analyze(tree: Tree)(using Context): Tree =
-//    try analyzeTree.applyOrElse(tree, (_: Tree) => ())
-//    catch
-//      case NonFatal(t) =>
-//        val sw = new StringWriter
-//        t.printStackTrace(new PrintWriter(sw))
-//        report(s"Analyzer rule $this failed: " + sw.toString)(using tree.sourcePos)
-//
-//    end try
-//    tree
-//
-//  end analyze
   override val runsAfter: Set[String] = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Staging.name)
+  
   override val phaseName = s"avsAnalyze$name"
   var level: Level = defaultLevel
   var argument: String = uninitialized
   override def toString: String = getClass.getSimpleName
 
+  inline protected final def report(message: String, tree: Tree)(using Context): Unit =
+    report(message, tree.symbol)(using tree.sourcePos)
+
   protected final def report(
-      message: String,
-      site: Symbol = NoSymbol
+    message: String,
+    site: Symbol = NoSymbol
   )(using
-      position: SourcePosition,
-      context: Context
-  ): Unit = context.reporter.report {
+    position: SourcePosition,
+    ctx: Context
+  ): Unit = ctx.reporter.report {
     level match
       case Level.Off =>
         return // awful
@@ -67,6 +60,6 @@ object Level:
     case '-' => Level.Off
     case '*' => Level.Info
     case '+' => Level.Error
-    case _   => Level.Warn
+    case _ => Level.Warn
 
 end Level

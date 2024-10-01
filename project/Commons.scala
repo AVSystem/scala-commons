@@ -225,7 +225,7 @@ object Commons extends ProjectGroup("commons") {
     .aggregate(
       analyzer,
 //      macros,
-//      core,
+      core3,
 //      jetty,
 //      mongo,
 //      hocon,
@@ -242,7 +242,7 @@ object Commons extends ProjectGroup("commons") {
 //    .settings(aggregateProjectSettings)
 
   lazy val analyzer = mkSubProject
-//    .dependsOn(core % Test)
+    .dependsOn(core3 % Test)
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
@@ -284,6 +284,17 @@ object Commons extends ProjectGroup("commons") {
 //        "io.monix" %% "monix" % monixVersion % Optional,
 //      ),
 //    )
+  lazy val core3 = mkSubProject
+//    .dependsOn(macros)
+    .settings(
+      jvmCommonSettings,
+      sourceDirsSettings(_ / "jvm"),
+      libraryDependencies ++= Seq(
+        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
+        "com.google.guava" % "guava" % guavaVersion % Optional,
+//        "io.monix" %% "monix" % monixVersion % Optional,
+      ),
+    )
 //
 //  lazy val `core-js` = mkSubProject.in(core.base / "js")
 //    .enablePlugins(ScalaJSPlugin)
