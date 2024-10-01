@@ -23,7 +23,7 @@ trait AnalyzerTest:
 
   end assertErrors
 
-  protected final def assertErrors(errors: Int, source: String)(using  Position): Unit =
+  protected final def assertErrors(errors: Int, source: String)(using Position): Unit =
     given ctx: Context = compilerContext
     compile(source)
     assert(ctx.reporter.errorCount == errors)

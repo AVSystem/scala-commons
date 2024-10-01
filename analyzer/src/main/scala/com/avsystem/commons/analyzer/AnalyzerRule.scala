@@ -18,7 +18,7 @@ abstract class AnalyzerRule(val name: String, defaultLevel: Level = Level.Warn) 
 
   override val runsAfter: Set[String] = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Staging.name)
-  
+
   override val phaseName = s"avsAnalyze$name"
   var level: Level = defaultLevel
   var argument: String = uninitialized

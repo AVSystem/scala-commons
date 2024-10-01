@@ -6,7 +6,8 @@ import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.reporting.Diagnostic
 import dotty.tools.dotc.util.NoSourcePosition
 
-final class AnalyzerPlugin extends StandardPlugin { plugin =>
+final class AnalyzerPlugin extends StandardPlugin:
+  plugin =>
 
   private lazy val rules = List(
     new ImportJavaUtil,
@@ -33,7 +34,7 @@ final class AnalyzerPlugin extends StandardPlugin { plugin =>
         else
           val (name, arg) = nameArg.split(":", 2) match
             case Array(n, a) => (n, a)
-            case Array(n) => (n, null)
+            case Array(n)    => (n, null)
           rulesByName.get(name) match
             case Some(rule) =>
               rule.level = level
@@ -66,4 +67,5 @@ final class AnalyzerPlugin extends StandardPlugin { plugin =>
     end if
 
   end validateJdk
-}
+
+end AnalyzerPlugin

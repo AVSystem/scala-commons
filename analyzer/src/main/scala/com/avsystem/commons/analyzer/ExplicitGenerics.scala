@@ -6,7 +6,7 @@ import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.core.{Contexts, Symbols}
 import dotty.tools.dotc.transform.PickleQuotes
 
-final class ExplicitGenerics extends AnalyzerRule("explicitGenerics") {
+final class ExplicitGenerics extends AnalyzerRule("explicitGenerics"):
 
   import tpd.*
 
@@ -36,16 +36,19 @@ final class ExplicitGenerics extends AnalyzerRule("explicitGenerics") {
   //    analyzeTree(unit.body)
   //  }
 
-  override def transformTypeApply(tree: TypeApply)(using Context): Tree = {
+  override def transformTypeApply(tree: TypeApply)(using Context): Tree =
     val TypeApply(fun: Tree, args) = tree
     val explicitGenerics = Symbols.requiredClass("com.avsystem.commons.annotation.explicitGenerics")
-    if fun.symbol.hasAnnotation(explicitGenerics) then args.foreach {
-      case tt: TypeTree /*if tt.original == null || tt.original == EmptyTree */ =>
-              report(s"${fun.symbol} requires that its type arguments are explicit (not inferred)", tree)
-      case _ =>
-    }
+    if fun.symbol.hasAnnotation(explicitGenerics) then
+      args.foreach {
+        case tt: TypeTree /*if tt.original == null || tt.original == EmptyTree */ =>
+          report(s"${fun.symbol} requires that its type arguments are explicit (not inferred)", tree)
+        case _ =>
+      }
+
+    end if
     tree
-  }
 
+  end transformTypeApply
 
-}
+end ExplicitGenerics
