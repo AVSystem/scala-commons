@@ -10,7 +10,7 @@ import org.scalatest.Assertions
 import scala.util.chaining.scalaUtilChainingOps
 
 trait AnalyzerTest:
-  analyzer: Assertions =>
+  this: Assertions =>
 
   lazy val compiler = new Compiler
 
@@ -47,7 +47,7 @@ trait AnalyzerTest:
 
     base.initialCtx.fresh.tap { ctx =>
       ctx.setSetting(ctx.settings.usejavacp, true)
-      ctx.setSetting(ctx.settings.pluginOptions, "AVSystemAnalyzer:+_" :: analyzer.pluginOptions)
+      ctx.setSetting(ctx.settings.pluginOptions, "AVSystemAnalyzer:+_" :: this.pluginOptions)
       base.initialize()(using ctx)
     }
 

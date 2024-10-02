@@ -7,7 +7,6 @@ import dotty.tools.dotc.reporting.Diagnostic
 import dotty.tools.dotc.util.NoSourcePosition
 
 final class AnalyzerPlugin extends StandardPlugin:
-  plugin =>
 
   private lazy val rules = List(
     new ImportJavaUtil,

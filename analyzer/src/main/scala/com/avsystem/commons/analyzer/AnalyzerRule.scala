@@ -11,8 +11,9 @@ import dotty.tools.dotc.transform.{Pickler, Staging}
 import dotty.tools.dotc.util.SourcePosition
 
 import scala.compiletime.uninitialized
+import scala.util.ChainingSyntax
 
-abstract class AnalyzerRule(val name: String, defaultLevel: Level = Level.Warn) extends PluginPhase:
+abstract class AnalyzerRule(val name: String, defaultLevel: Level = Level.Warn) extends PluginPhase, ChainingSyntax:
 
   import tpd.*
 
@@ -28,11 +29,11 @@ abstract class AnalyzerRule(val name: String, defaultLevel: Level = Level.Warn) 
     report(message, tree.symbol)(using tree.sourcePos)
 
   protected final def report(
-    message: String,
-    site: Symbol = NoSymbol
+      message: String,
+      site: Symbol = NoSymbol
   )(using
-    position: SourcePosition,
-    ctx: Context
+      position: SourcePosition,
+      ctx: Context
   ): Unit = ctx.reporter.report {
     level match
       case Level.Off =>
@@ -60,6 +61,6 @@ object Level:
     case '-' => Level.Off
     case '*' => Level.Info
     case '+' => Level.Error
-    case _ => Level.Warn
+    case _   => Level.Warn
 
 end Level

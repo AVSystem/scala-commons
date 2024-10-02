@@ -10,8 +10,9 @@ final class VarargsAtLeastTest extends AnyFunSuite with AnalyzerTest:
       """
         |import com.avsystem.commons.analyzer.TestUtils
         |
+        |object T
         |object whatever {
-        |  TestUtils.need3Params(1, 2)
+        |  TestUtils.need3Params(1, 2, "String", T)(List(8, 9))
         |}
       """.stripMargin
     )

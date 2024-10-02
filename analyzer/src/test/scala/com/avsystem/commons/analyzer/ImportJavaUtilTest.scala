@@ -34,4 +34,5 @@ final class ImportJavaUtilTest extends AnyFunSuite with AnalyzerTest:
       """.stripMargin
     )
   }
+
 end ImportJavaUtilTest
