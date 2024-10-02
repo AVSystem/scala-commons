@@ -511,17 +511,17 @@ object SharedExtensionsUtils extends SharedExtensions {
       */
     def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
 
-    def applyNOpt(a: A): NOpt[B] = pf.applyOrElse(a, NoValueMarkerFunc) match {
+    def applyNOpt(a: A): NOpt[B] = pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
       case NoValueMarker => NOpt.Empty
       case rawValue => NOpt.some(rawValue.asInstanceOf[B])
     }
 
-    def applyOpt(a: A): Opt[B] = pf.applyOrElse(a, NoValueMarkerFunc) match {
+    def applyOpt(a: A): Opt[B] = pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
       case NoValueMarker => Opt.Empty
       case rawValue => Opt(rawValue.asInstanceOf[B])
     }
 
-    def fold[C](a: A)(forEmpty: A => C, forNonEmpty: B => C): C = pf.applyOrElse(a, NoValueMarkerFunc) match {
+    def fold[C](a: A)(forEmpty: A => C, forNonEmpty: B => C): C = pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
       case NoValueMarker => forEmpty(a)
       case rawValue => forNonEmpty(rawValue.asInstanceOf[B])
     }
