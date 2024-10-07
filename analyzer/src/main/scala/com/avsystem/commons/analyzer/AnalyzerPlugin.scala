@@ -10,7 +10,8 @@ final class AnalyzerPlugin extends StandardPlugin:
 
   private lazy val rules = List(
     new ImportJavaUtil,
-    new ExplicitGenerics
+    new ExplicitGenerics,
+    new OldStyleImplicitConversion
   )
 
   override val description = "AVSystem custom Scala static analyzer"
