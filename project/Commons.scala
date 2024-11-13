@@ -54,7 +54,6 @@ object Commons extends ProjectGroup("commons") {
     organization := "com.avsystem.commons",
     homepage := Some(url("https://github.com/AVSystem/scala-commons")),
     organizationName := "AVSystem",
-    organizationHomepage := Some(url("http://www.avsystem.com/")),
     description := "AVSystem commons library for Scala",
     startYear := Some(2015),
     licenses := Vector(
@@ -66,7 +65,7 @@ object Commons extends ProjectGroup("commons") {
       devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
     )),
     developers := List(
-      Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
+      Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak")),
     ),
 
     scalaVersion := "2.13.15",
