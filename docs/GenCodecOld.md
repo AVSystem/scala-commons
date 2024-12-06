@@ -238,7 +238,7 @@ The library by default provides codecs for common Scala and Java types:
   so you only have to worry about it when dealing with custom map implementations.
 * Any `java.util.Map[K,V]`, with the same restrictions as for Scala maps (there must be `GenCodec` for `V` and 
   `GenKeyCodec` for `K`)
-* `Option[T]`, `Opt[T]`, `OptArg[T]`, `NOpt[T]`, `OptRef[T]`, provided that `T` can be serialized.
+* `Option[T]`, `Opt[T]`, `OptArg[T]`, `ImplicitOptArg[T]`, `NOpt[T]`, `OptRef[T]`, provided that `T` can be serialized.
 * `Either[A,B]`, provided that `A` and `B` can be serialized.
 * [`NamedEnum`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnum.html)s 
   whose companion object extends [`NamedEnumCompanion`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NamedEnumCompanion.html).

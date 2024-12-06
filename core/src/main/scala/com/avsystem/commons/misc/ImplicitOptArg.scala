@@ -1,55 +1,58 @@
 package com.avsystem.commons.misc
 
-object OptArg {
+object ImplicitOptArg {
   /**
     * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
     */
-  implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
+  implicit def argToImplicitOptArg[A](value: A): ImplicitOptArg[A] = ImplicitOptArg(value)
+  implicit def implicitArgToImplicitOptArg[A](implicit value: A): ImplicitOptArg[A] = ImplicitOptArg(value)
 
   // additional implicits to cover most common, safe numeric promotions
-  implicit def intToOptArgLong(int: Int): OptArg[Long] = OptArg(int)
-  implicit def intToOptArgDouble(int: Int): OptArg[Double] = OptArg(int)
+  implicit def intToOptArgLong(int: Int): ImplicitOptArg[Long] = ImplicitOptArg(int)
+  implicit def intToOptArgDouble(int: Int): ImplicitOptArg[Double] = ImplicitOptArg(int)
 
   private object EmptyMarker extends Serializable
 
-  def apply[A](value: A): OptArg[A] = new OptArg[A](if (value != null) value else EmptyMarker)
-  def unapply[A](opt: OptArg[A]): OptArg[A] = opt //name-based extractor
+  def apply[A](value: A): ImplicitOptArg[A] = new ImplicitOptArg[A](if (value != null) value else EmptyMarker)
+  def unapply[A](opt: ImplicitOptArg[A]): ImplicitOptArg[A] = opt //name-based extractor
 
-  def some[A](value: A): OptArg[A] =
-    if (value != null) new OptArg[A](value)
+  def some[A](value: A): ImplicitOptArg[A] =
+    if (value != null) new ImplicitOptArg[A](value)
     else throw new NullPointerException
 
-  val Empty: OptArg[Nothing] = new OptArg(EmptyMarker)
-  def empty[A]: OptArg[A] = Empty
+  val Empty: ImplicitOptArg[Nothing] = new ImplicitOptArg(EmptyMarker)
+  def empty[A]: ImplicitOptArg[A] = Empty
 }
 
 /**
-  * [[OptArg]] is like [[Opt]] except it's intended to be used to type-safely express optional method/constructor
+  * [[ImplicitOptArg]] is like [[OptArg]] except it's intended to be used to type-safely express optional implicit method/constructor
   * parameters while at the same time avoiding having to explicitly wrap arguments when passing them
-  * (thanks to the implicit conversion from `A` to `OptArg[A]`). For example:
+  * (thanks to the implicit conversion from `implicit A` to `ImplicitOptArg[A]`). For example:
   *
   * {{{
-  *   def takesMaybeString(str: OptArg[String] = OptArg.Empty) = ???
+  *   def takesMaybeString(implicit str: ImplicitOptArg[String]) = ???
   *
-  *   takesMaybeString()         // default empty value is used
-  *   takesMaybeString("string") // no explicit wrapping into OptArg required
+  *   implicit val str: String = "string"
+  *   takesMaybeString()                            // str is used
+  *   takesMaybeString(using str)                   // str is used explicitly
+  *   takesMaybeString(using ImplicitOptArg.Empty)  // Empty is used explicitly
   * }}}
   *
-  * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into `OptArg.Empty`.
+  * Note that like [[Opt]], [[ImplicitOptArg]] assumes its underlying value to be non-null and `null` is translated into `ImplicitOptArg.Empty`.
   * <br/>
-  * It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit conversion `A => OptArg[A]`
-  * is intended to work. You should not use [[OptArg]] as a general-purpose "optional value" type - other types like
-  * [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately does not have any "transforming"
-  * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
+  * It is strongly recommended that [[ImplicitOptArg]] type is used without default argument.
+  * You should not use [[ImplicitOptArg]] as a general-purpose "optional value" type - other types like
+  * [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[ImplicitOptArg]] deliberately does not have any "transforming"
+  * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[ImplicitOptArg]] is converted to [[Opt]],
   * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
   */
-final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class ImplicitOptArg[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
-  import OptArg._
+  import ImplicitOptArg.*
 
   private def value: A = rawValue.asInstanceOf[A]
 
-  @inline def get: A = if (isEmpty) throw new NoSuchElementException("empty OptArg") else value
+  @inline def get: A = if (isEmpty) throw new NoSuchElementException("empty ImplicitOptArg") else value
 
   @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
   @inline def isDefined: Boolean = !isEmpty
@@ -69,9 +72,6 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
 
   @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
-
-  @inline def toImplicitOptArg: ImplicitOptArg[A] =
-    if (isEmpty) ImplicitOptArg.Empty else ImplicitOptArg(value)
 
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value
@@ -105,7 +105,7 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
     if (isEmpty) Iterator.empty else Iterator.single(value)
 
   @inline def toList: List[A] =
-    if (isEmpty) List() else new::(value, Nil)
+    if (isEmpty) List() else value :: Nil
 
   @inline def toRight[X](left: => X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
@@ -114,13 +114,13 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
     if (isEmpty) Right(right) else Left(value)
 
   /**
-    * Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
+    * Apply side effect only if ImplicitOptArg is empty. It's a bit like foreach for ImplicitOptArg.Empty
     *
     * @param sideEffect - code to be executed if optArg is empty
-    * @return the same optArg
+    * @return the same ImplicitOptArg
     * @example {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
     */
-  @inline def forEmpty(sideEffect: => Unit): OptArg[A] = {
+  @inline def forEmpty(sideEffect: => Unit): ImplicitOptArg[A] = {
     if (isEmpty) {
       sideEffect
     }
@@ -128,5 +128,5 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
   }
 
   override def toString: String =
-    if (isEmpty) "OptArg.Empty" else s"OptArg($value)"
+    if (isEmpty) "ImplicitOptArg.Empty" else s"ImplicitOptArg($value)"
 }

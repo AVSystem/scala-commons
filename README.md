@@ -29,6 +29,7 @@
   * Lightweight alternatives for Scala `Option` -
     [`Opt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/Opt.html) - guarantees no `null`s,
     [`OptArg`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptArg.html),
+    [`ImplicitOptArg`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/ImplicitOptArg.html),
     [`NOpt`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/NOpt.html),
     [`OptRef`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptRef.html) (implemented as value
     classes)

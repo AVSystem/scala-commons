@@ -88,6 +88,9 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
   @inline def toOptArg: OptArg[A] =
     if (isEmpty) OptArg.Empty else OptArg(value)
 
+  @inline def toImplicitOptArg: ImplicitOptArg[A] =
+    if (isEmpty) ImplicitOptArg.Empty else ImplicitOptArg(value)
+
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value
 

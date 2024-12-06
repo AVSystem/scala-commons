@@ -1,14 +1,14 @@
 package com.avsystem.commons
 
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc._
+import com.avsystem.commons.misc.*
 
 import scala.annotation.{nowarn, tailrec}
 import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
 
 trait SharedExtensions {
 
-  import com.avsystem.commons.SharedExtensionsUtils._
+  import com.avsystem.commons.SharedExtensionsUtils.*
 
   implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
 
@@ -416,6 +416,11 @@ object SharedExtensionsUtils extends SharedExtensions {
       */
     def toOptArg: OptArg[A] =
       if (option.isEmpty) OptArg.Empty else OptArg(option.get)
+    /**
+      * Converts this `Option` into `ImplicitOptArg`. Because `ImplicitOptArg` cannot hold `null`, `Some(null)` is translated to `OptArg.Empty`.
+      */
+    def toImplicitOptArg: ImplicitOptArg[A] =
+      if (option.isEmpty) ImplicitOptArg.Empty else ImplicitOptArg(option.get)
 
     /**
       * Apply side effect only if Option is empty. It's a bit like foreach for None
@@ -502,7 +507,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class PartialFunctionOps[A, B](private val pf: PartialFunction[A, B]) extends AnyVal {
 
-    import PartialFunctionOps._
+    import PartialFunctionOps.*
 
     /**
       * The same thing as `orElse` but with arguments flipped.
@@ -638,7 +643,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {
 
-    import MapOps._
+    import MapOps.*
 
     def getOpt(key: K): Opt[V] = map.get(key).toOpt
 

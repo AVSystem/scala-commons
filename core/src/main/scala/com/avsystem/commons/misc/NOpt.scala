@@ -43,7 +43,7 @@ object NOpt {
   */
 final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
-  import NOpt._
+  import NOpt.*
 
   private def value: A = (if (rawValue.asInstanceOf[AnyRef] eq NullMarker) null else rawValue).asInstanceOf[A]
 
@@ -82,6 +82,9 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptB
     */
   @inline def toOptArg: OptArg[A] =
     if (isEmpty) OptArg.Empty else OptArg(value)
+
+  @inline def toImplicitOptArg: ImplicitOptArg[A] =
+    if (isEmpty) ImplicitOptArg.Empty else ImplicitOptArg(value)
 
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value
@@ -142,7 +145,7 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptB
     if (isEmpty) Iterator.empty else Iterator.single(value)
 
   @inline def toList: List[A] =
-    if (isEmpty) List() else new ::(value, Nil)
+    if (isEmpty) List() else new::(value, Nil)
 
   @inline def toRight[X](left: => X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)

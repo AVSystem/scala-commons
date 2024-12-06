@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package jiop
 
-import java.{util => ju}
+import java.util as ju
 
 trait JOptionalUtils {
 
-  import JOptionalUtils._
+  import JOptionalUtils.*
 
   type JOptional[T] = ju.Optional[T]
   type JOptionalDouble = ju.OptionalDouble
@@ -36,6 +36,9 @@ trait JOptionalUtils {
 
   implicit def optArg2AsJava[T](opt: OptArg[T]): optArg2AsJava[T] =
     new optArg2AsJava((opt: OptArg[Any]).orNull)
+
+  implicit def implicitOptArg2AsJava[T](opt: ImplicitOptArg[T]): implicitOptArg2AsJava[T] =
+    new implicitOptArg2AsJava((opt: ImplicitOptArg[Any]).orNull)
 
   implicit def option2AsJavaDouble(option: Option[Double]): option2AsJavaDouble =
     new option2AsJavaDouble(option)
@@ -156,6 +159,18 @@ object JOptionalUtils {
 
   final class optArg2AsJava[T](private val rawOrNull: Any) extends AnyVal {
     private def opt: OptArg[T] = OptArg(rawOrNull.asInstanceOf[T])
+
+    /**
+      * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
+      * is not able to hold null
+      */
+    def toJOptional: JOptional[T] =
+      if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
+
+    def asJava: JOptional[T] = toJOptional
+  }
+  final class implicitOptArg2AsJava[T](private val rawOrNull: Any) extends AnyVal {
+    private def opt: ImplicitOptArg[T] = ImplicitOptArg(rawOrNull.asInstanceOf[T])
 
     /**
       * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
