@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import org.apache.pekko.actor.{ActorSystem, Props}
-import org.apache.pekko.pattern.ask
 import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
@@ -10,6 +8,8 @@ import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{RedisConnectionActor, RedisOperationActor}
 import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig}
 import com.avsystem.commons.redis.exception.ClientStoppedException
+import org.apache.pekko.actor.{ActorSystem, Props}
+import org.apache.pekko.pattern.ask
 
 /**
   * Redis client that uses a single, non-reconnectable connection.
@@ -24,6 +24,7 @@ import com.avsystem.commons.redis.exception.ClientStoppedException
   * If you simply need a single-connection, reconnectable client, use [[RedisNodeClient]] with connection pool size
   * configured to 1.
   */
+@deprecated("Redis driver is scheduled for removal. Use a different library, e.g. redisson.", "2.21.0")
 final class RedisConnectionClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: ConnectionConfig = ConnectionConfig(),
