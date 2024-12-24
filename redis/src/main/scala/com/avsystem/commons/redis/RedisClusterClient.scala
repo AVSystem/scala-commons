@@ -1,9 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import org.apache.pekko.actor.{ActorSystem, Props}
-import org.apache.pekko.pattern.ask
-import org.apache.pekko.util.Timeout
 import com.avsystem.commons.concurrent.RetryStrategy
 import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisClusterClient.{AskingPack, CollectionPacks}
@@ -12,16 +9,19 @@ import com.avsystem.commons.redis.actor.ClusterMonitoringActor.{GetClient, GetCl
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
 import com.avsystem.commons.redis.commands.{Asking, SlotRange}
 import com.avsystem.commons.redis.config.{ClusterConfig, ExecutionConfig}
-import com.avsystem.commons.redis.exception._
+import com.avsystem.commons.redis.exception.*
 import com.avsystem.commons.redis.monitoring.ClusterStateObserver
-import com.avsystem.commons.redis.protocol._
+import com.avsystem.commons.redis.protocol.*
 import com.avsystem.commons.redis.util.DelayedFuture
+import org.apache.pekko.actor.{ActorSystem, Props}
+import org.apache.pekko.pattern.ask
+import org.apache.pekko.util.Timeout
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /**
   * Redis client implementation for Redis Cluster deployments. Internally, it uses single [[RedisNodeClient]] instance
@@ -45,6 +45,7 @@ import scala.concurrent.duration._
   * @param config    client configuration - [[ClusterConfig]]
   * @param clusterStateObserver optional observer for monitoring client's state and connections - [[ClusterStateObserver]]
   */
+@deprecated("Redis driver is scheduled for removal. Use a different library, e.g. redisson.", "2.21.0")
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
   val config: ClusterConfig = ClusterConfig(),

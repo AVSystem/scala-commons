@@ -1,16 +1,16 @@
 package com.avsystem.commons
 package redis.config
 
-import java.net.InetSocketAddress
-import org.apache.pekko.io.Inet
-import org.apache.pekko.util.Timeout
 import com.avsystem.commons.concurrent.RetryStrategy
-import com.avsystem.commons.concurrent.RetryStrategy._
+import com.avsystem.commons.concurrent.RetryStrategy.*
 import com.avsystem.commons.redis.actor.RedisConnectionActor.{DebugListener, DevNullListener}
 import com.avsystem.commons.redis.{NodeAddress, RedisBatch, RedisOp}
+import org.apache.pekko.io.Inet
+import org.apache.pekko.util.Timeout
 
+import java.net.InetSocketAddress
 import javax.net.ssl.SSLEngine
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /**
   * Configuration of a [[com.avsystem.commons.redis.RedisClusterClient RedisClusterClient]]
@@ -161,6 +161,7 @@ case class NodeConfig(
   * @param debugListener        listener for traffic going through this connection. Only for debugging and testing
   *                             purposes
   */
+@deprecated("Redis driver is scheduled for removal. Use a different library, e.g. redisson.", "2.21.0")
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
   sslEngineCreator: OptArg[() => SSLEngine] = OptArg.Empty,
