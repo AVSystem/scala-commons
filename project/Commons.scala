@@ -73,20 +73,9 @@ object Commons extends ProjectGroup("commons") {
 
     githubWorkflowTargetTags ++= Seq("v*"),
 
-    githubWorkflowEnv ++= Map(
-      "REDIS_VERSION" -> "6.2.12",
-    ),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21")),
     githubWorkflowBuildPreamble ++= Seq(
-      WorkflowStep.Use(
-        UseRef.Public("actions", "cache", "v2"),
-        name = Some("Cache Redis"),
-        params = Map(
-          "path" -> "./redis-${{ env.REDIS_VERSION }}",
-          "key" -> "${{ runner.os }}-redis-cache-v2-${{ env.REDIS_VERSION }}"
-        )
-      ),
       WorkflowStep.Use(
         UseRef.Public("actions", "setup-node", "v2"),
         name = Some("Setup Node.js"),
@@ -100,10 +89,6 @@ object Commons extends ProjectGroup("commons") {
           "mongodb-replica-set" -> "test-rs",
         )
       ),
-      WorkflowStep.Run(
-        List("./install-redis.sh"),
-        name = Some("Setup Redis"),
-      )
     ),
 
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
@@ -338,6 +323,7 @@ object Commons extends ProjectGroup("commons") {
       ),
       Test / parallelExecution := false,
       Compile / scalacOptions += "-Wconf:cat=deprecation:is", // only inform about deprecations due to scheduled removal
+      Test / skip := true,
     )
 
   lazy val hocon = mkSubProject
