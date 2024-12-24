@@ -172,7 +172,7 @@ additionally aware of internal structure of some types, including:
 * [embedded documents](#embedded-document-types) - serialized into BSON documents
 * collections, i.e. any subtype of `scala.collection.Seq` or `scala.collection.Set` - serialized into BSON arrays
 * maps, i.e. any subtype of `scala.collection.Map` - serialized into BSON documents
-* option-like types, i.e. `Option`, `Opt`, `OptArg`, etc. - serialized into nullable values
+* option-like types, i.e. `Option`, `Opt`, `OptArg`, `ImplicitOptArg[T]` etc. - serialized into nullable values
 
 Being aware of internal structure makes it possible to build queries, updates, projections, etc. that reach inside
 these data types. For example, you can refer to a specific map entry in a query.
@@ -201,7 +201,7 @@ fields. In other words, the type would be valid but _opaque_.
 
 ### Optional fields
 
-A field typed as an `Option`, `Opt`, `OptArg` or similar will serialize just like its wrapped value except that `null`
+A field typed as an `Option`, `Opt`, `OptArg`, `ImplicitOptArg[T]` or similar will serialize just like its wrapped value except that `null`
 will be used to represent the absence of value. If you want to omit that `null`, effectively making the field optional
 on BSON level, use one of the following:
 

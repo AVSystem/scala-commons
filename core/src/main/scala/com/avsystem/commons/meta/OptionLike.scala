@@ -66,6 +66,9 @@ object OptionLike {
   implicit def optArgOptionLike[A]: BaseOptionLike[OptArg[A], A] =
     new OptionLikeImpl(OptArg.Empty, OptArg.some, _.isDefined, _.get, ignoreNulls = true)
 
+  implicit def implicitOptArgOptionLike[A]: BaseOptionLike[ImplicitOptArg[A], A] =
+    new OptionLikeImpl(ImplicitOptArg.Empty, ImplicitOptArg.some, _.isDefined, _.get, ignoreNulls = true)
+
   implicit def nOptOptionLike[A]: BaseOptionLike[NOpt[A], A] =
     new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get, ignoreNulls = false)
 }
