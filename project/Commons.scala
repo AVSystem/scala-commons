@@ -337,6 +337,7 @@ object Commons extends ProjectGroup("commons") {
         "io.monix" %% "monix" % monixVersion,
       ),
       Test / parallelExecution := false,
+      Compile / scalacOptions += "-Wconf:cat=deprecation:is", // only inform about deprecations due to scheduled removal
     )
 
   lazy val hocon = mkSubProject
