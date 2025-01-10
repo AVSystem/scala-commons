@@ -45,7 +45,7 @@ import scala.concurrent.duration.*
   * @param config    client configuration - [[ClusterConfig]]
   * @param clusterStateObserver optional observer for monitoring client's state and connections - [[ClusterStateObserver]]
   */
-@deprecated("Redis driver is scheduled for removal. Use a different library, e.g. redisson.", "2.21.0")
+@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
   val config: ClusterConfig = ClusterConfig(),

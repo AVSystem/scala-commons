@@ -22,7 +22,7 @@ import scala.concurrent.duration.*
   * and batches and operations are distributed over connections using round-robin scheme. Connections are automatically
   * reconnected upon failure (possibly with an appropriate delay, see [[config.NodeConfig NodeConfig]] for details).
   */
-@deprecated("Redis driver is scheduled for removal. Use a different library, e.g. redisson.", "2.21.0")
+@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig(),

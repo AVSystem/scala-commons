@@ -24,7 +24,7 @@ import org.apache.pekko.pattern.ask
   * If you simply need a single-connection, reconnectable client, use [[RedisNodeClient]] with connection pool size
   * configured to 1.
   */
-@deprecated("Redis driver is scheduled for removal. Use a different library, e.g. redisson.", "2.21.0")
+@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
 final class RedisConnectionClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: ConnectionConfig = ConnectionConfig(),

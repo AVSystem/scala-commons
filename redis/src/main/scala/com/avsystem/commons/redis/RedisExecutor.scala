@@ -54,7 +54,7 @@ trait RedisNodeExecutor extends RedisKeyedExecutor with RedisOpExecutor
   */
 trait RedisConnectionExecutor extends RedisNodeExecutor
 
-@deprecated("Redis driver is scheduled for removal. Use a different library, e.g. redisson.", "2.21.0")
+@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
 abstract class RedisClient extends RedisExecutor with Closeable {
   def initialized: Future[this.type]
 }

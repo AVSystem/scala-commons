@@ -161,7 +161,7 @@ case class NodeConfig(
   * @param debugListener        listener for traffic going through this connection. Only for debugging and testing
   *                             purposes
   */
-@deprecated("Redis driver is scheduled for removal. Use a different library, e.g. redisson.", "2.21.0")
+@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
 case class ConnectionConfig(
   initCommands: RedisBatch[Any] = RedisBatch.unit,
   sslEngineCreator: OptArg[() => SSLEngine] = OptArg.Empty,
