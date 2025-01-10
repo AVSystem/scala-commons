@@ -33,7 +33,7 @@
     [`OptRef`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptRef.html) (implemented as value
     classes)
   * [Components](docs/Components.md) and Dependency Injection library
-* `commons-redis` - [Scala driver for Redis](docs/RedisDriver.md)
+* `commons-redis` (DEPRECATED) - [Scala driver for Redis](docs/RedisDriver.md)
 * `commons-macros` contains implementations of macros used in other modules and reusable macro utilities:
   * `MacroCommons` trait with several convenience functions for implementing macros
   * `TypeClassDerivation` - implements infrastructure for automatic type class derivation

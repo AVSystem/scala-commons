@@ -1,12 +1,6 @@
 package com.avsystem.commons
 package redis
 
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.atomic.AtomicLong
-
-import org.apache.pekko.actor.{Actor, ActorRef, ActorSystem, Props}
-import org.apache.pekko.pattern.ask
-import org.apache.pekko.util.Timeout
 import com.avsystem.commons.concurrent.RunInQueueEC
 import com.avsystem.commons.redis.actor.ConnectionPoolActor.QueuedConn
 import com.avsystem.commons.redis.actor.RedisConnectionActor.PacksResult
@@ -14,15 +8,21 @@ import com.avsystem.commons.redis.actor.RedisOperationActor.OpResult
 import com.avsystem.commons.redis.actor.{ConnectionPoolActor, RedisConnectionActor, RedisOperationActor}
 import com.avsystem.commons.redis.config.{ConfigDefaults, ConnectionConfig, ExecutionConfig, NodeConfig}
 import com.avsystem.commons.redis.exception.{ClientStoppedException, NodeInitializationFailure, NodeRemovedException, TooManyConnectionsException}
+import org.apache.pekko.actor.{Actor, ActorRef, ActorSystem, Props}
+import org.apache.pekko.pattern.ask
+import org.apache.pekko.util.Timeout
 
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicLong
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /**
   * Redis client implementation for a single Redis node using a connection pool. Connection pool size is constant
   * and batches and operations are distributed over connections using round-robin scheme. Connections are automatically
   * reconnected upon failure (possibly with an appropriate delay, see [[config.NodeConfig NodeConfig]] for details).
   */
+@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig(),
