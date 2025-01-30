@@ -7,31 +7,31 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [`GenCodec`](#gencodec)
-  - [The `GenCodec` typeclass](#the-gencodec-typeclass)
-    - [Formats supported by default](#formats-supported-by-default)
-    - [`GenKeyCodec`](#genkeycodec)
-    - [`GenObjectCodec`](#genobjectcodec)
-  - [Writing and reading](#writing-and-reading)
-  - [`GenCodec` instances available by default](#gencodec-instances-available-by-default)
-  - [Deriving codecs](#deriving-codecs)
-    - [Deriving codecs for generic types](#deriving-codecs-for-generic-types)
-    - [Depending on external implicits](#depending-on-external-implicits)
-  - [Serializing case classes](#serializing-case-classes)
-    - [Field name customization](#field-name-customization)
-    - [Default field values](#default-field-values)
-      - [Transient default field values](#transient-default-field-values)
-    - [Optional and nullable fields](#optional-and-nullable-fields)
-    - [Case class like types](#case-class-like-types)
-  - [Serializing sealed hierarchies](#serializing-sealed-hierarchies)
-    - [Nested sealed hierarchy format](#nested-sealed-hierarchy-format)
-    - [Flat sealed hierarchy format](#flat-sealed-hierarchy-format)
-      - [Sealed hierarchy default case](#sealed-hierarchy-default-case)
-    - [Case name customization](#case-name-customization)
-  - [Transparent wrappers](#transparent-wrappers)
-  - [Writing codecs for third party types](#writing-codecs-for-third-party-types)
-    - [Derive the codec from a "fake companion"](#derive-the-codec-from-a-fake-companion)
-    - [Transform the codec of another type](#transform-the-codec-of-another-type)
-    - [Implement the codec manually](#implement-the-codec-manually)
+    - [The `GenCodec` typeclass](#the-gencodec-typeclass)
+        - [Formats supported by default](#formats-supported-by-default)
+        - [`GenKeyCodec`](#genkeycodec)
+        - [`GenObjectCodec`](#genobjectcodec)
+    - [Writing and reading](#writing-and-reading)
+    - [`GenCodec` instances available by default](#gencodec-instances-available-by-default)
+    - [Deriving codecs](#deriving-codecs)
+        - [Deriving codecs for generic types](#deriving-codecs-for-generic-types)
+        - [Depending on external implicits](#depending-on-external-implicits)
+    - [Serializing case classes](#serializing-case-classes)
+        - [Field name customization](#field-name-customization)
+        - [Default field values](#default-field-values)
+            - [Transient default field values](#transient-default-field-values)
+        - [Optional and nullable fields](#optional-and-nullable-fields)
+        - [Case class like types](#case-class-like-types)
+    - [Serializing sealed hierarchies](#serializing-sealed-hierarchies)
+        - [Nested sealed hierarchy format](#nested-sealed-hierarchy-format)
+        - [Flat sealed hierarchy format](#flat-sealed-hierarchy-format)
+            - [Sealed hierarchy default case](#sealed-hierarchy-default-case)
+        - [Case name customization](#case-name-customization)
+    - [Transparent wrappers](#transparent-wrappers)
+    - [Writing codecs for third party types](#writing-codecs-for-third-party-types)
+        - [Derive the codec from a "fake companion"](#derive-the-codec-from-a-fake-companion)
+        - [Transform the codec of another type](#transform-the-codec-of-another-type)
+        - [Implement the codec manually](#implement-the-codec-manually)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -89,10 +89,11 @@ Within `scala-commons` you can find `Input` and `Output` implementations for the
     * using Java intermediate `BsonValue` representation - `BsonValueInput` & `BsonValueOutput`
     * using Java stream-like `BsonReader` and `BsonWriter` - `BsonReaderInput` & `BsonWriterOutput`
 * [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md) using
-  [Lightbend Config](https://github.com/lightbend/config) representation, available in `commons-hocon` module - 
+  [Lightbend Config](https://github.com/lightbend/config) representation, available in `commons-hocon` module -
   `HoconInput` & `HoconOutput`
 
-Also, in principle it should be relatively easy to implement `Input` and `Output` for various intermediate representations 
+Also, in principle it should be relatively easy to implement `Input` and `Output` for various intermediate
+representations
 found in third party libraries, e.g. JSON ASTs implemented by all the JSON serialization libraries.
 
 ### `GenKeyCodec`
@@ -141,10 +142,10 @@ val ints: List[Int] = JsonStringInput.read[List[Int]]("[1, 2, 3]")
 * Scala enums (extending `NamedEnum` with companion extending `NamedEnumCompanion`) - they serialize as strings equal to
   their names
 * Java enums - they serialize as strings equal to their names
-* `Option[T]`, `Opt[T]`, `OptArg[T]`, `NOpt[T]` - assuming availability of `GenCodec[T]`
+* `Option[T]`, `Opt[T]`, `OptArg[T]`, `ImplicitOptArg[T]`, `NOpt[T]` - assuming availability of `GenCodec[T]`
     * empty values (`None`, `Opt.Empty`, etc) serialize as `null` while non-empty values serialize as-is - therefore it
       is not possible to unambiguously serialize `Some(null)` and `NOpt(null)` - they will collapse to `None`
-      and `NOpt.Empty` upon deserialization (note that `Opt(null)` and `OptArg(null)` already collapse to empty values
+      and `NOpt.Empty` upon deserialization (note that `Opt(null)`, `OptArg(null)` and `ImplicitOptArg(null)` already collapse to empty values
       in runtime, independent of serialization).
 * `Either[A, B]` - assuming availability of `GenCodec[A]` and `GenCodec[B]`
 
@@ -312,7 +313,8 @@ deserialization (i.e. you don't want a language-level default value):
 case class Data(int: Int, @whenAbsent("default") string: String)
 ```
 
-Default field values allow you to evolve your case classes by adding fields, without breaking serialization compatibility.
+Default field values allow you to evolve your case classes by adding fields, without breaking serialization
+compatibility.
 
 #### Transient default field values
 
@@ -362,7 +364,8 @@ case class Data(int: Int, @transientDefault str: Option[String] = None)
 
 However, `@optionalParam` is the recommended, more "native" way to do this.
 
-When using `@optionalParam` with `Option`/`Opt`/`OptArg`, `null`-valued fields are treated equivalently to missing fields. If you
+When using `@optionalParam` with `Option`/`Opt`/`OptArg`/`ImplicitOptArg`, `null`-valued fields are treated equivalently to missing
+fields. If you
 need to distinguish between missing fields and `null`-valued fields, this can be achieved with the help of `NOpt` (a
 nullable `Opt`):
 
@@ -375,8 +378,8 @@ object Data extends HasGenCodec[Data]
 def printJson(value: Data): Unit =
   println(JsonStringOutput.write(value))
 
-printJson(Data(42, NOpt.Empty))        // {"int":42}
-printJson(Data(42, NOpt(None)))        // {"int":42,"str":null}
+printJson(Data(42, NOpt.Empty)) // {"int":42}
+printJson(Data(42, NOpt(None))) // {"int":42,"str":null}
 printJson(Data(42, NOpt(Some("foo")))) // {"int":42,"str":"foo"}
 ```
 
@@ -384,7 +387,7 @@ printJson(Data(42, NOpt(Some("foo")))) // {"int":42,"str":"foo"}
 
 The macro that materializes codecs for case classes does not strictly require a `case class`. It is enough if
 a class or trait _looks sufficiently like_ a case class. Strictly speaking, the class or trait must have a companion
-object with `apply` and `unapply` methods defined as if it were a case class (`unapplySeq` if repeated parameters are 
+object with `apply` and `unapply` methods defined as if it were a case class (`unapplySeq` if repeated parameters are
 in play). For a real `case class`, these methods are automatically synthesized by the compiler.
 
 ```scala
@@ -400,7 +403,7 @@ object Stuff extends HasGenCodec[Stuff] {
       def intValue = int
       def strValue = str
     }
-    
+
   def unapply(stuff: Stuff): Some[(Int, String)] =
     Some((stuff.intValue, stuff.strValue))
 }
@@ -430,9 +433,9 @@ object Expr extends HasGenCodec[Expr]
 def printJson(value: Expr): Unit =
   println(JsonStringOutput.write[Expr](value))
 
-printJson(IntExpr(42))    // {"IntExpr":{"value":42}}
+printJson(IntExpr(42)) // {"IntExpr":{"value":42}}
 printJson(StrExpr("foo")) // {"StrExpr":{"value":"foo"}}
-printJson(NullExpr)       // {"NullExpr":{}}
+printJson(NullExpr) // {"NullExpr":{}}
 ```
 
 The advantage of this format is that case classes and objects don't need to serialize into objects.
@@ -451,9 +454,9 @@ object Expr extends HasGenCodec[Expr]
 def printJson(value: Expr): Unit =
   println(JsonStringOutput.write[Expr](value))
 
-printJson(IntExpr(42))    // {"IntExpr":42}
+printJson(IntExpr(42)) // {"IntExpr":42}
 printJson(StrExpr("foo")) // {"StrExpr":"foo"}
-printJson(NullExpr)       // {"NullExpr":{}}
+printJson(NullExpr) // {"NullExpr":{}}
 ```
 
 ### Flat sealed hierarchy format
@@ -474,9 +477,9 @@ object Expr extends HasGenCodec[Expr]
 def printJson(value: Expr): Unit =
   println(JsonStringOutput.write[Expr](value))
 
-printJson(IntExpr(42))    // {"type":"IntExpr","value":42}
+printJson(IntExpr(42)) // {"type":"IntExpr","value":42}
 printJson(StrExpr("foo")) // {"type":"StrExpr","value":"foo"}
-printJson(NullExpr)       // {"type":"NullExpr"}
+printJson(NullExpr) // {"type":"NullExpr"}
 ```
 
 Flat sealed hierarchy format is cleaner but requires that all case classes and objects serialize into objects.
@@ -518,9 +521,9 @@ import com.avsystem.commons.serialization._
 @name("null") case object NullExpr extends Expr
 object Expr extends HasGenCodec[Expr]
 
-printJson(IntExpr(42))    // {"type":"int","value":42}
+printJson(IntExpr(42)) // {"type":"int","value":42}
 printJson(StrExpr("foo")) // {"type":"str","value":"foo"}
-printJson(NullExpr)       // {"type":"null"}
+printJson(NullExpr) // {"type":"null"}
 ```
 
 ## Transparent wrappers
@@ -565,17 +568,18 @@ import java.time.Duration
 
 object ThirdPartyCodecs {
   object JavaDurationAU {
-    def apply(seconds: Long, nanos: Int): Duration = 
+    def apply(seconds: Long, nanos: Int): Duration =
       Duration.ofSeconds(seconds).withNanos(nanos)
-    def unapply(duration: Duration): Some[(Long, Int)] = 
+    def unapply(duration: Duration): Some[(Long, Int)] =
       Some((duration.getSeconds, duration.getNano))
   }
-  
+
   implicit val durationCodec: GenCodec[Duration] =
     GenCodec.fromApplyUnapplyProvider[Duration](JavaDurationAU)
 }
 
 import ThirdPartyCodecs._
+
 println(JsonStringOutput.write(Duration.ofSeconds(5).withNanos(500))) // {"seconds":5,"nanos":500}
 ```
 
@@ -593,15 +597,16 @@ import java.time.Duration
 object ThirdPartyCodecs {
   case class DurationRepr(seconds: Long, nanos: Int)
   object DurationRepr extends HasGenCodec[Duration]
-  
+
   implicit val durationCodec: GenCodec[Duration] =
     DurationRepr.codec.transform[Duration](
-      d => DurationRepr(d.getSeconds, d.getNamo), 
+      d => DurationRepr(d.getSeconds, d.getNamo),
       dr => Duration.ofSeconds(dr.seconds).withNanos(dr.nanos)
     )
 }
 
 import ThirdPartyCodecs._
+
 println(JsonStringOutput.write(Duration.ofSeconds(5).withNanos(500))) // {"seconds":5,"nanos":500}
 ```
 
@@ -626,7 +631,7 @@ object ThirdPartyCodecs {
       val nanos = input.getNextNamedField("nanos").readSimple().readInt()
       Duration.ofSeconds(seconds).withNanos(nanos)
     }
-    
+
     def write(output: ObjectOutput, value: Duration): Unit = {
       output.writeField("seconds").writeSimple().writeLong(value.getSeconds)
       output.writeField("nanos").writeSimple().writeInt(value.getNano)
@@ -635,6 +640,7 @@ object ThirdPartyCodecs {
 }
 
 import ThirdPartyCodecs._
+
 println(JsonStringOutput.write(Duration.ofSeconds(5).withNanos(500))) // {"seconds":5,"nanos":500}
 ```
 
