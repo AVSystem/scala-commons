@@ -266,7 +266,6 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
-        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
       ),
@@ -292,6 +291,7 @@ object Commons extends ProjectGroup("commons") {
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion,
+        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
         "io.monix" %% "monix" % monixVersion,
         "org.mongodb" % "mongodb-driver-core" % mongoVersion,
         "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
