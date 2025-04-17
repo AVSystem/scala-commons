@@ -35,6 +35,7 @@ Here's a list of currently supported rules:
 | `finalValueClasses`        | warning       | Makes sure that value classes are marked final.                                                                                                                                                      |
 | `implicitParamDefaults`    | warning       | Makes sure that default values are not defined for implicit parameters                                                                                                                               |
 | `implicitValueClasses`     | warning       | Makes sure that implicit classes extend `AnyVal` (when applicable). Nested classes check can be enabled by passing the `true` argument.                                                              |
+| `implicitFunctionParams`    | warning       | Makes sure that implicit parameters are not function types or partial functions                                                                                                                  |
 
 Rules may be enabled and disabled in `build.sbt` with Scala compiler options:
 
