@@ -13,7 +13,7 @@ class ImplicitFunctionParams(g: Global) extends AnalyzerRule(g, "implicitFunctio
         if (paramList.nonEmpty && paramList.head.mods.hasFlag(Flag.IMPLICIT)) {
           paramList.foreach { param =>
             val paramTpe = param.tpt.tpe
-            if (paramTpe != null && (definitions.isFunctionProto(paramTpe) || definitions.isPartialFunctionType(paramTpe))) {
+            if (paramTpe != null && (definitions.isFunctionType(paramTpe) || definitions.isPartialFunctionType(paramTpe))) {
               report(param.pos, "Implicit parameters should not have any function type")
             }
           }
