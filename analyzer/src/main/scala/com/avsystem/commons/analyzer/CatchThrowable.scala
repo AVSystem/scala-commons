@@ -9,10 +9,16 @@ class CatchThrowable(g: Global) extends AnalyzerRule(g, "catchThrowable", Level.
   import global._
 
   private lazy val throwableTpe = typeOf[Throwable]
-  private lazy val nonFatalSym = typeOf[NonFatal.type].termSymbol
+
+  private lazy val nonFatalSymbols = {
+    val nonFatal = typeOf[NonFatal.type].termSymbol
+    val nonFatalAlias = classType("com.avsystem.commons.CommonAliases").member(TermName("NonFatal"))
+
+    Set(nonFatal, nonFatalAlias)
+  }
 
   private def isNonFatalPattern(tree: Tree): Boolean = tree match {
-    case UnApply(Apply(Select(qualifier, TermName("unapply")), _), _) if qualifier.symbol == nonFatalSym => true
+    case UnApply(Apply(Select(qualifier, TermName("unapply")), _), _) if nonFatalSymbols contains qualifier.symbol => true
     case _ => false
   }
 

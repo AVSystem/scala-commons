@@ -77,14 +77,13 @@ class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
     assertNoErrors(
       //language=Scala
       """
-        |import scala.util.control.NonFatal
-        |
-        |object Test {
+        |object Test extends com.avsystem.commons.CommonAliases {
         |  def test(): Unit = {
         |    try {
         |      println("test")
         |    } catch {
         |      case NonFatal(t) => println(t)
+        |      case scala.util.control.NonFatal(t) => println(t)
         |    }
         |  }
         |}
