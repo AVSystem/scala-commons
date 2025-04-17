@@ -1,10 +1,9 @@
 package com.avsystem.commons
 package analyzer
 
-import org.scalatest.Suites
 import org.scalatest.funsuite.AnyFunSuite
 
-class DefaultImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
+class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
   test("implicit final class extending AnyVal should pass") {
     assertNoErrors(
       //language=Scala
@@ -210,8 +209,3 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
       """.stripMargin)
   }
 }
-
-class ImplicitValueClassesTest extends Suites(
-  new DefaultImplicitValueClassesSuite,
-  new NestedImplicitValueClassesSuite
-)
