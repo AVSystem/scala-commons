@@ -15,9 +15,6 @@ class ImplicitValueClasses(g: Global) extends AnalyzerRule(g, "implicitValueClas
     case a => a.toBoolean
   }
 
-  private lazy val message = "Implicit classes should always extend AnyVal to become value classes" +
-    (if (reportOnNestedClasses) ". Nested classes should be extracted to top-level objects" else "")
-
   def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
     case cd: ClassDef if cd.mods.hasFlag(Flag.IMPLICIT) =>
       val tpe = cd.symbol.typeSignature
@@ -34,9 +31,12 @@ class ImplicitValueClasses(g: Global) extends AnalyzerRule(g, "implicitValueClas
       def hasExactlyOneParam = paramLists.forall(lists => lists.size == 1 && lists.head.size == 1)
 
       if (!inheritsAnyVal && !inheritsOtherClass && hasExactlyOneParam) {
-        def isNestedClass =
+        val isNestedClass =
           //implicit classes are always nested classes, so we want to check if the outer class's an object
           /*cd.symbol.isNestedClass &&*/ !cd.symbol.isStatic
+
+        val message = "Implicit classes should always extend AnyVal to become value classes" +
+          (if (isNestedClass) ". Nested classes should be extracted to top-level objects" else "")
 
         if (reportOnNestedClasses || !isNestedClass)
           report(cd.pos, message)
