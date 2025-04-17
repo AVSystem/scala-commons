@@ -6,6 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   test("implicit parameters should not have default values") {
     assertErrors(6,
+      //language=Scala
       """
         |object whatever {
         |  // This should pass - implicit parameter without default value

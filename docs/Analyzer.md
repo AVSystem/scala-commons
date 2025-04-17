@@ -31,6 +31,10 @@ Here's a list of currently supported rules:
 | `throwableObjects`         | warning       | Makes sure that objects are never used as `Throwable`s (unless they have stack traces disabled)                                                                                                      |
 | `constantDeclarations`     | off           | Checks if constants are always declared as `final val`s with `UpperCamelCase` and no explicit type annotation for literal values                                                                     |
 | `basePackage`              | warning       | Checks if all sources are within the specified base package                                                                                                                                          |
+| `catchThrowable`           | warning       | Makes sure that code does not catch `Throwable` directly, which can hide critical errors like `OutOfMemoryError`                                                                                     |
+| `finalValueClasses`        | warning       | Makes sure that value classes are marked final.                                                                                                                                                      |
+| `implicitParamDefaults`    | warning       | Makes sure that default values are not defined for implicit parameters                                                                                                                               |
+| `implicitValueClasses`     | warning       | Makes sure that implicit classes extend `AnyVal` (when applicable). Nested classes check can be enabled by passing the `true` argument.                                                              |
 
 Rules may be enabled and disabled in `build.sbt` with Scala compiler options:
 
