@@ -72,4 +72,22 @@ class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
         |}
       """.stripMargin)
   }
+
+  test("catching Throwable using NonFatal should be allowed") {
+    assertNoErrors(
+      //language=Scala
+      """
+        |import scala.util.control.NonFatal
+        |
+        |object Test {
+        |  def test(): Unit = {
+        |    try {
+        |      println("test")
+        |    } catch {
+        |      case NonFatal(t) => println(t)
+        |    }
+        |  }
+        |}
+      """.stripMargin)
+  }
 }
