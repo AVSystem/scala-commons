@@ -61,6 +61,7 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     new BasePackage(global),
     new ImplicitValueClasses(global),
     new FinalValueClasses(global),
+    new FinalCaseClasses(global),
     new ImplicitParamDefaults(global),
     new CatchThrowable(global),
     new ImplicitFunctionParams(global),
