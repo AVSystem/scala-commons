@@ -28,9 +28,14 @@ class ImplicitValueClasses(g: Global) extends AnalyzerRule(g, "implicitValueClas
 
         cls != cd.symbol && !isDefault && !isUniversalTrait
       }
-      def hasExactlyOneParam = paramLists.forall(lists => lists.size == 1 && lists.head.size == 1)
+      def hasExactlyOneParam = paramLists.exists(lists => lists.size == 1 && lists.head.size == 1)
 
-      if (!inheritsAnyVal && !inheritsOtherClass && hasExactlyOneParam) {
+      def paramIsValueClass = paramLists.exists { lists =>
+        /* lists.nonEmpty && lists.head.nonEmpty && */
+        lists.head.head.typeSignature.typeSymbol.isDerivedValueClass
+      }
+
+      if (!inheritsAnyVal && !inheritsOtherClass && hasExactlyOneParam && !paramIsValueClass) {
         val isNestedClass =
           //implicit classes are always nested classes, so we want to check if the outer class's an object
           /*cd.symbol.isNestedClass &&*/ !cd.symbol.isStatic

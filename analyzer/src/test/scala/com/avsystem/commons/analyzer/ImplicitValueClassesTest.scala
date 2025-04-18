@@ -112,6 +112,18 @@ class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
         |}
       """.stripMargin)
   }
+
+  test("implicit class for value class should not be affected") {
+    assertNoErrors(
+      //language=Scala
+      """
+        |object whatever {
+        |  implicit final class ValueClass(x: com.avsystem.commons.misc.Timestamp) {
+        |    def sth: Long = x.millis
+        |  }
+        |}
+      """.stripMargin)
+  }
 }
 
 class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
@@ -119,6 +131,7 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
 
   test("nested implicit class not extending AnyVal should fail") {
     assertErrors(1,
+      //language=Scala
       """
         |object whatever {
         |  class Outer {
@@ -134,6 +147,8 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
   test("nested implicit class with type parameter not extending AnyVal should fail") {
     assertErrors(1,
       """
+        |      //language=Scala
+        |
         |object whatever {
         |  class Outer {
         |    implicit final class BadNestedImplicitClass[T <: Int](val x: T) {
@@ -146,6 +161,7 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
 
   test("deeply nested implicit class not extending AnyVal should fail") {
     assertErrors(1,
+      //language=Scala
       """
         |object whatever {
         |  class Outer {
@@ -161,6 +177,7 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
 
   test("regular class should not be affected") {
     assertNoErrors(
+      //language=Scala
       """
         |object whatever {
         |  class Outer {
@@ -174,6 +191,7 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
 
   test("implicit class extending other classes should not be affected") {
     assertNoErrors(
+      //language=Scala
       """
         |object whatever {
         |  class Outer {
@@ -194,6 +212,7 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
 
   test("implicit class extending AnyVal with traits should be handled correctly") {
     assertErrors(1,
+      //language=Scala
       """
         |object whatever {
         |  class Outer {
