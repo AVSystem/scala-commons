@@ -36,4 +36,24 @@ class FinalCaseClassesTest extends AnyFunSuite with AnalyzerTest {
         |}
       """.stripMargin)
   }
+
+  // SI-4440 https://github.com/scala/bug/issues/4440
+  test("should not be affected due to SI-4440"){
+    assertNoErrors(
+      //language=scala
+      """
+        |trait Outer {
+        |  case class Inner(x: Int, y: String) {
+        |    def double: Int = x * 2
+        |  }
+        |}
+        |
+        |class Outer2 {
+        |  case class Inner(x: Int, y: String) {
+        |    def double: Int = x * 2
+        |  }
+        |}
+        """.stripMargin
+    )
+  }
 }
