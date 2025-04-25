@@ -38,7 +38,7 @@ class FinalCaseClassesTest extends AnyFunSuite with AnalyzerTest {
   }
 
   // SI-4440 https://github.com/scala/bug/issues/4440
-  test("should not be affected due to SI-4440"){
+  test("should not be affected due to SI-4440") {
     assertNoErrors(
       //language=scala
       """
@@ -54,6 +54,21 @@ class FinalCaseClassesTest extends AnyFunSuite with AnalyzerTest {
         |  }
         |}
         """.stripMargin
+    )
+  }
+
+  test("sealed case class should not be affected") {
+    assertNoErrors(
+      //language=scala
+      """
+        |sealed case class SealedCaseClass(x: Int) {
+        |  def double: Int = x * 2
+        |}
+        |object SealedCaseClass {
+        |  val jeden = SealedCaseClass(1)
+        |  val dwa = SealedCaseClass(2)
+        |}
+  """.stripMargin
     )
   }
 }

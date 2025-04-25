@@ -10,9 +10,8 @@ class FinalCaseClasses(g: Global) extends AnalyzerRule(g, "finalCaseClasses", Le
   import global.*
 
   def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
-    case cd: ClassDef if !cd.mods.hasFlag(Flag.FINAL) && cd.mods.hasFlag(Flag.CASE) =>
+    case cd: ClassDef if !cd.mods.hasFlag(Flag.FINAL | Flag.SEALED) && cd.mods.hasFlag(Flag.CASE) =>
       // Skip case classes defined inside traits (SI-4440)
-
       val isInner = cd.symbol.isStatic
 
       if (isInner) {
