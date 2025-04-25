@@ -73,15 +73,22 @@ class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin)
   }
 
-  test("catching Throwable using NonFatal should be allowed") {
+  test("catching Throwable using custom extractor should be allowed") {
     assertNoErrors(
       //language=Scala
       """
-        |object Test extends com.avsystem.commons.CommonAliases {
+        |object Test extends com.avsystem.commons.CommonAliases  {
+        |  object custom {
+        |    def unapply(t: Throwable): Option[IllegalArgumentException] = t match {
+        |      case e: IllegalArgumentException => Some(e)
+        |      case _ => None
+        |    }
+        |  }
         |  def test(): Unit = {
         |    try {
         |      println("test")
         |    } catch {
+        |      case custom(t) => println(t)
         |      case NonFatal(t) => println(t)
         |      case scala.util.control.NonFatal(t) => println(t)
         |    }
