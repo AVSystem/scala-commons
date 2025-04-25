@@ -89,4 +89,36 @@ class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
         |}
       """.stripMargin)
   }
+
+  test("catching non-Throwable with pattern match should be allowed") {
+    assertNoErrors(
+      //language=Scala
+      """
+        |object Test {
+        |  def test(): Unit = {
+        |    try {
+        |      println("test")
+        |    } catch {
+        |      case _: IndexOutOfBoundsException | _: NullPointerException => println("OK!")
+        |    }
+        |  }
+        |}
+      """.stripMargin)
+  }
+
+  test("catching Throwable with pattern match should be rejected") {
+    assertErrors(1,
+      //language=Scala
+      """
+        |object Test {
+        |  def test(): Unit = {
+        |    try {
+        |      println("test")
+        |    } catch {
+        |      case _: IndexOutOfBoundsException | _: Throwable => println("Not OK!")
+        |    }
+        |  }
+        |}
+      """.stripMargin)
+  }
 }
