@@ -101,6 +101,11 @@ class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
         |    } catch {
         |      case _: IndexOutOfBoundsException | _: NullPointerException => println("OK!")
         |    }
+        |    try {
+        |      println("test")
+        |    } catch {
+        |      case e@(_: IndexOutOfBoundsException | _: NullPointerException) => println("OK!")
+        |    }
         |  }
         |}
       """.stripMargin)

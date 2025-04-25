@@ -22,18 +22,17 @@ class CatchThrowable(g: Global) extends AnalyzerRule(g, "catchThrowable", Level.
     case _ => false
   }
 
+  private def checkTree(pat: Tree): Unit = if (pat.tpe != null && pat.tpe =:= throwableTpe && !isNonFatalPattern(pat)) {
+    report(pat.pos, "Catching Throwable is discouraged, catch specific exceptions instead")
+  }
+
   def analyze(unit: CompilationUnit): Unit =
     unit.body.foreach {
       case t: Try =>
         t.catches.foreach {
-          case cas@CaseDef(Alternative(trees), _, _) =>
-            if (trees.exists(_.tpe =:= throwableTpe)) {
-              report(cas.pos, "Catching Throwable is discouraged, catch specific exceptions instead")
-            }
-          case cas@CaseDef(pat, _, _) =>
-            if (pat.tpe != null && pat.tpe =:= throwableTpe && !isNonFatalPattern(pat)) {
-              report(cas.pos, "Catching Throwable is discouraged, catch specific exceptions instead")
-            }
+          case CaseDef(Alternative(trees), _, _) => trees.foreach(checkTree)
+          case CaseDef(Bind(_, Alternative(trees)), _, _) => trees.foreach(checkTree)
+          case CaseDef(pat, _, _) => checkTree(pat)
         }
       case _ =>
     }
