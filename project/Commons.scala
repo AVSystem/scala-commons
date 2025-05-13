@@ -15,7 +15,8 @@ import sbtide.Keys.*
 import sbtunidoc.BaseUnidocPlugin.autoImport.{unidoc, unidocProjectFilter}
 import sbtunidoc.ScalaUnidocPlugin
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
-import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
+import xerial.sbt.Sonatype
+import xerial.sbt.Sonatype.autoImport.{sonatypeCredentialHost, sonatypeProfileName}
 
 object Commons extends ProjectGroup("commons") {
   // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
@@ -56,11 +57,10 @@ object Commons extends ProjectGroup("commons") {
     organizationName := "AVSystem",
     description := "AVSystem commons library for Scala",
     startYear := Some(2015),
-    licenses := Vector(
-      "The MIT License" -> url("https://opensource.org/licenses/MIT"),
-    ),
+    licenses := Vector(License.MIT),
+    sonatypeCredentialHost := Sonatype.sonatypeCentralHost,
     scmInfo := Some(ScmInfo(
-      browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
+      browseUrl = url("https://github.com/AVSystem/scala-commons"),
       connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
       devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
     )),
