@@ -439,7 +439,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   private implicit class IterableOps[A](private val coll: BIterable[A]) extends AnyVal {
     def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit = {
       lo.declareSizeOf(coll)
-      coll.foreach(new (A => Unit) {
+      coll.foreach(new(A => Unit) {
         private var idx = 0
         def apply(a: A): Unit = {
           try writer.write(lo.writeElement(), a) catch {
@@ -598,6 +598,9 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   implicit def optArgCodec[T: GenCodec]: GenCodec[OptArg[T]] =
     new Transformed[OptArg[T], Opt[T]](optCodec[T], _.toOpt, _.toOptArg)
+
+  implicit def implicitOptArgCodec[T: GenCodec]: GenCodec[ImplicitOptArg[T]] =
+    new Transformed[ImplicitOptArg[T], Opt[T]](optCodec[T], _.toOpt, _.toImplicitOptArg)
 
   implicit def optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
     new Transformed[OptRef[T], Opt[T]](optCodec[T], _.toOpt, _.toOptRef)
