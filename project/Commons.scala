@@ -79,10 +79,10 @@ object Commons extends ProjectGroup("commons") {
         params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        UseRef.Public("supercharge", "mongodb-github-action", "1.10.0"),
+        UseRef.Public("supercharge", "mongodb-github-action", "1.12.0"),
         name = Some("Setup MongoDB"),
         params = Map(
-          "mongodb-version" -> "7.0",
+          "mongodb-version" -> "8.0",
           "mongodb-replica-set" -> "test-rs",
         )
       ),
