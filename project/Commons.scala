@@ -15,8 +15,6 @@ import sbtide.Keys.*
 import sbtunidoc.BaseUnidocPlugin.autoImport.{unidoc, unidocProjectFilter}
 import sbtunidoc.ScalaUnidocPlugin
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
-import xerial.sbt.Sonatype
-import xerial.sbt.Sonatype.autoImport.{sonatypeCredentialHost, sonatypeProfileName}
 
 object Commons extends ProjectGroup("commons") {
   // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
@@ -58,7 +56,6 @@ object Commons extends ProjectGroup("commons") {
     description := "AVSystem commons library for Scala",
     startYear := Some(2015),
     licenses := Vector(License.MIT),
-    sonatypeCredentialHost := Sonatype.sonatypeCentralHost,
     scmInfo := Some(ScmInfo(
       browseUrl = url("https://github.com/AVSystem/scala-commons"),
       connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
@@ -82,10 +79,10 @@ object Commons extends ProjectGroup("commons") {
         params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        UseRef.Public("supercharge", "mongodb-github-action", "1.10.0"),
+        UseRef.Public("supercharge", "mongodb-github-action", "1.12.0"),
         name = Some("Setup MongoDB"),
         params = Map(
-          "mongodb-version" -> "7.0",
+          "mongodb-version" -> "8.0",
           "mongodb-replica-set" -> "test-rs",
         )
       ),
@@ -137,7 +134,6 @@ object Commons extends ProjectGroup("commons") {
     apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
     autoAPIMappings := true,
 
-    sonatypeProfileName := "com.avsystem",
     pomIncludeRepository := { _ => false },
 
     libraryDependencies ++= Seq(
