@@ -87,7 +87,7 @@ class OOOFieldCborRawKeysCodec[T](stdObjectCodec: OOOFieldsObjectCodec[T], keyCo
     stdObjectCodec.writeFields(output, value)
   }
 
-  def size(value: T): Int = stdObjectCodec.size(value)
+  def size(value: T, output: Opt[SequentialOutput]): Int = stdObjectCodec.size(value, output)
   def nullable: Boolean = stdObjectCodec.nullable
 }
 
