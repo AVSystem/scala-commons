@@ -17,7 +17,8 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   val TransparentGets: Set[Symbol] = Set(
     staticType(tq"$CommonsPkg.Opt[_]"),
     staticType(tq"$CommonsPkg.OptArg[_]"),
-    staticType(tq"$CommonsPkg.OptRef[_]")
+    staticType(tq"$CommonsPkg.OptRef[_]"),
+    staticType(tq"$CommonsPkg.ImplicitOptArg[_]"),
   ).map(_.member(TermName("get")))
 
   object MapApplyOrGet {
