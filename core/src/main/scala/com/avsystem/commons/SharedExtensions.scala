@@ -1,14 +1,14 @@
 package com.avsystem.commons
 
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc._
+import com.avsystem.commons.misc.*
 
 import scala.annotation.{nowarn, tailrec}
 import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
 
 trait SharedExtensions {
 
-  import com.avsystem.commons.SharedExtensionsUtils._
+  import com.avsystem.commons.SharedExtensionsUtils.*
 
   implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
 
@@ -471,8 +471,12 @@ object SharedExtensionsUtils extends SharedExtensions {
     def tapFailure(action: Throwable => Unit): Try[A] = tr match {
       case Success(_) => tr
       case Failure(throwable) =>
-        action(throwable)
+        try action(throwable)
+        catch {
+          case NonFatal(_) => // ignore any exceptions thrown by the action
+        }
         tr
+
     }
   }
 
@@ -515,7 +519,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class PartialFunctionOps[A, B](private val pf: PartialFunction[A, B]) extends AnyVal {
 
-    import PartialFunctionOps._
+    import PartialFunctionOps.*
 
     /**
       * The same thing as `orElse` but with arguments flipped.
@@ -651,7 +655,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {
 
-    import MapOps._
+    import MapOps.*
 
     def getOpt(key: K): Opt[V] = map.get(key).toOpt
 

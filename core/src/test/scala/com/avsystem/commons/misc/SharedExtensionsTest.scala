@@ -1,10 +1,9 @@
 package com.avsystem.commons.misc
 
+import com.avsystem.commons.CommonAliases.*
+import com.avsystem.commons.SharedExtensions.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
-
-import com.avsystem.commons.SharedExtensions._
-import com.avsystem.commons.CommonAliases._
 
 class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("mkMap") {
@@ -81,7 +80,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("Future.transformWith") {
-    import com.avsystem.commons.concurrent.RunNowEC.Implicits._
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.*
     val ex = new Exception
     assert(Future.successful(42).transformWith(t => Future.successful(t.get - 1)).value.contains(Success(41)))
     assert(Future.successful(42).transformWith(_ => Future.failed(ex)).value.contains(Failure(ex)))
@@ -205,5 +204,35 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
       """abc
         |  abc
         | abc""".stripMargin)
+  }
+
+  test("Try.tapFailure - Success case") {
+    var actionCalled = false
+    val successTry = Success(42)
+    val result = successTry.tapFailure(_ => actionCalled = true)
+
+    assert(!actionCalled, "Action should not be called for Success")
+    assert(result === successTry, "Original Success should be returned")
+  }
+
+  test("Try.tapFailure - Failure case") {
+    var capturedThrowable: Throwable = null
+    val exception = new RuntimeException("test exception")
+    val failureTry = Failure(exception)
+
+    val result = failureTry.tapFailure(t => capturedThrowable = t)
+
+    assert(capturedThrowable === exception, "Action should be called with the exception")
+    assert(result === failureTry, "Original Failure should be returned")
+  }
+
+  test("Try.tapFailure - Exception in action") {
+    val originalException = new RuntimeException("original exception")
+    val actionException = new RuntimeException("action exception")
+    val failureTry = Failure(originalException)
+
+    val result = failureTry.tapFailure(_ => throw actionException)
+
+    assert(result === failureTry, "Original Failure should be returned even if action throws")
   }
 }
