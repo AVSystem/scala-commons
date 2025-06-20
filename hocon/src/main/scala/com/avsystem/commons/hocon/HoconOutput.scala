@@ -2,7 +2,9 @@ package com.avsystem.commons
 package hocon
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
+import com.avsystem.commons.serialization.cbor.RawCbor
+import com.avsystem.commons.serialization.json.RawJson
 import com.typesafe.config.{ConfigValue, ConfigValueFactory}
 
 object HoconOutput {
@@ -31,7 +33,14 @@ class HoconOutput(consumer: ConfigValue => Unit) extends OutputAndSimpleOutput {
   def writeList(): HoconListOutput = new HoconListOutput(consumer)
   def writeObject(): HoconObjectOutput = new HoconObjectOutput(consumer)
 
-  //TODO: writeCustom
+  // TODO: handle other markers in writeCustom? Unfortunately typesafe config does not provide a methods to write
+  // duration to nice string representation etc.
+  override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =
+    typeMarker match {
+      case ConfigValueMarker => consumer(value); true
+      case PeriodMarker => anyRef(value.toString.toLowerCase.stripPrefix("p")); true
+      case _ => false
+    }
 }
 
 class HoconListOutput(consumer: ConfigValue => Unit) extends ListOutput {

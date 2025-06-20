@@ -16,7 +16,6 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  REDIS_VERSION: 6.2.12
 
 jobs:
   build:
@@ -24,7 +23,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.14]
+        scala: [2.13.16]
         java: [temurin@17, temurin@21]
     runs-on: ${{ matrix.os }}
     steps:
@@ -52,25 +51,16 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Cache Redis
-        uses: actions/cache@v2
-        with:
-          path: ./redis-${{ env.REDIS_VERSION }}
-          key: ${{ runner.os }}-redis-cache-v2-${{ env.REDIS_VERSION }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
           node-version: 12
 
       - name: Setup MongoDB
-        uses: supercharge/mongodb-github-action@1.10.0
+        uses: supercharge/mongodb-github-action@1.12.0
         with:
-          mongodb-version: 7.0
+          mongodb-version: 8.0
           mongodb-replica-set: test-rs
-
-      - name: Setup Redis
-        run: ./install-redis.sh
 
       - name: Check that workflows are up to date
         run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
@@ -85,7 +75,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.14]
+        scala: [2.13.16]
         java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:

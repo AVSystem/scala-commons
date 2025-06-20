@@ -1,5 +1,8 @@
 # Redis driver
 
+**⚠️ WARNING: This module is deprecated and scheduled for removal in a future release.
+It has not been actively tested since v2.21.0. Please migrate to an alternative solution. **
+
 `commons-redis` - Scala driver for Redis
 
 ```scala

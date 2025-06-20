@@ -312,11 +312,13 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   trait SizedCodec[T] extends GenCodec[T] {
-    def size(value: T): Int
+    def size(value: T): Int = size(value, Opt.Empty)
+
+    def size(value: T, output: Opt[SequentialOutput]): Int
 
     protected final def declareSizeFor(output: SequentialOutput, value: T): Unit =
       if (output.sizePolicy != SizePolicy.Ignored) {
-        output.declareSize(size(value))
+        output.declareSize(size(value, output.opt))
       }
   }
 
@@ -336,8 +338,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   object OOOFieldsObjectCodec {
     // this was introduced so that transparent wrapper cases are possible in flat sealed hierarchies
     final class Transformed[A, B](val wrapped: OOOFieldsObjectCodec[B], onWrite: A => B, onRead: B => A) extends OOOFieldsObjectCodec[A] {
-      def size(value: A): Int =
-        wrapped.size(onWrite(value))
+      def size(value: A, output: Opt[SequentialOutput]): Int =
+        wrapped.size(onWrite(value), output)
 
       def readObject(input: ObjectInput, outOfOrderFields: FieldValues): A =
         onRead(wrapped.readObject(input, outOfOrderFields))
