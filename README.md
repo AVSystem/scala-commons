@@ -3,8 +3,6 @@
 [![Continuous Integration](https://github.com/AVSystem/scala-commons/actions/workflows/ci.yml/badge.svg)](https://github.com/AVSystem/scala-commons/actions/workflows/ci.yml)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.avsystem.commons/commons-core_2.13)
 
-**[API reference](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/index.html)**
-
 **NOTE** This library is available to the public but it's mostly used internally at AVSystem. Therefore, API may frequently change in an incompatible way.
 
 ## Modules and features
@@ -34,7 +32,7 @@
     [`OptRef`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptRef.html) (implemented as value
     classes)
   * [Components](docs/Components.md) and Dependency Injection library
-* `commons-redis` - [Scala driver for Redis](docs/RedisDriver.md)
+* `commons-redis` (DEPRECATED) - [Scala driver for Redis](docs/RedisDriver.md)
 * `commons-macros` contains implementations of macros used in other modules and reusable macro utilities:
   * `MacroCommons` trait with several convenience functions for implementing macros
   * `TypeClassDerivation` - implements infrastructure for automatic type class derivation

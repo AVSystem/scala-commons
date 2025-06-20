@@ -31,12 +31,12 @@ object Opt {
 
   final class LazyOptOps[A](private val opt: () => Opt[A]) extends AnyVal {
     /** When a given condition is true, evaluates the `opt` argument and returns it.
-      * When the condition is false, `opt` is not evaluated and `Opt.Empty` is
+      * When the condition is false, `opt` is not evaluated and [[Opt.Empty]] is
       * returned.
       */
     def when(cond: Boolean): Opt[A] = if (cond) opt() else Opt.Empty
     /** Unless a given condition is true, this will evaluate the `opt` argument and
-      * return it. Otherwise, `opt` is not evaluated and `Opt.Empty` is returned.
+      * return it. Otherwise, `opt` is not evaluated and [[Opt.Empty]] is returned.
       */
     @inline def unless(cond: Boolean): Opt[A] = when(!cond)
   }
@@ -45,13 +45,13 @@ object Opt {
 }
 
 /**
-  * Like `Option` but implemented as value class (avoids boxing) and treats `null` as no value.
+  * Like [[Option]] but implemented as value class (avoids boxing) and treats `null` as no value.
   * Therefore, there is no equivalent for `Some(null)`.
   *
-  * If you need a value-class version of `Option` which differentiates between no value and `null` value,
+  * If you need a value-class version of [[Option]] which differentiates between no value and `null` value,
   * use [[NOpt]].
   *
-  * WARNING: Unfortunately, using `Opt` in pattern matches turns of exhaustivity checking.
+  * WARNING: Unfortunately, using `Opt` in pattern matches turns off the exhaustivity checking.
   * Please be aware of that tradeoff.
   */
 final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
