@@ -10,6 +10,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
   import c.universe._
 
+  private def IgnoreTransientDefaultMarkerObj: Tree = q"$SerializationPkg.IgnoreTransientDefaultMarker"
+
   override def allowOptionalParams: Boolean = true
 
   def mkTupleCodec[T: WeakTypeTag](elementCodecs: Tree*): Tree = instrument {
@@ -120,7 +122,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       q"""
         new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $safeSingleValue) {
           ..${generated.map({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
-          override def size(value: $tpe): $IntCls = ${generated.size}
+          override def size(value: $tpe, output: $OptCls[$SerializationPkg.SequentialOutput]): $IntCls = ${generated.size}
           override def writeFields(output: $SerializationPkg.ObjectOutput, value: $tpe): $UnitCls = {
             ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
           }
@@ -172,15 +174,48 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       }
     }
 
-    def writeField(p: ApplyParam, value: Tree): Tree = {
-      val transientValue =
-        if (isTransientDefault(p)) Some(p.defaultValue)
-        else p.optionLike.map(ol => q"${ol.reference(Nil)}.none")
-
+    def doWriteField(p: ApplyParam, value: Tree, transientValue: Option[Tree]): Tree = {
       val writeArgs = q"output" :: q"${p.idx}" :: value :: transientValue.toList
       val writeTargs = if (isOptimizedPrimitive(p)) Nil else List(p.valueType)
       q"writeField[..$writeTargs](..$writeArgs)"
     }
+
+    def writeFieldNoTransientDefault(p: ApplyParam, value: Tree): Tree = {
+      val transientValue = p.optionLike.map(ol => q"${ol.reference(Nil)}.none")
+      doWriteField(p, value, transientValue)
+    }
+
+    def writeFieldTransientDefaultPossible(p: ApplyParam, value: Tree): Tree =
+      if (isTransientDefault(p)) doWriteField(p, value, Some(p.defaultValue))
+      else writeFieldNoTransientDefault(p, value)
+
+    def writeField(p: ApplyParam, value: Tree, ignoreTransientDefault: Tree): Tree =
+      if (isTransientDefault(p)) // optimize code to avoid calling 'output.customEvent' when param does not have @transientDefault
+        q"""
+          if($ignoreTransientDefault) ${writeFieldNoTransientDefault(p, value)}
+          else ${writeFieldTransientDefaultPossible(p, value)}
+         """
+      else
+        writeFieldNoTransientDefault(p, value)
+
+    def ignoreTransientDefaultCheck: Tree =
+      q"output.customEvent($IgnoreTransientDefaultMarkerObj, ())"
+
+    // when params size is 1
+    def writeSingle(p: ApplyParam, value: Tree): Tree =
+      writeField(p, value, ignoreTransientDefaultCheck)
+
+    // when params size is greater than 1
+    def writeMultiple(value: ApplyParam => Tree): Tree =
+      // optimize code to avoid calling 'output.customEvent' when there no params with @transientDefault
+      // extracted to `val` to avoid calling 'output.customEvent' multiple times
+      if (anyParamHasTransientDefault)
+        q"""
+          val ignoreTransientDefault = $ignoreTransientDefaultCheck
+          ..${params.map(p => writeField(p, value(p), q"ignoreTransientDefault"))}
+         """
+      else
+        q"..${params.map(p => writeFieldNoTransientDefault(p, value(p)))}"
 
     def writeFields: Tree = params match {
       case Nil =>
@@ -194,57 +229,90 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
            """
       case List(p: ApplyParam) =>
         if (canUseFields)
-          writeField(p, q"value.${p.sym.name}")
+          q"${writeSingle(p, q"value.${p.sym.name}")}"
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else ${writeField(p, q"unapplyRes.get")}
+            if(unapplyRes.isEmpty) unapplyFailed
+            else ${writeSingle(p, q"unapplyRes.get")}
            """
       case _ =>
         if (canUseFields)
-          q"..${params.map(p => writeField(p, q"value.${p.sym.name}"))}"
+          q"${writeMultiple(p => q"value.${p.sym.name}")}"
         else
           q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else {
+            if(unapplyRes.isEmpty) unapplyFailed
+            else {
               val t = unapplyRes.get
-              ..${params.map(p => writeField(p, q"t.${tupleGet(p.idx)}"))}
+              ${writeMultiple(p => q"t.${tupleGet(p.idx)}")}
             }
            """
     }
 
+    def anyParamHasTransientDefault: Boolean =
+      params.exists(isTransientDefault)
+
+    def isOptionLike(p: ApplyParam): Boolean =
+      p.optionLike.nonEmpty
+
     def mayBeTransient(p: ApplyParam): Boolean =
-      p.optionLike.nonEmpty || isTransientDefault(p)
+      isOptionLike(p) || isTransientDefault(p)
 
     def transientValue(p: ApplyParam): Tree = p.optionLike match {
       case Some(optionLike) => q"${optionLike.reference(Nil)}.none"
       case None => p.defaultValue
     }
 
-    def countTransientFields: Tree =
-      if (canUseFields)
-        params.filter(mayBeTransient).foldLeft[Tree](q"0") {
-          (acc, p) => q"$acc + (if(value.${p.sym.name} == ${transientValue(p)}) 1 else 0)"
+    // assumes usage in SizedCodec.size(value, output) method implementation
+    def countTransientFields: Tree = {
+      def checkIgnoreTransientDefaultMarker: Tree =
+        q"output.isDefined && output.get.customEvent($IgnoreTransientDefaultMarkerObj, ())"
+
+      def doCount(paramsToCount: List[ApplyParam], accessor: ApplyParam => Tree): Tree =
+        paramsToCount.foldLeft[Tree](q"0") {
+          (acc, p) => q"$acc + (if(${accessor(p)} == ${transientValue(p)}) 1 else 0)"
         }
-      else if (!params.exists(mayBeTransient)) q"0"
-      else params match {
-        case List(p: ApplyParam) =>
-          q"""
-            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else if(unapplyRes.get == ${transientValue(p)}) 1 else 0
-          """
-        case _ =>
-          val res = params.filter(mayBeTransient).foldLeft[Tree](q"0") {
-            (acc, p) => q"$acc + (if(t.${tupleGet(p.idx)} == ${transientValue(p)}) 1 else 0)"
-          }
-          q"""
-            val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
-            if(unapplyRes.isEmpty) unapplyFailed else {
-              val t = unapplyRes.get
-              $res
-            }
-           """
-      }
+
+      def countOnlyOptionLike(accessor: ApplyParam => Tree): Tree =
+        doCount(params.filter(isOptionLike), accessor)
+
+      def countTransient(accessor: ApplyParam => Tree): Tree =
+        doCount(params.filter(mayBeTransient), accessor)
+
+      def countMultipleParams(accessor: ApplyParam => Tree): Tree =
+        if (anyParamHasTransientDefault)
+          q"if($checkIgnoreTransientDefaultMarker) ${countOnlyOptionLike(accessor)} else ${countTransient(accessor)}"
+        else
+          countTransient(accessor)
+
+      def countSingleParam(param: ApplyParam, value: Tree): Tree =
+        if (isTransientDefault(param))
+          q"if(!$checkIgnoreTransientDefaultMarker && $value == ${transientValue(param)}) 1 else 0"
+        else
+          q"if($value == ${transientValue(param)}) 1 else 0"
+
+      if (canUseFields)
+        countMultipleParams(p => q"value.${p.sym.name}")
+      else if (!params.exists(mayBeTransient))
+        q"0"
+      else
+        params match {
+          case List(p: ApplyParam) =>
+            q"""
+              val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
+              if(unapplyRes.isEmpty) unapplyFailed else { ${countSingleParam(p, q"unapplyRes.get")} }
+             """
+          case _ =>
+            q"""
+              val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
+              if(unapplyRes.isEmpty) unapplyFailed else {
+                val t = unapplyRes.get
+                ${countMultipleParams(p => q"t.${tupleGet(p.idx)}")}
+              }
+             """
+        }
+    }
 
     if (isTransparent(dtpe.typeSymbol)) params match {
       case List(p: ApplyParam) =>
@@ -292,8 +360,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       def sizeMethod: List[Tree] = if (useProductCodec) Nil else {
         val res =
           q"""
-            def size(value: $dtpe): $IntCls =
-              ${params.size} + ${generated.size} - $countTransientFields
+            def size(value: $dtpe, output: $OptCls[$SerializationPkg.SequentialOutput]): $IntCls =
+              ${params.size} + ${generated.size} - { $countTransientFields }
           """
         List(res)
       }

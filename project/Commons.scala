@@ -24,23 +24,23 @@ object Commons extends ProjectGroup("commons") {
   // option in IntelliJ's SBT settings.
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-  val guavaVersion = "33.2.1-jre"
+  val guavaVersion = "33.4.8-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
-  val scalacheckVersion = "1.18.0"
-  val jettyVersion = "10.0.22"
-  val mongoVersion = "5.1.2"
-  val springVersion = "5.3.37"
+  val scalacheckVersion = "1.18.1"
+  val jettyVersion = "12.0.19"
+  val mongoVersion = "5.4.0"
+  val springVersion = "5.3.39"
   val typesafeConfigVersion = "1.4.3"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.5"
-  val pekkoVersion = "1.0.3"
+  val pekkoVersion = "1.1.3"
   val monixVersion = "3.4.1"
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
   val scalajsBenchmarkVersion = "0.10.0"
-  val slf4jVersion = "2.0.13" // test only
+  val slf4jVersion = "2.0.17" // test only
 
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
@@ -54,7 +54,6 @@ object Commons extends ProjectGroup("commons") {
     organization := "com.avsystem.commons",
     homepage := Some(url("https://github.com/AVSystem/scala-commons")),
     organizationName := "AVSystem",
-    organizationHomepage := Some(url("http://www.avsystem.com/")),
     description := "AVSystem commons library for Scala",
     startYear := Some(2015),
     licenses := Vector(
@@ -66,28 +65,17 @@ object Commons extends ProjectGroup("commons") {
       devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
     )),
     developers := List(
-      Developer("ghik", "Roman Janusz", "r.janusz@avsystem.com", url("https://github.com/ghik")),
+      Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak")),
     ),
 
-    scalaVersion := "2.13.14",
+    scalaVersion := "2.13.16",
     compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
 
-    githubWorkflowEnv ++= Map(
-      "REDIS_VERSION" -> "6.2.12",
-    ),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21")),
     githubWorkflowBuildPreamble ++= Seq(
-      WorkflowStep.Use(
-        UseRef.Public("actions", "cache", "v2"),
-        name = Some("Cache Redis"),
-        params = Map(
-          "path" -> "./redis-${{ env.REDIS_VERSION }}",
-          "key" -> "${{ runner.os }}-redis-cache-v2-${{ env.REDIS_VERSION }}"
-        )
-      ),
       WorkflowStep.Use(
         UseRef.Public("actions", "setup-node", "v2"),
         name = Some("Setup Node.js"),
@@ -101,10 +89,6 @@ object Commons extends ProjectGroup("commons") {
           "mongodb-replica-set" -> "test-rs",
         )
       ),
-      WorkflowStep.Run(
-        List("./install-redis.sh"),
-        name = Some("Setup Redis"),
-      )
     ),
 
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
@@ -282,7 +266,6 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
-        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
       ),
@@ -308,6 +291,7 @@ object Commons extends ProjectGroup("commons") {
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion,
+        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
         "io.monix" %% "monix" % monixVersion,
         "org.mongodb" % "mongodb-driver-core" % mongoVersion,
         "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
@@ -338,6 +322,8 @@ object Commons extends ProjectGroup("commons") {
         "io.monix" %% "monix" % monixVersion,
       ),
       Test / parallelExecution := false,
+      Compile / scalacOptions += "-Wconf:cat=deprecation:is", // only inform about deprecations due to scheduled removal
+      Test / skip := true,
     )
 
   lazy val hocon = mkSubProject
@@ -365,10 +351,8 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "org.eclipse.jetty" % "jetty-client" % jettyVersion,
-        "org.eclipse.jetty" % "jetty-server" % jettyVersion,
+        "org.eclipse.jetty.ee10" % "jetty-ee10-servlet" % jettyVersion,
         "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-
-        "org.eclipse.jetty" % "jetty-servlet" % jettyVersion % Test,
       ),
     )
 

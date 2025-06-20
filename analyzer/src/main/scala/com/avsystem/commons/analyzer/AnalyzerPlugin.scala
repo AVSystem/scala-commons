@@ -70,7 +70,7 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
   private object component extends PluginComponent {
     val global: plugin.global.type = plugin.global
     val runsAfter = List("typer")
-    override val runsBefore = List("patmat", "silencer")
+    override val runsBefore = List("patmat")
     val phaseName = "avsAnalyze"
 
     import global._
