@@ -10,7 +10,11 @@ class ImplicitValueClasses(g: Global) extends AnalyzerRule(g, "implicitValueClas
 
   private lazy val defaultClasses = Set[Symbol](AnyClass, AnyValClass, ObjectClass)
 
-  private lazy val reportOnNestedClasses = ImplicitValueClasses.Options.fromString(argument).reportOnNestedClasses
+  private lazy val reportOnNestedClasses = argument match {
+    case "all" => true
+    case "top-level-only" | null => false
+    case _ => throw new IllegalArgumentException(s"Unknown ImplicitValueClasses option: $argument")
+  }
 
   def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
     case cd: ClassDef if cd.mods.hasFlag(Flag.IMPLICIT) =>
@@ -21,10 +25,12 @@ class ImplicitValueClasses(g: Global) extends AnalyzerRule(g, "implicitValueClas
 
       def inheritsOtherClass = tpe.baseClasses.exists { cls =>
         def isDefault = defaultClasses contains cls
+
         def isUniversalTrait = cls.isTrait && cls.superClass == AnyClass
 
         cls != cd.symbol && !isDefault && !isUniversalTrait
       }
+
       def hasExactlyOneParam = paramLists.exists(lists => lists.size == 1 && lists.head.size == 1)
 
       def paramIsValueClass = paramLists.exists { lists =>
@@ -46,19 +52,5 @@ class ImplicitValueClasses(g: Global) extends AnalyzerRule(g, "implicitValueClas
           report(cd.pos, message, level = Level.Info)
       }
     case _ =>
-  }
-}
-
-object ImplicitValueClasses {
-  private sealed abstract class Options(val reportOnNestedClasses: Boolean)
-  private object Options {
-    private case object All extends Options(reportOnNestedClasses = true)
-    private case object TopLevelOnly extends Options(reportOnNestedClasses = false)
-
-    def fromString(s: String): Options = s match {
-      case "all" => All
-      case "top-level-only" | null => TopLevelOnly
-      case _ => throw new IllegalArgumentException(s"Unknown ImplicitValueClasses option: $s")
-    }
   }
 }
