@@ -4,14 +4,18 @@ package analyzer
 import org.scalatest.funsuite.AnyFunSuite
 
 final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
-  // Dummy classes for the test
-  class Scheduler
-  object Scheduler {
-    val global = new Scheduler
+  private val DummyDefinition = {
+    //language=Scala
+    """
+      |class Scheduler
+      |object Scheduler {
+      | val global = new Scheduler
+      |}
+      |""".stripMargin
   }
 
   test("implicit parameter without default value should pass") {
-    assertNoErrors(
+    assertNoErrors(DummyDefinition +
       //language=Scala
       """
         |object whatever {
@@ -21,7 +25,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("regular parameter with default value should pass") {
-    assertNoErrors(
+    assertNoErrors(DummyDefinition +
       //language=Scala
       """
         |object whatever {
@@ -32,7 +36,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("implicit parameter with default value should fail") {
-    assertErrors(1,
+    assertErrors(1, DummyDefinition +
       //language=Scala
       """
         |object whatever {
@@ -42,7 +46,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("implicit parameter with default value in second parameter list should fail") {
-    assertErrors(1,
+    assertErrors(1, DummyDefinition +
       //language=Scala
       """
         |object whatever {
@@ -52,7 +56,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("generic method with implicit parameter with default value should fail") {
-    assertErrors(1,
+    assertErrors(1, DummyDefinition +
       //language=Scala
       """
         |object whatever {
@@ -62,7 +66,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("implicit class parameter without default value should pass") {
-    assertNoErrors(
+    assertNoErrors(DummyDefinition +
       //language=Scala
       """
         |class GoodClass1(implicit s: Scheduler)
@@ -70,7 +74,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("regular class parameter with default value should pass") {
-    assertNoErrors(
+    assertNoErrors(DummyDefinition +
       //language=Scala
       """
         |class GoodClass2(s: Scheduler = Scheduler.global)
@@ -78,7 +82,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("implicit class parameter with default value should fail") {
-    assertErrors(1,
+    assertErrors(1, DummyDefinition +
       //language=Scala
       """
         |class BadClass1(implicit s: Scheduler = Scheduler.global)
@@ -86,7 +90,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("implicit class parameter with default value in second parameter list should fail") {
-    assertErrors(1,
+    assertErrors(1, DummyDefinition +
       //language=Scala
       """
         |class BadClass2(sth: Int)(implicit s: Scheduler = Scheduler.global)
@@ -94,7 +98,7 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("generic class with implicit parameter with default value should fail") {
-    assertErrors(1,
+    assertErrors(1, DummyDefinition +
       //language=Scala
       """
         |class BadClass3[T](x: T)(implicit s: Scheduler = Scheduler.global)

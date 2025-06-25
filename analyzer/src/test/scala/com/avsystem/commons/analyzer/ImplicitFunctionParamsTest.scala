@@ -145,67 +145,72 @@ final class ImplicitFunctionParamsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   // Define a SAM type (Single Abstract Method) for all SAM type tests
-  trait IntToString {
-    def apply(i: Int): String
+  private val SamDefinition = {
+    //language=Scala
+    """
+      |trait IntToString {
+      |    def apply(i: Int): String
+      |}
+      |""".stripMargin
   }
 
   test("regular parameter with SAM type should pass") {
-    assertNoErrors(
+    assertNoErrors(SamDefinition +
       //language=Scala
-        """
-          |object whatever {
-          |  def goodMethod1(f: IntToString): Unit = ???
-          |}
+      """
+        |object whatever {
+        |  def goodMethod1(f: IntToString): Unit = ???
+        |}
       """.stripMargin)
   }
 
   test("implicit parameter with SAM type should pass") {
-    assertNoErrors(
+    assertNoErrors(SamDefinition +
       //language=Scala
-        """
-          |object whatever {
-          |  def goodMethod2(implicit f: IntToString): Unit = ???
-          |}
+      """
+        |object whatever {
+        |  def goodMethod2(implicit f: IntToString): Unit = ???
+        |}
       """.stripMargin)
   }
 
   test("implicit parameter with SAM type in second parameter list should pass") {
-    assertNoErrors(
+    assertNoErrors(SamDefinition +
       //language=Scala
-        """
-          |object whatever {
-          |  def goodMethod3(x: Int)(implicit f: IntToString): Unit = ???
-          |}
+      """
+        |object whatever {
+        |  def goodMethod3(x: Int)(implicit f: IntToString): Unit = ???
+        |}
       """.stripMargin)
   }
 
   test("regular class parameter with SAM type should pass") {
-    assertNoErrors(
+    assertNoErrors(SamDefinition +
       //language=Scala
-        """
-          |object whatever {
-          |  class GoodClass1(f: IntToString)
-          |}
+      """
+        |object whatever {
+        |  class GoodClass1(f: IntToString)
+        |}
       """.stripMargin)
   }
 
   test("implicit class parameter with SAM type should pass") {
-    assertNoErrors(
+    assertNoErrors(SamDefinition +
       //language=Scala
-        """
-          |object whatever {
-          |  class GoodClass2(implicit f: IntToString)
-          |}
+      """
+        |object whatever {
+        |  class GoodClass2(implicit f: IntToString)
+        |}
       """.stripMargin)
   }
 
   test("implicit class parameter with SAM type in second parameter list should pass") {
-    assertNoErrors(
+    assertNoErrors(SamDefinition +
       //language=Scala
-        """
-          |object whatever {
-          |  class GoodClass3(x: Int)(implicit f: IntToString)
-          |}
+      """
+        |object whatever {
+        |  class GoodClass3(x: Int)(implicit f: IntToString)
+        |}
       """.stripMargin)
   }
 
