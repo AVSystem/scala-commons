@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package analyzer
 
+import com.avsystem.commons.analyzer.AnalyzerTest.ScalaInterpolator
 import org.scalactic.source.Position
 import org.scalatest.Assertions
 
@@ -25,11 +26,6 @@ trait AnalyzerTest { this: Assertions =>
     run.compileSources(List(new BatchSourceFile("test.scala", source)))
   }
 
-  def assertErrors(source: String)(implicit pos: Position): Unit = {
-    compile(source)
-    assert(compiler.reporter.hasErrors)
-  }
-
   def assertErrors(errors: Int, source: String)(implicit pos: Position): Unit = {
     compile(source)
     assert(compiler.reporter.errorCount == errors)
@@ -38,5 +34,13 @@ trait AnalyzerTest { this: Assertions =>
   def assertNoErrors(source: String)(implicit pos: Position): Unit = {
     compile(source)
     assert(!compiler.reporter.hasErrors)
+  }
+
+  implicit final def stringContextToScalaInterpolator(sc: StringContext): ScalaInterpolator = new ScalaInterpolator(sc)
+}
+
+object AnalyzerTest {
+  final class ScalaInterpolator(private val sc: StringContext) extends AnyVal {
+    def scala(args: Any*): String = s"object TopLevel {${sc.s(args *)}}"
   }
 }

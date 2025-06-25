@@ -3,27 +3,27 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class ValueEnumExhaustiveMatchTest extends AnyFunSuite with AnalyzerTest {
+final class ValueEnumExhaustiveMatchTest extends AnyFunSuite with AnalyzerTest {
   def source(caseDefs: String): String =
-    s"""
-       |import com.avsystem.commons.misc._
-       |
-       |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
-       |object Enumz extends AbstractValueEnumCompanion[Enumz] {
-       |  final val One, Two, Three: Value = new Enumz
-       |}
-       |
-       |object Main {
-       |  val enum: Enumz = Enumz.One
-       |  import Enumz._
-       |  enum match {
-       |    $caseDefs
-       |  }
-       |}
-      """.stripMargin
+    scala"""
+           |import com.avsystem.commons.misc._
+           |
+           |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+           |object Enumz extends AbstractValueEnumCompanion[Enumz] {
+           |  final val One, Two, Three: Value = new Enumz
+           |}
+           |
+           |object Main {
+           |  val enum: Enumz = Enumz.One
+           |  import Enumz._
+           |  enum match {
+           |    $caseDefs
+           |  }
+           |}
+           |""".stripMargin
 
   test("should report two unmatched enum values") {
-    assertErrors(source(
+    assertErrors(1, source(
       """
         |case Enumz.One =>
         |case null =>
@@ -32,7 +32,7 @@ class ValueEnumExhaustiveMatchTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("should report one unmatched enum value") {
-    assertErrors(source(
+    assertErrors(1, source(
       """
         |case Enumz.One =>
         |case Enumz.Two =>
@@ -41,7 +41,7 @@ class ValueEnumExhaustiveMatchTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("should report one unmatched by alternative enum value") {
-    assertErrors(source(
+    assertErrors(1, source(
       """
         |case One | Two =>
       """.stripMargin

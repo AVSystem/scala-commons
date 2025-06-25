@@ -15,7 +15,6 @@ import sbtide.Keys.*
 import sbtunidoc.BaseUnidocPlugin.autoImport.{unidoc, unidocProjectFilter}
 import sbtunidoc.ScalaUnidocPlugin
 import sbtunidoc.ScalaUnidocPlugin.autoImport.ScalaUnidoc
-import xerial.sbt.Sonatype.autoImport.sonatypeProfileName
 
 object Commons extends ProjectGroup("commons") {
   // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
@@ -24,18 +23,18 @@ object Commons extends ProjectGroup("commons") {
   // option in IntelliJ's SBT settings.
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
-  val guavaVersion = "33.4.7-jre"
+  val guavaVersion = "33.4.8-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
   val scalacheckVersion = "1.18.1"
-  val jettyVersion = "12.0.19"
-  val mongoVersion = "5.4.0"
+  val jettyVersion = "12.0.22"
+  val mongoVersion = "5.5.1"
   val springVersion = "5.3.39"
   val typesafeConfigVersion = "1.4.3"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.5"
-  val pekkoVersion = "1.1.3"
+  val pekkoVersion = "1.1.4"
   val monixVersion = "3.4.1"
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
@@ -56,11 +55,9 @@ object Commons extends ProjectGroup("commons") {
     organizationName := "AVSystem",
     description := "AVSystem commons library for Scala",
     startYear := Some(2015),
-    licenses := Vector(
-      "The MIT License" -> url("https://opensource.org/licenses/MIT"),
-    ),
+    licenses := Vector(License.MIT),
     scmInfo := Some(ScmInfo(
-      browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
+      browseUrl = url("https://github.com/AVSystem/scala-commons"),
       connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
       devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
     )),
@@ -82,10 +79,10 @@ object Commons extends ProjectGroup("commons") {
         params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        UseRef.Public("supercharge", "mongodb-github-action", "1.10.0"),
+        UseRef.Public("supercharge", "mongodb-github-action", "1.12.0"),
         name = Some("Setup MongoDB"),
         params = Map(
-          "mongodb-version" -> "7.0",
+          "mongodb-version" -> "8.0",
           "mongodb-replica-set" -> "test-rs",
         )
       ),
@@ -137,7 +134,6 @@ object Commons extends ProjectGroup("commons") {
     apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
     autoAPIMappings := true,
 
-    sonatypeProfileName := "com.avsystem",
     pomIncludeRepository := { _ => false },
 
     libraryDependencies ++= Seq(

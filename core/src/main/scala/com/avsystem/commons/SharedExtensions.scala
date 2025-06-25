@@ -1,14 +1,14 @@
 package com.avsystem.commons
 
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.misc._
+import com.avsystem.commons.misc.*
 
 import scala.annotation.{nowarn, tailrec}
 import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
 
 trait SharedExtensions {
 
-  import com.avsystem.commons.SharedExtensionsUtils._
+  import com.avsystem.commons.SharedExtensionsUtils.*
 
   implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
 
@@ -461,6 +461,27 @@ object SharedExtensionsUtils extends SharedExtensions {
       */
     def toOptArg: OptArg[A] =
       if (tr.isFailure) OptArg.Empty else OptArg(tr.get)
+
+    /**
+      * Apply side-effect only if Try is a failure. The provided `action` function will be called with the
+      * throwable from the failure case, allowing you to perform operations like logging or error handling.
+      * 
+      * Non-fatal exceptions thrown by the `action` function are caught and ignored, ensuring that this method
+      * always returns the original Try instance regardless of what happens in the action.
+      *
+      * Don't use .failed projection, because it unnecessarily creates Exception in case of Success,
+      * which is an expensive operation.
+      */
+    def tapFailure(action: Throwable => Unit): Try[A] = tr match {
+      case Success(_) => tr
+      case Failure(throwable) =>
+        try action(throwable)
+        catch {
+          case NonFatal(_) => // ignore non-fatal exceptions thrown by the action
+        }
+        tr
+
+    }
   }
 
   class LazyTryOps[A](private val tr: () => Try[A]) extends AnyVal {
@@ -502,7 +523,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class PartialFunctionOps[A, B](private val pf: PartialFunction[A, B]) extends AnyVal {
 
-    import PartialFunctionOps._
+    import PartialFunctionOps.*
 
     /**
       * The same thing as `orElse` but with arguments flipped.
@@ -638,7 +659,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {
 
-    import MapOps._
+    import MapOps.*
 
     def getOpt(key: K): Opt[V] = map.get(key).toOpt
 
