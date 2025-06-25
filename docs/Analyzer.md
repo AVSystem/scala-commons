@@ -31,6 +31,7 @@ Here's a list of currently supported rules:
 | `throwableObjects`         | warning       | Makes sure that objects are never used as `Throwable`s (unless they have stack traces disabled)                                                                                                      |
 | `constantDeclarations`     | off           | Checks if constants are always declared as `final val`s with `UpperCamelCase` and no explicit type annotation for literal values                                                                     |
 | `basePackage`              | warning       | Checks if all sources are within the specified base package                                                                                                                                          |
+| `throwAsFunctionArgument`  | warning       | Detects when exceptions are thrown in place of function definitions and suggests wrapping the exception in a function literal instead                                                                |
 
 Rules may be enabled and disabled in `build.sbt` with Scala compiler options:
 

@@ -3,7 +3,7 @@ package analyzer
 
 import org.scalatest.wordspec.AnyWordSpec
 
-final class ThrownExceptionNotInFunctionTest extends AnyWordSpec with AnalyzerTest {
+final class ThrowAsFunctionArgumentTest extends AnyWordSpec with AnalyzerTest {
   settings.pluginOptions.value ++= List("AVSystemAnalyzer:-discardedMonixTask")
 
   "The ThrownExceptionNotInFunction rule" should {
@@ -210,7 +210,8 @@ final class ThrownExceptionNotInFunctionTest extends AnyWordSpec with AnalyzerTe
         )
 
         assertNoErrors(
-          scala"""$definition
+          scala"""
+                 |$definition
                  |
                  |a.f1(identity, identity)
                  |a.f2(identity)(identity)

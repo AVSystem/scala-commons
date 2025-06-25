@@ -3,7 +3,7 @@ package analyzer
 
 import scala.tools.nsc.Global
 
-final class ThrownExceptionNotInFunction(g: Global) extends AnalyzerRule(g, "thrownExceptionNotInFunction") {
+final class ThrowAsFunctionArgument(g: Global) extends AnalyzerRule(g, "throwAsFunctionArgument") {
 
   import global.*
 
