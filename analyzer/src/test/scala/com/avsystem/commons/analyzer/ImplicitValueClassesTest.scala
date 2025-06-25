@@ -3,7 +3,7 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
+final class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
   test("implicit final class extending AnyVal should pass") {
     assertNoErrors(
       //language=Scala
@@ -44,10 +44,8 @@ class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
     assertNoErrors(
       //language=Scala
       """
-        |object whatever {
-        |  class RegularClass(val x: Int) {
-        |    def double: Int = x * 2
-        |  }
+        |class RegularClass(val x: Int) {
+        |  def double: Int = x * 2
         |}
       """.stripMargin)
   }
@@ -126,18 +124,16 @@ class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
   }
 }
 
-class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
-  settings.pluginOptions.value ++= List("AVSystemAnalyzer:+implicitValueClasses:true")
+final class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
+  settings.pluginOptions.value ++= List("AVSystemAnalyzer:+implicitValueClasses:all")
 
   test("nested implicit class not extending AnyVal should fail") {
     assertErrors(1,
       //language=Scala
       """
-        |object whatever {
-        |  class Outer {
-        |    implicit final class GoodNestedImplicitClass(val x: Int) {
-        |      def double: Int = x * 2
-        |    }
+        |class Outer {
+        |  implicit final class GoodNestedImplicitClass(val x: Int) {
+        |    def double: Int = x * 2
         |  }
         |}
       """.stripMargin)
@@ -146,14 +142,11 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
 
   test("nested implicit class with type parameter not extending AnyVal should fail") {
     assertErrors(1,
+      //language=Scala
       """
-        |      //language=Scala
-        |
-        |object whatever {
-        |  class Outer {
-        |    implicit final class BadNestedImplicitClass[T <: Int](val x: T) {
-        |      def double: Int = x * 2
-        |    }
+        |class Outer {
+        |  implicit final class BadNestedImplicitClass[T <: Int](val x: T) {
+        |    def double: Int = x * 2
         |  }
         |}
       """.stripMargin)
@@ -163,12 +156,10 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
     assertErrors(1,
       //language=Scala
       """
-        |object whatever {
-        |  class Outer {
-        |    class Inner {
-        |      implicit final class BadDeeplyNestedImplicitClass(val x: Int) {
-        |        def double: Int = x * 2
-        |      }
+        |class Outer {
+        |  class Inner {
+        |    implicit final class BadDeeplyNestedImplicitClass(val x: Int) {
+        |      def double: Int = x * 2
         |    }
         |  }
         |}
@@ -179,12 +170,8 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
     assertNoErrors(
       //language=Scala
       """
-        |object whatever {
-        |  class Outer {
-        |    class RegularClass(val x: Int) {
-        |      def double: Int = x * 2
-        |    }
-        |  }
+        |class RegularClass(val x: Int) {
+        |  def double: Int = x * 2
         |}
       """.stripMargin)
   }
@@ -193,19 +180,15 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
     assertNoErrors(
       //language=Scala
       """
-        |object whatever {
-        |  class Outer {
-        |    class SomeClass
+        |class SomeClass
         |
-        |    implicit final class GoodImplicitClass1(val x: Int) extends SomeClass {
-        |      def double: Int = x * 2
-        |    }
+        |implicit final class GoodImplicitClass1(val x: Int) extends SomeClass {
+        |  def double: Int = x * 2
+        |}
         |
-        |    trait SomeTrait
-        |    implicit final class GoodImplicitClass2(val x: Int) extends SomeTrait {
-        |      def double: Int = x * 2
-        |    }
-        |  }
+        |trait SomeTrait
+        |implicit final class GoodImplicitClass2(val x: Int) extends SomeTrait {
+        |  def double: Int = x * 2
         |}
       """.stripMargin)
   }
@@ -214,16 +197,16 @@ class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
     assertErrors(1,
       //language=Scala
       """
-        |object whatever {
-        |  class Outer {
-        |    trait AnyTrait extends Any
-        |    implicit final class GoodImplicitClass(val x: Int) extends AnyVal with AnyTrait {
-        |      def double: Int = x * 2
-        |    }
-        |    implicit final class BadImplicitClass(val x: Int) extends AnyTrait {
-        |      def double: Int = x * 2
-        |    }
-        |  }
+        |class Outer {
+        | trait AnyTrait extends Any{
+        |    def x: Int
+        | }
+        | implicit final class GoodImplicitClass(val x: Int) extends AnyVal with AnyTrait {
+        |   def double: Int = x * 2
+        | }
+        | implicit final class BadImplicitClass(val x: Int) extends AnyTrait {
+        |   def double: Int = x * 2
+        | }
         |}
       """.stripMargin)
   }

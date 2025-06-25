@@ -3,7 +3,7 @@ package analyzer
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
+final class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
   test("catching Throwable should be rejected") {
     assertErrors(1,
       //language=Scala

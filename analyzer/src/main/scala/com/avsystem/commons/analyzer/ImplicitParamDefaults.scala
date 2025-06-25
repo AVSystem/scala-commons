@@ -13,7 +13,7 @@ class ImplicitParamDefaults(g: Global) extends AnalyzerRule(g, "implicitParamDef
         if (paramList.nonEmpty && paramList.head.mods.hasFlag(Flag.IMPLICIT)) {
           paramList.foreach { param =>
             if (param.rhs != EmptyTree) {
-              report(param.pos, "Do not declare default values for implicit parameters")
+              report(param.pos, "Implicit parameters should not have default values")
             }
           }
         }
