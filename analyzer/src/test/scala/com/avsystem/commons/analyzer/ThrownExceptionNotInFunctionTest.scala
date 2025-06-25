@@ -6,18 +6,19 @@ import org.scalatest.wordspec.AnyWordSpec
 final class ThrownExceptionNotInFunctionTest extends AnyWordSpec with AnalyzerTest {
   settings.pluginOptions.value ++= List("AVSystemAnalyzer:-discardedMonixTask")
 
-  "ThrownExceptionNotInFunction rule" should {
-    "detect exception" when {
-      "thrown in simple case" in assertErrors(1,
+  "The ThrownExceptionNotInFunction rule" should {
+    "detect improper usage of thrown exceptions" when {
+
+      "an exception is thrown directly in a simple function argument" in assertErrors(1,
         scala"""
                |def ex: Exception = ???
                |
-               |def f0(x1: Int => Int) = ???
+               |def f0(x1: Int => Int): Unit = ???
                |
-               |//not ok
+               |// This is incorrect: throwing an exception instead of passing a function
                |f0(throw ex)
                |
-               |//ok
+               |// This is correct: passing a valid function
                |f0(identity)
                |""".stripMargin
       )
@@ -41,109 +42,108 @@ final class ThrownExceptionNotInFunctionTest extends AnyWordSpec with AnalyzerTe
         ("Nothing => Nothing", "andThen"),
         ("String => Int", "compose[Any]"),
         ("Seq[_]", "foreach"),
-      ).foreach { case (tpe, function) =>
+      ).foreach { case (typeName, methodName) =>
         val definition =
           //language=Scala
           s"""
-             |def sth: $tpe = ???
+             |def sth: $typeName = ???
              |def ex: Exception = ???
              |
-             |implicit val ec: scala.concurrent.ExecutionContext = ??? // for Future
+             |implicit val ec: scala.concurrent.ExecutionContext = ??? // Required for Future
              |""".stripMargin
 
-        s"thrown in $function of $tpe" which {
-          "is in body" in assertErrors(1,
+        s"an exception is thrown directly in the $methodName method of $typeName" which {
+
+          "occurs within the method body" in assertErrors(1,
             scala"""
                    |$definition
-                   |sth.$function(throw ex)
+                   |sth.$methodName(throw ex)
                    |""".stripMargin
           )
 
-          "is in block" in assertErrors(1,
+          "occurs within a code block" in assertErrors(1,
             scala"""
                    |$definition
                    |{
-                   |  println(""); sth.$function(throw ex)
+                   |  println(""); sth.$methodName(throw ex)
                    |}
                    |""".stripMargin
           )
 
-          "is in if" in assertErrors(2,
+          "occurs within both branches of an if expression" in assertErrors(2,
             scala"""
                    |$definition
-                   |if (true) sth.$function(throw ex) else sth.$function(throw ex)
+                   |if (true) sth.$methodName(throw ex) else sth.$methodName(throw ex)
                    |""".stripMargin
           )
 
-          "is in try" in assertErrors(3,
+          "occurs within all sections of a try-catch-finally block" in assertErrors(3,
             scala"""
                    |$definition
-                   |try sth.$function(throw ex) catch {
-                   |  case _: Exception => sth.$function(throw ex)
-                   |} finally sth.$function(throw ex)
+                   |try sth.$methodName(throw ex) catch {
+                   |  case _: Exception => sth.$methodName(throw ex)
+                   |} finally sth.$methodName(throw ex)
                    |""".stripMargin
           )
 
-          "is in while" in assertErrors(1,
+          "occurs within a while loop" in assertErrors(1,
             scala"""
                    |$definition
-                   |while (true) sth.$function(throw ex)
+                   |while (true) sth.$methodName(throw ex)
                    |""".stripMargin
           )
 
-          "is in do while" in assertErrors(1,
+          "occurs within a do-while loop" in assertErrors(1,
             scala"""
                    |$definition
-                   |do sth.$function(throw ex) while (true)
+                   |do sth.$methodName(throw ex) while (true)
                    |""".stripMargin
           )
 
-          "is in function invocations" in assertErrors(1,
+          "occurs within a function invocation" in assertErrors(1,
+            scala"""
+                   |$definition
+                   |Seq(1, 2, 3).foreach(_ => sth.$methodName(throw ex))
+                   |""".stripMargin
+          )
+
+          "does not occur when the exception is thrown inside a function literal" in assertNoErrors(
             scala"""
                    |$definition
                    |
-                   |Seq(1, 2, 3).foreach(_ => sth.$function(throw ex))
-                   |""".stripMargin
-          )
-
-          "no exceptions" in assertNoErrors(
-            scala"""
-                   |$definition
-                   |
-                   |sth.$function(_ => throw ex)
+                   |sth.$methodName(_ => throw ex)
                    |
                    |{
-                   |  println(""); sth.$function(_ => throw ex)
+                   |  println(""); sth.$methodName(_ => throw ex)
                    |}
                    |
-                   |if (true) sth.$function(_ => throw ex) else sth.$function(_ => throw ex)
+                   |if (true) sth.$methodName(_ => throw ex) else sth.$methodName(_ => throw ex)
                    |
-                   |try sth.$function(_ => throw ex) catch {
-                   |  case _: Exception => sth.$function(_ => throw ex)
-                   |} finally sth.$function(_ => throw ex)
+                   |try sth.$methodName(_ => throw ex) catch {
+                   |  case _: Exception => sth.$methodName(_ => throw ex)
+                   |} finally sth.$methodName(_ => throw ex)
                    |
-                   |Seq(1, 2, 3).foreach(_ => sth.$function(_ => throw ex))
+                   |Seq(1, 2, 3).foreach(_ => sth.$methodName(_ => throw ex))
                    |
-                   |while (true) sth.$function(_ => throw ex)
+                   |while (true) sth.$methodName(_ => throw ex)
                    |
-                   |do sth.$function(_ => throw ex) while (true)
+                   |do sth.$methodName(_ => throw ex) while (true)
                    |""".stripMargin
           )
         }
       }
 
-      "multiple parameter functions" in {
+      "multiple-parameter functions are tested for thrown exceptions" in {
         val definition =
           //language=Scala
           """
             |def ex: Exception = ???
             |
-            |def f1(x1: Int => Int, x2: String => String) = ???
-            |def f2(x1: Int => Int)(x2: String => String) = ???
-            |def f3(x1: Int => Int)(x2: Int)(x3: String => String) = ???
-            |def f4(x1: Int, x2: Int, x3: String => String) = ???
+            |def f1(x1: Int => Int, x2: String => String): Unit = ???
+            |def f2(x1: Int => Int)(x2: String => String): Unit = ???
+            |def f3(x1: Int => Int)(x2: Int)(x3: String => String): Unit = ???
+            |def f4(x1: Int, x2: Int, x3: String => String): Unit = ???
             |""".stripMargin
-
 
         assertErrors(13,
           scala"""
@@ -176,15 +176,15 @@ final class ThrownExceptionNotInFunctionTest extends AnyWordSpec with AnalyzerTe
         )
       }
 
-      ("method parameters") in {
+      "methods with parameters in a class context are tested" in {
         val definition =
           //language=Scala
           """
             |class A {
-            |  def f1(x1: Int => Int, x2: String => String) = ???
-            |  def f2(x1: Int => Int)(x2: String => String) = ???
-            |  def f3(x1: Int => Int)(x2: Int)(x3: String => String) = ???
-            |  def f4(x1: Int, x2: Int, x3: String => String) = ???
+            |  def f1(x1: Int => Int, x2: String => String): Unit = ???
+            |  def f2(x1: Int => Int)(x2: String => String): Unit = ???
+            |  def f3(x1: Int => Int)(x2: Int)(x3: String => String): Unit = ???
+            |  def f4(x1: Int, x2: Int, x3: String => String): Unit = ???
             |}
             |final val a = new A
             |""".stripMargin
@@ -204,8 +204,8 @@ final class ThrownExceptionNotInFunctionTest extends AnyWordSpec with AnalyzerTe
                  |a.f3(throw ex)(42)(throw ex)
                  |a.f3(throw ex)(42)(identity)
                  |a.f3(identity)(42)(throw ex)
-                 |
                  |a.f4(42, 42, throw ex)
+                 |
                  |""".stripMargin
         )
 
@@ -220,23 +220,20 @@ final class ThrownExceptionNotInFunctionTest extends AnyWordSpec with AnalyzerTe
         )
       }
 
-      ("in class constructor parameter") in {
+      "an exception is thrown directly in a class constructor parameter" in {
         assertErrors(9,
           scala"""
                  |def ex: Exception = ???
                  |
                  |class A(f: Int => Int)
-                 |
                  |new A(throw ex)
                  |
                  |class B(f: Int => Int)(g: Int => Int)
-                 |
                  |new B(throw ex)(identity)
                  |new B(identity)(throw ex)
                  |new B(throw ex)(throw ex)
                  |
                  |class C(f: Int => Int, g: Int => Int)
-                 |
                  |new C(throw ex, identity)
                  |new C(identity, throw ex)
                  |new C(throw ex, throw ex)
@@ -244,17 +241,17 @@ final class ThrownExceptionNotInFunctionTest extends AnyWordSpec with AnalyzerTe
         )
       }
 
-      "should detect passing function that throws exception" in {
+      "detects passing a function that throws an exception (Nothing)" in {
         assertErrors(1,
           scala"""
                  |def throwEx: Nothing = ???
                  |
-                 |def f0(x1: Int => Int) = ???
+                 |def f0(x1: Int => Int): Unit = ???
                  |
-                 |//not ok
+                 |// Incorrect usage: passing a thrown exception instead of a function
                  |f0(throwEx)
                  |
-                 |//ok
+                 |// Correct usage: passing a valid function
                  |f0(identity)
                  |""".stripMargin
         )
