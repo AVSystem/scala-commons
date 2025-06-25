@@ -463,9 +463,13 @@ object SharedExtensionsUtils extends SharedExtensions {
       if (tr.isFailure) OptArg.Empty else OptArg(tr.get)
 
     /**
-      * Apply side-effect only if Try is a failure.
+      * Apply side-effect only if Try is a failure. The provided `action` function will be called with the
+      * throwable from the failure case, allowing you to perform operations like logging or error handling.
+      * 
+      * Any exceptions thrown by the `action` function are caught and ignored, ensuring that this method
+      * always returns the original Try instance regardless of what happens in the action.
       *
-      * Don't use .failed projection here, because it unnecessarily creates Exception in case of Success,
+      * Don't use .failed projection, because it unnecessarily creates Exception in case of Success,
       * which is an expensive operation.
       */
     def tapFailure(action: Throwable => Unit): Try[A] = tr match {

@@ -235,4 +235,16 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
 
     assert(result === failureTry, "Original Failure should be returned even if action throws")
   }
+
+  test("Try.tapFailure - Fatal exception in action") {
+    val originalException = new RuntimeException("original exception")
+    val fatalException = new OutOfMemoryError("fatal exception")
+    val failureTry = Failure(originalException)
+
+    val thrown = intercept[OutOfMemoryError] {
+      failureTry.tapFailure(_ => throw fatalException)
+    }
+
+    assert(thrown === fatalException, "Fatal exception should propagate out of tapFailure")
+  }
 }
