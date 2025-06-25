@@ -6,93 +6,85 @@ import org.scalatest.funsuite.AnyFunSuite
 final class FinalCaseClassesTest extends AnyFunSuite with AnalyzerTest {
   test("final case class should pass") {
     assertNoErrors(
-      //language=scala
-      """
-        |final case class GoodCaseClass(x: Int, y: String) {
-        |  def double: Int = x * 2
-        |}
-      """.stripMargin)
+      scala"""
+             |final case class GoodCaseClass(x: Int, y: String) {
+             |  def double: Int = x * 2
+             |}
+             |""".stripMargin)
   }
 
   test("case class not marked as final should fail") {
     assertErrors(1,
-      //language=scala
-      """
-        |case class BadCaseClass1(x: Int, y: String) {
-        |  def double: Int = x * 2
-        |}
-      """.stripMargin)
+      scala"""
+             |case class BadCaseClass1(x: Int, y: String) {
+             |  def double: Int = x * 2
+             |}
+             |""".stripMargin)
   }
 
   test("generic case class not marked as final should fail") {
     assertErrors(1,
-      //language=scala
-      """
-        |case class BadCaseClass2[T](x: T, y: String) {
-        |  def double: String = y * 2
-        |}
-      """.stripMargin)
+      scala"""
+             |case class BadCaseClass2[T](x: T, y: String) {
+             |  def double: String = y * 2
+             |}
+             |""".stripMargin)
   }
 
   test("regular class should not be affected") {
     assertNoErrors(
-      //language=scala
-      """
-        |class RegularClass(val x: Int, val y: String) {
-        |  def double: Int = x * 2
-        |}
-      """.stripMargin)
+      scala"""
+             |class RegularClass(val x: Int, val y: String) {
+             |  def double: Int = x * 2
+             |}
+             |""".stripMargin)
   }
 
   test("regular class with case-like constructor should not be affected") {
     assertNoErrors(
-      //language=scala
-      """
-        |class RegularClass2(x: Int, y: String) {
-        |  def double: Int = x * 2
-        |}
-      """.stripMargin)
+      scala"""
+             |class RegularClass2(x: Int, y: String) {
+             |  def double: Int = x * 2
+             |}
+             |""".stripMargin)
   }
 
   // SI-4440 https://github.com/scala/bug/issues/4440
   test("inner case class in trait should not be affected due to SI-4440") {
     assertNoErrors(
-      //language=scala
-      """
-        |trait Outer {
-        |  case class Inner(x: Int, y: String) {
-        |    def double: Int = x * 2
-        |  }
-        |}
-      """.stripMargin
+      scala"""
+             |trait Outer {
+             |  case class Inner(x: Int, y: String) {
+             |    def double: Int = x * 2
+             |  }
+             |}
+             |""".stripMargin
     )
   }
 
   test("inner case class in class should not be affected due to SI-4440") {
     assertNoErrors(
-      //language=scala
-      """
-        |class Outer2 {
-        |  case class Inner(x: Int, y: String) {
-        |    def double: Int = x * 2
-        |  }
-        |}
-      """.stripMargin
+      scala"""
+             |class Outer2 {
+             |  case class Inner(x: Int, y: String) {
+             |    def double: Int = x * 2
+             |  }
+             |}
+             |""".stripMargin
     )
   }
 
   test("sealed case class should not be affected") {
     assertNoErrors(
-      //language=scala
-      """
-        |sealed case class SealedCaseClass(x: Int) {
-        |  def double: Int = x * 2
-        |}
-        |object SealedCaseClass {
-        |  val jeden = SealedCaseClass(1)
-        |  val dwa = SealedCaseClass(2)
-        |}
-      """.stripMargin
+      scala"""
+             |sealed case class SealedCaseClass(x: Int) {
+             |  def double: Int = x * 2
+             |}
+             |object SealedCaseClass {
+             |  val jeden = SealedCaseClass(1)
+             |  val dwa = SealedCaseClass(2)
+             |}
+             |""".stripMargin
     )
   }
 }
