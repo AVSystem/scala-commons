@@ -3,7 +3,7 @@ package analyzer
 
 import org.scalatest.wordspec.AnyWordSpec
 
-final class ThrowAsFunctionArgumentTest extends AnyWordSpec with AnalyzerTest {
+final class NothingAsFunctionArgumentTest extends AnyWordSpec with AnalyzerTest {
   settings.pluginOptions.value ++= List("AVSystemAnalyzer:-discardedMonixTask")
 
   "The ThrownExceptionNotInFunction rule" should {
