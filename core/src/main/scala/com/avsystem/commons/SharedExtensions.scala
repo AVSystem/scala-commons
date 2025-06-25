@@ -466,7 +466,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * Apply side-effect only if Try is a failure. The provided `action` function will be called with the
       * throwable from the failure case, allowing you to perform operations like logging or error handling.
       * 
-      * Any exceptions thrown by the `action` function are caught and ignored, ensuring that this method
+      * Non-fatal exceptions thrown by the `action` function are caught and ignored, ensuring that this method
       * always returns the original Try instance regardless of what happens in the action.
       *
       * Don't use .failed projection, because it unnecessarily creates Exception in case of Success,
@@ -477,7 +477,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       case Failure(throwable) =>
         try action(throwable)
         catch {
-          case NonFatal(_) => // ignore any exceptions thrown by the action
+          case NonFatal(_) => // ignore non-fatal exceptions thrown by the action
         }
         tr
 
