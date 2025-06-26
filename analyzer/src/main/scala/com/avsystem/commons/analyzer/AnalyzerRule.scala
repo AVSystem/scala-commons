@@ -32,7 +32,8 @@ abstract class AnalyzerRule(val global: Global, val name: String, defaultLevel: 
     pos: Position,
     message: String,
     category: WarningCategory = WarningCategory.Lint,
-    site: Symbol = NoSymbol
+    site: Symbol = NoSymbol,
+    level: Level = this.level
   ): Unit =
     level match {
       case Level.Off =>

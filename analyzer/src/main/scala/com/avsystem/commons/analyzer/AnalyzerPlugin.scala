@@ -60,6 +60,12 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     new BadSingletonComponent(global),
     new ConstantDeclarations(global),
     new BasePackage(global),
+    new ImplicitValueClasses(global),
+    new FinalValueClasses(global),
+    new FinalCaseClasses(global),
+    new ImplicitParamDefaults(global),
+    new CatchThrowable(global),
+    new ImplicitFunctionParams(global),
   )
 
   private lazy val rulesByName = rules.map(r => (r.name, r)).toMap
