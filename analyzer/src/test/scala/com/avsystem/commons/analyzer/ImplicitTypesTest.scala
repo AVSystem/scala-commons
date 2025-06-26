@@ -13,7 +13,7 @@ final class ImplicitTypesTest extends AnyFunSuite with AnalyzerTest {
              |implicit def conv(x: Int) = x.toString
              |implicit def conv2(x: Int): String = x.toString
              |implicit object objekt
-             |implicit class wtf(x: Int)
+             |implicit final class wtf(private val x: Int) extends AnyVal
              |""".stripMargin)
   }
 }
