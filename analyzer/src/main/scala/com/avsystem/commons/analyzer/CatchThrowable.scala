@@ -24,7 +24,9 @@ class CatchThrowable(g: Global) extends AnalyzerRule(g, "catchThrowable", Level.
         t.catches.foreach {
           case CaseDef(Alternative(trees), _, _) => trees.foreach(checkTree)
           case CaseDef(Bind(_, Alternative(trees)), _, _) => trees.foreach(checkTree)
-          case CaseDef(pat, _, _) => checkTree(pat)
+          // CaseDef generated from a custom handler has NoPosition
+          case cd@CaseDef(pat, _, _) if cd.pos != NoPosition => checkTree(pat)
+          case _ =>
         }
       case _ =>
     }
