@@ -32,7 +32,7 @@ final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVa
     jStream.allMatch(jDoublePredicate(predicate))
 
   def anyMatch(predicate: Double => Boolean): Boolean =
-    jStream.allMatch(jDoublePredicate(predicate))
+    jStream.anyMatch(jDoublePredicate(predicate))
 
   def average: Option[Double] =
     jStream.average.asScala

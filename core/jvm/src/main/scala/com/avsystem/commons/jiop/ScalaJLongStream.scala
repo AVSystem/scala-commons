@@ -32,7 +32,7 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
     jStream.allMatch(jLongPredicate(predicate))
 
   def anyMatch(predicate: Long => Boolean): Boolean =
-    jStream.allMatch(jLongPredicate(predicate))
+    jStream.anyMatch(jLongPredicate(predicate))
 
   def asDoubleStream: ScalaJDoubleStream =
     new ScalaJDoubleStream(jStream.asDoubleStream())
