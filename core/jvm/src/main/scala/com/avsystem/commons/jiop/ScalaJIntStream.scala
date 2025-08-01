@@ -32,7 +32,7 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
     jStream.allMatch(jIntPredicate(predicate))
 
   def anyMatch(predicate: Int => Boolean): Boolean =
-    jStream.allMatch(jIntPredicate(predicate))
+    jStream.anyMatch(jIntPredicate(predicate))
 
   def asDoubleStream: ScalaJDoubleStream =
     new ScalaJDoubleStream(jStream.asDoubleStream())
