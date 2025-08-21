@@ -28,4 +28,9 @@ object TestUtils {
   def genericMethod[T](arg: T): T = arg
   @explicitGenerics
   def genericMacro[T](arg: T): T = macro genericMacroImpl[T]
+
+  @explicitGenerics
+  class GenericClass[T]
+
+  case class GenericCaseClass[T](arg: T)
 }
