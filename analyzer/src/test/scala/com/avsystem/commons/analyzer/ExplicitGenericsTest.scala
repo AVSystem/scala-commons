@@ -41,4 +41,22 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
              |val x = TestUtils.genericMacro[Int](123)
              |""".stripMargin)
   }
+
+  test("inferred in constructor should be rejected") {
+    assertErrors(1,
+      scala"""
+             |import com.avsystem.commons.analyzer.TestUtils
+             |
+             |val x = new TestUtils.GenericClass()
+             |""".stripMargin)
+  }
+
+  test("explicit in constructor should not be rejected") {
+    assertNoErrors(
+      scala"""
+             |import com.avsystem.commons.analyzer.TestUtils
+             |
+             |val x = new TestUtils.GenericClass[Int]()
+             |""".stripMargin)
+  }
 }
