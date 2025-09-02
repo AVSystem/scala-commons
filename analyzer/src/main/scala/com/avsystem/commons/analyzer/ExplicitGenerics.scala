@@ -9,7 +9,11 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
 
   lazy val explicitGenericsAnnotTpe = classType("com.avsystem.commons.annotation.explicitGenerics")
 
-  def analyze(unit: CompilationUnit) = if (explicitGenericsAnnotTpe != NoType) {
+
+  private def fail(pos: Position, symbol: Symbol): Unit =
+    report(pos, s"$symbol requires that its type arguments are explicit (not inferred)")
+
+  def analyze(unit: CompilationUnit): Unit = if (explicitGenericsAnnotTpe != NoType) {
     def requiresExplicitGenerics(sym: Symbol): Boolean =
       sym != NoSymbol && (sym :: sym.overrides).flatMap(_.annotations).exists(_.tree.tpe <:< explicitGenericsAnnotTpe)
 
@@ -22,7 +26,18 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
               case _ => false
             }
             if (inferredTypeParams) {
-              report(t.pos, s"${pre.symbol} requires that its type arguments are explicit (not inferred)")
+              fail(t.pos, pre.symbol)
+            }
+          case n@New(tpt) if requiresExplicitGenerics(tpt.tpe.typeSymbol) =>
+            val explicitTypeArgsProvided = tpt match {
+              case tt: TypeTree => tt.original match {
+                case AppliedTypeTree(_, args) if args.nonEmpty => true
+                case _ => false
+              }
+              case _ => false
+            }
+            if (!explicitTypeArgsProvided) {
+              fail(n.pos, tpt.tpe.typeSymbol)
             }
           case _ =>
         }
