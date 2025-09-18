@@ -5,7 +5,7 @@ import scala.tools.nsc.Global
 
 class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
 
-  import global._
+  import global.*
 
   lazy val explicitGenericsAnnotTpe = classType("com.avsystem.commons.annotation.explicitGenerics")
 
@@ -17,16 +17,29 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
     def requiresExplicitGenerics(sym: Symbol): Boolean =
       sym != NoSymbol && (sym :: sym.overrides).flatMap(_.annotations).exists(_.tree.tpe <:< explicitGenericsAnnotTpe)
 
+    def applyOfAnnotatedCompanion(preSym: Symbol): Boolean = {
+      if (preSym != NoSymbol && preSym.isMethod && preSym.name == TermName("apply")) {
+        val owner = preSym.owner
+        val companionCls =
+          if (owner.isModuleClass) owner.companionClass
+          else if (owner.isModule) owner.moduleClass.companionClass
+          else NoSymbol
+        requiresExplicitGenerics(companionCls)
+      } else false
+    }
+
     def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
       case `tree` | EmptyTree =>
         tree match {
-          case t@TypeApply(pre, args) if requiresExplicitGenerics(pre.symbol) =>
+          case t@TypeApply(pre, args) if requiresExplicitGenerics(pre.symbol) || applyOfAnnotatedCompanion(pre.symbol) =>
             val inferredTypeParams = args.forall {
               case tt: TypeTree => tt.original == null || tt.original == EmptyTree
               case _ => false
             }
             if (inferredTypeParams) {
-              fail(t.pos, pre.symbol)
+              // If we're on companion.apply, report on the class symbol for clearer message
+              val targetSym = if (applyOfAnnotatedCompanion(pre.symbol)) pre.symbol.owner.companionClass else pre.symbol
+              fail(t.pos, targetSym)
             }
           case n@New(tpt) if requiresExplicitGenerics(tpt.tpe.typeSymbol) =>
             val explicitTypeArgsProvided = tpt match {
@@ -45,6 +58,7 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
       case prevTree =>
         analyzeTree(prevTree)
     }
+
     analyzeTree(unit.body)
   }
 }
