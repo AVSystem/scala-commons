@@ -32,5 +32,6 @@ object TestUtils {
   @explicitGenerics
   class GenericClass[T]
 
+  @explicitGenerics
   case class GenericCaseClass[T](arg: T)
 }
