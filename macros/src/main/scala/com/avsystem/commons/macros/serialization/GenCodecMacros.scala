@@ -131,9 +131,13 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
   }
 
-  def isTransientDefault(param: ApplyParam): Boolean =
-    param.defaultValue.nonEmpty && hasAnnotation(param.sym, TransientDefaultAnnotType)
-
+  def isTransientDefault(param: ApplyParam, warnIfDefaultNotProvided: Boolean = false): Boolean =
+    (hasAnnotation(param.sym, TransientDefaultAnnotType), param.defaultValue.nonEmpty, warnIfDefaultNotProvided) match {
+      case (true, false, true) =>
+        c.warning(param.sym.pos, s"@transientDefault has no effect on parameter ${param.sym.name} because it has no default value")
+        false
+      case (hasAnnotation, noDefaultValue, _) => hasAnnotation && noDefaultValue
+    }
   def isOptimizedPrimitive(param: ApplyParam): Boolean = {
     val vt = param.valueType
     vt =:= typeOf[Boolean] || vt =:= typeOf[Int] || vt =:= typeOf[Long] || vt =:= typeOf[Double]
@@ -251,13 +255,13 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
 
     def anyParamHasTransientDefault: Boolean =
-      params.exists(isTransientDefault)
+      params.exists(isTransientDefault(_))
 
     def isOptionLike(p: ApplyParam): Boolean =
       p.optionLike.nonEmpty
 
     def mayBeTransient(p: ApplyParam): Boolean =
-      isOptionLike(p) || isTransientDefault(p)
+      isOptionLike(p) || isTransientDefault(p, warnIfDefaultNotProvided = true)
 
     def transientValue(p: ApplyParam): Tree = p.optionLike match {
       case Some(optionLike) => q"${optionLike.reference(Nil)}.none"
@@ -614,7 +618,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val deps = new mutable.ListBuffer[Tree]
 
     ttpe.members.iterator.foreach { getter =>
-      if(getter.isMethod && isJavaGetter(getter.asMethod)) {
+      if (getter.isMethod && isJavaGetter(getter.asMethod)) {
         val propType = getter.typeSignatureIn(ttpe).finalResultType
         val getterName = getter.name.decodedName.toString
         val setterName = getterName.replaceFirst("^(get|is)", "set")
