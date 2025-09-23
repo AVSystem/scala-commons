@@ -3,13 +3,14 @@ package com.avsystem.commons.serialization
 import org.scalatest.funsuite.AnyFunSuite
 
 final class NotUsedTransientDefault extends AnyFunSuite {
+  case class Valid(@transientDefault a: String = "default")
+  case class Invalid(@transientDefault a: String)
 
   test("no warnings when @transientDefault is used properly") {
     assertCompiles(
       //language=Scala
       s"""
-         |case class X(@transientDefault a: String = "default")
-         |val codec = GenCodec.materialize[X]
+         |GenCodec.materialize[Valid]
          |""".stripMargin
     )
   }
@@ -18,8 +19,7 @@ final class NotUsedTransientDefault extends AnyFunSuite {
     assertDoesNotCompile(
       //language=Scala
       s"""
-         |case class X(@transientDefault a: String)
-         |val codec = GenCodec.materialize[X]
+         |GenCodec.materialize[Invalid]
          |""".stripMargin
     )
   }
