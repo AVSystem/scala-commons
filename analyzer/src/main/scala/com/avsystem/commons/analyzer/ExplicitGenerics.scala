@@ -17,16 +17,15 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
     def requiresExplicitGenerics(sym: Symbol): Boolean =
       sym != NoSymbol && (sym :: sym.overrides).flatMap(_.annotations).exists(_.tree.tpe <:< explicitGenericsAnnotTpe)
 
-    def applyOfAnnotatedCompanion(preSym: Symbol): Boolean = {
-      if (preSym != NoSymbol && preSym.isMethod && preSym.name == TermName("apply")) {
+    def applyOfAnnotatedCompanion(preSym: Symbol): Boolean =
+      preSym != NoSymbol && preSym.isMethod && preSym.name == TermName("apply") && {
         val owner = preSym.owner
         val companionCls =
           if (owner.isModuleClass) owner.companionClass
           else if (owner.isModule) owner.moduleClass.companionClass
           else NoSymbol
         requiresExplicitGenerics(companionCls)
-      } else false
-    }
+      }
 
     def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
       case `tree` | EmptyTree =>
