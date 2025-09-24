@@ -1,10 +1,10 @@
 package com.avsystem.commons
 package di
 
-import monix.execution.atomic.{Atomic, AtomicBoolean, AtomicInt}
+import monix.execution.atomic.{Atomic, AtomicInt}
 import org.scalatest.funsuite.AsyncFunSuite
 
-class LifeCycleComponentTest extends AsyncFunSuite with Components {
+final class LifeCycleComponentTest extends AsyncFunSuite with Components {
 
   object init {
     val inits: AtomicInt = Atomic(0)
@@ -27,22 +27,22 @@ class LifeCycleComponentTest extends AsyncFunSuite with Components {
   }
 
   object disposable {
-    val destroyed: AtomicBoolean = Atomic(false)
+    val destroys: AtomicInt = Atomic(0)
     val component: Component[DisposableComponent] = singleton {
       new DisposableComponent {
-        def destroy(): Unit = destroyed.set(true)
+        def destroy(): Unit = destroys += 1
       }
     }
   }
 
 
   object asyncDisposable {
-    val destroyed: AtomicBoolean = Atomic(false)
+    val destroys: AtomicInt = Atomic(0)
     val component: Component[AsyncDisposableComponent] = singleton {
       new AsyncDisposableComponent {
         def destroy()(implicit ec: ExecutionContext): Future[Unit] = Future {
-          destroyed.set(true)
-        }(ec)
+          destroys += 1
+        }(using ec)
       }
     }
   }
@@ -65,17 +65,27 @@ class LifeCycleComponentTest extends AsyncFunSuite with Components {
     _ = assert(asyncInit.inits.get() == 1)
   } yield assert(c1 eq c2))
 
-  test("DisposableComponent destroy triggers side effect") {
-    assert(!disposable.destroyed.get())
-    disposable.component.destroy.map { _ =>
-      assert(disposable.destroyed.get())
-    }
-  }
+  test("DisposableComponent destroy triggers side effect")(for {
+    _ <- Future.unit
+    _ <- disposable.component.destroy
+    _ = assert(disposable.destroys.get() == 0)
+    _ <- disposable.component.init
+    _ = assert(disposable.destroys.get() == 0)
+    _ <- disposable.component.destroy
+    _ = assert(disposable.destroys.get() == 1)
+    _ <- disposable.component.destroy
+    _ = assert(disposable.destroys.get() == 1)
+  } yield succeed)
 
-  test("AsyncDisposableComponent destroy triggers side effect") {
-    assert(!asyncDisposable.destroyed.get())
-    asyncDisposable.component.destroy.map { _ =>
-      assert(asyncDisposable.destroyed.get())
-    }
-  }
+  test("AsyncDisposableComponent destroy triggers side effect")(for {
+    _ <- Future.unit
+    _ <- asyncDisposable.component.destroy
+    _ = assert(asyncDisposable.destroys.get() == 0)
+    _ <- asyncDisposable.component.init
+    _ = assert(asyncDisposable.destroys.get() == 0)
+    _ <- asyncDisposable.component.destroy
+    _ = assert(asyncDisposable.destroys.get() == 1)
+    _ <- asyncDisposable.component.destroy
+    _ = assert(asyncDisposable.destroys.get() == 1)
+  } yield succeed)
 }

@@ -8,10 +8,10 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance
 
-case class ComponentInitializationException(component: Component[_], cause: Throwable)
+case class ComponentInitializationException(component: Component[?], cause: Throwable)
   extends Exception(s"failed to initialize component ${component.info}", cause)
 
-case class DependencyCycleException(cyclePath: List[Component[_]])
+case class DependencyCycleException(cyclePath: List[Component[?]])
   extends Exception(s"component dependency cycle detected:\n${cyclePath.iterator.map(_.info).map("  " + _).mkString(" ->\n")}")
 
 case class ComponentInfo(
@@ -41,7 +41,7 @@ object ComponentInfo {
   */
 final class Component[+T](
   val info: ComponentInfo,
-  deps: => IndexedSeq[Component[_]],
+  deps: => IndexedSeq[Component[?]],
   creator: IndexedSeq[Any] => ExecutionContext => Future[T],
   destroyer: DestroyFunction[T] = Component.emptyDestroy,
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
@@ -58,12 +58,12 @@ final class Component[+T](
     * Returns dependencies of this component extracted from the component definition.
     * You can use this to inspect the dependency graph without initializing any components.
     */
-  lazy val dependencies: IndexedSeq[Component[_]] = deps
+  lazy val dependencies: IndexedSeq[Component[?]] = deps
 
   private[this] val storage: AtomicReference[Future[T]] =
     cachedStorage.getOrElse(new AtomicReference)
 
-  private def sameStorage(otherStorage: AtomicReference[_]): Boolean =
+  private def sameStorage(otherStorage: AtomicReference[?]): Boolean =
     storage eq otherStorage
 
   // equality based on storage identity is important for cycle detection with cached components
@@ -106,7 +106,7 @@ final class Component[+T](
   /**
     * Forces a dependency on another component or components.
     */
-  def dependsOn(moreDeps: Component[_]*): Component[T] =
+  def dependsOn(moreDeps: Component[?]*): Component[T] =
     new Component(info, deps ++ moreDeps, creator, destroyer, cachedStorage)
 
   /**
@@ -126,7 +126,7 @@ final class Component[+T](
   def destroyWith(destroyFun: T => Unit): Component[T] =
     asyncDestroyWith(implicit ctx => t => Future(destroyFun(t)))
 
-  private[di] def cached(cachedStorage: AtomicReference[Future[T@uncheckedVariance]], info: ComponentInfo): Component[T] =
+  private[di] def cached(cachedStorage: AtomicReference[Future[T @uncheckedVariance]], info: ComponentInfo): Component[T] =
     new Component(info, deps, creator, destroyer, Opt(cachedStorage))
 
   /**
@@ -171,10 +171,15 @@ final class Component[+T](
           val resultFuture =
             Future.traverse(dependencies)(_.doInit(starting = false))
               .flatMap(resolvedDeps => creator(resolvedDeps)(ec))
+              .flatMap {
+                case component: AsyncInitializingComponent => component.init().map(_ => component)
+                case component: InitializingComponent => Future(component.init()).map(_ => component)
+                case component => Future.successful(component)
+              }
               .recoverNow {
                 case NonFatal(cause) =>
                   throw ComponentInitializationException(this, cause)
-              }
+              }.asInstanceOf[Future[T]]
           promise.completeWith(resultFuture)
         }
         storage.get()
@@ -194,7 +199,7 @@ object Component {
   def async[T](definition: => T): ExecutionContext => Future[T] =
     implicit ctx => Future(definition)
 
-  def validateAll(components: Seq[Component[_]]): Unit =
+  def validateAll(components: Seq[Component[?]]): Unit =
     GraphUtils.dfs(components)(
       _.dependencies.toList,
       onCycle = (node, stack) => {
@@ -210,9 +215,9 @@ object Component {
     * (reverse initialization order).
     * Independent components are destroyed in parallel, using given `ExecutionContext`.
     */
-  def destroyAll(components: Seq[Component[_]])(implicit ec: ExecutionContext): Future[Unit] = {
-    val reverseGraph = new MHashMap[Component[_], MListBuffer[Component[_]]]
-    val terminals = new MHashSet[Component[_]]
+  def destroyAll(components: Seq[Component[?]])(implicit ec: ExecutionContext): Future[Unit] = {
+    val reverseGraph = new MHashMap[Component[?], MListBuffer[Component[?]]]
+    val terminals = new MHashSet[Component[?]]
     GraphUtils.dfs(components)(
       _.dependencies.toList,
       onEnter = { (c, _) =>
@@ -225,9 +230,9 @@ object Component {
           terminals += c
       },
     )
-    val destroyFutures = new MHashMap[Component[_], Future[Unit]]
+    val destroyFutures = new MHashMap[Component[?], Future[Unit]]
 
-    def doDestroy(c: Component[_]): Future[Unit] =
+    def doDestroy(c: Component[?]): Future[Unit] =
       destroyFutures.getOrElseUpdate(c, Future.traverse(reverseGraph(c))(doDestroy).flatMap(_ => c.doDestroy))
 
     Future.traverse(reverseGraph.keys)(doDestroy).toUnit
