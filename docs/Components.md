@@ -164,6 +164,69 @@ object MyApp extends Components {
 }
 ```
 
+## Lifecycle-aware components
+
+Many application services have explicit initialization and shutdown phases. Components support this out of the box.
+
+There are four lifecycle traits you can implement on the values produced by your components:
+
+- InitializingComponent — synchronous init hook def init(): Unit
+- AsyncInitializingComponent — asynchronous init hook def init()(implicit ec: ExecutionContext): Future[Unit]
+- DisposableComponent — synchronous shutdown hook def destroy(): Unit
+- AsyncDisposableComponent — asynchronous shutdown hook def destroy()(implicit ec: ExecutionContext): Future[Unit]
+
+How it works:
+
+- When you call component.init, after all dependencies have been initialized, the framework automatically detects
+  if the created instance implements InitializingComponent or AsyncInitializingComponent and invokes its init hook.
+  For cached components created with singleton/asyncSingleton the init hook is executed only once and subsequent
+  init calls return the same instance without re-running the hook.
+- When you call component.destroy, components are destroyed in reverse dependency order. If a component’s type
+  implements DisposableComponent or AsyncDisposableComponent, its destroy hook is called automatically. Independent
+  components are destroyed in parallel where possible. For cached components, destroy clears the cached instance so
+  the next init will create a new instance.
+- Destroy is a no-op for components that were never initialized in the current process (nothing is created, so
+  there’s nothing to destroy).
+
+Custom cleanup:
+
+- You can register additional cleanup with destroyWith/asyncDestroyWith to complement lifecycle traits:
+
+```scala
+val httpServer: Component[HttpServer] =
+  component(new HttpServer(db.ref))
+    .destroyWith(_.close()) // runs in addition to lifecycle destroy hooks if present
+```
+
+Example with lifecycle hooks:
+
+```scala
+import com.avsystem.commons.di._
+import scala.concurrent.{ExecutionContext, Future}
+
+final class Cache extends InitializingComponent with DisposableComponent {
+  def init(): Unit = println("warming up cache...")
+  def destroy(): Unit = println("clearing cache...")
+}
+
+object MyApp extends Components {
+  def cache: Component[Cache] = singleton(new Cache)
+}
+
+// Somewhere in your main:
+import ExecutionContext.Implicits.global
+for {
+  _ <- MyApp.cache.init           // prints "warming up cache..." only once
+  _ <- MyApp.cache.destroy        // prints "clearing cache..."
+} yield ()
+```
+
+Notes:
+
+- Lifecycle init hooks are invoked by Component during init. Lifecycle destroy hooks are wired into the destroy
+  function by the component macros based on the component’s static type, so you don’t need to call destroyWith
+  explicitly when using DisposableComponent/AsyncDisposableComponent.
+
 ## Complete example
 
 See [ComponentsExample.scala](https://github.com/AVSystem/scala-commons/blob/master/core/jvm/src/test/scala/com/avsystem/commons/di/ComponentsExample.scala)
