@@ -13,7 +13,7 @@ final class BadSingletonComponentTest extends AnyFunSuite with AnalyzerTest {
              |  singleton(123)
              |  val notDef = singleton(123)
              |  def hasParams(param: Int) = singleton(param)
-             |  def hasTypeParams[T]: Component[T] = singleton(???)
+             |  def hasTypeParams[T]: Component[T] = singleton(??? :T)
              |  def outerMethod: Component[Int] = {
              |    def innerMethod = singleton(123)
              |    innerMethod
