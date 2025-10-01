@@ -89,5 +89,4 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
         }
       }
 
-  def postProcessBeanFactory(beanFactory: ConfigurableListableBeanFactory): Unit = ()
 }
