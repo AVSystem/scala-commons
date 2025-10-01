@@ -34,7 +34,7 @@ object Commons extends ProjectGroup("commons") {
   val typesafeConfigVersion = "1.4.5"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.6"
-  val pekkoVersion = "1.2.0"
+  val pekkoVersion = "1.2.1"
   val monixVersion = "3.4.1"
   val circeVersion = "0.14.5" // benchmark only
   val upickleVersion = "3.1.2" // benchmark only
