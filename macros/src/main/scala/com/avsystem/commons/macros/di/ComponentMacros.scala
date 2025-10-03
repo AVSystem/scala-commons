@@ -4,6 +4,7 @@ package macros.di
 import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.macros.blackbox
 
 class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
@@ -18,6 +19,11 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
   lazy val ComponentRefSym: Symbol = ComponentTpe.member(TermName("ref"))
   lazy val InjectSym: Symbol = getType(tq"$DiPkg.Components").member(TermName("inject"))
   lazy val ComponentInfoSym: Symbol = getType(tq"$DiPkg.ComponentInfo.type").member(TermName("info"))
+
+  lazy val DisposableComponentTpe: Type = getType(tq"$DiPkg.DisposableComponent")
+  lazy val AsyncDisposableComponentTpe: Type = getType(tq"$DiPkg.AsyncDisposableComponent")
+  lazy val ExecutionContextTpe: Type = typeOf[ExecutionContext]
+  lazy val FutureApplySym: Symbol = typeOf[Future.type].member(TermName("apply"))
 
   object ComponentRef {
     def unapply(tree: Tree): Option[Tree] = tree match {
@@ -90,8 +96,16 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       if (needsRetyping) c.untypecheck(transformedDefinition) else definition
 
     val asyncDefinition =
-      if(async) finalDefinition
+      if (async) finalDefinition
       else q"$DiPkg.Component.async($finalDefinition)"
+
+    val destroyer =
+      if (tpe <:< DisposableComponentTpe)
+        q"(ec: $ExecutionContextTpe) => (t: $tpe) => $FutureApplySym(t.destroy())(using ec)"
+      else if (tpe <:< AsyncDisposableComponentTpe)
+        q"(ec: $ExecutionContextTpe) => (t: $tpe) => t.destroy()(using ec)"
+      else
+        q"$DiPkg.Component.emptyDestroy"
 
     val result =
       q"""
@@ -99,7 +113,8 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         new $DiPkg.Component[$tpe](
           $infoName,
           $ScalaPkg.IndexedSeq(..${depsBuf.result()}),
-          ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $asyncDefinition
+          ($depArrayName: $ScalaPkg.IndexedSeq[$ScalaPkg.Any]) => $asyncDefinition,
+          $destroyer,
         )
        """
 
