@@ -57,11 +57,14 @@ class TypedMongoClient(
   def listDatabaseNames: Observable[String] =
     multi(optionalizeFirstArg(nativeClient.listDatabaseNames(sessionOrNull)))
 
-  def listDatabases: Observable[Document] =
+  @deprecated("Use listTypedDatabases or listRawDatabases instead", "2.25.0")
+  def listDatabases: Observable[Nothing] = ???
+
+  def listRawDatabases: Observable[Document] =
     multi(optionalizeFirstArg(nativeClient.listDatabases(sessionOrNull)))
 
-  def listDatabases[T: GenCodec]: Observable[T] =
-    listDatabases.map(doc => BsonValueInput.read[T](doc.toBsonDocument))
+  def listTypedDatabases[T: GenCodec]: Observable[T] =
+    listRawDatabases.map(doc => BsonValueInput.read[T](doc.toBsonDocument))
 
   //TODO: `watch` methods
 
