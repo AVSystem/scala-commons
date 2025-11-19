@@ -47,11 +47,11 @@ class TypedMongoDatabase(
   def listCollectionNames: Observable[String] =
     multi(optionalizeFirstArg(nativeDatabase.listCollectionNames(sessionOrNull)))
 
-  def listCollections: Observable[Document] =
+  def listCollections(): Observable[Document] =
     multi(optionalizeFirstArg(nativeDatabase.listCollections(sessionOrNull)))
 
   def listCollections[T: GenCodec]: Observable[T] =
-    listCollections.map(doc => BsonValueInput.read[T](doc.toBsonDocument))
+    listCollections().map(doc => BsonValueInput.read[T](doc.toBsonDocument))
 
   def createCollection(
     name: String,

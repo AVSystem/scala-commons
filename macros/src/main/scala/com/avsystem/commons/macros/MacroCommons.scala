@@ -220,6 +220,8 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
     val aggregate: Option[Annot],
     paramMaterializer: Symbol => Option[Res[Tree]]
   ) {
+    require(annotTree != null, s"annotTree is null for subject=$subject, directSource=$directSource")
+    
     def aggregationChain: List[Annot] =
       aggregate.fold(List.empty[Annot])(a => a :: a.aggregationChain)
 
@@ -283,7 +285,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
           .collectFirst {
             case (param, arg) if param.name == subSym.name => arg match {
               case Literal(Constant(value: T)) => value
-              case t if param.asTerm.isParamWithDefault && t.symbol.isSynthetic &&
+              case t if param.asTerm.isParamWithDefault && t.symbol != null && t.symbol.isSynthetic &&
                 t.symbol.name.decodedName.toString.contains("$default$") => whenDefault
               case t if classTag[T] == classTag[Tree] => t.asInstanceOf[T]
               case _ => abort(s"Expected literal ${classTag[T].runtimeClass.getSimpleName} " +
@@ -310,7 +312,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
         if (rawAnnots.isEmpty) {
           warning(s"no aggregated annotations found in $tpe")
         }
-        rawAnnots.map { a =>
+        rawAnnots.filter(_.tree != null).map { a =>
           val tree = argsInliner.transform(correctAnnotTree(a.tree, tpe))
           new Annot(tree, subject, aggregatedMethodSym, Some(this), paramMaterializer)
         }
@@ -352,7 +354,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
       !(superSym != initSym && isSealedHierarchyRoot(superSym) && annot.tree.tpe <:< NotInheritedFromSealedTypes)
 
     val nonFallback = maybeWithSuperSymbols(initSym, withInherited)
-      .flatMap(ss => rawAnnotations(ss).filter(inherited(_, ss))
+      .flatMap(ss => rawAnnotations(ss).filter(a => a.tree != null && inherited(a, ss))
         .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None, paramMaterializer)))
 
     (nonFallback ++ fallback.iterator.map(t => new Annot(t, s, s, None, paramMaterializer)))
@@ -390,7 +392,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
 
     maybeWithSuperSymbols(initSym, withInherited)
       .map(ss => find(
-        rawAnnotations(ss).filter(inherited(_, ss))
+        rawAnnotations(ss).filter(a => a.tree != null && inherited(a, ss))
           .map(a => new Annot(correctAnnotTree(a.tree, seenFrom), s, ss, None, paramMaterializer)),
         rejectDuplicates = true
       ))
@@ -994,19 +996,19 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
   def paramSymbolToValDef(sym: Symbol): ValDef = {
     val ts = sym.asTerm
     val implicitFlag = if (sym.isImplicit) Flag.IMPLICIT else NoFlags
-    val mods = Modifiers(Flag.PARAM | implicitFlag, typeNames.EMPTY, rawAnnotations(ts).map(_.tree))
+    val mods = Modifiers(Flag.PARAM | implicitFlag, typeNames.EMPTY, rawAnnotations(ts).filter(_.tree != null).map(_.tree))
     ValDef(mods, ts.name, treeForType(sym.typeSignature), EmptyTree)
   }
 
   def getterSymbolToValDef(sym: Symbol): ValDef = {
     val ms = sym.asMethod
     val mutableFlag = if (ms.isVar) Flag.MUTABLE else NoFlags
-    val mods = Modifiers(Flag.DEFERRED | mutableFlag, typeNames.EMPTY, rawAnnotations(ms).map(_.tree))
+    val mods = Modifiers(Flag.DEFERRED | mutableFlag, typeNames.EMPTY, rawAnnotations(ms).filter(_.tree != null).map(_.tree))
     ValDef(mods, ms.name, treeForType(sym.typeSignature), EmptyTree)
   }
 
   def existentialSingletonToValDef(sym: Symbol, name: TermName, tpe: Type): ValDef = {
-    val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, rawAnnotations(sym).map(_.tree))
+    val mods = Modifiers(Flag.DEFERRED, typeNames.EMPTY, rawAnnotations(sym).filter(_.tree != null).map(_.tree))
     ValDef(mods, name, treeForType(tpe), EmptyTree)
   }
 
@@ -1025,7 +1027,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
       else NoFlags
 
     val flags = paramOrDeferredFlag | syntheticFlag | varianceFlag
-    val mods = Modifiers(flags, typeNames.EMPTY, rawAnnotations(ts).map(_.tree))
+    val mods = Modifiers(flags, typeNames.EMPTY, rawAnnotations(ts).filter(_.tree != null).map(_.tree))
     val (typeParams, signature) = sym.typeSignature match {
       case PolyType(polyParams, resultType) => (polyParams, resultType)
       case sig => (ts.typeParams, sig)
@@ -1278,7 +1280,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
   def positionPoint(sym: Symbol): Int =
     if (c.enclosingPosition.source == sym.pos.source) sym.pos.point
     else positionCache.getOrElseUpdate(sym,
-      rawAnnotations(sym).find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
+      rawAnnotations(sym).filter(_.tree != null).find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
         case Apply(_, List(MaybeTyped(Lit(point: Int), _))) => point
         case t => abort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
       } getOrElse {

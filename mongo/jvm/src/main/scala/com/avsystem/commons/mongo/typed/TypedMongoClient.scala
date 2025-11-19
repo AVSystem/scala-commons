@@ -57,11 +57,11 @@ class TypedMongoClient(
   def listDatabaseNames: Observable[String] =
     multi(optionalizeFirstArg(nativeClient.listDatabaseNames(sessionOrNull)))
 
-  def listDatabases: Observable[Document] =
+  def listDatabases(): Observable[Document] =
     multi(optionalizeFirstArg(nativeClient.listDatabases(sessionOrNull)))
 
   def listDatabases[T: GenCodec]: Observable[T] =
-    listDatabases.map(doc => BsonValueInput.read[T](doc.toBsonDocument))
+    listDatabases().map(doc => BsonValueInput.read[T](doc.toBsonDocument))
 
   //TODO: `watch` methods
 
