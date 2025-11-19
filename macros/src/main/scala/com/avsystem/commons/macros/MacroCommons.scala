@@ -273,11 +273,18 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
     def findArg[T: ClassTag](valSym: Symbol): T =
       findArg[T](valSym, abort(s"(bug) no default value for ${tree.tpe} parameter ${valSym.name} provided by macro"))
 
-    def findArg[T: ClassTag](valSym: Symbol, whenDefault: => T): T = tree match {
-      case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
+    def findArg[T: ClassTag](valSym: Symbol, whenDefault: => T): T = {
+      val treeVal = tree
+      if (treeVal == null) {
+        // In Scala 2.13.18+, annotation trees can be null for parameters with macro-generated defaults
+        // In this case, we use the default value
+        c.info(c.enclosingPosition, s"findArg: tree is null for ${valSym.name}, using default value", force = true)
+        whenDefault
+      } else treeVal match {
+        case Apply(Select(New(tpt), termNames.CONSTRUCTOR), args) =>
         val clsTpe = tpt.tpe
         val params = primaryConstructorOf(clsTpe).typeSignature.paramLists.head
-        ensure(params.size == args.size, s"Not a primary constructor call tree: $tree")
+        ensure(params.size == args.size, s"Not a primary constructor call tree: $treeVal")
         val subSym = clsTpe.member(valSym.name)
         ensure(subSym.isTerm && subSym.asTerm.isParamAccessor && withSuperSymbols(subSym).contains(valSym),
           s"Annotation $clsTpe must override $valSym with a constructor parameter")
@@ -293,7 +300,8 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
             }
           }
           .getOrElse(abort(s"Could not find argument corresponding to constructor parameter ${subSym.name}"))
-      case _ => abort(s"Not a primary constructor call tree: $tree")
+        case _ => abort(s"Not a primary constructor call tree: $treeVal")
+      }
     }
 
     private object argsInliner extends Transformer {
