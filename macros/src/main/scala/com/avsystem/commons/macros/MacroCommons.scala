@@ -234,11 +234,18 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
         primaryConstructorOf(clsTpe).typeSignatureIn(clsTpe)
     }
 
+    private def isDefaultAnnotArg(tree: Tree): Boolean = {
+      (tree.tpe match {
+        case AnnotatedType(annots, _) => annots.exists(_.tree.tpe.typeSymbol.name.toString == "defaultArg")
+        case _ => false
+      }) ||
+        tree.symbol != null && tree.symbol.isSynthetic && tree.symbol.name.decodedName.toString.contains("$default$")
+    }
+
     lazy val treeRes: Res[Tree] = annotTree match {
       case Apply(constr, args) =>
         val newArgs = (args zip constructorSig.paramLists.head) map {
-          case (arg, param) if param.asTerm.isParamWithDefault && arg.symbol != null &&
-            arg.symbol.isSynthetic && arg.symbol.name.decodedName.toString.contains("$default$") =>
+          case (arg, param) if param.asTerm.isParamWithDefault && isDefaultAnnotArg(arg) =>
             if (findAnnotation(param, DefaultsToNameAT).nonEmpty)
               Ok(q"${subject.name.decodedName.toString}")
             else
@@ -283,7 +290,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
           .collectFirst {
             case (param, arg) if param.name == subSym.name => arg match {
               case Literal(Constant(value: T)) => value
-              case Literal(Constant(null)) => whenDefault
+              case _ if param.asTerm.isParamWithDefault && isDefaultAnnotArg(arg) => whenDefault
               case t if param.asTerm.isParamWithDefault && t.symbol.isSynthetic &&
                 t.symbol.name.decodedName.toString.contains("$default$") => whenDefault
               case t if classTag[T] == classTag[Tree] => t.asInstanceOf[T]
@@ -824,6 +831,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
   case class LitOrDefault[T: ClassTag](default: T) {
     def unapply(tree: Tree): Option[T] = tree match {
       case Literal(Constant(value: T)) => Some(value)
+      case _ if tree.tpe != null && tree.tpe.toString.endsWith("@scala.annotation.meta.defaultArg") => Some(default)
       case Select(_, TermName(n)) if n.startsWith("$lessinit$greater$default$") => Some(default)
       case _ => None
     }
