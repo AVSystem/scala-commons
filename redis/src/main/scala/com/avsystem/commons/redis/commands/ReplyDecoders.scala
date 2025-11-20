@@ -303,10 +303,10 @@ object ReplyDecoders {
     }
 
   val multiBulkAsXConsumerInfo: ReplyDecoder[XConsumerInfo] =
-    flatMultiBulkAsMap(bulkAsUTF8, undecoded).andThen(XConsumerInfo.apply)
+    flatMultiBulkAsMap(bulkAsUTF8, undecoded).andThen(XConsumerInfo.apply _)
 
   val multiBulkAsXGroupInfo: ReplyDecoder[XGroupInfo] =
-    flatMultiBulkAsMap(bulkAsUTF8, undecoded).andThen(XGroupInfo.apply)
+    flatMultiBulkAsMap(bulkAsUTF8, undecoded).andThen(XGroupInfo.apply _)
 
   def multiBulkAsXStreamInfoOf[Rec: RedisRecordCodec]: ReplyDecoder[XStreamInfo[Rec]] =
     flatMultiBulkAsMap(bulkAsUTF8, undecoded).andThen(XStreamInfo[Rec](_))
@@ -374,7 +374,7 @@ object ReplyDecoders {
     flatMultiBulkAsMap(bulkAs[A], bulkAs[B])
 
   def flatMultiBulkAsRecord[R: RedisRecordCodec]: ReplyDecoder[R] = {
-    case ArrayMsg(elements: IndexedSeq[BulkStringMsg@unchecked]) if elements.forall(_.isInstanceOf[BulkStringMsg]) =>
+    case ArrayMsg(elements: IndexedSeq[BulkStringMsg @unchecked]) if elements.forall(_.isInstanceOf[BulkStringMsg]) =>
       RedisRecordCodec[R].read(elements)
   }
 
