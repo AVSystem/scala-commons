@@ -28,9 +28,9 @@ object Commons extends ProjectGroup("commons") {
   val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
   val scalacheckVersion = "1.19.0"
-  val jettyVersion = "12.1.1"
+  val jettyVersion = "12.1.4"
   val mongoVersion = "5.6.1"
-  val springVersion = "6.2.11"
+  val springVersion = "6.2.13"
   val typesafeConfigVersion = "1.4.5"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.6"
@@ -66,20 +66,19 @@ object Commons extends ProjectGroup("commons") {
     ),
 
     scalaVersion := "2.13.18",
-    compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
-
     githubWorkflowArtifactUpload := false,
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
+    githubWorkflowEnv += "JAVA_OPTS" -> "-Dfile.encoding=UTF-8 -Xmx4G",
+    githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
-        UseRef.Public("actions", "setup-node", "v2"),
+        UseRef.Public("actions", "setup-node", "v4"),
         name = Some("Setup Node.js"),
-        params = Map("node-version" -> "12")
       ),
       WorkflowStep.Use(
-        UseRef.Public("supercharge", "mongodb-github-action", "1.12.0"),
+        UseRef.Public("supercharge", "mongodb-github-action", "1.12.1"),
         name = Some("Setup MongoDB"),
         params = Map(
           "mongodb-version" -> "8.0",
@@ -87,9 +86,7 @@ object Commons extends ProjectGroup("commons") {
         )
       ),
     ),
-
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
-
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(
       List("ci-release"),
       env = Map(
