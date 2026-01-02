@@ -22,7 +22,8 @@ trait BsonInput extends Any with InputAndSimpleInput {
   protected def bsonType: BsonType
 
   protected def handleFailures[T](expr: => T): T =
-    try expr catch {
+    try expr
+    catch {
       case e: BsonInvalidOperationException => throw new ReadFailure(e.getMessage, e)
     }
 
@@ -98,10 +99,11 @@ trait BsonOutput extends Any with OutputAndSimpleOutput {
 
   override def writeBigInt(bigInt: BigInt): Unit =
     if (bigInt.isValidLong) writeLong(bigInt.longValue)
-    else Decimal128Utils.fromBigDecimal(BigDecimal(bigInt)) match {
-      case Opt(dec128) => writeDecimal128(dec128)
-      case Opt.Empty => writeBinary(bigInt.toByteArray)
-    }
+    else
+      Decimal128Utils.fromBigDecimal(BigDecimal(bigInt)) match {
+        case Opt(dec128) => writeDecimal128(dec128)
+        case Opt.Empty => writeBinary(bigInt.toByteArray)
+      }
 
   override def writeBigDecimal(bigDecimal: BigDecimal): Unit =
     Decimal128Utils.fromBigDecimal(bigDecimal) match {
@@ -124,7 +126,6 @@ trait BsonOutput extends Any with OutputAndSimpleOutput {
 object BsonOutput {
   def bigDecimalBytes(bigDecimal: BigDecimal): Array[Byte] = {
     val unscaledBytes = bigDecimal.bigDecimal.unscaledValue.toByteArray
-    ByteBuffer.allocate(unscaledBytes.length + Integer.BYTES)
-      .put(unscaledBytes).putInt(bigDecimal.scale).array
+    ByteBuffer.allocate(unscaledBytes.length + Integer.BYTES).put(unscaledBytes).putInt(bigDecimal.scale).array
   }
 }

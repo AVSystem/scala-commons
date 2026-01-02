@@ -15,15 +15,14 @@ trait ObservableExtensions {
 object ObservableExtensions extends ObservableExtensions {
   final class ObservableOps[T](private val obs: Observable[T]) extends AnyVal {
 
-    /** Creates a [[monix.eval.Task Task]] that upon execution
-      * will signal the first generated element of the source observable.
+    /** Creates a [[monix.eval.Task Task]] that upon execution will signal the first generated element of the source
+      * observable.
       *
       * Returns an `Opt.empty` for either empty source or null first element.
       */
     def headOptL: Task[Opt[T]] = obs.headOptionL.map(_.toOpt)
 
-    /**
-      * Returns a [[monix.eval.Task Task]] which emits the first <b>non-null</b> item for which the predicate holds.
+    /** Returns a [[monix.eval.Task Task]] which emits the first <b>non-null</b> item for which the predicate holds.
       */
     def findOptL(p: T => Boolean): Task[Opt[T]] = obs.findL(e => e != null && p(e)).map(_.toOpt)
 
@@ -33,8 +32,8 @@ object ObservableExtensions extends ObservableExtensions {
       */
     def distinct: Observable[T] = distinctBy[T](identity)
 
-    /** Given a function that returns a key for each element emitted by
-      * the source Observable, suppress duplicates items.
+    /** Given a function that returns a key for each element emitted by the source Observable, suppress duplicates
+      * items.
       *
       * WARNING: this requires unbounded buffering.
       */
@@ -51,24 +50,22 @@ object ObservableExtensions extends ObservableExtensions {
       * WARNING: this requires unbounded buffering.
       */
     def sortedL(implicit ord: Ordering[T], ct: ClassTag[T]): Task[ISeq[T]] =
-      obs
-        .toL(Array)
-        .map { arr =>
-          Sorting.stableSort(arr)
-          IArraySeq.unsafeWrapArray(arr)
-        }
+      obs.toL(Array).map { arr =>
+        Sorting.stableSort(arr)
+        IArraySeq.unsafeWrapArray(arr)
+      }
 
-    /** Given a function that returns a key for each element emitted by the source Observable,
-      * returns a [[monix.eval.Task Task]] that upon evaluation will collect all items from the source sorted by that key
-      * in an immutable sequence.
+    /** Given a function that returns a key for each element emitted by the source Observable, returns a
+      * [[monix.eval.Task Task]] that upon evaluation will collect all items from the source sorted by that key in an
+      * immutable sequence.
       *
       * WARNING: this requires unbounded buffering.
       */
     def sortedByL[R](f: T => R)(implicit ord: Ordering[R], ct: ClassTag[T]): Task[ISeq[T]] =
-      sortedL(ord on f, ct)
+      sortedL(ord.on(f), ct)
 
-    /** Given a collection factory `factory`, returns a [[monix.eval.Task Task]] that upon evaluation
-      * will collect all items from the source in the appropriate representation for the current element type `T`.
+    /** Given a collection factory `factory`, returns a [[monix.eval.Task Task]] that upon evaluation will collect all
+      * items from the source in the appropriate representation for the current element type `T`.
       *
       * Example uses for obs: Observable[(Int, String)]:
       * {{{
@@ -77,20 +74,15 @@ object ObservableExtensions extends ObservableExtensions {
       *      obs.toL(Map) //Task[Map[Int, String]]
       * }}}
       *
-      * WARNING: for infinite streams the process will eventually blow up
-      * with an out of memory error.
+      * WARNING: for infinite streams the process will eventually blow up with an out of memory error.
       */
     def toL[R](factory: Factory[T, R]): Task[R] =
-      obs
-        .foldLeftL(factory.newBuilder)(_ += _)
-        .map(_.result())
+      obs.foldLeftL(factory.newBuilder)(_ += _).map(_.result())
 
-    /** Returns a [[monix.eval.Task Task]] that upon evaluation
-      * will collect all items from the source into a [[Map]] instance
-      * using provided functions to compute keys and values.
+    /** Returns a [[monix.eval.Task Task]] that upon evaluation will collect all items from the source into a [[Map]]
+      * instance using provided functions to compute keys and values.
       *
-      * WARNING: for infinite streams the process will eventually blow up
-      * with an out of memory error.
+      * WARNING: for infinite streams the process will eventually blow up with an out of memory error.
       */
     def mkMapL[K, V](keyFun: T => K, valueFun: T => V): Task[Map[K, V]] =
       obs.map(v => (keyFun(v), valueFun(v))).toL(Map)

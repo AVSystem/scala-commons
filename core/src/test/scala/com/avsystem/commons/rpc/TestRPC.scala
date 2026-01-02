@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.rpc.DummyRPC._
-import com.avsystem.commons.serialization.{HasGenCodec, optionalParam, transientDefault, whenAbsent}
+import com.avsystem.commons.serialization.{optionalParam, transientDefault, whenAbsent, HasGenCodec}
 import scala.annotation.nowarn
 
 class prepend(prefix: String) extends EncodingInterceptor[String, String] with DecodingInterceptor[String, String] {
@@ -102,21 +102,24 @@ object TestRPC extends RPCCompanion[TestRPC] {
     def srslyDude(): Unit =
       onProcedure("srslyDude", Nil)
 
-    def innerRpc(name: String): InnerRPC = {
-      onGet("innerRpc", List(write(name)), new InnerRPC {
-        def func(arg: Int): Future[String] =
-          onCall("innerRpc.func", List(write(arg)), "innerRpc.funcResult")
+    def innerRpc(name: String): InnerRPC =
+      onGet(
+        "innerRpc",
+        List(write(name)),
+        new InnerRPC {
+          def func(arg: Int): Future[String] =
+            onCall("innerRpc.func", List(write(arg)), "innerRpc.funcResult")
 
-        def proc(): Unit =
-          onProcedure("innerRpc.proc", Nil)
+          def proc(): Unit =
+            onProcedure("innerRpc.proc", Nil)
 
-        def moreInner(name: String): InnerRPC =
-          this
+          def moreInner(name: String): InnerRPC =
+            this
 
-        def indirectRecursion(): TestRPC =
-          outer
-      })
-    }
+          def indirectRecursion(): TestRPC =
+            outer
+        },
+      )
 
     def generallyDoStuff[T](list: List[T])(implicit tag: Tag[T]): Future[Option[T]] =
       onCall("generallyDoStuff", List(write(tag), write(list)), list.headOption)

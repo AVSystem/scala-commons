@@ -5,8 +5,7 @@ import java.util.{function => juf}
 
 import com.avsystem.commons.misc.Sam
 
-/**
-  * Utils to convert Scala functions and expressions to most common Java functional interfaces.
+/** Utils to convert Scala functions and expressions to most common Java functional interfaces.
   */
 trait JFunctionUtils {
   type JBiConsumer[T, U] = juf.BiConsumer[T, U]

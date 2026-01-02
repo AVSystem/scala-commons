@@ -6,6 +6,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait NodeConnectionApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/echo ECHO]] */
   def echo(message: ByteString): Result[ByteString] =
     execute(new Echo(message))
@@ -32,6 +33,7 @@ trait NodeConnectionApi extends ApiSubset {
 }
 
 trait ConnectionConnectionApi extends NodeConnectionApi {
+
   /** Executes [[http://redis.io/commands/auth AUTH]] */
   def auth(password: String): Result[Unit] =
     execute(new Auth(Opt.Empty, password))

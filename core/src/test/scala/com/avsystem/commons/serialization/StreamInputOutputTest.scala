@@ -26,7 +26,7 @@ case class FieldTypes(
   m: BigDecimal,
   n: Array[Byte],
   o: Obj,
-  p: List[List[Obj]]
+  p: List[List[Obj]],
 )
 
 class StreamInputOutputTest extends AnyFunSuite {
@@ -50,8 +50,8 @@ class StreamInputOutputTest extends AnyFunSuite {
     Obj(10, "x"),
     List(
       List.empty,
-      List(Obj(123, "y"), Obj(124, "z"))
-    )
+      List(Obj(123, "y"), Obj(124, "z")),
+    ),
   )
 
   implicit val wrapCodec: GenCodec[Wrap] = GenCodec.materialize[Wrap]
@@ -83,7 +83,7 @@ class StreamInputOutputTest extends AnyFunSuite {
 
   test("simple encode/decode") {
     assertEncDec(1)
-    assert(Array[Byte](1, 3, 8) sameElements encDec(Array[Byte](1, 3, 8)))
+    assert(Array[Byte](1, 3, 8).sameElements(encDec(Array[Byte](1, 3, 8))))
     assertEncDec("x")
     assertEncDec(List.empty[String])
     assertEncDec(List[String]("   "))
@@ -94,7 +94,7 @@ class StreamInputOutputTest extends AnyFunSuite {
 
   test("encode and decode all field types in a complicated structure") {
     val encoded = encDec(fieldTypesInstance)
-    assert(fieldTypesInstance.n sameElements encoded.n)
+    assert(fieldTypesInstance.n.sameElements(encoded.n))
     assert(fieldTypesInstance == encoded.copy(n = fieldTypesInstance.n))
   }
 

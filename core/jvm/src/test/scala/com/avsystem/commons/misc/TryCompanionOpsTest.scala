@@ -4,8 +4,8 @@ package misc
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/**
-  * @author Wojciech Milewski
+/** @author
+  *   Wojciech Milewski
   */
 class TryCompanionOpsTest extends AnyFlatSpec with Matchers {
 
@@ -29,7 +29,8 @@ class TryCompanionOpsTest extends AnyFlatSpec with Matchers {
     val npe = new NullPointerException
     val ise = new IllegalStateException
 
-    val list: List[Try[Int]] = Success(1) :: Success(2) :: Failure(npe) :: Success(3) :: Failure(ise) :: Success(4) :: Nil
+    val list: List[Try[Int]] = Success(1) :: Success(2) :: Failure(npe) :: Success(3) :: Failure(ise) :: Success(4) ::
+      Nil
 
     val result = Try.sequence(list)
 

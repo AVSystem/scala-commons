@@ -1,24 +1,25 @@
 package com.avsystem.commons
 package analyzer
 
-
 import org.scalatest.funsuite.AnyFunSuite
 
 final class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest {
   test("macro private method invoked directly should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |import com.avsystem.commons.analyzer.TestUtils
              |
              |object test {
              |  TestUtils.macroPrivateMethod
              |}
-             |""".stripMargin
+             |""".stripMargin,
     )
   }
 
   test("macro private extractor used directly should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |import com.avsystem.commons.analyzer.TestUtils
              |
@@ -27,7 +28,7 @@ final class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest {
              |    case TestUtils.Extractor(_) =>
              |  }
              |}
-             |""".stripMargin
+             |""".stripMargin,
     )
   }
 

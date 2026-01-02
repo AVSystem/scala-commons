@@ -6,9 +6,7 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.duration._
 
-/**
-  * Author: ghik
-  * Created: 31/08/16.
+/** Author: ghik Created: 31/08/16.
   */
 class ExponentialBackoffTest extends AnyFunSuite with Matchers {
   test("simple") {
@@ -17,14 +15,70 @@ class ExponentialBackoffTest extends AnyFunSuite with Matchers {
 
     val allDelays = Iterator.iterateUntilEmpty(eb.nextRetry)(_._2.nextRetry).map(_._1).toList
     allDelays shouldBe List(
-      Duration.Zero, 1.second, 2.seconds, 4.seconds, 8.seconds, 16.seconds, 20.seconds, 20.seconds,
-      20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds,
-      20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds,
-      20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds,
-      20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds,
-      20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds,
-      20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds,
-      20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds, 20.seconds,
+      Duration.Zero,
+      1.second,
+      2.seconds,
+      4.seconds,
+      8.seconds,
+      16.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
+      20.seconds,
     )
   }
 }

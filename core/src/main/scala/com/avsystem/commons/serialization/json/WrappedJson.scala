@@ -4,8 +4,7 @@ package serialization.json
 import com.avsystem.commons.misc.CaseMethods
 import com.avsystem.commons.serialization.GenCodec
 
-/**
-  * Wrapper for raw JSON string
+/** Wrapper for raw JSON string
   *
   * It will be serialized as JSON value when used with [[com.avsystem.commons.serialization.Output]] supporting
   * [[RawJson]] marker.

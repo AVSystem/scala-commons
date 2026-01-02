@@ -19,7 +19,8 @@ final class CheckBincompatTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("usage of @bincompat annotated symbols should be rejected") {
-    assertErrors(3,
+    assertErrors(
+      3,
       scala"""
              |import com.avsystem.commons.annotation.bincompat
              |
@@ -36,7 +37,7 @@ final class CheckBincompatTest extends AnyFunSuite with AnalyzerTest {
              |  println(new klass)
              |  println(outer.method)
              |}
-             |""".stripMargin
+             |""".stripMargin,
     )
   }
 }

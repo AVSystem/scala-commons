@@ -11,51 +11,50 @@ import com.avsystem.commons.serialization.TransparentWrapping
 import org.bson.{BsonDocument, BsonValue}
 import scala.annotation.tailrec
 
-/**
-  * Represents a reference to a particular "place" in a MongoDB document. The "place" may be an actual path
-  * inside the document ([[MongoPropertyRef]]) or the whole document _itself_ (you can think of it as an empty path).
+/** Represents a reference to a particular "place" in a MongoDB document. The "place" may be an actual path inside the
+  * document ([[MongoPropertyRef]]) or the whole document _itself_ (you can think of it as an empty path).
   *
-  * When the [[MongoRef]] points to the whole document, it may also narrow the type only to some subtype(s).
-  * See the [[DataRefDsl.as]] macro for more details on narrowing.
+  * When the [[MongoRef]] points to the whole document, it may also narrow the type only to some subtype(s). See the
+  * [[DataRefDsl.as]] macro for more details on narrowing.
   *
-  * @tparam E the data type
+  * @tparam E
+  *   the data type
   */
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] { self =>
   def format: MongoFormat[T]
   def projectionRefs: Set[MongoRef[E, _]] = Set(this)
   def showRecordId: Boolean = false
 
-  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoRef[E, C]
+  @macroPrivate def subtypeRefFor[C <: T: ClassTag]: MongoRef[E, C]
 
   @macroPrivate def fieldRefFor[T0](scalaFieldName: String): MongoPropertyRef[E, T0] =
     format.assumeAdt.fieldRefFor(this, scalaFieldName)
 
-  @macroPrivate def subtypeFilterFor[C <: T : ClassTag](negated: Boolean): MongoDocumentFilter[E] =
+  @macroPrivate def subtypeFilterFor[C <: T: ClassTag](negated: Boolean): MongoDocumentFilter[E] =
     format.assumeUnion.subtypeFilterFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]], negated)
 
-  /**
-    * Composes this reference with another one, effectively prepending a "prefix" to this reference.
-    * This is conceptually similar to composing functions using `scala.Function1.compose`.
+  /** Composes this reference with another one, effectively prepending a "prefix" to this reference. This is
+    * conceptually similar to composing functions using `scala.Function1.compose`.
     */
   def compose[P](prefix: MongoRef[P, E]): ThisRef[P, T]
 
-  /**
-    * Composes this reference with another one, effectively appending a "suffix" to this reference.
-    * This is conceptually similar to composing functions using `scala.Function1.andThen`.
+  /** Composes this reference with another one, effectively appending a "suffix" to this reference. This is conceptually
+    * similar to composing functions using `scala.Function1.andThen`.
     */
-  def andThen[S](suffix: MongoRef[T, S]): suffix.ThisRef[E, S] = suffix compose this
+  def andThen[S](suffix: MongoRef[T, S]): suffix.ThisRef[E, S] = suffix.compose(this)
 
   def on[E0](ref: MongoRef[E0, E]): MongoProjection[E0, T] = compose(ref)
 }
 
-/**
-  * A "reference" to a document type, possibly narrowed to some subtype.
-  * A `MongoToplevelRef` can be used as a [[MongoProjection]] to indicate that we want a query to return
-  * full documents. If the projection is narrowed to a subtype of the document, this implies an additional
-  * filter so that only a subset of documents matching the subtype is returned.
+/** A "reference" to a document type, possibly narrowed to some subtype. A `MongoToplevelRef` can be used as a
+  * [[MongoProjection]] to indicate that we want a query to return full documents. If the projection is narrowed to a
+  * subtype of the document, this implies an additional filter so that only a subset of documents matching the subtype
+  * is returned.
   *
-  * @tparam E the document type
-  * @tparam T subtype of the document type, often equal to the document type
+  * @tparam E
+  *   the document type
+  * @tparam T
+  *   subtype of the document type, often equal to the document type
   */
 sealed trait MongoToplevelRef[E, T <: E] extends MongoRef[E, T] {
   // no need to expose this as MongoToplevelRef, MongoRef is enough
@@ -65,20 +64,19 @@ sealed trait MongoToplevelRef[E, T <: E] extends MongoRef[E, T] {
   def fullRef: MongoRef.RootRef[E]
   def format: MongoAdtFormat[T]
 
-  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoToplevelRef[E, C] =
+  @macroPrivate def subtypeRefFor[C <: T: ClassTag]: MongoToplevelRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
   def decodeFrom(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
 }
 
-/**
-  * Represents a path inside a MongoDB document.
+/** Represents a path inside a MongoDB document.
   *
-  * A [[MongoPropertyRef]] is usually obtained using the [[DataRefDsl.ref]] macro -
-  * see its documentation for more details.
+  * A [[MongoPropertyRef]] is usually obtained using the [[DataRefDsl.ref]] macro - see its documentation for more
+  * details.
   *
-  * [[MongoPropertyRef]] has a rich API so that it can be used for creating [[MongoDocumentFilter]]s, [[MongoDocumentUpdate]]s,
-  * [[MongoDocumentOrder]]s and [[MongoIndex]]es.
+  * [[MongoPropertyRef]] has a rich API so that it can be used for creating [[MongoDocumentFilter]]s,
+  * [[MongoDocumentUpdate]]s, [[MongoDocumentOrder]]s and [[MongoIndex]]es.
   *
   * {{{
   *   case class MyEntity(id: String, number: Int) extends MongoEntity[MyEntity]
@@ -94,22 +92,25 @@ sealed trait MongoToplevelRef[E, T <: E] extends MongoRef[E, T] {
   *     MyEntity.ref(_.number).descending
   * }}}
   *
-  * [[MongoPropertyRef]] may also be used as a [[MongoProjection]]
-  * or as a part of a more complex, multi-field projection.
+  * [[MongoPropertyRef]] may also be used as a [[MongoProjection]] or as a part of a more complex, multi-field
+  * projection.
   *
-  * @tparam E data type representing the whole document
-  * @tparam T type of the value under the referenced field or path
+  * @tparam E
+  *   data type representing the whole document
+  * @tparam T
+  *   type of the value under the referenced field or path
   */
-sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
-  with QueryOperatorsDsl[T, MongoDocumentFilter[E]]
-  with UpdateOperatorsDsl[T, MongoDocumentUpdate[E]] {
+sealed trait MongoPropertyRef[E, T]
+  extends MongoRef[E, T]
+    with QueryOperatorsDsl[T, MongoDocumentFilter[E]]
+    with UpdateOperatorsDsl[T, MongoDocumentUpdate[E]] {
 
   type ThisRef[E0, T0] = MongoPropertyRef[E0, T0]
   def SelfRef: MongoPropertyRef[E, T] = this
 
   import MongoRef._
 
-  @macroPrivate def subtypeRefFor[C <: T : ClassTag]: MongoPropertyRef[E, C] =
+  @macroPrivate def subtypeRefFor[C <: T: ClassTag]: MongoPropertyRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
   protected def wrapQueryOperators(ops: MongoQueryOperator[T]*): MongoDocumentFilter[E] =
@@ -121,10 +122,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   private def satisfiesFilter(filter: MongoFilter[T]): MongoDocumentFilter[E] =
     MongoFilter.PropertyValueFilter(this, filter)
 
-  /**
-    * Creates a [[MongoDocumentFilter]] which applies some other filter on the value pointed by this
-    * reference. This method accepts a lambda simply for syntactic convenience - the "creator" gives you all the
-    * API for creating filters on the value type which is usually shorter than creating them manually.
+  /** Creates a [[MongoDocumentFilter]] which applies some other filter on the value pointed by this reference. This
+    * method accepts a lambda simply for syntactic convenience - the "creator" gives you all the API for creating
+    * filters on the value type which is usually shorter than creating them manually.
     *
     * {{{
     *   case class MyEntity(id: String, data: InnerData) extends MongoEntity[MyEntity]
@@ -140,10 +140,9 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
   def satisfies(filter: MongoFilter.Creator[T] => MongoFilter[T]): MongoDocumentFilter[E] =
     satisfiesFilter(filter(new MongoFilter.Creator[T](format)))
 
-  /**
-    * Creates a filter that applies multiple query operators on this reference (which means that all the operators
-    * must be satisfied). Note that every operator may be used only once and this is not validated statically
-    * (a runtime error is thrown when some operator is duplicated).
+  /** Creates a filter that applies multiple query operators on this reference (which means that all the operators must
+    * be satisfied). Note that every operator may be used only once and this is not validated statically (a runtime
+    * error is thrown when some operator is duplicated).
     *
     * {{{
     *   case class MyEntity(id: String, number: Int) extends MongoEntity[MyEntity]
@@ -169,7 +168,8 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
     * However, there are some places where this is not possible, e.g. when specifying a filter in
     * [[VanillaQueryOperatorsDsl.ForCollection.elemMatch elemMatch]].
     */
-  def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoDocumentFilter[E] =
+  def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]])
+    : MongoDocumentFilter[E] =
     satisfies(_.satisfiesOperators(operators))
 
   def updateWith(update: MongoUpdate.Creator[T] => MongoUpdate[T]): MongoDocumentUpdate[E] =
@@ -250,14 +250,16 @@ sealed trait MongoPropertyRef[E, T] extends MongoRef[E, T]
 object MongoPropertyRef {
   final val Separator = "."
 
-  implicit class CollectionRefOps[E, C[X] <: Iterable[X], T](private val ref: MongoPropertyRef[E, C[T]]) extends AnyVal {
+  implicit class CollectionRefOps[E, C[X] <: Iterable[X], T](private val ref: MongoPropertyRef[E, C[T]])
+    extends AnyVal {
     def head: MongoPropertyRef[E, T] = apply(0)
 
     def apply(index: Int): MongoPropertyRef[E, T] =
       MongoRef.ArrayIndexRef(ref, index, ref.format.assumeCollection.elementFormat)
   }
 
-  implicit class DictionaryRefOps[E, M[X, Y] <: BMap[X, Y], K, V](private val ref: MongoPropertyRef[E, M[K, V]]) extends AnyVal {
+  implicit class DictionaryRefOps[E, M[X, Y] <: BMap[X, Y], K, V](private val ref: MongoPropertyRef[E, M[K, V]])
+    extends AnyVal {
     def apply(key: K): MongoPropertyRef[E, V] = {
       val dictFormat = ref.format.assumeDictionary
       MongoRef.FieldRef(ref, dictFormat.keyCodec.write(key), dictFormat.valueFormat, Opt.Empty)
@@ -271,7 +273,8 @@ object MongoPropertyRef {
     }
   }
 
-  implicit def optionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(implicit optionLike: OptionLike.Aux[O, T]): OptionalRefOps[E, O, T] =
+  implicit def optionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(implicit optionLike: OptionLike.Aux[O, T])
+    : OptionalRefOps[E, O, T] =
     new OptionalRefOps[E, O, T](ref)
 
   class OptionalRefOps[E, O, T](private val ref: MongoPropertyRef[E, O]) extends AnyVal {
@@ -281,7 +284,8 @@ object MongoPropertyRef {
     }
   }
 
-  implicit def transparentRefOps[E, T, R](ref: MongoPropertyRef[E, T])(implicit wrapping: TransparentWrapping[R, T]): TransparentRefOps[E, T, R] =
+  implicit def transparentRefOps[E, T, R](ref: MongoPropertyRef[E, T])(implicit wrapping: TransparentWrapping[R, T])
+    : TransparentRefOps[E, T, R] =
     new TransparentRefOps[E, T, R](ref)
 
   class TransparentRefOps[E, T, R](private val ref: MongoPropertyRef[E, T]) extends AnyVal {
@@ -296,7 +300,7 @@ object MongoPropertyRef {
 object MongoRef {
   // Deliberately not calling this IdentityRef so that it doesn't get confused with IdRef (for database ID field)
   final case class RootRef[T](
-    format: MongoAdtFormat[T],
+    format: MongoAdtFormat[T]
   ) extends MongoToplevelRef[T, T] {
     def fullRef: RootRef[T] = this
     def compose[P](prefix: MongoRef[P, T]): MongoRef[P, T] = prefix
@@ -324,7 +328,7 @@ object MongoRef {
     fallbackBson: Opt[BsonValue],
   ) extends MongoPropertyRef[E, T] {
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
-      copy(prefix = this.prefix compose newPrefix)
+      copy(prefix = this.prefix.compose(newPrefix))
   }
 
   final case class ArrayIndexRef[E, C[X] <: Iterable[X], T](
@@ -334,7 +338,7 @@ object MongoRef {
   ) extends MongoPropertyRef[E, T] {
     require(index >= 0, "array index must be non-negative")
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
-      copy(prefix = prefix compose newPrefix)
+      copy(prefix = prefix.compose(newPrefix))
   }
 
   final case class GetFromOptional[E, O, T](
@@ -343,7 +347,7 @@ object MongoRef {
     optionLike: OptionLike.Aux[O, T],
   ) extends MongoPropertyRef[E, T] {
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
-      copy(prefix = prefix compose newPrefix)
+      copy(prefix = prefix.compose(newPrefix))
   }
 
   final case class TransparentUnwrap[E, R, T](
@@ -352,7 +356,7 @@ object MongoRef {
     transparentWrapping: TransparentWrapping[R, T],
   ) extends MongoPropertyRef[E, R] {
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, R] =
-      copy(prefix = prefix compose newPrefix)
+      copy(prefix = prefix.compose(newPrefix))
   }
 
   final case class PropertySubtypeRef[E, T0, T <: T0](
@@ -362,7 +366,7 @@ object MongoRef {
     format: MongoAdtFormat[T],
   ) extends MongoPropertyRef[E, T] {
     def compose[P](newPrefix: MongoRef[P, E]): MongoPropertyRef[P, T] =
-      copy(prefix = prefix compose newPrefix)
+      copy(prefix = prefix.compose(newPrefix))
   }
 
   def caseNameRef[E, T](prefix: MongoRef[E, T], caseFieldName: String): MongoPropertyRef[E, String] =

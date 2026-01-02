@@ -14,9 +14,7 @@ import scala.collection.BuildFrom
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/**
-  * Author: ghik
-  * Created: 14/04/16.
+/** Author: ghik Created: 14/04/16.
   */
 trait ByteStringInterpolation {
   implicit class bsInterpolation(sc: StringContext) {
@@ -59,8 +57,13 @@ trait ByteStringInterpolation {
   }
 }
 
-trait CommandsSuite extends AnyFunSuite with ScalaFutures with Matchers with UsesActorSystem
-  with ByteStringInterpolation with CommunicationLogging {
+trait CommandsSuite
+  extends AnyFunSuite
+    with ScalaFutures
+    with Matchers
+    with UsesActorSystem
+    with ByteStringInterpolation
+    with CommunicationLogging {
 
   def executor: RedisKeyedExecutor
   def executionConfig: ExecutionConfig = ExecutionConfig.Default
@@ -71,7 +74,8 @@ trait CommandsSuite extends AnyFunSuite with ScalaFutures with Matchers with Use
   protected def setup(batches: RedisBatch[Any]*): Unit = {
     // TODO: Scala 2.13.x regression, diverging implicit expansion
     val sequencer: Sequencer[Seq[RedisBatch[Any]], Seq[Any]] =
-      Sequencer.collectionSequencer(Sequencer.trivialSequencer[Any], implicitly[BuildFrom[Seq[RedisBatch[Any]], Any, Seq[Any]]])
+      Sequencer
+        .collectionSequencer(Sequencer.trivialSequencer[Any], implicitly[BuildFrom[Seq[RedisBatch[Any]], Any, Seq[Any]]])
     Await.result(executor.executeBatch(batches.sequence(sequencer), executionConfig), Duration.Inf)
     listener.clear()
   }
@@ -81,7 +85,7 @@ trait CommandsSuite extends AnyFunSuite with ScalaFutures with Matchers with Use
     def exec: Future[T] = executor.executeBatch(batch, executionConfig)
     def assert(pred: T => Boolean)(implicit pos: Position): Unit = CommandsSuite.this.assert(pred(get))
     def assertEquals(t: T)(implicit pos: Position): Unit = assertResult(t)(get)
-    def intercept[E <: Throwable : ClassTag](implicit pos: Position): E = CommandsSuite.this.intercept[E](get)
+    def intercept[E <: Throwable: ClassTag](implicit pos: Position): E = CommandsSuite.this.intercept[E](get)
   }
 
   protected def cleanupBatch: RedisBatch[Any] =
@@ -93,19 +97,20 @@ trait CommandsSuite extends AnyFunSuite with ScalaFutures with Matchers with Use
   }
 }
 
-abstract class RedisClusterCommandsSuite extends AnyFunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
+abstract class RedisClusterCommandsSuite
+  extends AnyFunSuite with UsesPreconfiguredCluster with UsesRedisClusterClient with CommandsSuite {
   def executor: RedisKeyedExecutor = redisClient
 
   override def clusterConfig: ClusterConfig =
     super.clusterConfig |> { cc =>
       cc.copy(
-        nodeConfigs = a => cc.nodeConfigs(a) |> { nc =>
-          nc.copy(
-            poolSize = 4,
-            connectionConfigs = i =>
-              nc.connectionConfigs(i).copy(debugListener = listener)
-          )
-        }
+        nodeConfigs = a =>
+          cc.nodeConfigs(a) |> { nc =>
+            nc.copy(
+              poolSize = 4,
+              connectionConfigs = i => nc.connectionConfigs(i).copy(debugListener = listener),
+            )
+          }
       )
     }
 
@@ -124,13 +129,13 @@ abstract class RedisMasterSlaveCommandsSuite
   override def masterSlaveConfig: MasterSlaveConfig =
     super.masterSlaveConfig |> { msc =>
       msc.copy(
-        masterConfig = a => msc.masterConfig(a) |> { mc =>
-          mc.copy(
-            poolSize = 4,
-            connectionConfigs = i =>
-              mc.connectionConfigs(i).copy(debugListener = listener)
-          )
-        }
+        masterConfig = a =>
+          msc.masterConfig(a) |> { mc =>
+            mc.copy(
+              poolSize = 4,
+              connectionConfigs = i => mc.connectionConfigs(i).copy(debugListener = listener),
+            )
+          }
       )
     }
 
@@ -148,8 +153,7 @@ abstract class RedisNodeCommandsSuite extends AnyFunSuite with UsesRedisNodeClie
     super.nodeConfig |> { nc =>
       nc.copy(
         poolSize = 4,
-        connectionConfigs = i =>
-          nc.connectionConfigs(i).copy(debugListener = listener)
+        connectionConfigs = i => nc.connectionConfigs(i).copy(debugListener = listener),
       )
     }
 

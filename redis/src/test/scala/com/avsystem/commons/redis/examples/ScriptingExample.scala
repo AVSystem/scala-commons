@@ -7,8 +7,7 @@ import com.avsystem.commons.redis.commands.{RedisScript, ReplyDecoders}
 import com.avsystem.commons.redis.config.{ClusterConfig, NodeConfig}
 import com.avsystem.commons.redis.protocol.{BulkStringMsg, NullBulkStringMsg}
 
-/**
-  * Example which shows how to execute LUA scripts.
+/** Example which shows how to execute LUA scripts.
   */
 object ScriptingExample extends App {
   implicit val actorSystem: ActorSystem = ActorSystem()
@@ -36,7 +35,7 @@ object ScriptingExample extends App {
   // using EVALSHA and falls back to EVAL if the script is not yet loaded into Redis. This way we avoid sending
   // the entire script to Redis every time but at the same time we don't have to preload it using SCRIPT LOAD
   def runScript1: Future[Opt[String]] =
-  api.evalshaOrEval(script1, Seq("key"), Seq())
+    api.evalshaOrEval(script1, Seq("key"), Seq())
 
   // If you want to preload scripts before evaluating them, you can use `initOp` setting of `NodeConfig`
   // This is especially useful when using `RedisClusterClient` where nodes can appear and disappear at any time

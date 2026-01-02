@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package analyzer
 
-
 import org.scalatest.funsuite.AnyFunSuite
 
 final class FindUsagesTest extends AnyFunSuite with AnalyzerTest {

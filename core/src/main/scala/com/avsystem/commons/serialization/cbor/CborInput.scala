@@ -54,7 +54,7 @@ final class CborReader(val data: RawCbor) {
     }
 
   @inline private def bits(off: Int): Long =
-    data(idx + off).toLong & 0xFF
+    data(idx + off).toLong & 0xff
 
   def nextByte(): Long = {
     val res = bits(0)
@@ -75,8 +75,14 @@ final class CborReader(val data: RawCbor) {
   }
 
   def nextLong(): Long = {
-    val res = (bits(0) << 56) | (bits(1) << 48) | (bits(2) << 40) | (bits(3) << 32) |
-      (bits(4) << 24) | (bits(5) << 16) | (bits(6) << 8) | bits(7)
+    val res =
+      (bits(0) << 56) |
+        (bits(1) << 48) |
+        (bits(2) << 40) |
+        (bits(3) << 32) |
+        (bits(4) << 24) |
+        (bits(5) << 16) |
+        (bits(6) << 8) | bits(7)
     advance(8)
     res
   }
@@ -157,8 +163,7 @@ object CborInput {
   private final val Two64 = BigInt(1) << 64
 }
 
-/**
-  * An [[com.avsystem.commons.serialization.Input Input]] implementation that deserializes from
+/** An [[com.avsystem.commons.serialization.Input Input]] implementation that deserializes from
   * [[https://tools.ietf.org/html/rfc7049 CBOR]].
   */
 class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimpleInput {
@@ -215,14 +220,14 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
     readLong().toInt
 
   def readLong(): Long = nextInitial() match {
-    case InitialByte(major@(MajorType.Unsigned | MajorType.Negative), info) =>
+    case InitialByte(major @ (MajorType.Unsigned | MajorType.Negative), info) =>
       readSigned(major, info)
     case ib =>
       unexpected(ib, "integer")
   }
 
   def readDouble(): Double = nextInitial() match {
-    case InitialByte(major@(MajorType.Unsigned | MajorType.Negative), info) =>
+    case InitialByte(major @ (MajorType.Unsigned | MajorType.Negative), info) =>
       readSigned(major, info).toDouble
     case InitialByte.HalfPrecisionFloat =>
       new HFloat(nextShort().toShort).toFloat.toDouble
@@ -235,14 +240,16 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
   }
 
   def readBigInt(): BigInt = peekInitial() match {
-    case InitialByte(major@(MajorType.Unsigned | MajorType.Negative), info) =>
+    case InitialByte(major @ (MajorType.Unsigned | MajorType.Negative), info) =>
       nextInitial()
       val uns = readUnsigned(info)
       val unsigned = if (uns >= 0) BigInt(uns) else CborInput.Two64 + uns
       if (major == MajorType.Unsigned) unsigned else -(unsigned + 1)
     case InitialByte(MajorType.ByteString, info) =>
-      val tag = requireTag(t => t == Tag.PositiveBignum || t == Tag.NegativeBignum,
-        "expected value tagged as positive or negative bignum")
+      val tag = requireTag(
+        t => t == Tag.PositiveBignum || t == Tag.NegativeBignum,
+        "expected value tagged as positive or negative bignum",
+      )
       nextInitial()
       val unsigned = BigInt(readSizedBytes(info))
       if (tag == Tag.PositiveBignum) unsigned else -(unsigned + 1)
@@ -436,22 +443,19 @@ class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   private[this] var forcedKeyCodec: CborKeyCodec = _
   private[this] def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
-  /**
-    * Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard
-    * [[ObjectOutput]] which only allows string-typed keys. If this method is used to read the key then value
-    * MUST be read with [[nextValue()]] and [[nextField()]] MUST NOT be used.
+  /** Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard [[ObjectOutput]]
+    * which only allows string-typed keys. If this method is used to read the key then value MUST be read with
+    * [[nextValue()]] and [[nextField()]] MUST NOT be used.
     */
   def nextKey(): CborInput = {
     prepareForNext()
     new CborInput(reader, keyCodec)
   }
 
-  /**
-    * Returns a [[CborOutput]] for reading the value of a CBOR field whose key was previously read with [[nextKey()]].
-    * This method MUST ONLY be used after the key was fully read using [[nextKey()]]. Fully reading the input means
-    * that all its bytes must be consumed. For example, if the key is an array or object then all its elements/fields
-    * must be consumed.
-    * If this method is used to read the field value then [[nextField()]] MUST NOT be used.
+  /** Returns a [[CborOutput]] for reading the value of a CBOR field whose key was previously read with [[nextKey()]].
+    * This method MUST ONLY be used after the key was fully read using [[nextKey()]]. Fully reading the input means that
+    * all its bytes must be consumed. For example, if the key is an array or object then all its elements/fields must be
+    * consumed. If this method is used to read the field value then [[nextField()]] MUST NOT be used.
     */
   def nextValue(): CborInput =
     new CborInput(reader, keyCodec)

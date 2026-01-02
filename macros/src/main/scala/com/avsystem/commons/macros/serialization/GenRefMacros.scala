@@ -17,16 +17,16 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   val TransparentGets: Set[Symbol] = Set(
     staticType(tq"$CommonsPkg.Opt[_]"),
     staticType(tq"$CommonsPkg.OptArg[_]"),
-    staticType(tq"$CommonsPkg.OptRef[_]")
+    staticType(tq"$CommonsPkg.OptRef[_]"),
   ).map(_.member(TermName("get")))
 
   object MapApplyOrGet {
     def unapply(tree: Tree): Option[(Tree, Tree, Symbol)] = tree match {
       case Apply(Select(prefix, TermName("apply")), List(arg))
-        if (tree.symbol :: tree.symbol.overrides).contains(MapApply) =>
+          if (tree.symbol :: tree.symbol.overrides).contains(MapApply) =>
         Some((prefix, arg, MapTpe.typeSymbol))
       case Apply(Select(prefix, TermName("get")), List(arg))
-        if (tree.symbol :: tree.symbol.overrides).contains(JMapGet) =>
+          if (tree.symbol :: tree.symbol.overrides).contains(JMapGet) =>
         Some((prefix, arg, JMapTpe.typeSymbol))
       case _ => None
     }
@@ -41,12 +41,14 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   private def isTransparentWrapper(prefixTpe: Type, fieldSym: Symbol): Boolean = {
     val sym = prefixTpe.typeSymbol
-    sym.isClass && sym.asClass.isCaseClass && (primaryConstructorOf(prefixTpe).asMethod.paramLists match {
-      case List(`fieldSym`) :: _ => isTransparent(sym) || {
-        val paramTpe = fieldSym.typeSignatureIn(prefixTpe).finalResultType
-        val wrappingTpe = getType(tq"$SerializationPkg.TransparentWrapping[$paramTpe, $prefixTpe]")
-        inferImplicitValue(wrappingTpe) != EmptyTree
-      }
+    sym.isClass && sym.asClass.isCaseClass &&
+    (primaryConstructorOf(prefixTpe).asMethod.paramLists match {
+      case List(`fieldSym`) :: _ =>
+        isTransparent(sym) || {
+          val paramTpe = fieldSym.typeSignatureIn(prefixTpe).finalResultType
+          val wrappingTpe = getType(tq"$SerializationPkg.TransparentWrapping[$paramTpe, $prefixTpe]")
+          inferImplicitValue(wrappingTpe) != EmptyTree
+        }
       case _ => false
     })
   }
@@ -93,14 +95,20 @@ class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
                 val fieldSym = fieldMemberFor(subtype, subMember)
                 val fieldType = actualParamType(fieldSym.typeSignatureIn(subtype).finalResultType)
                 if (!(fieldType =:= bodyTpe)) {
-                  c.abort(body.pos, s"$subMember in $subtype has different type ($fieldType) than $selSym in $prefixTpe ($bodyTpe)")
+                  c.abort(
+                    body.pos,
+                    s"$subMember in $subtype has different type ($fieldType) than $selSym in $prefixTpe ($bodyTpe)",
+                  )
                 }
                 fieldSym
               }
 
               val memberName = targetName(fieldSymbols.head)
               if (fieldSymbols.exists(s => targetName(s) != memberName)) {
-                c.abort(body.pos, s"All members that override $selSym in $prefixTpe in subtypes must have the same @name")
+                c.abort(
+                  body.pos,
+                  s"All members that override $selSym in $prefixTpe in subtypes must have the same @name",
+                )
               }
 
               refs ::= q"$SerializationPkg.RawRef.Field($memberName)"

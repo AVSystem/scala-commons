@@ -40,13 +40,14 @@ class HParser(tokens: IndexedSeq[HToken]) {
 
   @tailrec private def skipWs(newlines: Boolean = true): Int =
     if (eof) idx
-    else cur.tokenType match {
-      case Whitespace | Comment if newlines || !cur.multiline =>
-        advance()
-        skipWs(newlines)
-      case _ =>
-        idx
-    }
+    else
+      cur.tokenType match {
+        case Whitespace | Comment if newlines || !cur.multiline =>
+          advance()
+          skipWs(newlines)
+        case _ =>
+          idx
+      }
 
   private def ahead(tt: HTokenType): Boolean =
     ahead(_.tokenType == tt)
@@ -223,10 +224,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     val start = skipWs()
     val values = new MListBuffer[HValue]
     values += parseNonConcat()
-    while (
-      aheadAny(LBrace, LBracket, Splice, QuotedString, MultilineString) ||
-        ahead(unquotedStringPart(inKey = false))
-    ) {
+    while (aheadAny(LBrace, LBracket, Splice, QuotedString, MultilineString) || ahead(unquotedStringPart(inKey = false))) {
       values += parseNonConcat()
     }
     values.last match {
@@ -240,7 +238,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     }
   }
 
-  def parseNonConcat(): HValue = {
+  def parseNonConcat(): HValue =
     if (ahead(LBrace)) parseObject()
     else if (ahead(LBracket)) parseArray()
     else if (ahead(Splice)) parseSubst()
@@ -255,15 +253,15 @@ class HParser(tokens: IndexedSeq[HToken]) {
       }
       else str
     }
-  }
 
   private def unquotedStringPart(inKey: Boolean): HToken => Boolean =
-    token => token.tokenType match {
-      case Unquoted | LParen | RParen => true
-      case Dot => !inKey
-      case Whitespace => !token.multiline
-      case _ => false
-    }
+    token =>
+      token.tokenType match {
+        case Unquoted | LParen | RParen => true
+        case Dot => !inKey
+        case Whitespace => !token.multiline
+        case _ => false
+      }
 
   def parseString(inKey: Boolean): HString = {
     val start = idx
@@ -275,8 +273,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
       while (ahead(unquotedStringPart(inKey))) {
         advance()
       }
-      val keepLast = prev.tokenType != Whitespace ||
-        (inKey && aheadAny(Dot, QuotedString, MultilineString)) ||
+      val keepLast = prev.tokenType != Whitespace || (inKey && aheadAny(Dot, QuotedString, MultilineString)) ||
         (!inKey && aheadAny(LBrace, LBracket, QuotedString, MultilineString, Splice))
       val end = if (keepLast) idx else prev.idx
       val range = new HTokenRange(tokens, start, end)

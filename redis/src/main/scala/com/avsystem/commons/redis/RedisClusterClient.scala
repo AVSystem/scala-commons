@@ -23,34 +23,40 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 
-/**
-  * Redis client implementation for Redis Cluster deployments. Internally, it uses single [[RedisNodeClient]] instance
+/** Redis client implementation for Redis Cluster deployments. Internally, it uses single [[RedisNodeClient]] instance
   * for every known master in the cluster plus a separate connection for monitoring of every known master.
   * [[RedisNodeClient]] instances are dynamically created and destroyed as the cluster changes its state.
   *
   * The cluster client is only able to execute commands or transactions containing keys which determine which master
-  * should be contacted. However, it's possible to gain access to [[RedisNodeClient]] instances that [[RedisClusterClient]]
-  * internally uses to connect to every master (see [[ClusterState]] and [[masterClient]]).
+  * should be contacted. However, it's possible to gain access to [[RedisNodeClient]] instances that
+  * [[RedisClusterClient]] internally uses to connect to every master (see [[ClusterState]] and [[masterClient]]).
   *
-  * [[RedisClusterClient]] can directly execute only [[RedisBatch]]es. It automatically distributes every batch
-  * over multiple cluster masters and handles cluster redirections if necessary. See [[executeBatch]] for more
-  * details.
+  * [[RedisClusterClient]] can directly execute only [[RedisBatch]]es. It automatically distributes every batch over
+  * multiple cluster masters and handles cluster redirections if necessary. See [[executeBatch]] for more details.
   *
-  * [[RedisClusterClient]] cannot directly execute [[RedisOp]]s (e.g. `WATCH`-`MULTI`-`EXEC` transactions).
-  * You must manually access node client for appropriate master through [[currentState]] and execute the operation using it.
+  * [[RedisClusterClient]] cannot directly execute [[RedisOp]]s (e.g. `WATCH`-`MULTI`-`EXEC` transactions). You must
+  * manually access node client for appropriate master through [[currentState]] and execute the operation using it.
   * However, be aware that you must manually handle cluster redirections and cluster state changes while doing so.
   *
-  * @param seedNodes nodes used to fetch initial cluster state from. You don't need to list all cluster nodes, it is
-  *                  only required that at least one of the seed nodes is available during startup.
-  * @param config    client configuration - [[ClusterConfig]]
-  * @param clusterStateObserver optional observer for monitoring client's state and connections - [[ClusterStateObserver]]
+  * @param seedNodes
+  *   nodes used to fetch initial cluster state from. You don't need to list all cluster nodes, it is only required that
+  *   at least one of the seed nodes is available during startup.
+  * @param config
+  *   client configuration - [[ClusterConfig]]
+  * @param clusterStateObserver
+  *   optional observer for monitoring client's state and connections - [[ClusterStateObserver]]
   */
-@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
+@deprecated(
+  "Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.",
+  "2.21.0",
+)
 final class RedisClusterClient(
   val seedNodes: Seq[NodeAddress] = List(NodeAddress.Default),
   val config: ClusterConfig = ClusterConfig(),
   val clusterStateObserver: OptArg[ClusterStateObserver] = OptArg.Empty,
-)(implicit system: ActorSystem) extends RedisClient with RedisKeyedExecutor {
+)(implicit system: ActorSystem
+) extends RedisClient
+    with RedisKeyedExecutor {
 
   require(seedNodes.nonEmpty, "No seed nodes provided")
 
@@ -107,7 +113,18 @@ final class RedisClusterClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new ClusterMonitoringActor(seedNodes, config, initPromise.failure, onNewState, onTemporaryClient, clusterStateObserver)))
+    system.actorOf(
+      Props(
+        new ClusterMonitoringActor(
+          seedNodes,
+          config,
+          initPromise.failure,
+          onNewState,
+          onTemporaryClient,
+          clusterStateObserver,
+        )
+      )
+    )
 
   private def determineSlot(pack: RawCommandPack): Int = {
     var slot = -1
@@ -123,63 +140,71 @@ final class RedisClusterClient(
     else throw new NoKeysException
   }
 
-  /**
-    * Sets a listener that is notified every time [[RedisClusterClient]] detects a change in cluster state
-    * (slot mapping).
+  /** Sets a listener that is notified every time [[RedisClusterClient]] detects a change in cluster state (slot
+    * mapping).
     */
   def setStateListener(listener: ClusterState => Unit)(implicit executor: ExecutionContext): Unit =
     stateListener = state => executor.execute(jRunnable(listener(state)))
 
-  /**
-    * Returns currently known cluster state.
+  /** Returns currently known cluster state.
     */
   def currentState: ClusterState =
     state
 
-  /**
-    * Returns currently known cluster state, waiting for initialization if necessary.
+  /** Returns currently known cluster state, waiting for initialization if necessary.
     */
   def initializedCurrentState: Future[ClusterState] =
     initPromise.future.mapNow(_ => currentState)
 
-  /**
-    * Waits until cluster state is known and [[RedisNodeClient]] for every master node is initialized.
+  /** Waits until cluster state is known and [[RedisNodeClient]] for every master node is initialized.
     */
   def initialized: Future[this.type] =
     initPromise.future.mapNow(_ => this)
 
   private def handleRedirection[T](
-    pack: RawCommandPack, slot: Int, result: Future[RedisReply],
-    retryStrategy: RetryStrategy, tryagainStrategy: RetryStrategy
-  )(implicit timeout: Timeout): Future[RedisReply] =
-    result.flatMapNow {
-      case RedirectionReply(red) =>
-        retryRedirected(pack, red, retryStrategy, tryagainStrategy)
-      case TryagainReply(reply) => tryagainStrategy.nextRetry match {
-        case Opt.Empty => Future.successful(reply)
-        case Opt((delay, nextStrat)) =>
-          val result = DelayedFuture(delay).flatMapNow(_ => state.clientForSlot(slot).executeRaw(pack).mapNow(_.apply(0)))
-          handleRedirection(pack, slot, result, config.redirectionStrategy, nextStrat)
+    pack: RawCommandPack,
+    slot: Int,
+    result: Future[RedisReply],
+    retryStrategy: RetryStrategy,
+    tryagainStrategy: RetryStrategy,
+  )(implicit timeout: Timeout
+  ): Future[RedisReply] =
+    result
+      .flatMapNow {
+        case RedirectionReply(red) =>
+          retryRedirected(pack, red, retryStrategy, tryagainStrategy)
+        case TryagainReply(reply) =>
+          tryagainStrategy.nextRetry match {
+            case Opt.Empty => Future.successful(reply)
+            case Opt((delay, nextStrat)) =>
+              val result =
+                DelayedFuture(delay).flatMapNow(_ => state.clientForSlot(slot).executeRaw(pack).mapNow(_.apply(0)))
+              handleRedirection(pack, slot, result, config.redirectionStrategy, nextStrat)
+          }
+        case _ => result
       }
-      case _ => result
-    } recoverWithNow {
-      case _: NodeRemovedException =>
+      .recoverWithNow { case _: NodeRemovedException =>
         // Node went down and we didn't get a regular redirection but the cluster detected the failure
         // and we now have a new cluster view, so retry our not-yet-sent request using new cluster state.
         val client = state.clientForSlot(slot)
         retryStrategy.nextRetry match {
           case Opt.Empty =>
-            Future.successful(FailureReply(new TooManyRedirectionsException(Redirection(client.address, slot, ask = false))))
+            Future.successful(
+              FailureReply(new TooManyRedirectionsException(Redirection(client.address, slot, ask = false)))
+            )
           case Opt((delay, nextStrat)) =>
             val result = DelayedFuture(delay).flatMapNow(_ => client.executeRaw(pack).mapNow(_.apply(0)))
             handleRedirection(pack, slot, result, nextStrat, tryagainStrategy)
         }
-    }
+      }
 
   private def retryRedirected(
-    pack: RawCommandPack, redirection: Redirection,
-    retryStrategy: RetryStrategy, tryagainStrategy: RetryStrategy
-  )(implicit timeout: Timeout): Future[RedisReply] = {
+    pack: RawCommandPack,
+    redirection: Redirection,
+    retryStrategy: RetryStrategy,
+    tryagainStrategy: RetryStrategy,
+  )(implicit timeout: Timeout
+  ): Future[RedisReply] = {
     if (!redirection.ask) {
       // redirection (without ASK) indicates that we may have old cluster state, refresh it
       monitoringActor ! Refresh(redirection.address.opt)
@@ -206,19 +231,19 @@ final class RedisClusterClient(
     state.masters.getOpt(address) orElse temporaryClients.findOpt(_.address == address)
 
   private def askForClient(address: NodeAddress): Future[RedisNodeClient] =
-    monitoringActor.ask(GetClient(address))(RedisClusterClient.GetClientTimeout)
-      .flatMapNow({ case GetClientResponse(client) => client.initialized })
+    monitoringActor.ask(GetClient(address))(RedisClusterClient.GetClientTimeout).flatMapNow {
+      case GetClientResponse(client) => client.initialized
+    }
 
-  /**
-    * Returns a [[RedisNodeClient]] internally used to connect to a master with given address.
-    * Note that the address may belong to a master that is not yet known to this cluster client.
-    * In such case, node client for this master will be created on demand. However, be aware that this temporary
-    * client will be immediately closed if it's master is not listed in next cluster state fetched by
-    * [[RedisClusterClient]]. Therefore, you can't use this method to obtain clients for arbitrary nodes - only for
-    * master nodes that this cluster client knows or is about to know upon next state refresh.
+  /** Returns a [[RedisNodeClient]] internally used to connect to a master with given address. Note that the address may
+    * belong to a master that is not yet known to this cluster client. In such case, node client for this master will be
+    * created on demand. However, be aware that this temporary client will be immediately closed if it's master is not
+    * listed in next cluster state fetched by [[RedisClusterClient]]. Therefore, you can't use this method to obtain
+    * clients for arbitrary nodes - only for master nodes that this cluster client knows or is about to know upon next
+    * state refresh.
     *
-    * This method is primarily intended to be used when having to manually recover from a cluster redirection.
-    * If you want to obtain node client serving particular hash slot, get it from [[currentState]].
+    * This method is primarily intended to be used when having to manually recover from a cluster redirection. If you
+    * want to obtain node client serving particular hash slot, get it from [[currentState]].
     */
   def masterClient(address: NodeAddress): Future[RedisNodeClient] = ifReady {
     readyClient(address).fold(askForClient(address))(Future.successful)
@@ -226,45 +251,39 @@ final class RedisClusterClient(
 
   def executionContext: ExecutionContext = system.dispatcher
 
-  /**
-    * Executes a [[RedisBatch]] on a Redis Cluster deployment. In order to determine node on which each command must be
-    * executed, every command or `MULTI`-`EXEC` transaction in the batch must contain at least one key.
-    * Also, in the scope of a single command or transaction all keys must hash to the same slot.
+  /** Executes a [[RedisBatch]] on a Redis Cluster deployment. In order to determine node on which each command must be
+    * executed, every command or `MULTI`-`EXEC` transaction in the batch must contain at least one key. Also, in the
+    * scope of a single command or transaction all keys must hash to the same slot.
     *
-    * However, each command or transaction in the batch may target different slot.
-    * [[RedisClusterClient]] automatically splits the original batch and creates smaller batches, one for every master
-    * node that needs to be contacted. In other words, commands and transactions from the original batch are
-    * automatically distributed over Redis Cluster master nodes, in parallel, using a scatter-gather like manner.
+    * However, each command or transaction in the batch may target different slot. [[RedisClusterClient]] automatically
+    * splits the original batch and creates smaller batches, one for every master node that needs to be contacted. In
+    * other words, commands and transactions from the original batch are automatically distributed over Redis Cluster
+    * master nodes, in parallel, using a scatter-gather like manner.
     *
     * [[RedisClusterClient]] also automatically retries execution of commands that fail due to cluster redirections
-    * ([[http://redis.io/topics/cluster-spec#moved-redirection MOVED]] and [[http://redis.io/topics/cluster-spec#ask-redirection ASK]]),
-    * cluster state changes and `TRYAGAIN` errors which might be returned for multikey commands during slot migration.
-    * See [[http://redis.io/topics/cluster-spec#redirection-and-resharding Redis Cluster specification]] for
-    * more detailed information on redirections and migrations.
-    * Redirection and `TRYAGAIN` handling is configured by retry strategies in [[config.ClusterConfig]].
+    * ([[http://redis.io/topics/cluster-spec#moved-redirection MOVED]] and
+    * [[http://redis.io/topics/cluster-spec#ask-redirection ASK]]), cluster state changes and `TRYAGAIN` errors which
+    * might be returned for multikey commands during slot migration. See
+    * [[http://redis.io/topics/cluster-spec#redirection-and-resharding Redis Cluster specification]] for more detailed
+    * information on redirections and migrations. Redirection and `TRYAGAIN` handling is configured by retry strategies
+    * in [[config.ClusterConfig]].
     *
-    * In general, you can assume that if there are no redirections involved, commands executed on the same master
-    * node are executed in the same order as specified in the original batch.
+    * In general, you can assume that if there are no redirections involved, commands executed on the same master node
+    * are executed in the same order as specified in the original batch.
     *
-    * Execution of each command in the batch or the whole batch may fail due to following reasons:
-    * <ul>
+    * Execution of each command in the batch or the whole batch may fail due to following reasons: <ul>
     * <li>[[exception.NoKeysException NoKeysException]] when some command or transaction contains no keys</li>
-    * <li>[[exception.CrossSlotException CrossSlotException]] when some command or transaction
-    * contains keys hashing to different slots</li>
-    * <li>[[exception.ForbiddenCommandException ForbiddenCommandException]] when trying to execute command not
-    * supported by this client type</li>
-    * <li>[[exception.ErrorReplyException ErrorReplyException]] when Redis server replies with an error for some command</li>
-    * <li>[[exception.UnexpectedReplyException UnexpectedReplyException]] when Redis server replies with something
-    * unexpected by a decoder of some command</li>
-    * <li>[[exception.ConnectionClosedException ConnectionClosedException]] when connection is closed or
-    * reset (the client reconnects automatically after connection failure but commands that were in the middle of
-    * execution may still fail)</li>
-    * <li>[[exception.WriteFailedException WriteFailedException]] when a network write
-    * failed</li>
-    * <li>[[exception.TooManyRedirectionsException TooManyRedirectionsException]] when
-    * a command was replied with `MOVED` or `ASK` redirection too many times in a row. This might indicate
-    * misconfiguration of the Redis Cluster deployment.</li>
-    * </ul>
+    * <li>[[exception.CrossSlotException CrossSlotException]] when some command or transaction contains keys hashing to
+    * different slots</li> <li>[[exception.ForbiddenCommandException ForbiddenCommandException]] when trying to execute
+    * command not supported by this client type</li> <li>[[exception.ErrorReplyException ErrorReplyException]] when
+    * Redis server replies with an error for some command</li> <li>[[exception.UnexpectedReplyException
+    * UnexpectedReplyException]] when Redis server replies with something unexpected by a decoder of some command</li>
+    * <li>[[exception.ConnectionClosedException ConnectionClosedException]] when connection is closed or reset (the
+    * client reconnects automatically after connection failure but commands that were in the middle of execution may
+    * still fail)</li> <li>[[exception.WriteFailedException WriteFailedException]] when a network write failed</li>
+    * <li>[[exception.TooManyRedirectionsException TooManyRedirectionsException]] when a command was replied with
+    * `MOVED` or `ASK` redirection too many times in a row. This might indicate misconfiguration of the Redis Cluster
+    * deployment.</li> </ul>
     */
   def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] = {
     implicit val timeout: Timeout = config.responseTimeout
@@ -299,7 +318,11 @@ final class RedisClusterClient(
       .mapNow(PacksResult.Single.apply)
   }
 
-  private def executeClusteredPacks[A](packs: RawCommandPacks, currentState: ClusterState)(implicit timeout: Timeout) = {
+  private def executeClusteredPacks[A](
+    packs: RawCommandPacks,
+    currentState: ClusterState,
+  )(implicit timeout: Timeout
+  ) = {
     val barrier = Promise[Unit]()
     val packsByNode = new mutable.HashMap[RedisNodeClient, ArrayBuffer[RawCommandPack]]
     val resultsByNode = new mutable.HashMap[RedisNodeClient, Future[PacksResult]]
@@ -308,22 +331,23 @@ final class RedisClusterClient(
       val packBuffer = packsByNode.getOrElseUpdate(client, new ArrayBuffer)
       val idx = packBuffer.size
       packBuffer += pack
-      val result = resultsByNode.getOrElseUpdate(client,
-        barrier.future.flatMapNow(_ => client.executeRaw(CollectionPacks(packBuffer)))
-      ).mapNow(_.apply(idx))
+      val result = resultsByNode
+        .getOrElseUpdate(client, barrier.future.flatMapNow(_ => client.executeRaw(CollectionPacks(packBuffer))))
+        .mapNow(_.apply(idx))
       handleRedirection(pack, slot, result, config.redirectionStrategy, config.tryagainStrategy)
     }
 
     val results = new ArrayBuffer[Future[RedisReply]]
     packs.emitCommandPacks { pack =>
-      val resultFuture = try {
-        val slot = determineSlot(pack)
-        val client = currentState.clientForSlot(slot)
-        futureForPack(slot, client, pack)
-      } catch {
-        case re: RedisException => Future.successful(FailureReply(re))
-        case NonFatal(cause) => Future.failed(cause)
-      }
+      val resultFuture =
+        try {
+          val slot = determineSlot(pack)
+          val client = currentState.clientForSlot(slot)
+          futureForPack(slot, client, pack)
+        } catch {
+          case re: RedisException => Future.successful(FailureReply(re))
+          case NonFatal(cause) => Future.failed(cause)
+        }
       results += resultFuture
     }
     barrier.success(())
@@ -356,7 +380,7 @@ private object RedisClusterClient {
 
   case class CollectionPacks(coll: BIndexedSeq[RawCommandPack]) extends RawCommandPacks {
     def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = coll.foreach(consumer)
-    def computeSize(limit: Int): Int = limit min coll.size
+    def computeSize(limit: Int): Int = limit.min(coll.size)
   }
 
   final class AskingPack(pack: RawCommandPack) extends RawCommandPack {
@@ -373,31 +397,33 @@ private object RedisClusterClient {
 
     def rawCommands(inTransaction: Boolean): RawCommands =
       if (inTransaction || pack.isAsking || !keyed) pack.rawCommands(inTransaction)
-      else new RawCommands {
-        def emitCommands(consumer: RawCommand => Unit): Unit = {
-          consumer(Asking)
-          pack.rawCommands(inTransaction).emitCommands(consumer)
+      else
+        new RawCommands {
+          def emitCommands(consumer: RawCommand => Unit): Unit = {
+            consumer(Asking)
+            pack.rawCommands(inTransaction).emitCommands(consumer)
+          }
         }
-      }
 
     def createPreprocessor(replyCount: Int): ReplyPreprocessor =
       if (pack.isAsking || !keyed) pack.createPreprocessor(replyCount)
-      else new ReplyPreprocessor {
-        private val wrapped = pack.createPreprocessor(replyCount - 1)
-        private var first = true
-        private var error: Opt[FailureReply] = Opt.Empty
+      else
+        new ReplyPreprocessor {
+          private val wrapped = pack.createPreprocessor(replyCount - 1)
+          private var first = true
+          private var error: Opt[FailureReply] = Opt.Empty
 
-        def preprocess(message: RedisMsg, watchState: WatchState): Opt[RedisReply] =
-          if (first) {
-            first = false
-            message match {
-              case RedisMsg.Ok =>
-              case _ => error = FailureReply(new UnexpectedReplyException(s"Unexpected reply for ASKING: $message")).opt
-            }
-            Opt.Empty
-          } else wrapped.preprocess(message, watchState)
-            .map(reply => error.getOrElse(reply))
-      }
+          def preprocess(message: RedisMsg, watchState: WatchState): Opt[RedisReply] =
+            if (first) {
+              first = false
+              message match {
+                case RedisMsg.Ok =>
+                case _ =>
+                  error = FailureReply(new UnexpectedReplyException(s"Unexpected reply for ASKING: $message")).opt
+              }
+              Opt.Empty
+            } else wrapped.preprocess(message, watchState).map(reply => error.getOrElse(reply))
+        }
 
     def checkLevel(minAllowed: Level, clientType: String): Unit =
       pack.checkLevel(minAllowed, clientType)
@@ -411,13 +437,14 @@ object RedirectionReply {
     case TransactionReply(elements) =>
       @tailrec def collectRedirection(acc: Opt[Redirection], idx: Int): Opt[Redirection] =
         if (idx >= elements.size) acc
-        else elements(idx) match {
-          case RedirectionError(redirection) if acc.forall(_ == redirection) =>
-            collectRedirection(redirection.opt, idx + 1)
-          case err: ErrorMsg if err.errorCode == "EXECABORT" =>
-            collectRedirection(acc, idx + 1)
-          case _ => Opt.Empty
-        }
+        else
+          elements(idx) match {
+            case RedirectionError(redirection) if acc.forall(_ == redirection) =>
+              collectRedirection(redirection.opt, idx + 1)
+            case err: ErrorMsg if err.errorCode == "EXECABORT" =>
+              collectRedirection(acc, idx + 1)
+            case _ => Opt.Empty
+          }
       collectRedirection(Opt.Empty, 0)
     case _ => Opt.Empty
   }
@@ -451,28 +478,31 @@ object TryagainReply {
   }
 }
 
-/**
-  * Current cluster state known by [[RedisClusterClient]].
+/** Current cluster state known by [[RedisClusterClient]].
   *
-  * @param mapping      mapping between slot ranges and node clients that serve them, sorted by slot ranges
-  * @param masters      direct mapping between master addresses and node clients
-  * @param nonClustered non-empty if there's actually only one, non-clustered Redis node - see
-  *                     [[com.avsystem.commons.redis.config.ClusterConfig.fallbackToSingleNode fallbackToSingleNode]]
+  * @param mapping
+  *   mapping between slot ranges and node clients that serve them, sorted by slot ranges
+  * @param masters
+  *   direct mapping between master addresses and node clients
+  * @param nonClustered
+  *   non-empty if there's actually only one, non-clustered Redis node - see
+  *   [[com.avsystem.commons.redis.config.ClusterConfig.fallbackToSingleNode fallbackToSingleNode]]
   */
 case class ClusterState(
   mapping: IndexedSeq[(SlotRange, RedisNodeClient)],
   masters: BMap[NodeAddress, RedisNodeClient],
-  nonClustered: Opt[RedisNodeClient] = Opt.Empty
+  nonClustered: Opt[RedisNodeClient] = Opt.Empty,
 ) {
 
   nonClustered.foreach { client =>
-    require(!client.managed && mapping == IndexedSeq(SlotRange.Full -> client) && masters == Map(client.address -> client))
+    require(
+      !client.managed && mapping == IndexedSeq(SlotRange.Full -> client) && masters == Map(client.address -> client)
+    )
   }
 
-  /**
-    * Obtains a [[RedisNodeClient]] that currently serves particular hash slot. This is primarily used to
-    * execute `WATCH`-`MULTI`-`EXEC` transactions on a Redis Cluster deployment ([[RedisClusterClient]] cannot
-    * directly execute them). For example:
+  /** Obtains a [[RedisNodeClient]] that currently serves particular hash slot. This is primarily used to execute
+    * `WATCH`-`MULTI`-`EXEC` transactions on a Redis Cluster deployment ([[RedisClusterClient]] cannot directly execute
+    * them). For example:
     *
     * {{{
     *   import scala.concurrent.duration._
@@ -497,8 +527,8 @@ case class ClusterState(
     * }}}
     *
     * However, be aware that when executing transactions on node clients obtained from [[ClusterState]], you must
-    * manually handle cluster redirections and cluster state changes
-    * ([[exception.NodeRemovedException NodeRemovedException]])
+    * manually handle cluster redirections and cluster state changes ([[exception.NodeRemovedException
+    * NodeRemovedException]])
     */
   def clientForSlot(slot: Int): RedisNodeClient = {
     @tailrec def binsearch(from: Int, to: Int): RedisNodeClient =

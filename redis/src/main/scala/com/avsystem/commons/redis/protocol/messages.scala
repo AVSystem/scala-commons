@@ -10,10 +10,8 @@ import java.nio.ByteBuffer
 import scala.annotation.tailrec
 import scala.collection.immutable.VectorBuilder
 
-/**
-  * Raw result of executing a single [[com.avsystem.commons.redis.RawCommandPack]].
-  * It may be a Redis protocol message ([[RedisMsg]]) or an object that
-  * aggregates transaction results or an object that indicates failure.
+/** Raw result of executing a single [[com.avsystem.commons.redis.RawCommandPack]]. It may be a Redis protocol message
+  * ([[RedisMsg]]) or an object that aggregates transaction results or an object that indicates failure.
   */
 sealed trait RedisReply
 final case class TransactionReply(elements: IndexedSeq[RedisMsg]) extends RedisReply
@@ -25,8 +23,7 @@ object FailureReply {
     Sam[FailureReply](createException)
 }
 
-/**
-  * Redis protocol message. It can be sent over network from or to Redis instance.
+/** Redis protocol message. It can be sent over network from or to Redis instance.
   */
 sealed trait RedisMsg extends RedisReply
 sealed trait ValidRedisMsg extends RedisMsg
@@ -86,7 +83,7 @@ object RedisMsg {
       case '\'' => sb ++= "\\'"
       case '\"' => sb ++= "\\"
       case '\\' => sb ++= "\\\\"
-      case b if b > 0x1F && b < 0x7F => sb += b.toChar
+      case b if b > 0x1f && b < 0x7f => sb += b.toChar
       case b => sb ++= f"\\x$b%02x"
     }
     if (quote) {
@@ -319,14 +316,15 @@ object RedisMsg {
                 numberValue = digitValue
               case _ => fail("Expected '-' sign or digit")
             }
-          case ReadingInt => byte match {
-            case CRByte =>
-              numberNegative = false
-              state = CREncountered
-            case Digit(digitValue) =>
-              numberValue = numberValue * 10 + (if (numberNegative) -digitValue else digitValue)
-            case _ => fail("Expected digit or CR")
-          }
+          case ReadingInt =>
+            byte match {
+              case CRByte =>
+                numberNegative = false
+                state = CREncountered
+              case Digit(digitValue) =>
+                numberValue = numberValue * 10 + (if (numberNegative) -digitValue else digitValue)
+              case _ => fail("Expected digit or CR")
+            }
           case ReadingSimple =>
             if (dataStart < 0) {
               dataStart = idx
@@ -350,54 +348,56 @@ object RedisMsg {
                 state = CREncountered
               } else fail("Expected CR at the end of bulk string message")
             }
-          case CREncountered => byte match {
-            case LFByte if readingLength =>
-              readingLength = false
-              currentType match {
-                case BulkInd =>
-                  numberValue match {
-                    case -1 =>
-                      state = Initial
-                      completed(NullBulkStringMsg)
-                    case size if size >= 0 =>
-                      state = ReadingBulk
-                    case _ => fail("Invalid bulk string length")
-                  }
-                case ArrayInd =>
-                  state = Initial
-                  numberValue match {
-                    case -1 => completed(NullArrayMsg)
-                    case 0 => completed(ArrayMsg.Empty)
-                    case size if size > 0 =>
-                      val is = size.toInt
-                      arrayStack = new SizedArraySeqBuilder[RedisMsg](is) :: arrayStack
-                    case _ => fail("Invalid array size")
-                  }
-                case _ => fail("Length can be read only for bulk strings or arrays")
-              }
-            case LFByte =>
-              def extractData() = {
-                val res = dataBuilder.result()
-                dataBuilder.clear()
-                res
-              }
-              val msg = currentType match {
-                case SimpleInd => SimpleStringMsg(extractData())
-                case ErrorInd => ErrorMsg(extractData())
-                case BulkInd => BulkStringMsg(extractData())
-                case IntegerInd => IntegerMsg(numberValue)
-              }
-              completed(msg)
-              state = Initial
-            case _ => fail("Expected LF after CR")
-          }
+          case CREncountered =>
+            byte match {
+              case LFByte if readingLength =>
+                readingLength = false
+                currentType match {
+                  case BulkInd =>
+                    numberValue match {
+                      case -1 =>
+                        state = Initial
+                        completed(NullBulkStringMsg)
+                      case size if size >= 0 =>
+                        state = ReadingBulk
+                      case _ => fail("Invalid bulk string length")
+                    }
+                  case ArrayInd =>
+                    state = Initial
+                    numberValue match {
+                      case -1 => completed(NullArrayMsg)
+                      case 0 => completed(ArrayMsg.Empty)
+                      case size if size > 0 =>
+                        val is = size.toInt
+                        arrayStack = new SizedArraySeqBuilder[RedisMsg](is) :: arrayStack
+                      case _ => fail("Invalid array size")
+                    }
+                  case _ => fail("Length can be read only for bulk strings or arrays")
+                }
+              case LFByte =>
+                def extractData() = {
+                  val res = dataBuilder.result()
+                  dataBuilder.clear()
+                  res
+                }
+                val msg = currentType match {
+                  case SimpleInd => SimpleStringMsg(extractData())
+                  case ErrorInd => ErrorMsg(extractData())
+                  case BulkInd => BulkStringMsg(extractData())
+                  case IntegerInd => IntegerMsg(numberValue)
+                }
+                completed(msg)
+                state = Initial
+              case _ => fail("Expected LF after CR")
+            }
         }
         decode(idx + 1, dataStart)
-      } else state match {
-        case ReadingSimple | ReadingBulk if prevDataStart >= 0 =>
-          dataBuilder.append(bytes.drop(prevDataStart))
-        case _ =>
-      }
+      } else
+        state match {
+          case ReadingSimple | ReadingBulk if prevDataStart >= 0 =>
+            dataBuilder.append(bytes.drop(prevDataStart))
+          case _ =>
+        }
       decode(0, -1)
     }
   }

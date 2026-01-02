@@ -8,8 +8,9 @@ import scala.annotation.tailrec
 
 class SingletonCodec[T <: Singleton](
   protected val typeRepr: String,
-  singletonValue: => T
-) extends ErrorReportingCodec[T] with OOOFieldsObjectCodec[T] {
+  singletonValue: => T,
+) extends ErrorReportingCodec[T]
+    with OOOFieldsObjectCodec[T] {
   final def nullable = true
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = singletonValue
   def size(value: T, output: Opt[SequentialOutput]): Int = 0
@@ -19,8 +20,9 @@ class SingletonCodec[T <: Singleton](
 abstract class ApplyUnapplyCodec[T](
   protected val typeRepr: String,
   val nullable: Boolean,
-  fieldNames: Array[String]
-) extends ErrorReportingCodec[T] with OOOFieldsObjectCodec[T] {
+  fieldNames: Array[String],
+) extends ErrorReportingCodec[T]
+    with OOOFieldsObjectCodec[T] {
 
   protected def dependencies: Array[GenCodec[_]]
   protected def instantiate(fieldValues: FieldValues): T
@@ -35,13 +37,14 @@ abstract class ApplyUnapplyCodec[T](
       writeField(output, idx, value)
     }
 
-  protected final def writeOptField[A, O](output: ObjectOutput, idx: Int, value: O, optionLike: OptionLike.Aux[O, A]): Unit =
+  protected final def writeOptField[A, O](output: ObjectOutput, idx: Int, value: O, optionLike: OptionLike.Aux[O, A])
+    : Unit =
     optionLike.foreach(value, writeField(output, idx, _))
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean): Unit =
     deps(idx) match {
       case GenCodec.BooleanCodec => writeField(fieldNames(idx), output, value)
-      case codec: GenCodec[Boolean@unchecked] => writeField(fieldNames(idx), output, value, codec)
+      case codec: GenCodec[Boolean @unchecked] => writeField(fieldNames(idx), output, value, codec)
     }
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean, transient: Boolean): Unit =
@@ -52,7 +55,7 @@ abstract class ApplyUnapplyCodec[T](
   protected final def writeField(output: ObjectOutput, idx: Int, value: Int): Unit =
     deps(idx) match {
       case GenCodec.IntCodec => writeField(fieldNames(idx), output, value)
-      case codec: GenCodec[Int@unchecked] => writeField(fieldNames(idx), output, value, codec)
+      case codec: GenCodec[Int @unchecked] => writeField(fieldNames(idx), output, value, codec)
     }
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Int, transient: Int): Unit =
@@ -63,7 +66,7 @@ abstract class ApplyUnapplyCodec[T](
   protected final def writeField(output: ObjectOutput, idx: Int, value: Long): Unit =
     deps(idx) match {
       case GenCodec.LongCodec => writeField(fieldNames(idx), output, value)
-      case codec: GenCodec[Long@unchecked] => writeField(fieldNames(idx), output, value, codec)
+      case codec: GenCodec[Long @unchecked] => writeField(fieldNames(idx), output, value, codec)
     }
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Long, transient: Long): Unit =
@@ -74,7 +77,7 @@ abstract class ApplyUnapplyCodec[T](
   protected final def writeField(output: ObjectOutput, idx: Int, value: Double): Unit =
     deps(idx) match {
       case GenCodec.DoubleCodec => writeField(fieldNames(idx), output, value)
-      case codec: GenCodec[Double@unchecked] => writeField(fieldNames(idx), output, value, codec)
+      case codec: GenCodec[Double @unchecked] => writeField(fieldNames(idx), output, value, codec)
     }
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Double, transient: Double): Unit =
@@ -107,7 +110,7 @@ object ApplyUnapplyCodec {
 abstract class ProductCodec[T <: Product](
   typeRepr: String,
   nullable: Boolean,
-  fieldNames: Array[String]
+  fieldNames: Array[String],
 ) extends ApplyUnapplyCodec[T](typeRepr, nullable, fieldNames) {
   def size(value: T, output: Opt[SequentialOutput]): Int = value.productArity
 
@@ -126,8 +129,9 @@ abstract class SealedHierarchyCodec[T](
   val typeRepr: String,
   val nullable: Boolean,
   val caseNames: Array[String],
-  val cases: Array[Class[_]]
-) extends ErrorReportingCodec[T] with ObjectCodec[T] {
+  val cases: Array[Class[_]],
+) extends ErrorReportingCodec[T]
+    with ObjectCodec[T] {
 
   @tailrec protected final def caseIndexByValue(value: T, idx: Int = 0): Int =
     if (idx >= cases.length) unknownCase(value)
@@ -144,7 +148,7 @@ abstract class NestedSealedHierarchyCodec[T](
   typeRepr: String,
   nullable: Boolean,
   caseNames: Array[String],
-  cases: Array[Class[_]]
+  cases: Array[Class[_]],
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
   def caseDependencies: Array[GenCodec[_]]
@@ -157,7 +161,7 @@ abstract class NestedSealedHierarchyCodec[T](
     writeCase(caseNames(caseIdx), output, value, caseDeps(caseIdx).asInstanceOf[GenCodec[T]])
   }
 
-  final def readObject(input: ObjectInput): T = {
+  final def readObject(input: ObjectInput): T =
     if (input.hasNext) {
       val fi = input.nextField()
       val result = caseIndexByName(fi.fieldName) match {
@@ -166,7 +170,6 @@ abstract class NestedSealedHierarchyCodec[T](
       }
       if (input.hasNext) notSingleField(empty = false) else result
     } else notSingleField(empty = true)
-  }
 }
 
 abstract class FlatSealedHierarchyCodec[T](
@@ -178,7 +181,7 @@ abstract class FlatSealedHierarchyCodec[T](
   val caseDependentFieldNames: Set[String],
   override val caseFieldName: String,
   val defaultCaseIdx: Int,
-  val defaultCaseTransient: Boolean
+  val defaultCaseTransient: Boolean,
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
   def oooDependencies: Array[GenCodec[_]]
@@ -204,8 +207,7 @@ abstract class FlatSealedHierarchyCodec[T](
       val caseName = readCaseName(caseNameField)
       caseIndexByName(caseName) match {
         case -1 => unknownCase(caseName)
-        case idx => readFlatCase(caseName, oooFields, input,
-          caseDeps(idx).asInstanceOf[OOOFieldsObjectCodec[T]])
+        case idx => readFlatCase(caseName, oooFields, input, caseDeps(idx).asInstanceOf[OOOFieldsObjectCodec[T]])
       }
     }
 
@@ -218,8 +220,12 @@ abstract class FlatSealedHierarchyCodec[T](
             if (defaultCaseIdx != -1) {
               val defaultCaseName = caseNames(defaultCaseIdx)
               val wrappedInput = new DefaultCaseObjectInput(fi, input, defaultCaseName)
-              readFlatCase(defaultCaseName, oooFields, wrappedInput,
-                caseDeps(defaultCaseIdx).asInstanceOf[OOOFieldsObjectCodec[T]])
+              readFlatCase(
+                defaultCaseName,
+                oooFields,
+                wrappedInput,
+                caseDeps(defaultCaseIdx).asInstanceOf[OOOFieldsObjectCodec[T]],
+              )
             } else {
               missingCase(fi.fieldName)
             }
@@ -231,8 +237,12 @@ abstract class FlatSealedHierarchyCodec[T](
           read()
         }
       } else if (defaultCaseIdx != -1) {
-        readFlatCase(caseNames(defaultCaseIdx), oooFields, input,
-          caseDeps(defaultCaseIdx).asInstanceOf[OOOFieldsObjectCodec[T]])
+        readFlatCase(
+          caseNames(defaultCaseIdx),
+          oooFields,
+          input,
+          caseDeps(defaultCaseIdx).asInstanceOf[OOOFieldsObjectCodec[T]],
+        )
       } else {
         missingCase
       }
@@ -257,62 +267,82 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
     input.readSimple().readString()
 
   protected final def readField[A](fieldInput: FieldInput, codec: GenCodec[A]): A =
-    try codec.read(fieldInput) catch {
+    try codec.read(fieldInput)
+    catch {
       case NonFatal(e) => throw FieldReadFailed(typeRepr, fieldInput.fieldName, e)
     }
 
   protected final def readCaseName(fi: FieldInput): String =
-    try doReadCaseName(fi) catch {
+    try doReadCaseName(fi)
+    catch {
       case NonFatal(e) => throw FieldReadFailed(typeRepr, fi.fieldName, e)
     }
 
   protected final def readCase[A](caseName: String, input: Input, codec: GenCodec[A]): A =
-    try codec.read(input) catch {
+    try codec.read(input)
+    catch {
       case NonFatal(e) => throw CaseReadFailed(typeRepr, caseName, e)
     }
 
-  protected final def readFlatCase[A](caseName: String, outOfOrderFields: FieldValues, input: ObjectInput, codec: OOOFieldsObjectCodec[A]): A =
-    try codec.readObject(input, outOfOrderFields) catch {
+  protected final def readFlatCase[A](
+    caseName: String,
+    outOfOrderFields: FieldValues,
+    input: ObjectInput,
+    codec: OOOFieldsObjectCodec[A],
+  ): A =
+    try codec.readObject(input, outOfOrderFields)
+    catch {
       case NonFatal(e) => throw CaseReadFailed(typeRepr, caseName, e)
     }
 
   protected final def readFlatCase[A](caseName: String, input: ObjectInput, codec: GenCodec.ObjectCodec[A]): A =
-    try codec.readObject(input) catch {
+    try codec.readObject(input)
+    catch {
       case NonFatal(e) => throw CaseReadFailed(typeRepr, caseName, e)
     }
 
   protected final def writeField[A](fieldName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
-    try codec.write(output.writeField(fieldName), value) catch {
+    try codec.write(output.writeField(fieldName), value)
+    catch {
       case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
   protected final def writeField(fieldName: String, output: ObjectOutput, value: Boolean): Unit =
-    try output.writeField(fieldName).writeSimple().writeBoolean(value) catch {
+    try output.writeField(fieldName).writeSimple().writeBoolean(value)
+    catch {
       case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
   protected final def writeField(fieldName: String, output: ObjectOutput, value: Int): Unit =
-    try output.writeField(fieldName).writeSimple().writeInt(value) catch {
+    try output.writeField(fieldName).writeSimple().writeInt(value)
+    catch {
       case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
   protected final def writeField(fieldName: String, output: ObjectOutput, value: Long): Unit =
-    try output.writeField(fieldName).writeSimple().writeLong(value) catch {
+    try output.writeField(fieldName).writeSimple().writeLong(value)
+    catch {
       case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
   protected final def writeField(fieldName: String, output: ObjectOutput, value: Double): Unit =
-    try output.writeField(fieldName).writeSimple().writeDouble(value) catch {
+    try output.writeField(fieldName).writeSimple().writeDouble(value)
+    catch {
       case NonFatal(e) => throw FieldWriteFailed(typeRepr, fieldName, e)
     }
 
   protected final def writeCase[A](caseName: String, output: ObjectOutput, value: A, codec: GenCodec[A]): Unit =
-    try codec.write(output.writeField(caseName), value) catch {
+    try codec.write(output.writeField(caseName), value)
+    catch {
       case NonFatal(e) => throw CaseWriteFailed(typeRepr, caseName, e)
     }
 
   protected final def writeFlatCase[A](
-    caseName: String, transient: Boolean, output: ObjectOutput, value: A, codec: OOOFieldsObjectCodec[A]
+    caseName: String,
+    transient: Boolean,
+    output: ObjectOutput,
+    value: A,
+    codec: OOOFieldsObjectCodec[A],
   ): Unit = try {
     if (!transient) {
       doWriteCaseName(output.writeField(caseFieldName), caseName)
@@ -352,7 +382,8 @@ abstract class JavaBuilderBasedCodec[T, B](
   fieldNames: Array[String],
   fieldGetters: Array[T => Any],
   fieldSetters: Array[(B, Any) => B],
-) extends ErrorReportingCodec[T] with GenCodec.ObjectCodec[T] {
+) extends ErrorReportingCodec[T]
+    with GenCodec.ObjectCodec[T] {
 
   protected def dependencies: Array[GenCodec[_]]
 

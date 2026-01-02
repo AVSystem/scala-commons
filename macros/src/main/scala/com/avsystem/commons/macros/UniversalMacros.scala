@@ -22,7 +22,7 @@ class UniversalMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       }
 
     val indentToStrip = lineIndent(pos.source.lineToString(pos.source.offsetToLine(pos.start)))
-    val stripped = code.split('\n').map(l => l.drop(indentToStrip min lineIndent(l))).mkString("\n")
+    val stripped = code.split('\n').map(l => l.drop(indentToStrip.min(lineIndent(l)))).mkString("\n")
     q"$stripped"
   }
 

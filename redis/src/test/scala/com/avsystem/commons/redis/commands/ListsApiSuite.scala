@@ -3,9 +3,7 @@ package redis.commands
 
 import com.avsystem.commons.redis._
 
-/**
-  * Author: ghik
-  * Created: 11/10/16.
+/** Author: ghik Created: 11/10/16.
   */
 trait ListsApiSuite extends CommandsSuite {
 
@@ -169,7 +167,7 @@ trait ListsApiSuite extends CommandsSuite {
     setup(
       rpush("key", "a", "b"),
       rpush("{key}1", "a1", "b1"),
-      rpush("{key}2", "a2", "b2")
+      rpush("{key}2", "a2", "b2"),
     )
     blpop("key", 1).assertEquals("a".opt)
     blpop("key", 1).assertEquals("b".opt)
@@ -182,7 +180,7 @@ trait ListsApiSuite extends CommandsSuite {
     setup(
       rpush("key", "a", "b"),
       rpush("{key}1", "a1", "b1"),
-      rpush("{key}2", "a2", "b2")
+      rpush("{key}2", "a2", "b2"),
     )
     brpop("key", 1).assertEquals("b".opt)
     brpop("key", 1).assertEquals("a".opt)
@@ -194,7 +192,7 @@ trait ListsApiSuite extends CommandsSuite {
   apiTest("BRPOPLPUSH") {
     setup(
       rpush("{key}1", "a1", "b1"),
-      rpush("{key}2", "a2", "b2")
+      rpush("{key}2", "a2", "b2"),
     )
     brpoplpush("{key}1", "{key}2", 1).assertEquals("b1".opt)
     brpoplpush("{key}1", "{key}2", 1).assertEquals("a1".opt)

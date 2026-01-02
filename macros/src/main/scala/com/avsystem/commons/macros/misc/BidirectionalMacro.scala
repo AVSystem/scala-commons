@@ -24,8 +24,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
         else
           Set(resultSymbol)
 
-      possibleResultSymbols.find(_.name == name)
-        .map(_.companion).filter(_ != NoSymbol)
+      possibleResultSymbols.find(_.name == name).map(_.companion).filter(_ != NoSymbol)
 
     case _ => None
   }
@@ -50,7 +49,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
 
       // right associative operator
       case Block(List(ValDef(mods, valName, _, lhs)), Apply(prefix, List(Ident(lhsName))))
-        if valName == lhsName && mods.hasFlag(Flag.ARTIFACT | Flag.SYNTHETIC) =>
+          if valName == lhsName && mods.hasFlag(Flag.ARTIFACT | Flag.SYNTHETIC) =>
 
         prefix match {
           case SelectOrTypeApplySelect(rhs, opName) =>
@@ -67,7 +66,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
     val AnonPartialFunction(cases) = pf
 
     def patternToExpr(pattern: Tree): Tree = pattern match {
-      case Apply(tt@TypeTree(), args) if tt.original != null =>
+      case Apply(tt @ TypeTree(), args) if tt.original != null =>
         Apply(tt.original, args.map(patternToExpr))
       case Apply(fun, args) =>
         Apply(fun, args.map(patternToExpr))

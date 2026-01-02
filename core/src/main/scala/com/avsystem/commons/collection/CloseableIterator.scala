@@ -5,17 +5,16 @@ import java.util.function.Function
 import scala.annotation.nowarn
 import scala.annotation.unchecked.uncheckedVariance
 
-/**
-  * Abstraction over simple `Iterator` that allows one to close the resources associated with iterator without
-  * iterating through the whole result set.
+/** Abstraction over simple `Iterator` that allows one to close the resources associated with iterator without iterating
+  * through the whole result set.
   *
   * Note: This is both Java and Scala `Iterator`.
   */
-trait CloseableIterator[+T] extends Iterator[T] with JIterator[T@uncheckedVariance] with AutoCloseable {
+trait CloseableIterator[+T] extends Iterator[T] with JIterator[T @uncheckedVariance] with AutoCloseable {
   def transform[V](transform: Iterator[T] => Iterator[V]): CloseableIterator[V] =
     CloseableIterator.apply(transform(this), this)
 
-  def jTransform[V](transform: Function[JIterator[T@uncheckedVariance], JIterator[V]]): CloseableIterator[V] =
+  def jTransform[V](transform: Function[JIterator[T @uncheckedVariance], JIterator[V]]): CloseableIterator[V] =
     CloseableIterator.apply(transform(this), this)
 }
 object CloseableIterator {

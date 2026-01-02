@@ -202,7 +202,7 @@ object AddScaladocs {
     "SCAN" -> "http://redis.io/commands/scan",
     "SSCAN" -> "http://redis.io/commands/sscan",
     "HSCAN" -> "http://redis.io/commands/hscan",
-    "ZSCAN" -> "http://redis.io/commands/zscan"
+    "ZSCAN" -> "http://redis.io/commands/zscan",
   )
 
   def main(args: Array[String]): Unit = {
@@ -215,8 +215,15 @@ object AddScaladocs {
 
     val file = "commons-redis/src/main/scala/com/avsystem/commons/redis/commands/transactions.scala"
     Source.fromFile(file).getLines().foreach {
-      case line@MethodRegex(methodName) =>
-        caps(methodName).split(" ").iterator.scanLeft("")(_ + " " + _).map(_.trim).toList.reverse.find(urls.contains) match {
+      case line @ MethodRegex(methodName) =>
+        caps(methodName)
+          .split(" ")
+          .iterator
+          .scanLeft("")(_ + " " + _)
+          .map(_.trim)
+          .toList
+          .reverse
+          .find(urls.contains) match {
           case Some(cmd) =>
             println(s"  /** [[${urls(cmd)} $cmd]] */\n$line")
           case None =>

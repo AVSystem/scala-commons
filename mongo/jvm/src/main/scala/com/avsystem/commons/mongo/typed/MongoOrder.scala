@@ -3,12 +3,12 @@ package mongo.typed
 
 import org.bson.{BsonDocument, BsonValue}
 
-/**
-  * Represents a MongoDB order used to sort values. In most situations what you want is [[MongoDocumentOrder]].
-  * The base `MongoOrder` type is used only in rare situations where `T` is not guaranteed to be a document, e.g.
-  * in array `$$push` operator (see `UpdateOperatorsDsl.ForCollection.push`).
+/** Represents a MongoDB order used to sort values. In most situations what you want is [[MongoDocumentOrder]]. The base
+  * `MongoOrder` type is used only in rare situations where `T` is not guaranteed to be a document, e.g. in array
+  * `$$push` operator (see `UpdateOperatorsDsl.ForCollection.push`).
   *
-  * @tparam T type of the value being sorted
+  * @tparam T
+  *   type of the value being sorted
   */
 sealed trait MongoOrder[T] {
   def toBson: BsonValue
@@ -29,8 +29,7 @@ object MongoOrder {
   }
 }
 
-/**
-  * Represents a MongoDB sort order. Sort order is used to sort documents, usually in results of a query.
+/** Represents a MongoDB sort order. Sort order is used to sort documents, usually in results of a query.
   *
   * Examples:
   * {{{
@@ -50,7 +49,8 @@ object MongoOrder {
   *   MongoDocumentOrder.ascending(MyEntity.ref(_.int), MyEntity.ref(_.num))
   * }}}
   *
-  * @tparam E type of the entity/document
+  * @tparam E
+  *   type of the entity/document
   */
 case class MongoDocumentOrder[E](refs: Vector[(MongoPropertyRef[E, _], Boolean)]) extends MongoOrder[E] {
   def andThen(other: MongoDocumentOrder[E]): MongoDocumentOrder[E] =
@@ -65,7 +65,7 @@ case class MongoDocumentOrder[E](refs: Vector[(MongoPropertyRef[E, _], Boolean)]
   def andThenDescendingBy(ref: MongoPropertyRef[E, _]): MongoDocumentOrder[E] =
     andThenBy(ref, ascending = false)
 
-  //TODO: lambda-macro versions of andThenBy
+  // TODO: lambda-macro versions of andThenBy
 
   def toBson: BsonDocument =
     Bson.document(refs.iterator.map { case (ref, asc) => (ref.rawPath, Bson.int(if (asc) 1 else -1)) })

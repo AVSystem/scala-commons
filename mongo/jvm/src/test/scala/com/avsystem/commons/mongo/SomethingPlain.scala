@@ -15,12 +15,11 @@ case class SomethingPlain(
   double: Double,
   binary: Bytes,
   list: List[String],
-  map: Map[String, String]
+  map: Map[String, String],
 )
 object SomethingPlain extends HasGenCodec[SomethingPlain] {
-  def sizedListOf[T](maxSize: Int, gen: => Gen[T]): Gen[List[T]] = {
+  def sizedListOf[T](maxSize: Int, gen: => Gen[T]): Gen[List[T]] =
     Gen.resize(maxSize, Gen.listOf(gen))
-  }
 
   val stringListGen: Gen[List[String]] = sizedListOf(8, arbitrary[String])
 
@@ -48,7 +47,7 @@ object SomethingPlain extends HasGenCodec[SomethingPlain] {
     double,
     binary,
     list,
-    map
+    map,
   )
 }
 
@@ -57,7 +56,7 @@ case class SomethingComplex(
   complexList: List[SomethingPlain],
   nestedList: List[List[String]],
   nestedComplexList: List[List[SomethingPlain]],
-  option: Option[Int]
+  option: Option[Int],
 )
 object SomethingComplex extends HasGenCodec[SomethingComplex] {
   val sthListGen: Gen[List[SomethingPlain]] = SomethingPlain.sizedListOf(8, SomethingPlain.gen)
@@ -73,7 +72,7 @@ object SomethingComplex extends HasGenCodec[SomethingComplex] {
     complexList,
     nestedList,
     nestedComplexList,
-    option
+    option,
   )
 }
 

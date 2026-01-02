@@ -3,15 +3,13 @@ package rpc
 
 import com.avsystem.commons.meta._
 
-/**
-  * You can use this annotation on overloaded RPC methods to give them unique identifiers for RPC serialization.
-  * You can also subclass this annotation provided that you always override the `name` parameter with another
-  * constructor parameter.
+/** You can use this annotation on overloaded RPC methods to give them unique identifiers for RPC serialization. You can
+  * also subclass this annotation provided that you always override the `name` parameter with another constructor
+  * parameter.
   */
 class rpcName(val name: String) extends RealSymAnnotation
 
-/**
-  * You can use this annotation on real RPC methods to instruct macro engine to prepend method name (or [[rpcName]] if
+/** You can use this annotation on real RPC methods to instruct macro engine to prepend method name (or [[rpcName]] if
   * specified) with given prefix. This annotation is mostly useful when aggregated by another annotation e.g.
   *
   * {{{
@@ -24,106 +22,90 @@ class rpcName(val name: String) extends RealSymAnnotation
   */
 class rpcNamePrefix(val prefix: String, val overloadedOnly: Boolean = false) extends RealSymAnnotation
 
-/**
-  * Enables name-mangling of overloaded RPC methods. Each overloaded variant (except for the first one) will get
-  * a suffix `_<idx>` appended, where `<idx>` is an index of the overload, starting from 1 for the first actual
-  * overload. The first method is not considered an "overload" and will get no suffix appended.
+/** Enables name-mangling of overloaded RPC methods. Each overloaded variant (except for the first one) will get a
+  * suffix `_<idx>` appended, where `<idx>` is an index of the overload, starting from 1 for the first actual overload.
+  * The first method is not considered an "overload" and will get no suffix appended.
   *
-  * This allows overloading methods in RPC traits without manual disambiguation using [[rpcName]]
-  * or [[rpcNamePrefix]]. However, such approach is much more prone to breaking API changes,
-  * e.g. by reordering methods.
+  * This allows overloading methods in RPC traits without manual disambiguation using [[rpcName]] or [[rpcNamePrefix]].
+  * However, such approach is much more prone to breaking API changes, e.g. by reordering methods.
   *
   * This annotation must be applied on a raw method or method metadata param.
   */
 class mangleOverloads extends RawMethodAnnotation
 
-/**
-  * Base trait for RPC tag annotations. Tagging gives more direct control over how real methods
-  * and their parameters are matched against raw methods and their parameters.
-  * For more information about method tagging, see documentation of [[methodTag]].
-  * For more information about parameter tagging, see documentation of [[paramTag]].
+/** Base trait for RPC tag annotations. Tagging gives more direct control over how real methods and their parameters are
+  * matched against raw methods and their parameters. For more information about method tagging, see documentation of
+  * [[methodTag]]. For more information about parameter tagging, see documentation of [[paramTag]].
   */
 trait RpcTag extends RealSymAnnotation
 
-/**
-  * May be applied on raw method parameter of type `String` to indicate that macro generated implementation of
-  * `AsReal` should pass real method's RPC name as this parameter and that macro generated implementation of
-  * `AsRaw` should expect real method's RPC name to be passed there.
+/** May be applied on raw method parameter of type `String` to indicate that macro generated implementation of `AsReal`
+  * should pass real method's RPC name as this parameter and that macro generated implementation of `AsRaw` should
+  * expect real method's RPC name to be passed there.
   *
   * Macro generation of `AsRaw` implementations require that raw methods annotated as
-  * [[com.avsystem.commons.meta.multi multi]] must take at least
-  * one raw parameter annotated as [[methodName]] (it may also be aggregated into some
-  * [[com.avsystem.commons.meta.composite composite]] parameter).
-  * This is necessary to properly identify which real method should be called.
+  * [[com.avsystem.commons.meta.multi multi]] must take at least one raw parameter annotated as [[methodName]] (it may
+  * also be aggregated into some [[com.avsystem.commons.meta.composite composite]] parameter). This is necessary to
+  * properly identify which real method should be called.
   */
 final class methodName extends RawParamAnnotation
 
-/**
-  * Can be used on metadata parameters to instruct macro materialization that some particular metadata depends
-  * on some implicit typeclass instances for method's type parameters.
+/** Can be used on metadata parameters to instruct macro materialization that some particular metadata depends on some
+  * implicit typeclass instances for method's type parameters.
   *
-  * Type of a parameter annotated with this annotation must be a function which takes an `AnyIterable[TypeClass[_]]`
-  * as an argument and returns actual metadata class as a result.
-  * `AnyIterable` is any class that extends `Iterable`, e.g. `List`.
-  * `TypeClass` is any type constructor of kind (* -> *)
+  * Type of a parameter annotated with this annotation must be a function which takes an `AnyIterable[TypeClass[_]]` as
+  * an argument and returns actual metadata class as a result. `AnyIterable` is any class that extends `Iterable`, e.g.
+  * `List`. `TypeClass` is any type constructor of kind (* -> *)
   */
 final class forTypeParams extends RawParamAnnotation
 
-/**
-  * `@rpcMethodMetadata` applied on metadata parameter of RPC trait metadata class indicates that this parameter holds
+/** `@rpcMethodMetadata` applied on metadata parameter of RPC trait metadata class indicates that this parameter holds
   * metadata for RPC method(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]],
   * tagging, etc.).
-  * */
+  */
 final class rpcMethodMetadata extends MetadataParamStrategy
 
-/**
-  * `@rpcParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
-  * metadata for RPC parameter(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]]],
-  * tagging, etc.).
-  * */
+/** `@rpcParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
+  * metadata for RPC parameter(s) (one, some or all, depending on
+  * [[com.avsystem.commons.meta.SymbolArity SymbolArity]]], tagging, etc.).
+  */
 final class rpcParamMetadata extends MetadataParamStrategy
 
-/**
-  * `@rpcTypeParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter holds
-  * metadata for RPC type parameter(s) (one, some or all, depending on [[com.avsystem.commons.meta.SymbolArity SymbolArity]]],
-  * tagging, etc.).
-  * */
+/** `@rpcTypeParamMetadata` applied on metadata parameter of RPC method metadata class indicates that this parameter
+  * holds metadata for RPC type parameter(s) (one, some or all, depending on
+  * [[com.avsystem.commons.meta.SymbolArity SymbolArity]]], tagging, etc.).
+  */
 final class rpcTypeParamMetadata extends MetadataParamStrategy
 
-/**
-  * When applied on a real parameter, this parameter becomes an implicit dependency for encoders
-  * (`AsRaw` and `AsReal` instances) of other parameters of the same method and for encoder of that method's result.
+/** When applied on a real parameter, this parameter becomes an implicit dependency for encoders (`AsRaw` and `AsReal`
+  * instances) of other parameters of the same method and for encoder of that method's result.
   *
-  * This is primarily useful for generic (type-parameterized) real methods where an ad-hoc (per each call)
-  * encoding must be provided for type parameters.
+  * This is primarily useful for generic (type-parameterized) real methods where an ad-hoc (per each call) encoding must
+  * be provided for type parameters.
   *
   * NOTE: `@encodingDependency` parameters are serialized <b>before</b> other parameters, regardless of parameter
   * declaration order.
   */
 final class encodingDependency extends RealSymAnnotation
 
-/**
-  * Base trait for [[verbatim]] and [[encoded]]. These annotations can be applied either on a raw method or
-  * raw parameter in order to specify how matching real method results or matching real parameter values are encoded
-  * as raw values.
-  * Currently there are two possible cases: [[verbatim]] (no encoding) and [[encoded]] (encoding using `AsRaw` and
-  * `AsReal` typeclasses). By default, method return values and [[com.avsystem.commons.meta.multi multi]]
-  * parameters are [[encoded]] while [[com.avsystem.commons.meta.single single]] and
-  * [[com.avsystem.commons.meta.optional optional]] parameters are [[verbatim]].
-  * See documentation of [[verbatim]] and [[encoded]] for more details.
+/** Base trait for [[verbatim]] and [[encoded]]. These annotations can be applied either on a raw method or raw
+  * parameter in order to specify how matching real method results or matching real parameter values are encoded as raw
+  * values. Currently there are two possible cases: [[verbatim]] (no encoding) and [[encoded]] (encoding using `AsRaw`
+  * and `AsReal` typeclasses). By default, method return values and [[com.avsystem.commons.meta.multi multi]] parameters
+  * are [[encoded]] while [[com.avsystem.commons.meta.single single]] and
+  * [[com.avsystem.commons.meta.optional optional]] parameters are [[verbatim]]. See documentation of [[verbatim]] and
+  * [[encoded]] for more details.
   */
 sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
 
-/**
-  * When a raw parameter is annotated as [[encoded]], macro generated code will translate
-  * between real parameter values and raw parameter values using implicit instances of `AsRaw[Raw,Real]`
-  * and `AsReal[Raw,Real]` typeclasses. This annotation may also be applied on a method, but this would be
-  * redundant since method results are encoded by default.
+/** When a raw parameter is annotated as [[encoded]], macro generated code will translate between real parameter values
+  * and raw parameter values using implicit instances of `AsRaw[Raw,Real]` and `AsReal[Raw,Real]` typeclasses. This
+  * annotation may also be applied on a method, but this would be redundant since method results are encoded by default.
   *
-  * Here's an example of raw RPC definition supposed to handle asynchronous (`Future`-based) calls that uses
-  * `GenCodec` in order to encode and decode arguments and results as JSON strings.
-  * It introduces its own wrapper class for JSON strings that has appropriate implicit instances of
-  * `AsRaw` and `AsReal` (or `AsRawReal` which serves as both `AsReal` and `AsRaw`).
+  * Here's an example of raw RPC definition supposed to handle asynchronous (`Future`-based) calls that uses `GenCodec`
+  * in order to encode and decode arguments and results as JSON strings. It introduces its own wrapper class for JSON
+  * strings that has appropriate implicit instances of `AsRaw` and `AsReal` (or `AsRawReal` which serves as both
+  * `AsReal` and `AsRaw`).
   *
   * {{{
   * import com.avsystem.commons._
@@ -152,9 +134,9 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   * }
   * }}}
   *
-  * If you don't want to introduce the wrapper `Json` class and use more raw type, e.g. plain `String` then you
-  * can also do it by moving implicit instances of `AsReal` and `AsRaw` (or the joined `AsRawReal`) into the
-  * `implicits` object of raw RPC companion:
+  * If you don't want to introduce the wrapper `Json` class and use more raw type, e.g. plain `String` then you can also
+  * do it by moving implicit instances of `AsReal` and `AsRaw` (or the joined `AsRawReal`) into the `implicits` object
+  * of raw RPC companion:
   *
   * {{{
   * trait AsyncRawRpc {
@@ -177,11 +159,10 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   */
 final class encoded extends RpcEncoding
 
-/**
-  * Turns off raw value encoding as specified by [[encoded]]. By default, [[com.avsystem.commons.meta.single single]]
+/** Turns off raw value encoding as specified by [[encoded]]. By default, [[com.avsystem.commons.meta.single single]]
   * and [[com.avsystem.commons.meta.optional optional]] raw parameters are already [[verbatim]], so using [[verbatim]]
-  * only makes sense on [[com.avsystem.commons.meta.multi multi]] raw parameters or raw methods themselves,
-  * which means turning off encoding of method's result.
+  * only makes sense on [[com.avsystem.commons.meta.multi multi]] raw parameters or raw methods themselves, which means
+  * turning off encoding of method's result.
   *
   * When encoding is turned off, raw and real types must be exactly the same types. For example, the following raw RPC
   * definition will match only raw RPC traits whose methods take `Int`s as parameters and return `Double`s as values:
@@ -194,12 +175,11 @@ final class encoded extends RpcEncoding
   */
 final class verbatim extends RpcEncoding
 
-/**
-  * Base trait for annotations which - when applied on a real parameter or method - change the way its value is
-  * serialized. The `Raw` type parameter must match the original raw type into which the value is serialized.
-  * The annotation may then specify a `NewRaw` type. Macro engine will then look for a different implicit for
-  * serialization - instead of looking for `AsRaw[Raw,Real]` it will now look for `AsRaw[NewRaw,Real]`.
-  * The annotation must therefore provide a conversion from its new raw type to the original raw type.
+/** Base trait for annotations which - when applied on a real parameter or method - change the way its value is
+  * serialized. The `Raw` type parameter must match the original raw type into which the value is serialized. The
+  * annotation may then specify a `NewRaw` type. Macro engine will then look for a different implicit for serialization -
+  * instead of looking for `AsRaw[Raw,Real]` it will now look for `AsRaw[NewRaw,Real]`. The annotation must therefore
+  * provide a conversion from its new raw type to the original raw type.
   *
   * `NewRaw` may also be the same type as `Raw` - this is useful if we only want to modify the raw value after
   * serialization without changing its type.
@@ -208,12 +188,11 @@ trait EncodingInterceptor[NewRaw, Raw] extends RealSymAnnotation {
   def toOriginalRaw(newRaw: NewRaw): Raw
 }
 
-/**
-  * Base trait for annotations which - when applied on a real parameter or method - change the way its value is
-  * deserialized. The `Raw` type parameter must match the original raw type into which the value is serialized.
-  * The annotation may then specify a `NewRaw` type. Macro engine will then look for a different implicit for
-  * deserialization - instead of looking for `AsReal[Raw,Real]` it will now look for `AsReal[NewRaw,Real]`.
-  * The annotation must therefore provide a conversion from the original raw type to the new raw type.
+/** Base trait for annotations which - when applied on a real parameter or method - change the way its value is
+  * deserialized. The `Raw` type parameter must match the original raw type into which the value is serialized. The
+  * annotation may then specify a `NewRaw` type. Macro engine will then look for a different implicit for
+  * deserialization - instead of looking for `AsReal[Raw,Real]` it will now look for `AsReal[NewRaw,Real]`. The
+  * annotation must therefore provide a conversion from the original raw type to the new raw type.
   *
   * `NewRaw` may also be the same type as `Raw` - this is useful if we only want to modify the raw value before
   * deserialization without changing its type.
@@ -224,34 +203,28 @@ trait DecodingInterceptor[NewRaw, Raw] extends RealSymAnnotation {
 
 class rawWhenAbsent[+Raw](val value: Raw) extends RealSymAnnotation
 
-/**
-  * When raw method is annotated as `@tried`, invocations of real methods matching that raw method will be
-  * automatically wrapped into `Try`. Consequently, all real methods will be treated as if their result
-  * type was `Try[Result]` instead of actual `Result`. For example, if raw method is [[encoded]] and its
-  * (raw) result is `Raw` then macro engine will search for implicit `AsRaw/Real[Raw,Try[Result]]` instead of just
-  * `AsRaw/Real[Raw,Result]`
+/** When raw method is annotated as `@tried`, invocations of real methods matching that raw method will be automatically
+  * wrapped into `Try`. Consequently, all real methods will be treated as if their result type was `Try[Result]` instead
+  * of actual `Result`. For example, if raw method is [[encoded]] and its (raw) result is `Raw` then macro engine will
+  * search for implicit `AsRaw/Real[Raw,Try[Result]]` instead of just `AsRaw/Real[Raw,Result]`
   */
 final class tried extends RawMethodAnnotation
 
-/**
-  * When applied on raw RPC method or method metadata parameter, customizes error message displayed
-  * for unmatched real method.
+/** When applied on raw RPC method or method metadata parameter, customizes error message displayed for unmatched real
+  * method.
   *
-  * When applied on raw RPC parameter or param metadata parameter, customizes error message displayed
-  * when no real parameter matched annotated raw parameter. This implies that the raw parameter must have
-  * `single` arity (otherwise it's not required to be matched by any real parameter).
+  * When applied on raw RPC parameter or param metadata parameter, customizes error message displayed when no real
+  * parameter matched annotated raw parameter. This implies that the raw parameter must have `single` arity (otherwise
+  * it's not required to be matched by any real parameter).
   */
 final class unmatched(error: String) extends RawSymAnnotation
 
-/**
-  * Can be applied on raw RPC method or method metadata parameter to customize compilation error message for
-  * unmatched real parameters tagged as `Tag`.
+/** Can be applied on raw RPC method or method metadata parameter to customize compilation error message for unmatched
+  * real parameters tagged as `Tag`.
   */
 final class unmatchedParam[Tag <: RpcTag](error: String) extends RawMethodAnnotation
 
-/**
-  * Method tagging lets you have more explicit control over which raw methods can match which real methods.
-  * Example:
+/** Method tagging lets you have more explicit control over which raw methods can match which real methods. Example:
   *
   * {{{
   * sealed trait MethodType extends RpcTag
@@ -265,20 +238,20 @@ final class unmatchedParam[Tag <: RpcTag](error: String) extends RawMethodAnnota
   * }
   * }}}
   *
-  * In the example above, we created a hierarchy of annotations rooted at `MethodType` which can be used
-  * on real methods in order to explicitly tell the RPC macro which raw methods can match it.
-  * We also specify `new GET` as the default tag that will be assumed for real methods without any tag annotation.
-  * Then, using [[tagged]] we specify that the raw `get` method may only match real methods annotated as `GET`
-  * while `post` raw method may only match real methods annotated as `POST`.
-  * Raw methods not annotated with [[tagged]] have no limitations and may still match any real methods.
+  * In the example above, we created a hierarchy of annotations rooted at `MethodType` which can be used on real methods
+  * in order to explicitly tell the RPC macro which raw methods can match it. We also specify `new GET` as the default
+  * tag that will be assumed for real methods without any tag annotation. Then, using [[tagged]] we specify that the raw
+  * `get` method may only match real methods annotated as `GET` while `post` raw method may only match real methods
+  * annotated as `POST`. Raw methods not annotated with [[tagged]] have no limitations and may still match any real
+  * methods.
   *
-  * Also, instead of specifying `defaultTag` in `@methodTag` annotation, you may provide the `whenUntagged`
-  * parameter to [[tagged]] annotation. Raw method annotated as `@tagged[MethodType](whenUntagged = new GET)`
-  * will match real methods either explicitly tagged with `GET` or untagged. If untagged, `new GET` will be assumed
-  * as the tag. This is useful when you want to have multiple raw methods with different `whenUntagged` setting.
+  * Also, instead of specifying `defaultTag` in `@methodTag` annotation, you may provide the `whenUntagged` parameter to
+  * [[tagged]] annotation. Raw method annotated as `@tagged[MethodType](whenUntagged = new GET)` will match real methods
+  * either explicitly tagged with `GET` or untagged. If untagged, `new GET` will be assumed as the tag. This is useful
+  * when you want to have multiple raw methods with different `whenUntagged` setting.
   *
-  * NOTE: The example above assumes there is a Json` type defined with appropriate encodings -
-  * see [[encoded]] for more details on parameter and method result encoding.
+  * NOTE: The example above assumes there is a Json` type defined with appropriate encodings - see [[encoded]] for more
+  * details on parameter and method result encoding.
   *
   * An example of real RPC for `ExampleRawRpc`:
   *
@@ -292,16 +265,17 @@ final class unmatchedParam[Tag <: RpcTag](error: String) extends RawMethodAnnota
   * }
   * }}}
   *
-  * @tparam BaseTag base type for tags that can be used on real RPC methods
-  * @param defaultTag default tag value assumed for untagged methods
-  * */
+  * @tparam BaseTag
+  *   base type for tags that can be used on real RPC methods
+  * @param defaultTag
+  *   default tag value assumed for untagged methods
+  */
 final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawRpcAnnotation
 
-/**
-  * Parameter tagging lets you have more explicit control over which raw parameters can match which real
-  * parameters. This way you can have some of the parameters annotated in order to treat them differently, e.g.
-  * they may be [[verbatim]], encoded in a different way or collected to a different raw container (e.g.
-  * `Map[String,Raw]` vs `List[Raw]` - see [[com.avsystem.commons.meta.multi multi]] for more details).
+/** Parameter tagging lets you have more explicit control over which raw parameters can match which real parameters.
+  * This way you can have some of the parameters annotated in order to treat them differently, e.g. they may be
+  * [[verbatim]], encoded in a different way or collected to a different raw container (e.g. `Map[String,Raw]` vs
+  * `List[Raw]` - see [[com.avsystem.commons.meta.multi multi]] for more details).
   *
   * Example:
   * {{{
@@ -321,11 +295,11 @@ final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends
   * }
   * }}}
   *
-  * NOTE: The example above assumes there is a `Json` type defined with appropriate encodings -
-  * see [[encoded]] for more details on parameter and method result encoding.
+  * NOTE: The example above assumes there is a `Json` type defined with appropriate encodings - see [[encoded]] for more
+  * details on parameter and method result encoding.
   *
-  * The example above configures parameter tag type for the entire trait, but you can also do it for
-  * each raw method, e.g.
+  * The example above configures parameter tag type for the entire trait, but you can also do it for each raw method,
+  * e.g.
   *
   * {{{
   * trait RestRawRpc {
@@ -334,26 +308,26 @@ final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends
   * }
   * }}}
   *
-  * @tparam BaseTag base type for tags that can be used on real RPC parameters
-  * @param defaultTag default tag value assumed for untagged real parameters
+  * @tparam BaseTag
+  *   base type for tags that can be used on real RPC parameters
+  * @param defaultTag
+  *   default tag value assumed for untagged real parameters
   */
 final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
 
-/**
-  * Like [[paramTag]] or [[methodTag]] but used for tagging case classes in sealed hierarchies when
-  * materializing ADT metadata for them.
+/** Like [[paramTag]] or [[methodTag]] but used for tagging case classes in sealed hierarchies when materializing ADT
+  * metadata for them.
   */
 final class caseTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
 
-/**
-  * Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to
-  * only these annotated as `Tag`. See [[methodTag]] and [[paramTag]] for more explanation. NOTE: `Tag` may
-  * also be some common supertype of multiple tags which are accepted by this raw method or param.
+/** Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to only
+  * these annotated as `Tag`. See [[methodTag]] and [[paramTag]] for more explanation. NOTE: `Tag` may also be some
+  * common supertype of multiple tags which are accepted by this raw method or param.
   *
-  * @tparam Tag annotation type required to be present on real method or parameter
-  * @param whenUntagged default tag value assumed for untagged methods/parameters - if specified, this effectively
-  *                     means that raw method/parameter will also match untagged real methods/parameters and assume
-  *                     the default tag value for them
+  * @tparam Tag
+  *   annotation type required to be present on real method or parameter
+  * @param whenUntagged
+  *   default tag value assumed for untagged methods/parameters - if specified, this effectively means that raw
+  *   method/parameter will also match untagged real methods/parameters and assume the default tag value for them
   */
-final class tagged[Tag <: RpcTag](val whenUntagged: Tag = null)
-  extends RawMethodAnnotation with RawParamAnnotation
+final class tagged[Tag <: RpcTag](val whenUntagged: Tag = null) extends RawMethodAnnotation with RawParamAnnotation

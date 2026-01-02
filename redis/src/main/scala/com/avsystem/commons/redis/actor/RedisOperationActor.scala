@@ -10,13 +10,10 @@ import com.avsystem.commons.redis.exception.RedisException
 import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{RedisBatch, RedisOp}
 
-/**
-  * Implements execution of [[RedisOp]] (sequence of redis operations).
-  * Separate [[RedisOperationActor]] is spawned of every [[RedisOp]] and lives only to
-  * execute that single [[RedisOp]].
+/** Implements execution of [[RedisOp]] (sequence of redis operations). Separate [[RedisOperationActor]] is spawned of
+  * every [[RedisOp]] and lives only to execute that single [[RedisOp]].
   *
-  * Author: ghik
-  * Created: 11/04/16.
+  * Author: ghik Created: 11/04/16.
   */
 final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLazyLogging {
 
@@ -36,17 +33,17 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
     }
   }
 
-  def waitingForResponse[A, B](prevBatch: RedisBatch[A], nextStep: Opt[A => RedisOp[B]], reserving: Boolean = false): Receive = {
-    case pr: RedisConnectionActor.PacksResult =>
-      try {
-        val a = prevBatch.decodeReplies(pr)
-        nextStep match {
-          case Opt.Empty => respond(OpSuccess(a))
-          case Opt(fun) => handleOperation(fun(a))
-        }
-      } catch {
-        case NonFatal(t) => respond(OpFailure(t))
+  def waitingForResponse[A, B](prevBatch: RedisBatch[A], nextStep: Opt[A => RedisOp[B]], reserving: Boolean = false)
+    : Receive = { case pr: RedisConnectionActor.PacksResult =>
+    try {
+      val a = prevBatch.decodeReplies(pr)
+      nextStep match {
+        case Opt.Empty => respond(OpSuccess(a))
+        case Opt(fun) => handleOperation(fun(a))
       }
+    } catch {
+      case NonFatal(t) => respond(OpFailure(t))
+    }
   }
 
   def respond(msg: Any): Unit =
@@ -61,7 +58,8 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
   def receive = {
     case op: RedisOp[Any] if listener == null =>
       listener = sender()
-      try handleOperation(op, reserving = true) catch {
+      try handleOperation(op, reserving = true)
+      catch {
         case NonFatal(t) => respond(OpFailure(t))
       }
   }

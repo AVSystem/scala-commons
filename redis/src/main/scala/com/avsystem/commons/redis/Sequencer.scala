@@ -6,25 +6,23 @@ import com.avsystem.commons.redis.protocol.RedisReply
 
 import scala.annotation.implicitNotFound
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.{BuildFrom, mutable}
+import scala.collection.{mutable, BuildFrom}
 
-/**
-  * Typeclass for easy merging ("sequencing") of multiple [[RedisBatch]] instances into one. This is done in
-  * order to guarantee that some set of operations is sent to Redis as a single batch (most likely single network
-  * message).
+/** Typeclass for easy merging ("sequencing") of multiple [[RedisBatch]] instances into one. This is done in order to
+  * guarantee that some set of operations is sent to Redis as a single batch (most likely single network message).
   *
-  * The parameter `Ops` represents batches that will be sequenced into one. It may be a collection, a tuple or
-  * any other "collection-like" type for which type class instance is provided.
+  * The parameter `Ops` represents batches that will be sequenced into one. It may be a collection, a tuple or any other
+  * "collection-like" type for which type class instance is provided.
   *
-  * `Res` is the type of result of the batch created by "sequencing". This type is automatically inferred from
-  * the `Ops` type. For example, if `Ops` is `(RedisBatch[Int], RedisBatch[String])` (tuple) then `Res` will be
-  * `(Int, String)`. If `Ops` is `List[RedisBatch[Int&#93;]` then `Res` will be `List[Int]`.
+  * `Res` is the type of result of the batch created by "sequencing". This type is automatically inferred from the `Ops`
+  * type. For example, if `Ops` is `(RedisBatch[Int], RedisBatch[String])` (tuple) then `Res` will be `(Int, String)`.
+  * If `Ops` is `List[RedisBatch[Int&#93;]` then `Res` will be `List[Int]`.
   *
-  * Nesting is also possible. For example, if `Ops` is `(List[RedisBatch[Int&#93;], RedisBatch[String])` then
-  * `Res` will be `(List[Int], String)`.
+  * Nesting is also possible. For example, if `Ops` is `(List[RedisBatch[Int&#93;], RedisBatch[String])` then `Res` will
+  * be `(List[Int], String)`.
   *
-  * In order to perform "sequencing", simply call [[RedisBatch.SequenceOps#sequence sequence]]
-  * on your collection of batches, e.g.
+  * In order to perform "sequencing", simply call [[RedisBatch.SequenceOps#sequence sequence]] on your collection of
+  * batches, e.g.
   *
   * {{{
   *   import RedisApi.Batches.StringTyped._
@@ -47,7 +45,9 @@ object Sequencer extends TupleSequencers {
     reusableTrivialSequencer.asInstanceOf[Sequencer[RedisBatch[A], A]]
 
   implicit def collectionSequencer[ElOps, ElRes, M[X] <: IterableOnce[X], That](
-    implicit elSequencer: Sequencer[ElOps, ElRes], bf: BuildFrom[M[ElOps], ElRes, That]): Sequencer[M[ElOps], That] =
+    implicit elSequencer: Sequencer[ElOps, ElRes],
+    bf: BuildFrom[M[ElOps], ElRes, That],
+  ): Sequencer[M[ElOps], That] =
 
     (ops: M[ElOps]) => {
       val batches: Iterable[RedisBatch[ElRes]] =

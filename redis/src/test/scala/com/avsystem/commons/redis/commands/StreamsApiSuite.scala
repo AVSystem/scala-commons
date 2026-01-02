@@ -23,7 +23,7 @@ trait StreamsApiSuite extends CommandsSuite {
     setup(
       xgroupCreate("key", XGroup("g"), mkstream = true),
       RedisBatch.traverse(1 to 10)(i => xaddEntry("key", entry(i))),
-      xreadgroupSingle("key", XGroup("g"), XConsumer("c"))
+      xreadgroupSingle("key", XGroup("g"), XConsumer("c")),
     )
     xack("key", XGroup("g"), id(1)).assertEquals(true)
     xack("key", XGroup("g"), id(1)).assertEquals(false)
@@ -46,7 +46,7 @@ trait StreamsApiSuite extends CommandsSuite {
     setup(
       xgroupCreate("key", XGroup("g"), mkstream = true),
       RedisBatch.traverse(1 to 10)(i => xaddEntry("key", entry(i))),
-      xreadgroupSingle("key", XGroup("g"), XConsumer("c1"), count = 5)
+      xreadgroupSingle("key", XGroup("g"), XConsumer("c1"), count = 5),
     )
     // nonexistent id
     xclaimSingle("key", XGroup("g"), XConsumer("c1"), 0, id(0)).assertEquals(Opt.Empty)
@@ -97,7 +97,7 @@ trait StreamsApiSuite extends CommandsSuite {
   apiTest("XINFO STREAM") {
     setup(
       xaddEntry("key", entry(1)),
-      xgroupCreate("key", XGroup("g"))
+      xgroupCreate("key", XGroup("g")),
     )
     val xsi = xinfoStream("key").get
     assert(xsi.length == 1)
@@ -120,7 +120,7 @@ trait StreamsApiSuite extends CommandsSuite {
     setup(
       xgroupCreate("key", XGroup("g"), mkstream = true),
       xaddEntry("key", entry(1)),
-      xreadgroupSingle("key", XGroup("g"), XConsumer("c"))
+      xreadgroupSingle("key", XGroup("g"), XConsumer("c")),
     )
     val Seq(xci) = xinfoConsumers("key", XGroup("g")).get
     assert(xci.name == XConsumer("c"))
@@ -136,7 +136,7 @@ trait StreamsApiSuite extends CommandsSuite {
     setup(
       xgroupCreate("key", XGroup("g"), mkstream = true),
       RedisBatch.traverse(1 to 10)(i => xaddEntry("key", entry(i))),
-      xreadgroupSingle("key", XGroup("g"), XConsumer("c"))
+      xreadgroupSingle("key", XGroup("g"), XConsumer("c")),
     )
     xpending("key", XGroup("g")).assertEquals(XPendingOverview(10, id(1), id(10), Map(XConsumer("c") -> 10)))
     val Seq(xpe) = xpendingEntries("key", XGroup("g"), 1).get
@@ -169,13 +169,14 @@ trait StreamsApiSuite extends CommandsSuite {
   apiTest("XREADGROUP") {
     setup(
       xgroupCreate("key", XGroup("g"), mkstream = true),
-      RedisBatch.traverse(1 to 10)(i => xaddEntry("key", entry(i)))
+      RedisBatch.traverse(1 to 10)(i => xaddEntry("key", entry(i))),
     )
     xreadgroupSingle("key", XGroup("g"), XConsumer("c"), count = 5).assertEquals(entries(1, 5))
     xreadgroupSingle("key", XGroup("g"), XConsumer("c")).assertEquals(entries(6, 10))
     xreadgroupSingle("key", XGroup("g"), XConsumer("c")).assertEquals(Seq.empty)
     xreadgroupSingle("key", XGroup("g"), XConsumer("c"), id(5)).assertEquals(entries(6, 10))
-    xreadgroupSingle("key", XGroup("g"), XConsumer("c"), id(5), count = 10, blockMillis = 1000).assertEquals(entries(6, 10))
+    xreadgroupSingle("key", XGroup("g"), XConsumer("c"), id(5), count = 10, blockMillis = 1000)
+      .assertEquals(entries(6, 10))
     xreadgroupSingle("key", XGroup("g"), XConsumer("c"), blockMillis = 10).assertEquals(Seq.empty)
     xreadgroup(XGroup("g"), XConsumer("c"), List("key" -> id(5).opt)).assertEquals(Map("key" -> entries(6, 10)))
   }

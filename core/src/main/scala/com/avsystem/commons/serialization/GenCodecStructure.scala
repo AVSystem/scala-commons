@@ -17,11 +17,16 @@ case class GenParamInfo[T](
   @isAnnotated[whenAbsent[T]] hasWhenAbsent: Boolean,
   @isAnnotated[transientDefault] transientDefault: Boolean,
   @isAnnotated[outOfOrder] outOfOrder: Boolean,
-  @reifyFlags flags: ParamFlags
+  @reifyFlags flags: ParamFlags,
 ) extends GenInfo[T] {
 
   @bincompat private[commons] def this(
-    sourceName: String, annotName: Opt[name], hasWhenAbsent: Boolean, transientDefault: Boolean, outOfOrder: Boolean, flags: ParamFlags
+    sourceName: String,
+    annotName: Opt[name],
+    hasWhenAbsent: Boolean,
+    transientDefault: Boolean,
+    outOfOrder: Boolean,
+    flags: ParamFlags,
   ) = this(sourceName, annotName, optional = false, hasWhenAbsent, transientDefault, outOfOrder, flags)
 }
 
@@ -33,7 +38,7 @@ sealed trait GenCodecStructure[T] extends GenInfo[T] {
   @reifyFlags flags: TypeFlags,
   @reifyName sourceName: String,
   @optional @reifyAnnot annotName: Opt[name],
-  @optional @reifyAnnot flatten: Opt[flatten]
+  @optional @reifyAnnot flatten: Opt[flatten],
 ) extends GenCodecStructure[T]
 object GenUnionInfo extends AdtMetadataCompanion[GenUnionInfo]
 
@@ -42,6 +47,6 @@ object GenUnionInfo extends AdtMetadataCompanion[GenUnionInfo]
   @reifyName sourceName: String,
   @optional @reifyAnnot annotName: Opt[name],
   @isAnnotated[transparent] transparent: Boolean,
-  @isAnnotated[defaultCase] defaultCase: Boolean
+  @isAnnotated[defaultCase] defaultCase: Boolean,
 ) extends GenCodecStructure[T]
 object GenCaseInfo extends AdtMetadataCompanion[GenCaseInfo]

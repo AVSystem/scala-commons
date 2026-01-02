@@ -3,9 +3,8 @@ package rpc
 
 import com.avsystem.commons.meta._
 
-/**
-  * Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods
-  * with `Unit` return type.
+/** Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods with `Unit`
+  * return type.
   */
 trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
@@ -18,13 +17,13 @@ trait ProcedureRPCFramework extends RPCFramework {
   case class ProcedureSignature(
     name: String,
     paramMetadata: List[ParamMetadata[_]],
-    annotations: List[MetadataAnnotation]
-  ) extends Signature with TypedMetadata[Unit]
+    annotations: List[MetadataAnnotation],
+  ) extends Signature
+      with TypedMetadata[Unit]
 }
 
-/**
-  * Mix in this trait into your RPC framework to support remote functions, i.e. methods which asynchronously
-  * return some result (`Future[A]` where `A` has a `Reader` and `Writer`).
+/** Mix in this trait into your RPC framework to support remote functions, i.e. methods which asynchronously return some
+  * result (`Future[A]` where `A` has a `Reader` and `Writer`).
   */
 trait FunctionRPCFramework extends RPCFramework {
   type RawRPC <: FunctionRawRPC
@@ -37,15 +36,15 @@ trait FunctionRPCFramework extends RPCFramework {
     name: String,
     paramMetadata: List[ParamMetadata[_]],
     annotations: List[MetadataAnnotation],
-    @infer resultTypeMetadata: ResultTypeMetadata[T]
-  ) extends Signature with TypedMetadata[Future[T]]
+    @infer resultTypeMetadata: ResultTypeMetadata[T],
+  ) extends Signature
+      with TypedMetadata[Future[T]]
 
   implicit def readerBasedFutureAsReal[T: Reader]: AsReal[Future[RawValue], Future[T]] = _.mapNow(read[T])
   implicit def writerBasedFutureAsRaw[T: Writer]: AsRaw[Future[RawValue], Future[T]] = _.mapNow(write[T])
 }
 
-/**
-  * Mix in this trait into your RPC framework to support getters, i.e. methods that return RPC subinterfaces
+/** Mix in this trait into your RPC framework to support getters, i.e. methods that return RPC subinterfaces
   */
 trait GetterRPCFramework extends RPCFramework {
   type RawRPC <: GetterRawRPC
@@ -61,8 +60,9 @@ trait GetterRPCFramework extends RPCFramework {
     name: String,
     paramMetadata: List[ParamMetadata[_]],
     annotations: List[MetadataAnnotation],
-    @infer @checked resultMetadata: RPCMetadata.Lazy[T]
-  ) extends Signature with TypedMetadata[T]
+    @infer @checked resultMetadata: RPCMetadata.Lazy[T],
+  ) extends Signature
+      with TypedMetadata[T]
 }
 
 trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework with ProcedureRPCFramework {
@@ -76,7 +76,7 @@ trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework 
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @multi @verbatim @rpcMethodMetadata procedureSignatures: Map[String, ProcedureSignature],
     @multi @rpcMethodMetadata functionSignatures: Map[String, FunctionSignature[_]],
-    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]]
+    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]],
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }
@@ -91,7 +91,7 @@ trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @multi @verbatim @rpcMethodMetadata procedureSignatures: Map[String, ProcedureSignature],
-    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]]
+    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]],
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }

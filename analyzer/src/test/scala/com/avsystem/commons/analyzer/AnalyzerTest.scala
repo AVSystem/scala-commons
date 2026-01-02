@@ -41,6 +41,6 @@ trait AnalyzerTest { this: Assertions =>
 
 object AnalyzerTest {
   final class ScalaInterpolator(private val sc: StringContext) extends AnyVal {
-    def scala(args: Any*): String = s"object TopLevel {${sc.s(args *)}}"
+    def scala(args: Any*): String = s"object TopLevel {${sc.s(args*)}}"
   }
 }

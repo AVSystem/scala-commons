@@ -13,8 +13,10 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
         val jdkVersionRegex = option.substring(option.indexOf('=') + 1)
         val javaVersion = System.getProperty("java.version", "")
         if (!javaVersion.matches(jdkVersionRegex)) {
-          global.reporter.error(NoPosition,
-            s"This project must be compiled on JDK version that matches $jdkVersionRegex but got $javaVersion")
+          global.reporter.error(
+            NoPosition,
+            s"This project must be compiled on JDK version that matches $jdkVersionRegex but got $javaVersion",
+          )
         }
       } else {
         val level = option.charAt(0) match {

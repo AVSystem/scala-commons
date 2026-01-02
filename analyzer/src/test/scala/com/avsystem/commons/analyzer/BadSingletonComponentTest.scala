@@ -5,7 +5,8 @@ import org.scalatest.funsuite.AnyFunSuite
 
 final class BadSingletonComponentTest extends AnyFunSuite with AnalyzerTest {
   test("general") {
-    assertErrors(5,
+    assertErrors(
+      5,
       scala"""
              |import com.avsystem.commons.di._
              |
@@ -23,7 +24,7 @@ final class BadSingletonComponentTest extends AnyFunSuite with AnalyzerTest {
              |  def alsoGood: Component[Int] = { singleton(123) }
              |  def goodAsWell: Component[Int] = singleton(123).dependsOn(good)
              |}
-             |""".stripMargin
+             |""".stripMargin,
     )
   }
 }

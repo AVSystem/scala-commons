@@ -25,7 +25,8 @@ final class RedisConnectionActor(
   address: NodeAddress,
   config: ConnectionConfig,
   connectionStateObserver: OptArg[ConnectionStateObserver] = OptArg.Empty,
-) extends Actor with ActorLazyLogging { actor =>
+) extends Actor
+    with ActorLazyLogging { actor =>
 
   import RedisConnectionActor._
   import context._
@@ -120,7 +121,7 @@ final class RedisConnectionActor(
         connection ! CloseConnection(immediate = true)
       } else {
         log.debug(s"Connected to Redis at $address")
-        //TODO: use dedicated retry strategy for initialization instead of reconnection strategy
+        // TODO: use dedicated retry strategy for initialization instead of reconnection strategy
         new ConnectedTo(connection, localAddress, remoteAddress).initialize(retryStrategy)
         readInitSender.foreach(_ ! ReadAck)
       }
@@ -138,7 +139,7 @@ final class RedisConnectionActor(
       // not sure if it's possible to receive ReadInit before Connected but just to be safe
       // delay replying with ReadAck until Connected is received
       become(watchedConnecting(retryStrategy, Opt(sender())))
-    case _: TcpEvent => //ignore, this is from previous connection
+    case _: TcpEvent => // ignore, this is from previous connection
   }
 
   // previously this was implemented using Akka IO, now using Pekko Streams in a way that mimics Akka IO
@@ -152,27 +153,29 @@ final class RedisConnectionActor(
         case CloseConnection(true) => CompletionStrategy.immediately
         case CloseConnection(false) => CompletionStrategy.draining
       },
-      failureMatcher = PartialFunction.empty
+      failureMatcher = PartialFunction.empty,
     )
 
     val conn = config.sslEngineCreator match {
-      case OptArg(creator) => Tcp().outgoingConnectionWithTls(
-        address.socketAddress,
-        () => creator().setup(_.setUseClientMode(true)),
-        config.localAddress.toOption,
-        config.socketOptions,
-        config.connectTimeout.getOrElse(Duration.Inf),
-        config.idleTimeout.getOrElse(Duration.Inf),
-        _ => Success(()),
-        IgnoreComplete
-      )
-      case OptArg.Empty => Tcp().outgoingConnection(
-        address.socketAddress,
-        config.localAddress.toOption,
-        config.socketOptions,
-        connectTimeout = config.connectTimeout.getOrElse(Duration.Inf),
-        idleTimeout = config.idleTimeout.getOrElse(Duration.Inf)
-      )
+      case OptArg(creator) =>
+        Tcp().outgoingConnectionWithTls(
+          address.socketAddress,
+          () => creator().setup(_.setUseClientMode(true)),
+          config.localAddress.toOption,
+          config.socketOptions,
+          config.connectTimeout.getOrElse(Duration.Inf),
+          config.idleTimeout.getOrElse(Duration.Inf),
+          _ => Success(()),
+          IgnoreComplete,
+        )
+      case OptArg.Empty =>
+        Tcp().outgoingConnection(
+          address.socketAddress,
+          config.localAddress.toOption,
+          config.socketOptions,
+          connectTimeout = config.connectTimeout.getOrElse(Duration.Inf),
+          idleTimeout = config.idleTimeout.getOrElse(Duration.Inf),
+        )
     }
 
     // create connection Id to match connection message with
@@ -186,7 +189,7 @@ final class RedisConnectionActor(
       onInitMessage = ReadInit,
       ackMessage = ReadAck,
       onCompleteMessage = ConnectionClosed(Opt.Empty, connectionId),
-      onFailureMessage = cause => ConnectionClosed(Opt(cause), connectionId)
+      onFailureMessage = cause => ConnectionClosed(Opt(cause), connectionId),
     )
 
     val (actorRef, connFuture) = src.viaMat(conn)((_, _)).to(sink).run()
@@ -201,16 +204,17 @@ final class RedisConnectionActor(
   private def tryReconnect(retryStrategy: RetryStrategy, failureCause: => Throwable): Unit =
     if (incarnation == 0 && mustInitiallyConnect) {
       close(failureCause, stopSelf = false)
-    } else retryStrategy.nextRetry match {
-      case Opt((delay, nextStrategy)) =>
-        if (delay > Duration.Zero) {
-          log.info(s"Next reconnection attempt to $address in $delay")
-        }
-        become(watchedConnecting(nextStrategy, Opt.Empty))
-        system.scheduler.scheduleOnce(delay, self, Connect)
-      case Opt.Empty =>
-        close(failureCause, stopSelf = false)
-    }
+    } else
+      retryStrategy.nextRetry match {
+        case Opt((delay, nextStrategy)) =>
+          if (delay > Duration.Zero) {
+            log.info(s"Next reconnection attempt to $address in $delay")
+          }
+          become(watchedConnecting(nextStrategy, Opt.Empty))
+          system.scheduler.scheduleOnce(delay, self, Connect)
+        case Opt.Empty =>
+          close(failureCause, stopSelf = false)
+      }
 
   private final class ConnectedTo(connection: ActorRef, localAddr: InetSocketAddress, remoteAddr: InetSocketAddress)
     extends WatchState {
@@ -233,7 +237,7 @@ final class RedisConnectionActor(
     }
 
     def become(receive: Receive): Unit =
-      context.become(receive unless {
+      context.become(receive.unless {
         case Connected(oldConnection, _, _, _) if oldConnection != connection =>
           oldConnection ! CloseConnection(immediate = true)
       })
@@ -244,14 +248,14 @@ final class RedisConnectionActor(
       val initBuffer = ByteBuffer.allocate(initBatch.rawCommandPacks.encodedSize)
       // schedule a Cancellable RetryInit in case we do not receive a response for our request
       val scheduledRetry = system.scheduler.scheduleOnce(config.initResponseTimeout, self, RetryInit(retryStrategy.next))
-      new ReplyCollector(initBatch.rawCommandPacks, initBuffer, onInitResult(_, retryStrategy))
-        .sendEmptyReplyOr { collector =>
+      new ReplyCollector(initBatch.rawCommandPacks, initBuffer, onInitResult(_, retryStrategy)).sendEmptyReplyOr {
+        collector =>
           flip(initBuffer)
           val data = ByteString(initBuffer)
           logWrite(data)
           connection ! data
           become(initializing(collector, retryStrategy, scheduledRetry))
-        }
+      }
     }
 
     def initializing(collector: ReplyCollector, retryStrategy: RetryStrategy, scheduledRetry: Cancellable): Receive = {
@@ -269,7 +273,8 @@ final class RedisConnectionActor(
       case data: ByteString =>
         logReceived(data)
         scheduledRetry.cancel()
-        try decoder.decodeMore(data)(collector.processMessage(_, this)) catch {
+        try decoder.decodeMore(data)(collector.processMessage(_, this))
+        catch {
           case NonFatal(cause) =>
             // TODO: is there a possibility to NOT receive WriteAck up to this point? currently assuming that no
             onInitResult(PacksResult.Failure(cause), retryStrategy)
@@ -295,13 +300,14 @@ final class RedisConnectionActor(
         writeIfPossible()
       } catch {
         // https://github.com/antirez/redis/issues/4624
-        case e: ErrorReplyException if e.reply.errorCode == "LOADING" => strategy.nextRetry match {
-          case Opt((delay, nextStrategy)) =>
-            val delayMsg = if (delay > Duration.Zero) s" waiting $delay before" else ""
-            log.warning(s"Redis is loading the dataset in memory,$delayMsg retrying initialization...")
-            system.scheduler.scheduleOnce(delay, self, RetryInit(nextStrategy))
-          case Opt.Empty => failInit(e)
-        }
+        case e: ErrorReplyException if e.reply.errorCode == "LOADING" =>
+          strategy.nextRetry match {
+            case Opt((delay, nextStrategy)) =>
+              val delayMsg = if (delay > Duration.Zero) s" waiting $delay before" else ""
+              log.warning(s"Redis is loading the dataset in memory,$delayMsg retrying initialization...")
+              system.scheduler.scheduleOnce(delay, self, RetryInit(nextStrategy))
+            case Opt.Empty => failInit(e)
+          }
         case NonFatal(cause) => failInit(cause)
       }
 
@@ -355,7 +361,7 @@ final class RedisConnectionActor(
         become(watchedReady)
       case IncomingPacks(packs) =>
         packs.reply(PacksResult.Failure(cause))
-      case Release => //ignore
+      case Release => // ignore
       case WriteAck =>
         waitingForAck = false
       case cc: ConnectionClosed =>
@@ -371,16 +377,18 @@ final class RedisConnectionActor(
 
     def onMoreData(data: ByteString, sender: ActorRef): Unit = {
       logReceived(data)
-      try decoder.decodeMore(data) { msg =>
-        collectors.peekFirst() match {
-          // no collectors registered, assuming this is a pub/sub message
-          case null => onPubSubEvent(msg)
-          case collector =>
-            if (collector.processMessage(msg, this)) {
-              collectors.removeFirst()
-            }
+      try
+        decoder.decodeMore(data) { msg =>
+          collectors.peekFirst() match {
+            // no collectors registered, assuming this is a pub/sub message
+            case null => onPubSubEvent(msg)
+            case collector =>
+              if (collector.processMessage(msg, this)) {
+                collectors.removeFirst()
+              }
+          }
         }
-      } catch {
+      catch {
         case NonFatal(cause) => close(cause, stopSelf = false)
       } finally {
         sender ! ReadAck
@@ -390,7 +398,7 @@ final class RedisConnectionActor(
     def onPubSubEvent(msg: RedisMsg): Unit =
       for {
         receiver <- subscribed
-        event <- Opt(msg).collect({ case vm: ValidRedisMsg => vm }).collect(ReplyDecoders.pubSubEvent)
+        event <- Opt(msg).collect { case vm: ValidRedisMsg => vm }.collect(ReplyDecoders.pubSubEvent)
       } {
         receiver ! event
         event match {
@@ -420,7 +428,7 @@ final class RedisConnectionActor(
         val startingReservation = queuedToWrite.peekLast.reserve
         if (unwatch) {
           queuedToWrite.addFirst(QueuedPacks(RedisApi.Raw.BinaryTyped.unwatch, Opt.Empty, reserve = false))
-          unwatch = false //TODO: what if UNWATCH fails?
+          unwatch = false // TODO: what if UNWATCH fails?
         }
 
         var bufferSize = 0
@@ -457,8 +465,7 @@ final class RedisConnectionActor(
               // just encode, we don't expect response
               RedisMsg.encode(pubsub.encoded, writeBuffer)
             case packs =>
-              new ReplyCollector(packs, writeBuffer, queued.reply)
-                .sendEmptyReplyOr(collectors.addLast)
+              new ReplyCollector(packs, writeBuffer, queued.reply).sendEmptyReplyOr(collectors.addLast)
           }
         }
 
@@ -624,7 +631,7 @@ object RedisConnectionActor {
         case null => Opt(PacksResult.Empty)
         case prep: ReplyPreprocessor =>
           prep.preprocess(message, state).map(PacksResult.Single.apply)
-        case queue: mutable.Queue[ReplyPreprocessor@unchecked] =>
+        case queue: mutable.Queue[ReplyPreprocessor @unchecked] =>
           queue.front.preprocess(message, state).flatMap { preprocessedMsg =>
             if (replies == null) {
               replies = mutable.ArrayBuilder.make[RedisReply]
@@ -647,7 +654,7 @@ object RedisConnectionActor {
       preprocessors match {
         case null => preprocessors = preprocessor
         case prep: ReplyPreprocessor => preprocessors = mutable.Queue(prep, preprocessor)
-        case queue: mutable.Queue[ReplyPreprocessor@unchecked] => queue += preprocessor
+        case queue: mutable.Queue[ReplyPreprocessor @unchecked] => queue += preprocessor
       }
   }
 

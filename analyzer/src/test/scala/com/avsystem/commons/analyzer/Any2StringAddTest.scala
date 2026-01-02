@@ -5,11 +5,13 @@ import org.scalatest.funsuite.AnyFunSuite
 
 final class Any2StringAddTest extends AnyFunSuite with AnalyzerTest {
   test("any2stringadd should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |val any: Any = ???
              |any + "fag"
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("toString should not be rejected") {
@@ -22,8 +24,7 @@ final class Any2StringAddTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("string interpolation should not be rejected") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |val any: Any = ???
              |s"$${any}fag"
              |""".stripMargin)

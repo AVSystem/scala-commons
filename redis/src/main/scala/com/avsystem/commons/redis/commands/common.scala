@@ -24,11 +24,10 @@ object Cursor {
 }
 
 abstract class ParsedInfo(info: String, attrSeparator: String, nameValueSeparator: String) {
-  protected val attrMap: BMap[String, String] = mutable.HashMap() ++
-    info.split(attrSeparator).iterator.map { attr =>
-      val Array(name, value) = attr.split(nameValueSeparator, 2)
-      (name, value)
-    }
+  protected val attrMap: BMap[String, String] = mutable.HashMap() ++ info.split(attrSeparator).iterator.map { attr =>
+    val Array(name, value) = attr.split(nameValueSeparator, 2)
+    (name, value)
+  }
 
   override def toString: String = info
 }

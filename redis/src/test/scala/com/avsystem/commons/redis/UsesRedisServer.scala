@@ -6,9 +6,7 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/**
-  * Author: ghik
-  * Created: 14/04/16.
+/** Author: ghik Created: 14/04/16.
   */
 trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: Suite =>
   def port: Int = 7000
@@ -24,14 +22,20 @@ trait UsesRedisServer extends BeforeAndAfterAll with RedisProcessUtils { this: S
 
     redisProcess = Await.result(
       launchRedis(
-        "--daemonize", "no",
-        "--port", port.toString,
-        "--tls-port", tlsPort.toString,
-        "--tls-cert-file", "./tls/redis.crt",
-        "--tls-key-file", "./tls/redis.key",
-        "--tls-ca-cert-file", "./tls/ca.crt"
+        "--daemonize",
+        "no",
+        "--port",
+        port.toString,
+        "--tls-port",
+        tlsPort.toString,
+        "--tls-cert-file",
+        "./tls/redis.crt",
+        "--tls-key-file",
+        "./tls/redis.key",
+        "--tls-ca-cert-file",
+        "./tls/ca.crt",
       ),
-      10.seconds
+      10.seconds,
     )
   }
 

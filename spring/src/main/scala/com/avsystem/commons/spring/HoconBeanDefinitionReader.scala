@@ -13,8 +13,7 @@ import org.springframework.core.io.Resource
 import java.{util => ju}
 import scala.annotation.nowarn
 
-class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
-  extends AbstractBeanDefinitionReader(registry) {
+class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends AbstractBeanDefinitionReader(registry) {
 
   import com.avsystem.commons.spring.HoconBeanDefinitionReader.Keys._
   import com.typesafe.config.ConfigValueType._
@@ -24,12 +23,12 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
       implicitly[HoconType[T]].get(value)
   }
 
-  private val autowireMapping = AutowireMapping.withDefault {
-    v => throw new IllegalArgumentException(s"Invalid value $v for $AutowireAttr attribute")
+  private val autowireMapping = AutowireMapping.withDefault { v =>
+    throw new IllegalArgumentException(s"Invalid value $v for $AutowireAttr attribute")
   }
 
-  private val dependencyCheckMapping = DependencyCheckMapping.withDefault {
-    v => throw new IllegalArgumentException(s"Invalid value $v for $DependencyCheckAttr attribute")
+  private val dependencyCheckMapping = DependencyCheckMapping.withDefault { v =>
+    throw new IllegalArgumentException(s"Invalid value $v for $DependencyCheckAttr attribute")
   }
 
   private def setup[T](t: T)(setupFunc: T => Any) = {
@@ -37,9 +36,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     t
   }
 
-  private def iterate(obj: ConfigObject)
-    (attrFun: (String, ConfigValue) => Any)
-    (propFun: (String, ConfigValue) => Any) =
+  private def iterate(obj: ConfigObject)(attrFun: (String, ConfigValue) => Any)(propFun: (String, ConfigValue) => Any) =
     obj.asScala.foreach {
       case (key, _) if key.startsWith("_") =>
       case (key, value) if key.startsWith("%") => attrFun(key, value)
@@ -50,12 +47,18 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     required: Set[String] = Set.empty,
     requiredAny: Set[String] = Set.empty,
     allowed: Set[String] = Set.empty,
-    props: Boolean = false
-  )(obj: ConfigObject): Unit = {
-    require(required.forall(obj.containsKey),
-      s"Attributes ${required.mkString(", ")} must be present in object at ${obj.origin.description}")
-    require(requiredAny.isEmpty || requiredAny.exists(obj.containsKey),
-      s"At least one of ${requiredAny.mkString(", ")} must be present in object at ${obj.origin.description}")
+    props: Boolean = false,
+  )(
+    obj: ConfigObject
+  ): Unit = {
+    require(
+      required.forall(obj.containsKey),
+      s"Attributes ${required.mkString(", ")} must be present in object at ${obj.origin.description}",
+    )
+    require(
+      requiredAny.isEmpty || requiredAny.exists(obj.containsKey),
+      s"At least one of ${requiredAny.mkString(", ")} must be present in object at ${obj.origin.description}",
+    )
     val allAllowed = required ++ requiredAny ++ allowed
     iterate(obj) { (key, value) =>
       if (!allAllowed.contains(key))
@@ -161,11 +164,10 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     }
   }
 
-  private def readRawList(list: ConfigList) = {
+  private def readRawList(list: ConfigList) =
     setup(new ManagedList[Any]) { ml =>
       ml.addAll(list.asScala.map(read).asJavaCollection)
     }
-  }
 
   private def readMap(obj: ConfigObject) = {
     validateObj(allowed = Set(MergeAttr, KeyTypeAttr, ValueTypeAttr, EntriesAttr), props = true)(obj)
@@ -180,8 +182,8 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
         case _ =>
           throw new IllegalArgumentException(s"Required an object at ${obj.origin.description}")
       }
-      getProps(obj).foreach {
-        case (key, value) => mm.put(key, read(value))
+      getProps(obj).foreach { case (key, value) =>
+        mm.put(key, read(value))
       }
     }
   }
@@ -231,8 +233,8 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     bd.setLazyInit(obj.get(LazyInitAttr).as[Option[Boolean]].getOrElse(false))
     obj.get(LookupMethodsAttr).as[Option[ConfigObject]].foreach { obj =>
       validateObj(props = true)(obj)
-      getProps(obj).foreach {
-        case (key, value) => bd.getMethodOverrides.addOverride(new LookupOverride(key, value.as[String]))
+      getProps(obj).foreach { case (key, value) =>
+        bd.getMethodOverrides.addOverride(new LookupOverride(key, value.as[String]))
       }
     }
     obj.get(MetaAttr).as[Option[ConfigObject]].getOrElse(ConfigFactory.empty.root).asScala.foreach {
@@ -243,19 +245,19 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     obj.get(QualifiersAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach { obj =>
       bd.addQualifier(readQualifier(obj))
     }
-    obj.get(ReplacedMethodsAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach { obj =>
-      bd.getMethodOverrides.addOverride(readReplacedMethod(obj))
+    obj.get(ReplacedMethodsAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach {
+      obj =>
+        bd.getMethodOverrides.addOverride(readReplacedMethod(obj))
     }
     obj.get(ScopeAttr).as[Option[String]].foreach(bd.setScope)
 
     val construct = obj.get(ConstructAttr).as[Option[Boolean]].getOrElse(false)
-    getProps(obj).foreach {
-      case (key, value) =>
-        if (construct) {
-          addConstructorArg(readConstructorArg(value, forcedName = key))
-        } else {
-          propertyValues.addPropertyValue(readPropertyValue(key, value))
-        }
+    getProps(obj).foreach { case (key, value) =>
+      if (construct) {
+        addConstructorArg(readConstructorArg(value, forcedName = key))
+      } else {
+        propertyValues.addPropertyValue(readPropertyValue(key, value))
+      }
     }
     bd
   }
@@ -264,8 +266,8 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     validateObj(allowed = Set(TypeAttr, ValueAttr), props = true)(obj)
     val acq = new AutowireCandidateQualifier(obj.get(TypeAttr).as[Option[String]].getOrElse(classOf[Qualifier].getName))
     obj.get(ValueAttr).as[Option[String]].foreach(acq.setAttribute(AutowireCandidateQualifier.VALUE_KEY, _))
-    getProps(obj).foreach {
-      case (key, value) => acq.setAttribute(key, value.as[String])
+    getProps(obj).foreach { case (key, value) =>
+      acq.setAttribute(key, value.as[String])
     }
     acq
   }
@@ -273,11 +275,16 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   private def readReplacedMethod(obj: ConfigObject) = {
     validateObj(required = Set(NameAttr, ReplacerAttr), allowed = Set(ArgTypesAttr))(obj)
     val replaceOverride = new ReplaceOverride(obj.get(NameAttr).as[String], obj.get(ReplacerAttr).as[String])
-    obj.get(ArgTypesAttr).as[Option[ju.List[String]]].getOrElse(ju.Collections.emptyList).asScala.foreach(replaceOverride.addTypeIdentifier)
+    obj
+      .get(ArgTypesAttr)
+      .as[Option[ju.List[String]]]
+      .getOrElse(ju.Collections.emptyList)
+      .asScala
+      .foreach(replaceOverride.addTypeIdentifier)
     replaceOverride
   }
 
-  private def readConstructorArgs(value: ConfigValue) = {
+  private def readConstructorArgs(value: ConfigValue) =
     value.as[Option[Either[ConfigList, ConfigObject]]] match {
       case Some(Left(list)) =>
         list.iterator.asScala.zipWithIndex.map { case (configValue, idx) =>
@@ -291,12 +298,11 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
       case None =>
         Iterator.empty
     }
-  }
 
   private def readConstructorArg(
     value: ConfigValue,
     forcedIndex: OptArg[Int] = OptArg.Empty,
-    forcedName: OptArg[String] = OptArg.Empty
+    forcedName: OptArg[String] = OptArg.Empty,
   ) = value match {
     case ValueDefinition(obj) =>
       validateObj(required = Set(ValueAttr), allowed = Set(IndexAttr, TypeAttr, NameAttr))(obj)
@@ -325,14 +331,13 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
 
   private def readBeans(obj: ConfigObject) = {
     validateObj(props = true)(obj)
-    val beanDefs = getProps(obj).iterator.flatMap {
-      case (key, value) =>
-        try {
-          value.as[Option[ConfigObject]].map(obj => (key, readBean(obj)))
-        } catch {
-          case e: Exception => throw new RuntimeException(
-            s"Could not read definition of bean $key at ${value.origin.description}", e)
-        }
+    val beanDefs = getProps(obj).iterator.flatMap { case (key, value) =>
+      try {
+        value.as[Option[ConfigObject]].map(obj => (key, readBean(obj)))
+      } catch {
+        case e: Exception =>
+          throw new RuntimeException(s"Could not read definition of bean $key at ${value.origin.description}", e)
+      }
     }.toVector
     beanDefs.foreach((registry.registerBeanDefinition _).tupled)
     beanDefs.size
@@ -340,22 +345,23 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
 
   private def readAliases(obj: ConfigObject): Unit = {
     validateObj(props = true)(obj)
-    getProps(obj).foreach {
-      case (key, value) => value.as[Option[String]].foreach(registry.registerAlias(_, key))
+    getProps(obj).foreach { case (key, value) =>
+      value.as[Option[String]].foreach(registry.registerAlias(_, key))
     }
   }
 
-  private def readConditionals(config: Config): Config = {
+  private def readConditionals(config: Config): Config =
     if (!config.hasPath(Conditionals)) config
-    else config.getList(Conditionals).asScala.foldLeft(config.withoutPath(Conditionals)) { (currentConfig, conditionalObject) =>
-      val props = getProps(conditionalObject.as[ConfigObject])
+    else
+      config.getList(Conditionals).asScala.foldLeft(config.withoutPath(Conditionals)) {
+        (currentConfig, conditionalObject) =>
+          val props = getProps(conditionalObject.as[ConfigObject])
 
-      if (props(Condition).as[Boolean])
-        readConditionals(props(Config).as[Config]).withFallback(currentConfig)
-      else
-        currentConfig
-    }
-  }
+          if (props(Condition).as[Boolean])
+            readConditionals(props(Config).as[Config]).withFallback(currentConfig)
+          else
+            currentConfig
+      }
 
   def loadBeanDefinitions(resourceConfig: Config): Int = {
     val config = readConditionals(resourceConfig)

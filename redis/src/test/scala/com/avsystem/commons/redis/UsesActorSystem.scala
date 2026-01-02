@@ -9,9 +9,7 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/**
-  * Author: ghik
-  * Created: 14/04/16.
+/** Author: ghik Created: 14/04/16.
   */
 trait UsesActorSystem extends BeforeAndAfterAll with PatienceConfiguration { this: Suite =>
   implicit lazy val actorSystem: ActorSystem = ActorSystem()
@@ -26,7 +24,8 @@ trait UsesActorSystem extends BeforeAndAfterAll with PatienceConfiguration { thi
   }
 
   def wait(duration: FiniteDuration): Future[Unit] =
-    if (duration == Duration.Zero) Future.successful(()) else {
+    if (duration == Duration.Zero) Future.successful(())
+    else {
       val promise = Promise[Unit]()
       actorSystem.scheduler.scheduleOnce(duration)(promise.success(()))
       promise.future

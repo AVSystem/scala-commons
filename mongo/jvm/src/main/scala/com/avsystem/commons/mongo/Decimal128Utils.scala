@@ -17,7 +17,8 @@ object Decimal128Utils {
   final val BigIntTen = new JBigInteger("10")
 
   def fromBigDecimal(value: BigDecimal): Opt[Decimal128] =
-    try fromBigDecimal(value.bigDecimal, value.signum == -1).opt catch {
+    try fromBigDecimal(value.bigDecimal, value.signum == -1).opt
+    catch {
       case Decimal128FormatException => Opt.Empty
     }
 
@@ -81,8 +82,7 @@ object Decimal128Utils {
         val multiplier = BigIntTen.pow(diff)
         value = new JBigDecimal(initialValue.unscaledValue.multiply(multiplier), initialValue.scale + diff)
       }
-    }
-    else if (-initialValue.scale < MinExponent) {
+    } else if (-initialValue.scale < MinExponent) {
       // Increasing a very negative exponent may require decreasing precision, which is rounding
       // Only round exactly (by removing precision that is all zeroes).  An exception is thrown if the rounding would be inexact:
       // Exact:     .000...0011000  => 11000E-6177  => 1100E-6176  => .000001100
@@ -92,8 +92,7 @@ object Decimal128Utils {
       val divisor =
         if (undiscardedPrecision == 0) BigIntOne else BigIntTen.pow(diff)
       value = new JBigDecimal(initialValue.unscaledValue.divide(divisor), initialValue.scale - diff)
-    }
-    else {
+    } else {
       value = initialValue.round(MathContext.DECIMAL128)
       val extraPrecision = initialValue.precision - value.precision
       if (extraPrecision > 0) { // Again, only round exactly

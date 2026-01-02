@@ -13,6 +13,7 @@ import scala.annotation.nowarn
 import com.google.common.hash.Hashing
 
 trait KeyedScriptingApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/eval EVAL]] */
   def eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     execute(new Eval(script, keys, args))
@@ -41,10 +42,9 @@ trait KeyedScriptingApi extends ApiSubset {
 }
 
 trait RecoverableKeyedScriptingApi extends RecoverableApiSubset with KeyedScriptingApi {
-  /**
-    * Tries to execute [[http://redis.io/commands/evalsha EVALSHA]]
-    * and falls back to [[http://redis.io/commands/eval EVAL]]
-    * if script isn't loaded yet.
+
+  /** Tries to execute [[http://redis.io/commands/evalsha EVALSHA]] and falls back to
+    * [[http://redis.io/commands/eval EVAL]] if script isn't loaded yet.
     */
   def evalshaOrEval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     recoverWith(evalsha(script, keys, args)) {
@@ -54,6 +54,7 @@ trait RecoverableKeyedScriptingApi extends RecoverableApiSubset with KeyedScript
 }
 
 trait NodeScriptingApi extends KeyedScriptingApi {
+
   /** [[http://redis.io/commands/script-exists SCRIPT EXISTS]] */
   def scriptExists(hash: Sha1): Result[Boolean] =
     execute(new ScriptExists(hash.single).map(_.head))
@@ -62,8 +63,8 @@ trait NodeScriptingApi extends KeyedScriptingApi {
   def scriptExists(hash: Sha1, hashes: Sha1*): Result[Seq[Boolean]] =
     execute(new ScriptExists(hash +:: hashes))
 
-  /** Executes [[http://redis.io/commands/script-exists SCRIPT EXISTS]]
-    * NOTE: `hashes` CAN be empty, Redis accepts it */
+  /** Executes [[http://redis.io/commands/script-exists SCRIPT EXISTS]] NOTE: `hashes` CAN be empty, Redis accepts it
+    */
   def scriptExists(hashes: Iterable[Sha1]): Result[Seq[Boolean]] =
     execute(new ScriptExists(hashes))
 
@@ -84,7 +85,7 @@ trait NodeScriptingApi extends KeyedScriptingApi {
     val encoded: Encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
 
     override def immediateResult: Opt[ISeq[Boolean]] =
-      if(hashes.isEmpty) Opt(Nil) else Opt.Empty
+      if (hashes.isEmpty) Opt(Nil) else Opt.Empty
   }
 
   private object ScriptFlush extends RedisUnitCommand with NodeCommand {
@@ -102,6 +103,7 @@ trait NodeScriptingApi extends KeyedScriptingApi {
 }
 
 trait ConnectionScriptingApi extends NodeScriptingApi {
+
   /** Executes [[http://redis.io/commands/script-debug SCRIPT DEBUG]] */
   def scriptDebug(mode: DebugMode): Result[Unit] =
     execute(new ScriptDebug(mode))

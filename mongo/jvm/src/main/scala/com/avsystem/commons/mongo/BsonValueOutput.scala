@@ -15,7 +15,7 @@ object BsonValueOutput {
 
 final class BsonValueOutput(
   receiver: BsonValue => Unit = _ => (),
-  override val legacyOptionEncoding: Boolean = false
+  override val legacyOptionEncoding: Boolean = false,
 ) extends BsonOutput {
 
   private var _value: Opt[BsonValue] = Opt.empty
@@ -71,8 +71,7 @@ final class BsonValueOutput(
     setValue(bsonValue)
 }
 
-final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncoding: Boolean)
-  extends ListOutput {
+final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncoding: Boolean) extends ListOutput {
   private val array = new BsonArray()
 
   override def writeElement(): BsonOutput =
@@ -81,8 +80,7 @@ final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncodin
   override def finish(): Unit = receiver(array)
 }
 
-final class BsonValueObjectOutput(receiver: BsonDocument => Unit, legacyOptionEncoding: Boolean)
-  extends ObjectOutput {
+final class BsonValueObjectOutput(receiver: BsonDocument => Unit, legacyOptionEncoding: Boolean) extends ObjectOutput {
   private val doc = new BsonDocument()
 
   override def writeField(key: String): BsonOutput =

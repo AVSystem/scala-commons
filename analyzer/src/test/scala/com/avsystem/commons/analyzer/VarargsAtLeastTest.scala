@@ -5,12 +5,13 @@ import org.scalatest.funsuite.AnyFunSuite
 
 final class VarargsAtLeastTest extends AnyFunSuite with AnalyzerTest {
   test("too few varargs parameters should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |import com.avsystem.commons.analyzer.TestUtils
              |
              |TestUtils.need3Params(1, 2)
-             |""".stripMargin
+             |""".stripMargin,
     )
   }
 

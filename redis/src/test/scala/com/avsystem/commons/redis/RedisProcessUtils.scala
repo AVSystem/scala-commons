@@ -6,9 +6,7 @@ import org.scalatest.Suite
 
 import scala.sys.process._
 
-/**
-  * Author: ghik
-  * Created: 27/06/16.
+/** Author: ghik Created: 27/06/16.
   */
 trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
   def redisHome: Opt[String] = sys.env.getOpt("REDIS_HOME")
@@ -35,22 +33,21 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
     var pid = -1
     var nodeId: Opt[NodeId] = Opt.Empty
     val passArgs = password.fold(Seq.empty[String])(p => Seq("--requirepass", p))
-    val process = (runCommand ++: inRedisHome(executable) +: arguments ++: passArgs).run(
-      ProcessLogger { line =>
-        actorSystem.log.debug(line)
-        line match {
-          case PidRegex(pidStr) =>
-            pid = pidStr.toInt
-          case NodeLogRegex(rawNodeId) =>
-            nodeId = NodeId(rawNodeId).opt
-          case SentinelIdRegex(rawSentinelId) =>
-            nodeId = NodeId(rawSentinelId).opt
-            promise.success(())
-          case ReadyRegex() =>
-            promise.success(())
-          case _ =>
-        }
-      })
+    val process = (runCommand ++: inRedisHome(executable) +: arguments ++: passArgs).run(ProcessLogger { line =>
+      actorSystem.log.debug(line)
+      line match {
+        case PidRegex(pidStr) =>
+          pid = pidStr.toInt
+        case NodeLogRegex(rawNodeId) =>
+          nodeId = NodeId(rawNodeId).opt
+        case SentinelIdRegex(rawSentinelId) =>
+          nodeId = NodeId(rawSentinelId).opt
+          promise.success(())
+        case ReadyRegex() =>
+          promise.success(())
+        case _ =>
+      }
+    })
     promise.future.mapNow { _ =>
       if (pid < 0) {
         throw new IllegalStateException("Could not determine Redis process PID")

@@ -7,11 +7,11 @@ import org.scalatest.wordspec.AnyWordSpec
 class BidirectionalTest extends AnyWordSpec with Matchers {
   "Bidirectional" should {
     "create reversed partial function" in {
-      val (pf, rpf) = Bidirectional[Int, String]({
+      val (pf, rpf) = Bidirectional[Int, String] {
         case 1 => "1"
         case 2 => "2"
         case 3 => "3"
-      })
+      }
 
       pf(1) should be("1")
       pf(2) should be("2")
@@ -23,11 +23,11 @@ class BidirectionalTest extends AnyWordSpec with Matchers {
       case class A(i: Int)
       case class B(s: String)
 
-      val (ccpf, ccrpf) = Bidirectional[A, B]({
+      val (ccpf, ccrpf) = Bidirectional[A, B] {
         case A(1) => B("1")
         case A(2) => B("2")
         case A(3) => B("3")
-      })
+      }
 
       ccpf(A(1)) should be(B("1"))
       ccpf(A(2)) should be(B("2"))

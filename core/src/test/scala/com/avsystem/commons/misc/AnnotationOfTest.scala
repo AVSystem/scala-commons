@@ -14,8 +14,10 @@ case class genagg[T](value: T) extends AnnotationAggregate {
 class Subject
 
 abstract class SelfAnnots(implicit val annots: SelfAnnotations[genann[_]])
-@genagg(42) @genann("fuu") class Klass extends SelfAnnots
-@genagg(42) @genann("fuu") object Objekt extends SelfAnnots
+@genagg(42)
+@genann("fuu") class Klass extends SelfAnnots
+@genagg(42)
+@genann("fuu") object Objekt extends SelfAnnots
 
 class AnnotationOfTest extends AnyFunSuite {
   test("aggregate with generic") {

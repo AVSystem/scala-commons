@@ -3,9 +3,7 @@ package redis
 
 import org.scalatest.{BeforeAndAfterEach, Suite}
 
-/**
-  * Author: ghik
-  * Created: 29/07/16.
+/** Author: ghik Created: 29/07/16.
   */
 trait CommunicationLogging extends BeforeAndAfterEach { this: Suite =>
   protected val listener = new TestDebugListener

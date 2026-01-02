@@ -15,7 +15,7 @@ final case class Record(
   i: Int,
   l: List[String],
   d: Double,
-  @transientDefault s: String = ""
+  @transientDefault s: String = "",
 )
 object Record extends HasGenCodec[Record]
 
@@ -70,8 +70,9 @@ class CborInputOutputTest extends AnyFunSuite {
   private def roundtrip[T: GenCodec](
     value: T,
     binary: String,
-    keyCodec: CborKeyCodec = CborKeyCodec.Default
-  )(implicit pos: Position): Unit =
+    keyCodec: CborKeyCodec = CborKeyCodec.Default,
+  )(implicit pos: Position
+  ): Unit =
     test(s"${pos.lineNumber}: $value") {
       assertRoundtrip(value, binary, keyCodec)
     }
@@ -79,8 +80,9 @@ class CborInputOutputTest extends AnyFunSuite {
   private def assertRoundtrip[T: GenCodec](
     value: T,
     binary: String,
-    keyCodec: CborKeyCodec = CborKeyCodec.Default
-  )(implicit pos: Position): Unit = {
+    keyCodec: CborKeyCodec = CborKeyCodec.Default,
+  )(implicit pos: Position
+  ): Unit = {
     val baos = new ByteArrayOutputStream
     val output = new CborOutput(new DataOutputStream(baos), keyCodec, SizePolicy.Optional)
     GenCodec.write[T](output, value)
@@ -182,11 +184,12 @@ class CborInputOutputTest extends AnyFunSuite {
       case n => output.writeString(n)
     }
     def readFieldKey(input: CborInput): String = input.readInitialByte().majorType match {
-      case MajorType.Unsigned | MajorType.Negative => input.readInt() match {
-        case -1 => "a"
-        case 0 => "b"
-        case n => throw new ReadFailure(s"unknown CBOR field label: $n")
-      }
+      case MajorType.Unsigned | MajorType.Negative =>
+        input.readInt() match {
+          case -1 => "a"
+          case 0 => "b"
+          case n => throw new ReadFailure(s"unknown CBOR field label: $n")
+        }
       case _ =>
         input.readString()
     }
@@ -195,17 +198,17 @@ class CborInputOutputTest extends AnyFunSuite {
 
   roundtrip(
     Record(b = true, 42, List("a", "ajskd", "kek"), 3.14, "fuuuu"),
-    "A56162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F6173656675757575"
+    "A56162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F6173656675757575",
   )
 
   roundtrip(
     Record(b = true, 42, List("a", "ajskd", "kek"), 3.14),
-    "A46162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F"
+    "A46162F56169182A616C9F616165616A736B64636B656BFF6164FB40091EB851EB851F",
   )
 
   roundtrip(
     CustomKeysRecord(42, second = false, "foo", Map("bar" -> 0), Map(0 -> "bar")),
-    "A501182AF5F48301020363666F6F667374724D6170A1636261720066696E744D6170A10063626172"
+    "A501182AF5F48301020363666F6F667374724D6170A1636261720066696E744D6170A10063626172",
   )
 
   roundtrip(
@@ -213,9 +216,9 @@ class CborInputOutputTest extends AnyFunSuite {
       CustomKeysFlatUnion.IntCase(42),
       CustomKeysFlatUnion.StrCase("foo"),
       CustomKeysFlatUnion.BoolCase(bool = true),
-      CustomKeysFlatUnion.EmptyCase
+      CustomKeysFlatUnion.EmptyCase,
     ),
-    "9FA2000101182AA200020163666F6FA20068426F6F6C4361736564626F6F6CF5A10003FF"
+    "9FA2000101182AA200020163666F6FA20068426F6F6C4361736564626F6F6CF5A10003FF",
   )
 
   roundtrip(
@@ -223,14 +226,16 @@ class CborInputOutputTest extends AnyFunSuite {
       CustomKeysNestedUnion.IntCase(42),
       CustomKeysNestedUnion.StrCase("foo"),
       CustomKeysNestedUnion.BoolCase(bool = true),
-      CustomKeysNestedUnion.EmptyCase
+      CustomKeysNestedUnion.EmptyCase,
     ),
-    "9FA101A101182AA102A10163666F6FA168426F6F6C43617365A164626F6F6CF5A103A0FF"
+    "9FA101A101182AA102A10163666F6FA168426F6F6C43617365A164626F6F6CF5A103A0FF",
   )
 
   test("writing with CBOR optimized codec to non-CBOR output") {
-    assert(JsonStringOutput.write(CustomKeysRecord(42, second = true, "foo", Map("foo" -> 1), Map(1 -> "foo"))) ==
-      """{"first":42,"second":true,"third":"foo","strMap":{"foo":1},"intMap":{"1":"foo"}}""")
+    assert(
+      JsonStringOutput.write(CustomKeysRecord(42, second = true, "foo", Map("foo" -> 1), Map(1 -> "foo"))) ==
+        """{"first":42,"second":true,"third":"foo","strMap":{"foo":1},"intMap":{"1":"foo"}}"""
+    )
   }
 
   test("writing with IgnoreTransientDefaultMarker to CBOR output") {

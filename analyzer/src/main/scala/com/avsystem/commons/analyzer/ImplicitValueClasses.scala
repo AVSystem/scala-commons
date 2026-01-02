@@ -40,7 +40,7 @@ class ImplicitValueClasses(g: Global) extends AnalyzerRule(g, "implicitValueClas
 
       if (!inheritsAnyVal && !inheritsOtherClass && hasExactlyOneParam && !paramIsValueClass) {
         val isNestedClass =
-          //implicit classes are always nested classes, so we want to check if the outer class's an object
+          // implicit classes are always nested classes, so we want to check if the outer class's an object
           /*cd.symbol.isNestedClass &&*/ !cd.symbol.isStatic
 
         val message = "Implicit classes should always extend AnyVal to become value classes" +

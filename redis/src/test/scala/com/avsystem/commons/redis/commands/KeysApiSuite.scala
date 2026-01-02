@@ -4,10 +4,7 @@ package redis.commands
 import com.avsystem.commons.redis.ClusterUtils.keyWithSameSlotAs
 import com.avsystem.commons.redis._
 
-
-/**
-  * Author: ghik
-  * Created: 14/04/16.
+/** Author: ghik Created: 14/04/16.
   */
 trait KeyedKeysApiSuite extends CommandsSuite {
 
@@ -97,7 +94,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   apiTest("PTTL") {
     setup(
       set("key", "value"),
-      setex("exkey", Int.MaxValue, "value")
+      setex("exkey", Int.MaxValue, "value"),
     )
     pttl("???").assertEquals(Opt.Empty)
     pttl("key").assertEquals(Opt(Opt.Empty))
@@ -121,8 +118,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   }
 
   apiTest("SORT") {
-    sort("somelist",
-      SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
+    sort("somelist", SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
   apiTest("SORT with STORE") {
@@ -140,7 +136,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   apiTest("TTL") {
     setup(
       set("key", "value"),
-      setex("exkey", Int.MaxValue, "value")
+      setex("exkey", Int.MaxValue, "value"),
     )
     ttl("???").assertEquals(Opt.Empty)
     ttl("key").assertEquals(Opt(Opt.Empty))
@@ -188,8 +184,8 @@ trait NodeKeysApiSuite extends KeyedKeysApiSuite {
   }
 
   apiTest("SORT with GET") {
-    sortGet("somelist", Seq(FieldPattern("hash", "*")),
-      SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
+    sortGet("somelist", Seq(FieldPattern("hash", "*")), SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true)
+      .assert(_.isEmpty)
   }
 
   apiTest("SORT with BY") {

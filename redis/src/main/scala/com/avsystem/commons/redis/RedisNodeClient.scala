@@ -17,24 +17,27 @@ import java.util.concurrent.atomic.AtomicLong
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 
-/**
-  * Redis client implementation for a single Redis node using a connection pool. Connection pool size is constant
-  * and batches and operations are distributed over connections using round-robin scheme. Connections are automatically
+/** Redis client implementation for a single Redis node using a connection pool. Connection pool size is constant and
+  * batches and operations are distributed over connections using round-robin scheme. Connections are automatically
   * reconnected upon failure (possibly with an appropriate delay, see [[config.NodeConfig NodeConfig]] for details).
   */
-@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
+@deprecated(
+  "Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.",
+  "2.21.0",
+)
 final class RedisNodeClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: NodeConfig = NodeConfig(),
-  val managed: Boolean = false // true when used internally by RedisClusterClient or RedisMasterSlaveClient
-)(implicit system: ActorSystem) extends RedisClient with RedisNodeExecutor { client =>
+  val managed: Boolean = false, // true when used internally by RedisClusterClient or RedisMasterSlaveClient
+)(implicit system: ActorSystem
+) extends RedisClient
+    with RedisNodeExecutor { client =>
 
   private def newConnection(i: Int): ActorRef = {
     val connConfig: ConnectionConfig = config.connectionConfigs(i)
     // If this node connects to cluster master, initial connection attempt is not required to be successful
     // This is because in in RedisClusterClient only initial connections to seed nodes must be immediately successful
-    val props = Props(new RedisConnectionActor(address, connConfig))
-      .withDispatcher(ConfigDefaults.Dispatcher)
+    val props = Props(new RedisConnectionActor(address, connConfig)).withDispatcher(ConfigDefaults.Dispatcher)
     val connection = connConfig.actorName.fold(system.actorOf(props))(system.actorOf(props, _))
     connection ! RedisConnectionActor.Open(!managed, connInitPromises(i))
     connection
@@ -62,7 +65,10 @@ final class RedisNodeClient(
   private def onBlockingConnection[T](operation: ActorRef => Future[T]): Future[T] = {
     def operationWithRelease(connection: ActorRef): Future[T] =
       operation(connection).andThenNow { case _ => releaseBlockingConnection(connection) }
-    blockingConnectionQueue.pollFirst().opt.map(qc => operationWithRelease(qc.conn))
+    blockingConnectionQueue
+      .pollFirst()
+      .opt
+      .map(qc => operationWithRelease(qc.conn))
       .getOrElse(newBlockingConnection().flatMapNow(operationWithRelease))
   }
 
@@ -71,8 +77,8 @@ final class RedisNodeClient(
 
   private val overallInitFuture: Future[Any] = {
     implicit val executionContext: ExecutionContext = new RunInQueueEC
-    val initOpFuture = executeOp(connections(0), config.initOp)(config.initTimeout)
-      .transform(identity, new NodeInitializationFailure(_))
+    val initOpFuture =
+      executeOp(connections(0), config.initOp)(config.initTimeout).transform(identity, new NodeInitializationFailure(_))
     val res = Future.traverse(connInitPromises)(_.future).flatMap(_ => initOpFuture)
     res.onComplete {
       case Success(_) =>
@@ -96,15 +102,13 @@ final class RedisNodeClient(
       if (maxBlockMillis == 0)
         nextConnection().ask(packs)(timeout, Actor.noSender).mapNow { case pr: PacksResult => pr }
       else {
-        val adjTimeout = Timeout((maxBlockMillis.millis + 1.second) max timeout.duration)
+        val adjTimeout = Timeout((maxBlockMillis.millis + 1.second).max(timeout.duration))
         onBlockingConnection(_.ask(packs)(adjTimeout, Actor.noSender)).mapNow { case pr: PacksResult => pr }
       }
     }
 
-  /**
-    * Notifies the [[RedisNodeClient]] that its node is no longer a master in Redis Cluster and.
-    * The client stops itself as a result and fails any pending unsent requests with
-    * [[exception.NodeRemovedException]].
+  /** Notifies the [[RedisNodeClient]] that its node is no longer a master in Redis Cluster and. The client stops itself
+    * as a result and fails any pending unsent requests with [[exception.NodeRemovedException]].
     */
   private[redis] def nodeRemoved(): Unit = {
     val cause = new NodeRemovedException(address)
@@ -116,65 +120,57 @@ final class RedisNodeClient(
   def executionContext: ExecutionContext =
     system.dispatcher
 
-  /**
-    * Executes a [[RedisBatch]] on this client by sending its commands to the Redis node in a single network
-    * message (technically, a single `org.apache.pekko.io.Tcp.Write` message). Therefore it's also naturally guaranteed that
-    * all commands in a batch are executed on the same connection.
+  /** Executes a [[RedisBatch]] on this client by sending its commands to the Redis node in a single network message
+    * (technically, a single `org.apache.pekko.io.Tcp.Write` message). Therefore it's also naturally guaranteed that all
+    * commands in a batch are executed on the same connection.
     *
     * Note that even though connection used by [[RedisNodeClient]] are automatically reconnected, it's still possible
-    * that an error is returned for some batches that were executed around the time connection failure happened.
-    * To be precise, [[exception.ConnectionClosedException ConnectionClosedException]]
-    * is returned for batches that were sent through the connection but the connection failed before
-    * a response could be received. There is no way to safely retry such batches because it is unknown whether Redis
-    * node actually received and executed them or not.
+    * that an error is returned for some batches that were executed around the time connection failure happened. To be
+    * precise, [[exception.ConnectionClosedException ConnectionClosedException]] is returned for batches that were sent
+    * through the connection but the connection failed before a response could be received. There is no way to safely
+    * retry such batches because it is unknown whether Redis node actually received and executed them or not.
     *
-    * Execution of each command in the batch or the whole batch may fail due to following reasons:
-    * <ul>
-    * <li>[[exception.ForbiddenCommandException ForbiddenCommandException]] when trying to execute command not
-    * supported by this client type</li>
-    * <li>[[exception.ErrorReplyException ErrorReplyException]] when Redis server replies with an error for some command.
-    * In particular, if this client was obtained from [[RedisClusterClient]] then every keyed command may fail with
-    * cluster redirection. You can pattern-match redirection errors using [[RedirectionException]] extractor object.
-    * </li>
-    * <li>[[exception.UnexpectedReplyException UnexpectedReplyException]] when Redis server replies with something
-    * unexpected by a decoder of some command</li>
-    * <li>[[exception.ConnectionClosedException ConnectionClosedException]] when connection is closed or
-    * reset (the client reconnects automatically after connection failure but commands that were in the middle of
-    * execution may still fail)</li>
-    * <li>[[exception.WriteFailedException WriteFailedException]] when a network write
-    * failed</li>
+    * Execution of each command in the batch or the whole batch may fail due to following reasons: <ul>
+    * <li>[[exception.ForbiddenCommandException ForbiddenCommandException]] when trying to execute command not supported
+    * by this client type</li> <li>[[exception.ErrorReplyException ErrorReplyException]] when Redis server replies with
+    * an error for some command. In particular, if this client was obtained from [[RedisClusterClient]] then every keyed
+    * command may fail with cluster redirection. You can pattern-match redirection errors using [[RedirectionException]]
+    * extractor object. </li> <li>[[exception.UnexpectedReplyException UnexpectedReplyException]] when Redis server
+    * replies with something unexpected by a decoder of some command</li> <li>[[exception.ConnectionClosedException
+    * ConnectionClosedException]] when connection is closed or reset (the client reconnects automatically after
+    * connection failure but commands that were in the middle of execution may still fail)</li>
+    * <li>[[exception.WriteFailedException WriteFailedException]] when a network write failed</li>
     * <li>[[exception.NodeRemovedException NodeRemovedException]] when this client was obtained from
-    * [[RedisClusterClient]] and Redis node that it's connected to is no longer a master</li>
-    * </ul>
+    * [[RedisClusterClient]] and Redis node that it's connected to is no longer a master</li> </ul>
     */
   def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] =
-    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.responseTimeout)
-      .map(result => batch.decodeReplies(result))(config.decodeOn)
+    executeRaw(batch.rawCommandPacks.requireLevel(RawCommand.Level.Node, "NodeClient"))(config.responseTimeout).map(
+      result => batch.decodeReplies(result)
+    )(config.decodeOn)
 
-  /**
-    * Executes a [[RedisOp]] on this client. [[RedisOp]] is a sequence of dependent [[RedisBatch]]es,
-    * that requires an exclusive access to a single Redis connection. Typically, a [[RedisOp]] is a
-    * `WATCH`-`MULTI`-`EXEC` transaction (see [[RedisOp]] for more details).
+  /** Executes a [[RedisOp]] on this client. [[RedisOp]] is a sequence of dependent [[RedisBatch]]es, that requires an
+    * exclusive access to a single Redis connection. Typically, a [[RedisOp]] is a `WATCH`-`MULTI`-`EXEC` transaction
+    * (see [[RedisOp]] for more details).
     *
-    * Note that the client does not handle optimistic lock failures (which happen when watched key is modified by
-    * other client). An [[exception.OptimisticLockException OptimisticLockException]] is
-    * returned in such cases and you must recover from it manually.
+    * Note that the client does not handle optimistic lock failures (which happen when watched key is modified by other
+    * client). An [[exception.OptimisticLockException OptimisticLockException]] is returned in such cases and you must
+    * recover from it manually.
     *
     * Execution of a [[RedisOp]] may also fail for the same reasons as specified for [[RedisBatch]] in [[executeBatch]].
     * Be especially careful when using node clients obtained from cluster client.
     */
-  //TODO: executionConfig.decodeOn is ignored now
+  // TODO: executionConfig.decodeOn is ignored now
   def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
     ifReady(executeOp(nextConnection(), op)(executionConfig.responseTimeout))
 
   private def executeOp[A](connection: ActorRef, op: RedisOp[A])(implicit timeout: Timeout): Future[A] =
-    system.actorOf(Props(new RedisOperationActor(connection))).ask(op)
-      .mapNow({ case or: OpResult[A@unchecked] => or.get })
+    system.actorOf(Props(new RedisOperationActor(connection))).ask(op).mapNow { case or: OpResult[A @unchecked] =>
+      or.get
+    }
 
-  /**
-    * Waits until all Redis connections are initialized and `initOp` is executed.
-    * Note that you can call [[executeBatch]] and [[executeOp]] even if the client is not yet initialized -
-    * requests will be internally queued and executed after initialization is complete.
+  /** Waits until all Redis connections are initialized and `initOp` is executed. Note that you can call
+    * [[executeBatch]] and [[executeOp]] even if the client is not yet initialized - requests will be internally queued
+    * and executed after initialization is complete.
     */
   def initialized: Future[this.type] =
     overallInitFuture.mapNow(_ => this)

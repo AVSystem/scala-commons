@@ -21,13 +21,15 @@ object JsonStringInput {
     def afterElement(): Unit = ()
   }
 
-  class ParseException(msg: String, cause: Throwable = null)
-    extends ReadFailure(msg, cause)
+  class ParseException(msg: String, cause: Throwable = null) extends ReadFailure(msg, cause)
 }
 
 class JsonStringInput(
-  reader: JsonReader, options: JsonOptions = JsonOptions.Default, callback: AfterElement = AfterElementNothing
-) extends InputAndSimpleInput with AfterElement {
+  reader: JsonReader,
+  options: JsonOptions = JsonOptions.Default,
+  callback: AfterElement = AfterElementNothing,
+) extends InputAndSimpleInput
+    with AfterElement {
 
   private[this] val startIdx: Int = reader.parseValue()
   private[this] var endIdx: Int = _
@@ -38,7 +40,9 @@ class JsonStringInput(
   }
 
   private def expectedError(tpe: JsonType) =
-    throw new ParseException(s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue} ${reader.posInfo(startIdx)}")
+    throw new ParseException(
+      s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue} ${reader.posInfo(startIdx)}"
+    )
 
   private def checkedValue[T](jsonType: JsonType): T =
     if (reader.jsonType != jsonType) expectedError(jsonType)
@@ -63,7 +67,8 @@ class JsonStringInput(
       case JsonType.number | JsonType.string => reader.currentValue.asInstanceOf[String]
       case _ => expectedError(JsonType.number)
     }
-    try parse(str) catch {
+    try parse(str)
+    catch {
       case e: NumberFormatException =>
         throw new ParseException(s"Invalid number format: $str ${reader.posInfo(startIdx)}", e)
     }
@@ -192,8 +197,12 @@ class JsonStringInput(
 }
 
 final class JsonStringFieldInput(
-  val fieldName: String, reader: JsonReader, options: JsonOptions, callback: AfterElement
-) extends JsonStringInput(reader, options, callback) with FieldInput
+  val fieldName: String,
+  reader: JsonReader,
+  options: JsonOptions,
+  callback: AfterElement,
+) extends JsonStringInput(reader, options, callback)
+    with FieldInput
 
 final class JsonListInput(reader: JsonReader, options: JsonOptions, callback: AfterElement)
   extends ListInput with AfterElement {
@@ -323,8 +332,7 @@ final class JsonReader(val json: String) {
         val lineStart = idx + 1 - column
         val lineEnd = json.indexOf('\n', idx) |> (i => if (i == -1) json.length else i)
         s"(line $line, column $column) (line content: ${json.substring(lineStart, lineEnd)})"
-      }
-      else if (json.charAt(idx) == '\n') loop(idx + 1, line + 1, 1)
+      } else if (json.charAt(idx) == '\n') loop(idx + 1, line + 1, 1)
       else loop(idx + 1, line, column + 1)
     loop(0, 1, 1)
   }
@@ -409,7 +417,7 @@ final class JsonReader(val json: String) {
       parseDigits()
     }
 
-    //Double.MinPositiveValue.toString is 5e-324 in JS. Written by scientists, for scientists.
+    // Double.MinPositiveValue.toString is 5e-324 in JS. Written by scientists, for scientists.
     if (isNext('e') || isNext('E')) {
       advance()
       if (isNext('-') || isNext('+')) {
@@ -460,8 +468,8 @@ final class JsonReader(val json: String) {
     }
   }
 
-  /**
-    * @return startIndex
+  /** @return
+    *   startIndex
     */
   def parseValue(): Int = {
     @inline def update(newValue: Any, newTpe: JsonType): Unit = {
@@ -480,7 +488,8 @@ final class JsonReader(val json: String) {
       case '-' => update(parseNumber(), JsonType.number)
       case c if Character.isDigit(c) => update(parseNumber(), JsonType.number)
       case c => readFailure(s"Unexpected character: '${c.toChar}'")
-    } else readFailure("Unexpected EOF")
+    }
+    else readFailure("Unexpected EOF")
     startIndex
   }
 }

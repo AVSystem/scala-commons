@@ -17,8 +17,7 @@ trait DataRefDsl[E, T] {
   // called by .ref macro to ensure that the source type is not opaque and inner references are possible
   @macroPrivate def asAdtRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisRef[E, T] = SelfRef
 
-  /**
-    * A macro that interprets an anonymous function as a [[MongoPropertyRef]].
+  /** A macro that interprets an anonymous function as a [[MongoPropertyRef]].
     *
     * Let's define a MongoDB entity:
     * {{{
@@ -56,16 +55,16 @@ trait DataRefDsl[E, T] {
     *     Entity.ref(_.data.value)
     * }}}
     *
-    * When `T` is an `Option`, `Opt`, or similar `Option`-like type, the function may refer its `.get` method
-    * to return a reference to its inner value.
+    * When `T` is an `Option`, `Opt`, or similar `Option`-like type, the function may refer its `.get` method to return
+    * a reference to its inner value.
     *
     * {{{
     *   val dataRef: MongoPropertyRef[Entity, Data] =
     *     Entity.ref(_.dataOpt.get)
     * }}}
     *
-    * When `T` is a collection, the function may call its `apply` method to refer to an element at specific index.
-    * Also, `.head` may be used as an alias for `.apply(0)`.
+    * When `T` is a collection, the function may call its `apply` method to refer to an element at specific index. Also,
+    * `.head` may be used as an alias for `.apply(0)`.
     *
     * {{{
     *   val firstDataRef: MongoPropertyRef[Entity, Data] =
@@ -99,24 +98,24 @@ trait DataRefDsl[E, T] {
     *   object UnionEntity extends MongoEntityCompanion[UnionEntity]
     * }}}
     *
-    * The function passed to `.ref` macro may now refer to fields shared by all case classes
-    * (represented as abstract `def`s on the sealed trait):
+    * The function passed to `.ref` macro may now refer to fields shared by all case classes (represented as abstract
+    * `def`s on the sealed trait):
     *
     * {{{
     *   val idRef: MongoPropertyRef[UnionEntity, String] =
     *     UnionEntity.ref(_.id)
     * }}}
     *
-    * You may also access fields of individual case classes by "narrowing" the reference explicitly to one
-    * particular case class:
+    * You may also access fields of individual case classes by "narrowing" the reference explicitly to one particular
+    * case class:
     *
     * {{{
     *   val flagRef: MongoPropertyRef[UnionEntity, Boolean] =
     *     UnionEntity.ref(_.as[CaseOne].flag)
     * }}}
     *
-    * The same may be done for a subset of case classes sharing some common field.
-    * This subset must be expressed with an intermediate sealed trait, like `HasNumber` in the above example:
+    * The same may be done for a subset of case classes sharing some common field. This subset must be expressed with an
+    * intermediate sealed trait, like `HasNumber` in the above example:
     *
     * {{{
     *   val numberRef: MongoPropertyRef[UnionEntity, Int] =
@@ -129,13 +128,11 @@ trait DataRefDsl[E, T] {
     *   val deeplyNestedRef: MongoPropertyRef[UnionEntity, Int] =
     *     UnionEntity.ref(_.as[ThirdCase].data.complexData("key").head.get)
     * }}}
-    *
     */
   def ref[T0](fun: T => T0): MongoPropertyRef[E, T0] = macro MongoMacros.refImpl
 
-  /**
-    * Given a MongoDB union data type (defined with a sealed hierarchy with `@flatten` annotation), you can
-    * narrow it to one of its case classes or intermediate sealed traits.
+  /** Given a MongoDB union data type (defined with a sealed hierarchy with `@flatten` annotation), you can narrow it to
+    * one of its case classes or intermediate sealed traits.
     *
     * {{{
     *   @flatten sealed trait UnionEntity extends MongoEntity[UnionEntity] {
@@ -166,10 +163,9 @@ trait DataRefDsl[E, T] {
   @explicitGenerics
   def as[C <: T]: ThisRef[E, C] = macro MongoMacros.asSubtype[C]
 
-  /**
-    * Macro for obtaining a [[MongoDocumentFilter]] (condition) which is satisfied only by some specific subtype
-    * of an entity type. The entity must be a sealed trait/class and the subtype must be either one of its case classes
-    * or an intermediate sealed trait extended by some subset of its case classes.
+  /** Macro for obtaining a [[MongoDocumentFilter]] (condition) which is satisfied only by some specific subtype of an
+    * entity type. The entity must be a sealed trait/class and the subtype must be either one of its case classes or an
+    * intermediate sealed trait extended by some subset of its case classes.
     *
     * {{{
     *   @flatten sealed trait UnionEntity extends MongoEntity[UnionEntity] {
@@ -195,8 +191,7 @@ trait DataRefDsl[E, T] {
   @explicitGenerics
   def is[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isSubtype[C]
 
-  /**
-    * A negated version of [[is]].
+  /** A negated version of [[is]].
     */
   @explicitGenerics
   def isNot[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isNotSubtype[C]

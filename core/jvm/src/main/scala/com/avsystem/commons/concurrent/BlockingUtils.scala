@@ -13,27 +13,22 @@ abstract class BlockingUtils {
   def defaultTimeout: Duration = 60.seconds
   def defaultBufferSize: Int = 128
 
-  /**
-    * Default scheduler used to run `Task`s and `Observable`s.
-    * This scheduler is not meant for blocking code.
+  /** Default scheduler used to run `Task`s and `Observable`s. This scheduler is not meant for blocking code.
     */
   implicit def scheduler: Scheduler
 
-  /**
-    * Scheduler used for running blocking code.
+  /** Scheduler used for running blocking code.
     */
   def ioScheduler: Scheduler
 
-  /**
-    * Wraps blocking code into a [[Future]], making sure that blocking happens on an unbounded thread pool
-    * meant specifically for that purpose.
+  /** Wraps blocking code into a [[Future]], making sure that blocking happens on an unbounded thread pool meant
+    * specifically for that purpose.
     */
   def asFuture[T](blockingCode: => T): Future[T] =
     Future(blockingCode)(ioScheduler)
 
-  /**
-    * Wraps blocking code into a `Task`, making sure that blocking happens on an unbounded thread pool
-    * meant specifically for that purpose.
+  /** Wraps blocking code into a `Task`, making sure that blocking happens on an unbounded thread pool meant
+    * specifically for that purpose.
     */
   def asTask[T](blockingCode: => T): Task[T] =
     Task.eval(blockingCode).executeOn(ioScheduler, forceAsync = true)
@@ -70,7 +65,8 @@ abstract class BlockingUtils {
   def toIterator[T](observable: Observable[T], nextElementTimeout: Duration, bufferSize: Int): CloseableIterator[T] =
     new ObservableBlockingIterator[T](observable, nextElementTimeout.length, nextElementTimeout.unit, bufferSize)
 
-  def toIterator[T](observable: Observable[T], nextElementTimeout: Long, unit: TimeUnit, bufferSize: Int): CloseableIterator[T] =
+  def toIterator[T](observable: Observable[T], nextElementTimeout: Long, unit: TimeUnit, bufferSize: Int)
+    : CloseableIterator[T] =
     new ObservableBlockingIterator[T](observable, nextElementTimeout, unit, bufferSize)
 }
 

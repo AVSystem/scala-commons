@@ -15,9 +15,14 @@ trait RedisInfo {
   protected def indexedPrefixes: List[String] = Nil
 
   lazy val rawValues: BMap[String, String] =
-    mutable.LinkedHashMap() ++= Source.fromString(infoStr).getLines()
-      .map(_.trim).filterNot(l => l.isEmpty || l.startsWith("#"))
-      .map(l => l.split(":", 2)).map({ case Array(key, value) => (key, value) })
+    mutable.LinkedHashMap() ++=
+      Source
+        .fromString(infoStr)
+        .getLines()
+        .map(_.trim)
+        .filterNot(l => l.isEmpty || l.startsWith("#"))
+        .map(l => l.split(":", 2))
+        .map { case Array(key, value) => (key, value) }
 
   protected lazy val keysByPrefix: BMap[String, BSeq[String]] = {
     val result = new MHashMap[String, ListBuffer[String]]
@@ -35,20 +40,20 @@ trait RedisInfo {
   override def toString: String = infoStr
 }
 
-abstract class DefaultRedisInfo extends RedisInfo
-  with ServerInfo
-  with ClientsInfo
-  with MemoryInfo
-  with PersistenceInfo
-  with StatsInfo
-  with ReplicationInfo
-  with CpuInfo
-  with ClusterInfo
-  with KeyspaceInfo
+abstract class DefaultRedisInfo
+  extends RedisInfo
+    with ServerInfo
+    with ClientsInfo
+    with MemoryInfo
+    with PersistenceInfo
+    with StatsInfo
+    with ReplicationInfo
+    with CpuInfo
+    with ClusterInfo
+    with KeyspaceInfo
 object DefaultRedisInfo extends RedisInfoSection[DefaultRedisInfo]("default")
 
-case class FullRedisInfo(infoStr: String) extends DefaultRedisInfo
-  with CommandstatsInfo
+case class FullRedisInfo(infoStr: String) extends DefaultRedisInfo with CommandstatsInfo
 object FullRedisInfo extends RedisInfoSection[FullRedisInfo]("all")
 
 trait ServerInfo extends RedisInfo {
@@ -189,8 +194,9 @@ trait ReplicationInfo extends RedisInfo {
   def slaveReadonly: Opt[Boolean] = get("slave_read_only").map(_ == "1")
   def connectedSlaves: Opt[Int] = get("connected_slaves").map(_.toInt)
   def minSlavesGoodSlaves: Opt[Int] = get("min_slaves_good_slaves").map(_.toInt)
-  /**
-    * @param slaveId ranges from 0 to [[connectedSlaves]]-1
+
+  /** @param slaveId
+    *   ranges from 0 to [[connectedSlaves]]-1
     */
   def slaveInfo(slaveId: Int): Opt[SlaveInfo] = get(s"slave$slaveId").map(SlaveInfo.apply)
   def masterReplOffset: Opt[Long] = get("master_repl_offset").map(_.toLong)

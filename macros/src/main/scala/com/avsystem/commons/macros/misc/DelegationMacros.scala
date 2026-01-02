@@ -35,17 +35,19 @@ class DelegationMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
           val paramLists = mtpe.paramLists.map(_.map(paramSymbolToValDef))
           val resultTpeTree = treeForType(mtpe.finalResultType)
 
-          val result = if (ms.isGetter)
-            q"val $name: $resultTpeTree = $wrappedName.$name"
-          else
-            q"def $name[..$typeDefs](...$paramLists): $resultTpeTree = $wrappedName.$name[..$typeNames](...$paramNames)"
+          val result =
+            if (ms.isGetter)
+              q"val $name: $resultTpeTree = $wrappedName.$name"
+            else
+              q"def $name[..$typeDefs](...$paramLists): $resultTpeTree = $wrappedName.$name[..$typeNames](...$paramNames)"
 
           Some(result)
         } else {
           error(s"Can't delegate ${m.name} - only public defs and vals can be delegated")
           None
         }
-      }.toList
+      }
+      .toList
 
     q"""
       val $wrappedName = $source

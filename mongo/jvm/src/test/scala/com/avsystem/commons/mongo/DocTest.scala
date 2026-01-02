@@ -4,8 +4,8 @@ package mongo
 import org.bson.BsonString
 import org.scalatest.funsuite.AnyFunSuite
 
-/**
-  * @author MKej
+/** @author
+  *   MKej
   */
 class DocTest extends AnyFunSuite {
 

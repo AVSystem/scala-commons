@@ -61,7 +61,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
   test("nested transactions") {
     val batch = (
       get("nestedkey"),
-      set("nestedkey", "value").transaction
+      set("nestedkey", "value").transaction,
     ).sequence.transaction
 
     batch.assertEquals((Opt.Empty, true))
@@ -245,7 +245,7 @@ class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
 
   override def nodeConfig = super.nodeConfig.copy(
     poolSize = 1,
-    connectionConfigs = _ => ConnectionConfig(debugListener = listener)
+    connectionConfigs = _ => ConnectionConfig(debugListener = listener),
   )
 
   test("simple transaction with cleanup") {

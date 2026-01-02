@@ -1,12 +1,12 @@
 package com.avsystem.commons
 package analyzer
 
-
 import org.scalatest.funsuite.AnyFunSuite
 
 final class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
   test("simple") {
-    assertErrors(10,
+    assertErrors(
+      10,
       scala"""
              |import monix.eval.Task
              |
@@ -30,7 +30,7 @@ final class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
              |// no errors from these
              |Seq(1,2,3).map(_ => task)
              |val tsk = task
-             |""".stripMargin
+             |""".stripMargin,
     )
   }
 }

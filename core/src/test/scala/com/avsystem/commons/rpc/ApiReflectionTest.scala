@@ -9,7 +9,7 @@ class cool extends StaticAnnotation
 
 case class ApiInfo[T](
   @infer ts: TypeString[T],
-  @multi @mangleOverloads @rpcMethodMetadata methods: List[MethodInfo[_]]
+  @multi @mangleOverloads @rpcMethodMetadata methods: List[MethodInfo[_]],
 ) extends TypedMetadata[T] {
   def repr = s"${ts.value} {${methods.map(m => "\n  " + m.repr).mkString}\n}"
 }
@@ -23,16 +23,17 @@ case class MethodInfo[T](
   @reifyParamListCount paramListCount: Int,
   @multi @rpcTypeParamMetadata typeParams: List[TypeParamInfo],
   @multi @rpcParamMetadata params: List[ParamInfo[_]],
-  @forTypeParams @infer resultTs: List[TypeString[_]] => TypeString[T]
+  @forTypeParams @infer resultTs: List[TypeString[_]] => TypeString[T],
 ) extends TypedMetadata[T] {
 
   val paramLists: List[List[ParamInfo[_]]] = {
     def extract(listIdx: Int, params: List[ParamInfo[_]]): List[List[ParamInfo[_]]] =
       if (listIdx == paramListCount) Nil
-      else params.span(_.pos.indexOfList == listIdx) match {
-        case (nextList, rest) =>
-          nextList :: extract(listIdx + 1, rest)
-      }
+      else
+        params.span(_.pos.indexOfList == listIdx) match {
+          case (nextList, rest) =>
+            nextList :: extract(listIdx + 1, rest)
+        }
     extract(0, params)
   }
 
@@ -40,7 +41,7 @@ case class MethodInfo[T](
     val typeParamsRepr = typeParams.map(_.name).mkStringOrEmpty("[", ", ", "]")
     val paramsRepr = paramLists.map(_.map(_.repr(typeParams)).mkString("(", ", ", ")")).mkString
     val resultTypeString = resultTs(typeParams.map(_.typeString))
-    val coolRepr = if(cool) "@cool " else ""
+    val coolRepr = if (cool) "@cool " else ""
     s"$coolRepr${flags.baseDecl} $name$typeParamsRepr$paramsRepr: $resultTypeString"
   }
 }
@@ -55,7 +56,7 @@ case class ParamInfo[T](
   @reifyName name: String,
   @reifyPosition pos: ParamPosition,
   @reifyFlags flags: ParamFlags,
-  @forTypeParams @infer ts: List[TypeString[_]] => TypeString[T]
+  @forTypeParams @infer ts: List[TypeString[_]] => TypeString[T],
 ) extends TypedMetadata[T] {
   def repr(tparams: List[TypeParamInfo]): String = {
     val implicitMod = if (pos.indexInList == 0 && flags.isImplicit) "implicit " else ""
@@ -77,8 +78,7 @@ class SimpleApi {
 class ApiReflectionTest extends AnyFunSuite {
   test("String API JDK11") {
     assume(System.getProperty("java.specification.version") == "11")
-    assert(ApiInfo.materialize[String].repr ==
-      """String {
+    assert(ApiInfo.materialize[String].repr == """String {
         |  def length(): Int
         |  def isEmpty(): Boolean
         |  def charAt(x$1: Int): Char
@@ -137,14 +137,12 @@ class ApiReflectionTest extends AnyFunSuite {
         |  def intern(): String
         |  def repeat(x$1: Int): String
         |  final def +(x$1: Any): String
-        |}""".stripMargin
-    )
+        |}""".stripMargin)
   }
 
   test("String API JDK17") {
     assume(System.getProperty("java.specification.version") == "17")
-    assert(ApiInfo.materialize[String].repr ==
-      """String {
+    assert(ApiInfo.materialize[String].repr == """String {
         |  def length(): Int
         |  def isEmpty(): Boolean
         |  def charAt(x$1: Int): Char
@@ -210,13 +208,11 @@ class ApiReflectionTest extends AnyFunSuite {
         |  def describeConstable(): java.util.Optional[String]
         |  def resolveConstantDesc(x$1: java.lang.invoke.MethodHandles.Lookup): String
         |  final def +(x$1: Any): String
-        |}""".stripMargin
-    )
+        |}""".stripMargin)
   }
 
   test("Simple API") {
-    assert(ApiInfo.materialize[SimpleApi].repr ==
-      """com.avsystem.commons.rpc.SimpleApi {
+    assert(ApiInfo.materialize[SimpleApi].repr == """com.avsystem.commons.rpc.SimpleApi {
         |  final val Thing: String
         |  @cool lazy val CoolThing: Int
         |  def noParamLists: Int

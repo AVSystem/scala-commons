@@ -1,19 +1,20 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.mongo.{BsonGenCodecs, mongoId}
+import com.avsystem.commons.mongo.{mongoId, BsonGenCodecs}
 import com.avsystem.commons.serialization.{GenCodec, TransparentWrapping}
 import org.bson.types.ObjectId
 
 import scala.annotation.implicitNotFound
 
-/**
-  * Typeclass that distinguishes between manual-ID Mongo entities and automatic-ID Mongo entities.
-  * It is responsible for providing a [[MongoPropertyRef]] for ID of an entity.
+/** Typeclass that distinguishes between manual-ID Mongo entities and automatic-ID Mongo entities. It is responsible for
+  * providing a [[MongoPropertyRef]] for ID of an entity.
   */
-@implicitNotFound("Entity ${E} is invalid or has invalid ID type. " +
-  "Note: entities must extend either `MongoEntity` or `AutoIdMongoEntity`. When extending `AutoIdMongoEntity` " +
-  "the ID type must be raw `ObjectId` or a transparent wrapper over `ObjectId` (see `ObjectIdWrapperCompanion`).")
+@implicitNotFound(
+  "Entity ${E} is invalid or has invalid ID type. " +
+    "Note: entities must extend either `MongoEntity` or `AutoIdMongoEntity`. When extending `AutoIdMongoEntity` " +
+    "the ID type must be raw `ObjectId` or a transparent wrapper over `ObjectId` (see `ObjectIdWrapperCompanion`)."
+)
 sealed trait EntityIdMode[E, ID] {
   def idRef(format: MongoAdtFormat[E]): MongoPropertyRef[E, ID] = this match {
     case EntityIdMode.Explicit() =>

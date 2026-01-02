@@ -5,8 +5,7 @@ import com.avsystem.commons.derivation.DeferredInstance
 
 import scala.annotation.implicitNotFound
 
-/**
-  * Subtype of [[GenCodec]] which captures serialization to an "object", i.e. through [[ObjectOutput]] and
+/** Subtype of [[GenCodec]] which captures serialization to an "object", i.e. through [[ObjectOutput]] and
   * [[ObjectInput]].
   */
 @implicitNotFound("No GenObjectCodec found for ${T}")
@@ -38,7 +37,7 @@ object GenObjectCodec {
   def materialize[T]: GenObjectCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
 
   def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenObjectCodec[T] =
-  macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+    macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
 
   def create[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
     new GenObjectCodec[T] {
@@ -53,9 +52,8 @@ object GenObjectCodec {
   }
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  implicit def fromTransparentWrapping[R, T](implicit
-    tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R]
-  ): GenObjectCodec[T] =
+  implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R])
+    : GenObjectCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 
   def transformed[T, R: GenObjectCodec](toRaw: T => R, fromRaw: R => T): GenObjectCodec[T] =

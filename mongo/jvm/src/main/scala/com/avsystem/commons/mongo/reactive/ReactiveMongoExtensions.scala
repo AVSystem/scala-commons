@@ -11,8 +11,8 @@ trait ReactiveMongoExtensions {
   implicit final def publisherOps[T](publisher: Publisher[T]): PublisherOps[T] = new PublisherOps(publisher)
 }
 object ReactiveMongoExtensions extends ReactiveMongoExtensions {
-  /**
-    * Extensions for converting [[Publisher]] to [[Task]]/[[Observable]] Monix types
+
+  /** Extensions for converting [[Publisher]] to [[Task]]/[[Observable]] Monix types
     */
   final class PublisherOps[T](private val publisher: Publisher[T]) extends AnyVal {
     def asMonix: Observable[T] = Observable.fromReactivePublisher(publisher)

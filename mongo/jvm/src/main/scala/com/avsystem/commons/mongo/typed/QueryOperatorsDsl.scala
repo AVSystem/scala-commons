@@ -39,7 +39,7 @@ trait VanillaQueryOperatorsDsl[T, R] {
   }
 
   def regex(pattern: Pattern): R =
-    regex(pattern.pattern, if(pattern.flags > 0) OptArg(RegexFlag.optionsAsString(pattern.flags)) else OptArg.Empty)
+    regex(pattern.pattern, if (pattern.flags > 0) OptArg(RegexFlag.optionsAsString(pattern.flags)) else OptArg.Empty)
 
   def regex(pattern: SRegex): R =
     regex(pattern.pattern)
@@ -48,7 +48,7 @@ trait VanillaQueryOperatorsDsl[T, R] {
     search: String,
     language: OptArg[TextSearchLanguage] = OptArg.Empty,
     caseSensitive: OptArg[Boolean] = OptArg.Empty,
-    diacriticSensitive: OptArg[Boolean] = OptArg.Empty
+    diacriticSensitive: OptArg[Boolean] = OptArg.Empty,
   ): R =
     wrapQueryOperators(Text(search, language.toOpt, caseSensitive.toOpt, diacriticSensitive.toOpt))
 
@@ -59,7 +59,8 @@ trait VanillaQueryOperatorsDsl[T, R] {
     wrapQueryOperators(Raw(rawOperator, bson))
 }
 object VanillaQueryOperatorsDsl {
-  implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: VanillaQueryOperatorsDsl[C[T], R]) extends AnyVal {
+  implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: VanillaQueryOperatorsDsl[C[T], R])
+    extends AnyVal {
 
     import MongoQueryOperator._
 
@@ -88,7 +89,7 @@ trait QueryOperatorsDsl[T, R] extends VanillaQueryOperatorsDsl[T, R] {
     regex("^" + SRegex.quote(prefix))
 
   def containsSubstring(infix: String, caseInsensitive: Boolean = false): R =
-    regex(SRegex.quote(infix), if(caseInsensitive) OptArg("i") else OptArg.Empty)
+    regex(SRegex.quote(infix), if (caseInsensitive) OptArg("i") else OptArg.Empty)
 }
 object QueryOperatorsDsl {
   implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: QueryOperatorsDsl[C[T], R]) extends AnyVal {
@@ -100,7 +101,8 @@ object QueryOperatorsDsl {
     def containsAll(values: Iterable[T]): R = dsl.all(values)
   }
 
-  implicit def forOptional[O, T, R](dsl: QueryOperatorsDsl[O, R])(implicit optionLike: OptionLike.Aux[O, T]): ForOptional[O, T, R] =
+  implicit def forOptional[O, T, R](dsl: QueryOperatorsDsl[O, R])(implicit optionLike: OptionLike.Aux[O, T])
+    : ForOptional[O, T, R] =
     new ForOptional(dsl)
 
   class ForOptional[O, T, R](private val dsl: QueryOperatorsDsl[O, R]) extends AnyVal {
@@ -130,14 +132,14 @@ object RegexFlag extends AbstractValueEnumCompanion[RegexFlag] {
   def optionsAsString(javaOptions: Int): String = {
     val sb = new JStringBuilder
     @tailrec def loop(flags: Int, idx: Int): String =
-      if(idx >= values.size) sb.toString
+      if (idx >= values.size) sb.toString
       else {
         val flag = values(idx)
-        if((flags & flag.javaFlag) > 0) {
+        if ((flags & flag.javaFlag) > 0) {
           sb.append(flag.char)
-          loop(flags - flag.javaFlag, idx+1)
+          loop(flags - flag.javaFlag, idx + 1)
         } else {
-          loop(flags, idx+1)
+          loop(flags, idx + 1)
         }
       }
     loop(javaOptions, 0)

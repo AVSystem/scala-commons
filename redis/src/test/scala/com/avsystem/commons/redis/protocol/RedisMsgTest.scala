@@ -9,15 +9,14 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.immutable.VectorBuilder
 
-/**
-  * Author: ghik
-  * Created: 01/04/16.
+/** Author: ghik Created: 01/04/16.
   */
 class RedisMsgTest extends AnyFunSuite with ScalaCheckPropertyChecks {
-  def splitAtIndices(repr: ByteString, indices: Seq[Int]): Seq[ByteString] =
-    (indices :+ repr.length).foldLeft((0, Vector.empty[ByteString])) {
-      case ((prevIdx, acc), nextIdx) => (nextIdx, acc :+ repr.slice(prevIdx, nextIdx))
-    }._2
+  def splitAtIndices(repr: ByteString, indices: Seq[Int]): Seq[ByteString] = (indices :+ repr.length)
+    .foldLeft((0, Vector.empty[ByteString])) { case ((prevIdx, acc), nextIdx) =>
+      (nextIdx, acc :+ repr.slice(prevIdx, nextIdx))
+    }
+    ._2
 
   test("encoded and then decoded messages should be equal to the original messages") {
     val gen = for {

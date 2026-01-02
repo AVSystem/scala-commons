@@ -3,7 +3,7 @@ package rpc
 
 import com.avsystem.commons.meta.infer
 import com.avsystem.commons.misc.TypeString
-import com.avsystem.commons.serialization.{GenCodec, transientDefault, whenAbsent}
+import com.avsystem.commons.serialization.{transientDefault, whenAbsent, GenCodec}
 import org.scalatest.funsuite.AnyFunSuite
 
 class td extends transientDefault
@@ -11,7 +11,8 @@ class td extends transientDefault
 trait SomeBase {
   def difolt: Boolean = true
 
-  @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") @suchMeta(2, "b") foo: String): String
+  @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") @suchMeta(2, "b") foo: String)
+    : String
 }
 
 trait Box[T]
@@ -32,7 +33,8 @@ trait TestApi extends SomeBase {
   @rpcName("ovprefix") def overload: TestApi
   def getit(stuff: String, @suchMeta(1, "a") otherStuff: List[Int]): TestApi
   def postit(arg: String, bar: String, int: Int, @suchMeta(3, "c") foo: String): String
-  @POST @negFilter def otherPost(arg: String): String
+  @POST
+  @negFilter def otherPost(arg: String): String
   def generyk[T](lel: Box[T])(implicit @encodingDependency tag: Tag[T]): Future[List[T]]
 
   // TODO: macro has problems when real type parameter leaks into metadata parameter type like in this case
@@ -51,8 +53,7 @@ object TestApi {
 
 class NewRpcMetadataTest extends AnyFunSuite {
   test("TestApi metadata") {
-    assert(TestApi.metadata.toString ==
-      """com.avsystem.commons.rpc.TestApi
+    assert(TestApi.metadata.toString == """com.avsystem.commons.rpc.TestApi
         |  DO SOMETHING ELSE: true
         |  PROCEDURES:
         |  flames -> def flames@4:0: void
@@ -112,8 +113,7 @@ class NewRpcMetadataTest extends AnyFunSuite {
         |  PREFIXERS:
         |  ovprefix -> def overload<ovprefix>@7:0: com.avsystem.commons.rpc.TestApi
         |    RESULT: <recursive>
-        |""".stripMargin
-    )
+        |""".stripMargin)
   }
 
   test("TestApi partial metadata") {

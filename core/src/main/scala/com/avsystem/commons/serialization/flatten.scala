@@ -1,9 +1,8 @@
 package com.avsystem.commons
 package serialization
 
-/**
-  * Changes the serialization format used by `GenCodec`s automatically derived for sealed hierarchies.
-  * The format is changed from "nested" to "flat".
+/** Changes the serialization format used by `GenCodec`s automatically derived for sealed hierarchies. The format is
+  * changed from "nested" to "flat".
   *
   * {{{
   * @flatten sealed trait Value
@@ -14,8 +13,7 @@ package serialization
   * }
   * }}}
   *
-  * Without [[flatten]] annotation, the "nested" format is used, e.g. when `Numeric(42)` would be encoded to JSON
-  * as:
+  * Without [[flatten]] annotation, the "nested" format is used, e.g. when `Numeric(42)` would be encoded to JSON as:
   *
   * {{{
   * {"Numeric": {"int": 42}}

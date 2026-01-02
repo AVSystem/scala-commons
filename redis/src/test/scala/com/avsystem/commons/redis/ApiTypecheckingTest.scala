@@ -12,13 +12,12 @@ object ApiTypecheckingTest {
     val tupleBatch: RedisBatch[(Opt[String], Long)] =
       (get("key1"), incr("key2")).sequence
 
-    val seqBatch: RedisBatch[Seq[Opt[String]]] =
-      (1 to 10).map(i => get(s"key$i")).sequence
+    val seqBatch: RedisBatch[Seq[Opt[String]]] = (1 to 10).map(i => get(s"key$i")).sequence
 
-    val tupleCollectionBatch: RedisBatch[Seq[(Opt[String], Long)]] =
-      (1 to 10).map(i => (get(s"stringKey$i"), incr(s"numberKey$i"))).sequence
+    val tupleCollectionBatch: RedisBatch[Seq[(Opt[String], Long)]] = (1 to 10)
+      .map(i => (get(s"stringKey$i"), incr(s"numberKey$i")))
+      .sequence
   }
-
 
   locally {
     import RedisApi.Batches.StringTyped._

@@ -5,9 +5,7 @@ import com.avsystem.commons.redis.commands.SetslotCmd.{Importing, Migrating, Nod
 import com.avsystem.commons.redis.config.ClusterConfig
 import org.scalatest.Suite
 
-/**
-  * Author: ghik
-  * Created: 14/04/16.
+/** Author: ghik Created: 14/04/16.
   */
 trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { this: Suite =>
   def clusterConfig: ClusterConfig = ClusterConfig()
@@ -15,7 +13,8 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { t
 
   var redisClient: RedisClusterClient = _
 
-  protected def migrateSlot(slot: Int, targetNodeSlot: Int, incomplete: Boolean = false, withoutData: Boolean = false): Future[Unit] =
+  protected def migrateSlot(slot: Int, targetNodeSlot: Int, incomplete: Boolean = false, withoutData: Boolean = false)
+    : Future[Unit] =
     redisClient.initialized.flatMapNow { client =>
       val state = client.currentState
       val sourceClient = state.clientForSlot(slot)
@@ -27,10 +26,11 @@ trait UsesRedisClusterClient extends UsesClusterServers with UsesActorSystem { t
         val targetIdFut = targetApi.clusterMyid
         val keysToMigrateFut =
           if (withoutData) Future.successful(Seq.empty)
-          else for {
-            keyCount <- sourceApi.clusterCountkeysinslot(slot)
-            keys <- sourceApi.clusterGetkeysinslot(slot, keyCount.toInt)
-          } yield keys
+          else
+            for {
+              keyCount <- sourceApi.clusterCountkeysinslot(slot)
+              keys <- sourceApi.clusterGetkeysinslot(slot, keyCount.toInt)
+            } yield keys
         for {
           sourceId <- sourceIdFut
           targetId <- targetIdFut

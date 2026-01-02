@@ -134,8 +134,7 @@ class StreamInput(is: DataInputStream) extends InputAndSimpleInput {
   }
 }
 
-class StreamFieldInput(val fieldName: String, is: DataInputStream)
-  extends StreamInput(is) with FieldInput
+class StreamFieldInput(val fieldName: String, is: DataInputStream) extends StreamInput(is) with FieldInput
 
 private class StreamListInput(is: DataInputStream) extends ListInput {
   private[this] var currentInput: Opt[StreamInput] = Opt.empty

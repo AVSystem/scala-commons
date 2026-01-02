@@ -3,7 +3,6 @@ package spring
 
 import com.typesafe.config.ConfigFactory
 
-
 object Playground {
   def main(args: Array[String]): Unit = {
     val conf =

@@ -43,8 +43,8 @@ private[commons] abstract class RpcMacroCommons(ctx: blackbox.Context)
   final lazy val DecodingInterceptorTpe = staticType(tq"$RpcPackage.DecodingInterceptor[_,_]")
 }
 
-private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCommons(ctx)
-  with RpcSymbols with RpcMappings with RpcMetadatas {
+private[commons] final class RpcMacros(ctx: blackbox.Context)
+  extends RpcMacroCommons(ctx) with RpcSymbols with RpcMappings with RpcMetadatas {
 
   import c.universe._
 
@@ -119,7 +119,7 @@ private[commons] final class RpcMacros(ctx: blackbox.Context) extends RpcMacroCo
   private def mkMetadata(real: RealRpcApi): Tree = {
     val metadataTpe = c.macroApplication.tpe.dealias
     val constructor = new RpcApiMetadataConstructor(metadataTpe, None)
-    val actualReal = if(constructor.abstractsTypeParams) real.forTypeConstructor else real
+    val actualReal = if (constructor.abstractsTypeParams) real.forTypeConstructor else real
 
     def materialize: Res[Tree] = for {
       _ <- constructor.matchTagsAndFilters(actualReal)

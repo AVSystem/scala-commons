@@ -16,7 +16,7 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
     def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
       case `tree` | EmptyTree =>
         tree match {
-          case t@TypeApply(pre, args) if requiresExplicitGenerics(pre.symbol) =>
+          case t @ TypeApply(pre, args) if requiresExplicitGenerics(pre.symbol) =>
             val inferredTypeParams = args.forall {
               case tt: TypeTree => tt.original == null || tt.original == EmptyTree
               case _ => false
