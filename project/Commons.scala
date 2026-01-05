@@ -28,16 +28,14 @@ object Commons extends ProjectGroup("commons") {
   val scalatestVersion = "3.2.19"
   val scalatestplusScalacheckVersion = "3.2.14.0"
   val scalacheckVersion = "1.19.0"
-  val jettyVersion = "12.1.4"
-  val mongoVersion = "5.6.1"
-  val springVersion = "6.2.13"
+  val jettyVersion = "12.1.5"
+  val mongoVersion = "5.6.2"
+  val springVersion = "6.2.15"
   val typesafeConfigVersion = "1.4.5"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.6"
-  val pekkoVersion = "1.2.1"
+  val pekkoVersion = "1.4.0"
   val monixVersion = "3.4.1"
-  val circeVersion = "0.14.5" // benchmark only
-  val upickleVersion = "3.1.2" // benchmark only
   val scalajsBenchmarkVersion = "0.10.0"
   val slf4jVersion = "2.0.17" // test only
 
@@ -356,13 +354,6 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       noPublishSettings,
       sourceDirsSettings(_ / "jvm"),
-      libraryDependencies ++= Seq(
-        "io.circe" %% "circe-core" % circeVersion,
-        "io.circe" %% "circe-generic" % circeVersion,
-        "io.circe" %% "circe-jawn" % circeVersion,
-        "io.circe" %% "circe-parser" % circeVersion,
-        "com.lihaoyi" %% "upickle" % upickleVersion,
-      ),
       ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
     )
 
@@ -376,10 +367,6 @@ object Commons extends ProjectGroup("commons") {
       sameNameAs(benchmark),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
-        "io.circe" %%% "circe-core" % circeVersion,
-        "io.circe" %%% "circe-generic" % circeVersion,
-        "io.circe" %%% "circe-parser" % circeVersion,
-        "com.lihaoyi" %%% "upickle" % upickleVersion,
         "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
       ),
       scalaJSUseMainModuleInitializer := true,
