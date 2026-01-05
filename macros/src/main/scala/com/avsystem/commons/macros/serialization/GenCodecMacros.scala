@@ -131,7 +131,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
   }
 
-  def isTransientDefault(param: ApplyParam, warnIfDefaultNotProvided: Boolean = false): Boolean =
+  def isTransientDefault(param: ApplyParam): Boolean = isTransientDefault(param, warnIfDefaultNotProvided = false)
+  def isTransientDefault(param: ApplyParam, warnIfDefaultNotProvided: Boolean): Boolean =
     (hasAnnotation(param.sym, TransientDefaultAnnotType), param.defaultValue.nonEmpty, warnIfDefaultNotProvided) match {
       case (true, false, true) =>
         error(s"@transientDefault has no effect on parameter ${param.sym.name} because it has no default value")
