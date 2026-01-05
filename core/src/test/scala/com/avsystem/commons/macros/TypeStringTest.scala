@@ -82,7 +82,7 @@ object TypeStringTest {
     testTypeString[{ def lol(x: => Int): String }]("{def lol(x: => Int): String}")
     testTypeString[{ def lol(xs: Int*): String }]("{def lol(xs: Int*): String}")
     testTypeString[{ def lol(xs: Int => String*): String }]("{def lol(xs: Int => String*): String}")
-    testTypeString[{ def lol[**](xs: ***): String }]("{def lol[**](xs: ** *): String}")
+    testTypeString[{ def lol[**](xs: `**`*): String }]("{def lol[**](xs: ** *): String}")
     testTypeString[{ def lol(implicit x: Int, y: String): String }]("{def lol(implicit x: Int, y: String): String}")
     testTypeString[{ def lol(x: String): x.type }]("{def lol(x: String): x.type}")
     testTypeString[{ type T; def lol: T }]("{type T; def lol: T}")
