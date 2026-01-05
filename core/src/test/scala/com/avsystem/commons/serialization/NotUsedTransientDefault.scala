@@ -15,7 +15,7 @@ final class NotUsedTransientDefault extends AnyFunSuite {
     )
   }
 
-  test("warnings when missing default value") {
+  test("fails to compile when missing default value") {
     assertDoesNotCompile(
       //language=Scala
       s"""

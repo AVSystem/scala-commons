@@ -137,8 +137,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       case (true, false, true) =>
         error(s"@transientDefault has no effect on parameter ${param.sym.name} because it has no default value")
         false
-      case (hasAnnotation, noDefaultValue, _) => hasAnnotation && noDefaultValue
+      case (hasAnnotation, hasDefaultValue, _) => hasAnnotation && hasDefaultValue
     }
+
   def isOptimizedPrimitive(param: ApplyParam): Boolean = {
     val vt = param.valueType
     vt =:= typeOf[Boolean] || vt =:= typeOf[Int] || vt =:= typeOf[Long] || vt =:= typeOf[Double]
