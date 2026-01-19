@@ -6,7 +6,7 @@ import scala.concurrent.duration.Duration
 
 case class DynamicConfig(
   databaseUrl: String,
-  bulbulator: BulbulatorConfig
+  bulbulator: BulbulatorConfig,
 )
 
 case class BulbulatorConfig(
@@ -33,19 +33,16 @@ class Database(
 
 class BulbulatorDao(
   config: BulbulatorConfig
-)(implicit
-  db: Database,
+)(implicit db: Database
 ) extends MyComponent
 
-class DeviceDao(implicit
-  db: Database,
-) extends MyComponent
+class DeviceDao(implicit db: Database) extends MyComponent
 
 class FullApplication(
   dynamicDep: DynamicDep
 )(implicit
   bulbulatorDao: BulbulatorDao,
-  deviceDao: DeviceDao
+  deviceDao: DeviceDao,
 ) {
   println("full initialization")
 }

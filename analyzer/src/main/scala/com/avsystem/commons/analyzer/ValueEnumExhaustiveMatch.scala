@@ -14,7 +14,7 @@ class ValueEnumExhaustiveMatch(g: Global) extends AnalyzerRule(g, "valueEnumExha
 
   def analyze(unit: CompilationUnit): Unit = if (valueEnumTpe != NoType) {
     unit.body.foreach(analyzeTree {
-      case tree@Match(selector, cases) if selector.tpe <:< valueEnumTpe =>
+      case tree @ Match(selector, cases) if selector.tpe <:< valueEnumTpe =>
         val expectedCompanionTpe = TypeRef(miscPackageTpe, valueEnumCompanionSym, List(selector.tpe))
         val companion = selector.tpe.typeSymbol.companion
         val companionTpe = companion.toType
@@ -22,7 +22,9 @@ class ValueEnumExhaustiveMatch(g: Global) extends AnalyzerRule(g, "valueEnumExha
           val unmatched = new mutable.LinkedHashSet[Symbol]
           companionTpe.decls.iterator
             .filter(s => s.isVal && s.isFinal && !s.isLazy && s.typeSignature <:< selector.tpe)
-            .map(_.getterIn(companion)).filter(_.isPublic).foreach(unmatched.add)
+            .map(_.getterIn(companion))
+            .filter(_.isPublic)
+            .foreach(unmatched.add)
 
           def findMatchedEnums(pattern: Tree): Unit = pattern match {
             case Bind(_, body) => findMatchedEnums(body)

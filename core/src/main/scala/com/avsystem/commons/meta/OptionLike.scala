@@ -10,9 +10,8 @@ sealed trait OptionLike[O] {
   def isDefined(opt: O): Boolean
   def get(opt: O): Value
 
-  /**
-    * Determines whether `null` values should be collapsed into empty values (i.e. [[none]]).
-    * Used primarily by `GenCodec` when deserializing and dealing with e.g. JSON nulls vs missing fields.
+  /** Determines whether `null` values should be collapsed into empty values (i.e. [[none]]). Used primarily by
+    * `GenCodec` when deserializing and dealing with e.g. JSON nulls vs missing fields.
     */
   def ignoreNulls: Boolean
 
@@ -37,7 +36,7 @@ final class OptionLikeImpl[O, A](
   someFun: A => O,
   isDefinedFun: O => Boolean,
   getFun: O => A,
-  val ignoreNulls: Boolean
+  val ignoreNulls: Boolean,
 ) extends BaseOptionLike[O, A] {
   def none: O = empty
   def some(value: A): O = someFun(value)
@@ -52,7 +51,7 @@ final class OptionLikeImpl[O, A](
   ) = this(empty, someFun, isDefinedFun, getFun, ignoreNulls = true)
 }
 object OptionLike {
-  type Aux[O, V] = OptionLike[O] {type Value = V}
+  type Aux[O, V] = OptionLike[O] { type Value = V }
 
   implicit def optionOptionLike[A]: BaseOptionLike[Option[A], A] =
     new OptionLikeImpl(None, Some(_), _.isDefined, _.get, ignoreNulls = true)
@@ -70,14 +69,12 @@ object OptionLike {
     new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get, ignoreNulls = false)
 }
 
-/**
-  * If there is an instance of [[AutoOptionalParam]] for some type `T` then all case class &
-  * RPC parameters of type `T` will be treated as if they were annotated with
-  * [[com.avsystem.commons.serialization.optionalParam @optionalParam]].
+/** If there is an instance of [[AutoOptionalParam]] for some type `T` then all case class & RPC parameters of type `T`
+  * will be treated as if they were annotated with [[com.avsystem.commons.serialization.optionalParam @optionalParam]].
   *
-  * As with `@optionalParam` annotation, independently there must be also
-  * an instance of [[OptionLike]] for `T` for the entire mechanism to work. See the scaladoc of
-  * [[com.avsystem.commons.serialization.optionalParam optionalParam]] for more information.
+  * As with `@optionalParam` annotation, independently there must be also an instance of [[OptionLike]] for `T` for the
+  * entire mechanism to work. See the scaladoc of [[com.avsystem.commons.serialization.optionalParam optionalParam]] for
+  * more information.
   */
 sealed trait AutoOptionalParam[T]
 object AutoOptionalParam {

@@ -56,7 +56,7 @@ object GuavaInterop extends GuavaInterop {
       fut.toVoid.asGuava
   }
 
-  private case class ListenableFutureAsScala[+T](gfut: ListenableFuture[T@uncheckedVariance]) extends Future[T] {
+  private case class ListenableFutureAsScala[+T](gfut: ListenableFuture[T @uncheckedVariance]) extends Future[T] {
     def isCompleted: Boolean =
       gfut.isDone
 
@@ -67,10 +67,11 @@ object GuavaInterop extends GuavaInterop {
       }
       val executor = ec match {
         case executor: Executor => executor
-        case _ => new Executor {
-          def execute(command: Runnable): Unit =
-            ec.execute(command)
-        }
+        case _ =>
+          new Executor {
+            def execute(command: Runnable): Unit =
+              ec.execute(command)
+          }
       }
       Futures.addCallback(gfut, callback, executor)
     }
@@ -78,9 +79,12 @@ object GuavaInterop extends GuavaInterop {
     def transform[S](f: Try[T] => Try[S])(implicit executor: ExecutionContext): Future[S] = {
       val p = Promise[S]()
       onComplete { r =>
-        p.complete(try f(r) catch {
-          case NonFatal(t) => Failure(t)
-        })
+        p.complete(
+          try f(r)
+          catch {
+            case NonFatal(t) => Failure(t)
+          }
+        )
       }
       p.future
     }
@@ -88,7 +92,8 @@ object GuavaInterop extends GuavaInterop {
     def transformWith[S](f: Try[T] => Future[S])(implicit executor: ExecutionContext): Future[S] = {
       val p = Promise[S]()
       onComplete { r =>
-        try p.completeWith(f(r)) catch {
+        try p.completeWith(f(r))
+        catch {
           case NonFatal(t) => p.failure(t)
         }
       }
@@ -96,7 +101,8 @@ object GuavaInterop extends GuavaInterop {
     }
 
     private[this] def unwrapFailures(expr: => T): T =
-      try expr catch {
+      try expr
+      catch {
         case ee: ExecutionException => throw ee.getCause
       }
 
@@ -113,7 +119,8 @@ object GuavaInterop extends GuavaInterop {
     @throws(classOf[InterruptedException])
     @throws(classOf[TimeoutException])
     def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
-      try result(atMost) catch {
+      try result(atMost)
+      catch {
         case NonFatal(_) =>
       }
       this
@@ -125,12 +132,13 @@ object GuavaInterop extends GuavaInterop {
       listener.checkNotNull("listener is null")
       val ec = executor match {
         case ec: ExecutionContext => ec
-        case _ => new ExecutionContext {
-          def reportFailure(cause: Throwable): Unit =
-            cause.printStackTrace()
-          def execute(runnable: Runnable): Unit =
-            executor.execute(runnable)
-        }
+        case _ =>
+          new ExecutionContext {
+            def reportFailure(cause: Throwable): Unit =
+              cause.printStackTrace()
+            def execute(runnable: Runnable): Unit =
+              executor.execute(runnable)
+          }
       }
       fut.onComplete(_ => listener.run())(ec)
     }
@@ -139,7 +147,8 @@ object GuavaInterop extends GuavaInterop {
       false
 
     private[this] def wrapFailures(expr: => T): T =
-      try expr catch {
+      try expr
+      catch {
         case NonFatal(e) => throw new ExecutionException(e)
       }
 

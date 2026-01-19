@@ -8,12 +8,15 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-/**
-  * Author: ghik
-  * Created: 27/06/16.
+/** Author: ghik Created: 27/06/16.
   */
-class RedisConnectionClientTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer with ByteStringInterpolation {
+class RedisConnectionClientTest
+  extends AnyFunSuite
+    with Matchers
+    with ScalaFutures
+    with UsesActorSystem
+    with UsesRedisServer
+    with ByteStringInterpolation {
 
   def createClient(initCommands: RedisBatch[Any]): RedisConnectionClient =
     new RedisConnectionClient(address, config = ConnectionConfig(initCommands))

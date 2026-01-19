@@ -46,27 +46,34 @@ class RPCMetadataTest extends AnyFunSuite {
     assert(m.functionSignatures.keySet == Set("function"))
     assert(m.getterSignatures.keySet == Set("getter", "selfGetter"))
 
-    assert(m.procedureSignatures("proc") == ProcedureSignature("proc",
-      List(
-        ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), new TypeString("String"))
-      ),
-      List(Annot("on submethod"), Annot("on base method"))
-    ))
+    assert(
+      m.procedureSignatures("proc") == ProcedureSignature(
+        "proc",
+        List(
+          ParamMetadata("param", List(Annot("on subparam"), Annot("on base param")), new TypeString("String"))
+        ),
+        List(Annot("on submethod"), Annot("on base method")),
+      )
+    )
 
-    assert(m.procedureSignatures("genproc") == ProcedureSignature("genproc", List(
-      ParamMetadata("p", Nil, new TypeString("String"))
-    ), Nil))
+    assert(
+      m.procedureSignatures("genproc") == ProcedureSignature(
+        "genproc",
+        List(
+          ParamMetadata("p", Nil, new TypeString("String"))
+        ),
+        Nil,
+      )
+    )
 
-    m.functionSignatures("function") uncheckedMatch {
+    m.functionSignatures("function").uncheckedMatch {
       case FunctionSignature("func", List(TypeParamMetadata("A")), List(apm, tagpm), Nil, resTnFun) =>
         assert(resTnFun(List(classTag[String])) == classTag[String])
-        apm uncheckedMatch {
-          case GenericParamMetadata("a", Nil, tnFun) =>
-            assert(tnFun(List(new TypeString("AAA"))) == new TypeString("AAA"))
+        apm.uncheckedMatch { case GenericParamMetadata("a", Nil, tnFun) =>
+          assert(tnFun(List(new TypeString("AAA"))) == new TypeString("AAA"))
         }
-        tagpm uncheckedMatch {
-          case GenericParamMetadata("tag", Nil, tnFun) =>
-            assert(tnFun(List(new TypeString("AAA"))) == new TypeString("com.avsystem.commons.rpc.Tag[AAA]"))
+        tagpm.uncheckedMatch { case GenericParamMetadata("tag", Nil, tnFun) =>
+          assert(tnFun(List(new TypeString("AAA"))) == new TypeString("com.avsystem.commons.rpc.Tag[AAA]"))
         }
     }
 
@@ -77,12 +84,24 @@ class RPCMetadataTest extends AnyFunSuite {
     assert(resultMetadata.functionSignatures.keySet == Set("function"))
     assert(resultMetadata.getterSignatures.keySet == Set())
 
-    assert(resultMetadata.procedureSignatures("proc") == ProcedureSignature("proc", List(
-      ParamMetadata("p", List(Annot("on base param")), new TypeString("String"))
-    ), List(Annot("on base method"))))
+    assert(
+      resultMetadata.procedureSignatures("proc") == ProcedureSignature(
+        "proc",
+        List(
+          ParamMetadata("p", List(Annot("on base param")), new TypeString("String"))
+        ),
+        List(Annot("on base method")),
+      )
+    )
 
-    assert(m.procedureSignatures("genproc") == ProcedureSignature("genproc", List(
-      ParamMetadata("p", Nil, new TypeString("String"))
-    ), Nil))
+    assert(
+      m.procedureSignatures("genproc") == ProcedureSignature(
+        "genproc",
+        List(
+          ParamMetadata("p", Nil, new TypeString("String"))
+        ),
+        Nil,
+      )
+    )
   }
 }

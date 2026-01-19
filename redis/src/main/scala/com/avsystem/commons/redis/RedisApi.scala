@@ -4,55 +4,52 @@ package redis
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.redis.config.ExecutionConfig
 
-/**
-  * Object which contains implementations of various variants of Redis API that this driver provides.
-  * Each variant implements a set of methods corresponding directly to Redis commands, e.g.
-  * [[commands.StringsApi.get get]] method represents Redis `GET` command.
+/** Object which contains implementations of various variants of Redis API that this driver provides. Each variant
+  * implements a set of methods corresponding directly to Redis commands, e.g. [[commands.StringsApi.get get]] method
+  * represents Redis `GET` command.
   *
   * API variants may differ from each other in several independent aspects:
   *
   * The most important one is the result type returned by every method corresponding to a Redis command:
   *
-  *  - [[RedisApi.Raw]] - type returned for each command-method is [[RawCommand]]. Probably the only reason
+  *   - [[RedisApi.Raw]] - type returned for each command-method is [[RawCommand]]. Probably the only reason
   * to use this API variant is to pass a [[RawCommand]] to
   * [[commands.NodeServerApi.commandGetkeys(command:com\.avsystem\.commons\.redis\.RawCommand)* commandGetkeys]]
-  *  - [[RedisApi.Batches]] - type returned for each command-method is [[RedisBatch]].
-  * Batch can then be combined with other batches to form larger batches, become a part of [[RedisOp]] or simply
-  * get executed by [[RedisExecutor]] (e.g. one of Redis client implementations).
-  *  - [[RedisApi.Keyed.Async]], [[RedisApi.Node.Async]] and [[RedisApi.Connection.Async]] variants are the ones that
+  *   - [[RedisApi.Batches]] - type returned for each command-method is [[RedisBatch]].
+  * Batch can then be combined with other batches to form larger batches, become a part of [[RedisOp]] or simply get
+  * executed by [[RedisExecutor]] (e.g. one of Redis client implementations).
+  *   - [[RedisApi.Keyed.Async]], [[RedisApi.Node.Async]] and [[RedisApi.Connection.Async]] variants are the ones that
   * actually ''execute'' commands by sending them to Redis. Because of that, they take an appropriate [[RedisExecutor]]
-  * as constructor argument. Execution of commands is asynchronous and results are returned as
-  * `Future`s.
-  *  - [[RedisApi.Keyed.Blocking]], [[RedisApi.Node.Blocking]] and [[RedisApi.Connection.Blocking]] are similar
+  * as constructor argument. Execution of commands is asynchronous and results are returned as `Future`s.
+  *   - [[RedisApi.Keyed.Blocking]], [[RedisApi.Node.Blocking]] and [[RedisApi.Connection.Blocking]] are similar
   * to their `Async` counterparts but execution is blocking and results are returned as unwrapped values.
   *
   * `Async` and `Blocking` API variants additionally come in three different "levels", each one exposing different
   * subset of Redis commands. This reflects the fact that not every [[RedisExecutor]] (client implementation) supports
   * every command (e.g. you can't execute unkeyed commands using [[RedisClusterClient]]).
   *
-  *  - Variants from [[RedisApi.Keyed]] include only commands with keys (so that they can be executed on Redis Cluster)
-  *  - Variants from [[RedisApi.Node]] include only commands which don't access connection state
-  *  - Variants from [[RedisApi.Connection]] include all commands supported by the driver
+  *   - Variants from [[RedisApi.Keyed]] include only commands with keys (so that they can be executed on Redis Cluster)
+  *   - Variants from [[RedisApi.Node]] include only commands which don't access connection state
+  *   - Variants from [[RedisApi.Connection]] include all commands supported by the driver
   *
-  * Every API variant may also use different types to represent Redis keys, hash keys and values.
-  * You can define your own API variants for arbitrary combination of key, hash key and value types
-  * as long as there is an instance of [[RedisDataCodec]] for every of these types.
-  * Also, it is possible to customize `Record` type which is used primarily for entries in Redis Stream API.
-  * `Record` type requires [[RedisRecordCodec]] instance.
+  * Every API variant may also use different types to represent Redis keys, hash keys and values. You can define your
+  * own API variants for arbitrary combination of key, hash key and value types as long as there is an instance of
+  * [[RedisDataCodec]] for every of these types. Also, it is possible to customize `Record` type which is used primarily
+  * for entries in Redis Stream API. `Record` type requires [[RedisRecordCodec]] instance.
   *
   * Key, field, value and record types and their serialization typeclass instances are enapsulated by
   * [[RedisSerialization]] instances. API variants are then parameterized with them.
   *
-  * API variants which use only `String`s (textual) or only `ByteString`s (binary) are already implemented by the driver, e.g.
-  * [[RedisApi.Keyed.Async.StringTyped]], [[RedisApi.Batches.BinaryTyped]].
+  * API variants which use only `String`s (textual) or only `ByteString`s (binary) are already implemented by the
+  * driver, e.g. [[RedisApi.Keyed.Async.StringTyped]], [[RedisApi.Batches.BinaryTyped]].
   *
   * Note that [[RedisDataCodec]] is automatically provided for many simple types and also all types which have a
-  * `GenCodec`. This effectively gives you a complete serialization
-  * framework for keys, hash keys and values stored in Redis.
+  * `GenCodec`. This effectively gives you a complete serialization framework for keys, hash keys and values stored in
+  * Redis.
   *
-  * Note that chosen key, hash key and value types can be adjusted "on the fly" with a convenient syntax.
-  * For example, if you need to use some case class as a value type in a single, specific place, you can do it
-  * without defining a completely separate API variant. For example:
+  * Note that chosen key, hash key and value types can be adjusted "on the fly" with a convenient syntax. For example,
+  * if you need to use some case class as a value type in a single, specific place, you can do it without defining a
+  * completely separate API variant. For example:
   *
   * {{{
   *   case class Person(name: String, birthYear: Int)
@@ -81,11 +78,10 @@ object RedisApi {
     def withSerialization[S0 <: RedisSerialization](ser: S0): Raw[S0] = new Raw(ser)
   }
 
-  /**
-    * Entry point for API variants which return [[RawCommand]]s.
+  /** Entry point for API variants which return [[RawCommand]]s.
     */
   object Raw {
-    def apply[S <: RedisSerialization : ValueOf]: Raw[S] = new Raw(ValueOf[S])
+    def apply[S <: RedisSerialization: ValueOf]: Raw[S] = new Raw(ValueOf[S])
 
     final val StringTyped = apply[RedisSerialization.Strings.type]
     final val BinaryTyped = apply[RedisSerialization.ByteStrings.type]
@@ -98,18 +94,16 @@ object RedisApi {
     def withSerialization[S0 <: RedisSerialization](ser: S0): Batches[S0] = new Batches(ser)
   }
 
-  /**
-    * Entry point for API variants which return [[RedisBatch]]es.
+  /** Entry point for API variants which return [[RedisBatch]]es.
     */
   object Batches {
-    def apply[S <: RedisSerialization : ValueOf]: Batches[S] = new Batches(ValueOf[S])
+    def apply[S <: RedisSerialization: ValueOf]: Batches[S] = new Batches(ValueOf[S])
 
     final val StringTyped = apply[RedisSerialization.Strings.type]
     final val BinaryTyped = apply[RedisSerialization.ByteStrings.type]
   }
 
-  /**
-    * Entry point for API variants which expose only keyed commands.
+  /** Entry point for API variants which expose only keyed commands.
     */
   object Keyed extends ExecutedApis {
     type RequiredExecutor = RedisKeyedExecutor
@@ -117,28 +111,30 @@ object RedisApi {
     case class Async[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseAsync[S] with RedisRecoverableKeyedApi
+      execConfig: ExecutionConfig,
+    ) extends BaseAsync[S]
+        with RedisRecoverableKeyedApi
     object Async extends VariantCompanion[Async]
 
     case class Monix[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseMonix[S] with RedisRecoverableKeyedApi
+      execConfig: ExecutionConfig,
+    ) extends BaseMonix[S]
+        with RedisRecoverableKeyedApi
     object Monix extends VariantCompanion[Monix]
 
     case class Blocking[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseBlocking[S] with RedisRecoverableKeyedApi
+      execConfig: ExecutionConfig,
+    ) extends BaseBlocking[S]
+        with RedisRecoverableKeyedApi
     object Blocking extends VariantCompanion[Blocking]
   }
 
-  /**
-    * Entry point for API variants which expose node-level commands, i.e. the ones that don't access or modify
-    * Redis connection state.
+  /** Entry point for API variants which expose node-level commands, i.e. the ones that don't access or modify Redis
+    * connection state.
     */
   object Node extends ExecutedApis {
     type RequiredExecutor = RedisNodeExecutor
@@ -146,28 +142,30 @@ object RedisApi {
     case class Async[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseAsync[S] with RedisRecoverableNodeApi
+      execConfig: ExecutionConfig,
+    ) extends BaseAsync[S]
+        with RedisRecoverableNodeApi
     object Async extends VariantCompanion[Async]
 
     case class Monix[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseMonix[S] with RedisRecoverableNodeApi
+      execConfig: ExecutionConfig,
+    ) extends BaseMonix[S]
+        with RedisRecoverableNodeApi
     object Monix extends VariantCompanion[Monix]
 
     case class Blocking[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseBlocking[S] with RedisRecoverableNodeApi
+      execConfig: ExecutionConfig,
+    ) extends BaseBlocking[S]
+        with RedisRecoverableNodeApi
     object Blocking extends VariantCompanion[Blocking]
   }
 
-  /**
-    * Entry point for API variants which expose all commands, including connection-level ones, i.e. the ones that
-    * access or modify Redis connection state.
+  /** Entry point for API variants which expose all commands, including connection-level ones, i.e. the ones that access
+    * or modify Redis connection state.
     */
   object Connection extends ExecutedApis {
     type RequiredExecutor = RedisConnectionExecutor
@@ -175,22 +173,25 @@ object RedisApi {
     case class Async[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseAsync[S] with RedisRecoverableConnectionApi
+      execConfig: ExecutionConfig,
+    ) extends BaseAsync[S]
+        with RedisRecoverableConnectionApi
     object Async extends VariantCompanion[Async]
 
     case class Monix[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseMonix[S] with RedisRecoverableConnectionApi
+      execConfig: ExecutionConfig,
+    ) extends BaseMonix[S]
+        with RedisRecoverableConnectionApi
     object Monix extends VariantCompanion[Monix]
 
     case class Blocking[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
-    ) extends BaseBlocking[S] with RedisRecoverableConnectionApi
+      execConfig: ExecutionConfig,
+    ) extends BaseBlocking[S]
+        with RedisRecoverableConnectionApi
     object Blocking extends VariantCompanion[Blocking]
   }
 }
@@ -233,24 +234,26 @@ abstract class ExecutedApis {
     def apply[S <: RedisSerialization](
       serialization: S,
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig
+      execConfig: ExecutionConfig,
     ): Variant[S]
 
-    def apply[S <: RedisSerialization : ValueOf](
+    def apply[S <: RedisSerialization: ValueOf](
       executor: RequiredExecutor,
-      execConfig: ExecutionConfig = ExecutionConfig.Default
+      execConfig: ExecutionConfig = ExecutionConfig.Default,
     ): Variant[S] = apply(ValueOf[S], executor, execConfig)
 
     type StringTyped = Variant[RedisSerialization.Strings.type]
 
     def StringTyped(
-      exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
+      exec: RequiredExecutor,
+      config: ExecutionConfig = ExecutionConfig.Default,
     ): StringTyped = apply(RedisSerialization.Strings, exec, config)
 
     type BinaryTyped = Variant[RedisSerialization.ByteStrings.type]
 
     def BinaryTyped(
-      exec: RequiredExecutor, config: ExecutionConfig = ExecutionConfig.Default
+      exec: RequiredExecutor,
+      config: ExecutionConfig = ExecutionConfig.Default,
     ): BinaryTyped = apply(RedisSerialization.ByteStrings, exec, config)
   }
 

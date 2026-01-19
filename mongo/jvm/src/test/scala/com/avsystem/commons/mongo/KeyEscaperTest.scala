@@ -20,7 +20,7 @@ class KeyEscaperTest extends AnyFunSuite with ScalaCheckPropertyChecks {
       "plain$ with$ $dollars$" -> "plain$ with$ $dollars$",
       "Sentence." -> "Sentence\\_",
       "$operator" -> "\\$operator",
-      "$worst.of.both.worlds" -> "\\$worst\\_of\\_both\\_worlds"
+      "$worst.of.both.worlds" -> "\\$worst\\_of\\_both\\_worlds",
     )
 
     for ((input, expected) <- customCases) {

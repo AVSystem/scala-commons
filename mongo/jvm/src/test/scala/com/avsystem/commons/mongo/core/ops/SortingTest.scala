@@ -24,7 +24,10 @@ class SortingTest extends AnyFunSuite {
 
     assert(ascending(someDocKey, otherDocKey) === Sorts.ascending(someKey, otherKey))
     assert(descending(someDocKey, otherDocKey) === Sorts.descending(someKey, otherKey))
-    assert(orderBy(someDocKey.ascending, otherDocKey.descending) === Sorts.orderBy(Sorts.ascending(someKey), Sorts.descending(otherKey)))
+    assert(
+      orderBy(someDocKey.ascending, otherDocKey.descending) ===
+        Sorts.orderBy(Sorts.ascending(someKey), Sorts.descending(otherKey))
+    )
   }
 
   test("bsonRef tests") {
@@ -37,6 +40,9 @@ class SortingTest extends AnyFunSuite {
 
     assert(ascending(someRef, otherRef) === Sorts.ascending(someKey, otherKey))
     assert(descending(someRef, otherRef) === Sorts.descending(someKey, otherKey))
-    assert(orderBy(someRef.ascending, otherRef.descending) === Sorts.orderBy(Sorts.ascending(someKey), Sorts.descending(otherKey)))
+    assert(
+      orderBy(someRef.ascending, otherRef.descending) ===
+        Sorts.orderBy(Sorts.ascending(someKey), Sorts.descending(otherKey))
+    )
   }
 }

@@ -17,18 +17,18 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
     value == null
 
   override def readString(): String =
-    read("String") {
-      case s: String => s
+    read("String") { case s: String =>
+      s
     }
 
   override def readDouble(): Double =
-    read("Double") {
-      case v: Double => v
+    read("Double") { case v: Double =>
+      v
     }
 
   override def readInt(): Int =
-    read("Int") {
-      case v: Int => v
+    read("Int") { case v: Int =>
+      v
     }
 
   override def readLong(): Long = {
@@ -78,34 +78,34 @@ class NativeJsonInput(value: js.Any, options: NativeFormatOptions) extends Input
   }
 
   override def readBoolean(): Boolean =
-    read("Boolean") {
-      case v: Boolean => v
+    read("Boolean") { case v: Boolean =>
+      v
     }
 
   override def readList(): ListInput =
-    read("List") {
-      case array: js.Array[js.Any @unchecked] => new NativeJsonListInput(array, options)
+    read("List") { case array: js.Array[js.Any @unchecked] =>
+      new NativeJsonListInput(array, options)
     }
 
   override def readObject(): ObjectInput =
-    read("Object") {
-      case obj: js.Object => new NativeJsonObjectInput(obj.asInstanceOf[js.Dictionary[js.Any]], options)
+    read("Object") { case obj: js.Object =>
+      new NativeJsonObjectInput(obj.asInstanceOf[js.Dictionary[js.Any]], options)
     }
 
   override def readTimestamp(): Long = options.dateFormat match {
     case NativeDateFormat.RawString | NativeDateFormat.JsNumber =>
       readLong() // lenient behaviour, accept any value that can be interpreted as Long
     case NativeDateFormat.JsDate =>
-      read("js.Date") {
-        case v: js.Date => v.getTime().toLong
+      read("js.Date") { case v: js.Date =>
+        v.getTime().toLong
       }
   }
 
   override def skip(): Unit = ()
 
   override def readBinary(): Array[Byte] =
-    read("Binary") {
-      case array: js.Array[Int @unchecked] => array.iterator.map(_.toByte).toArray
+    read("Binary") { case array: js.Array[Int @unchecked] =>
+      array.iterator.map(_.toByte).toArray
     }
 
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] =
@@ -150,7 +150,7 @@ final class NativeJsonFieldInput(
   value: js.Any,
   options: NativeFormatOptions,
 ) extends NativeJsonInput(value, options)
-  with FieldInput
+    with FieldInput
 
 object NativeJsonInput {
   @explicitGenerics

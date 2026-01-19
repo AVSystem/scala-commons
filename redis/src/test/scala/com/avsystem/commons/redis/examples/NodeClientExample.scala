@@ -8,8 +8,7 @@ import com.avsystem.commons.redis._
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Basic example showing how to execute simple command on [[RedisNodeClient]].
+/** Basic example showing how to execute simple command on [[RedisNodeClient]].
   */
 object NodeClientExample extends App {
   // The driver is implemented using Pekko IO, so we need actor system

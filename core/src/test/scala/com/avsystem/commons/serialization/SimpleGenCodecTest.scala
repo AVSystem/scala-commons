@@ -44,7 +44,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   }
 
   test("NoState") {
-    type NoState = Nothing {type Dummy = Nothing}
+    type NoState = Nothing { type Dummy = Nothing }
     assert(implicitly[GenCodec[NoState]] == GenCodec.NothingCodec)
   }
 
@@ -63,13 +63,9 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   }
 
   test("tuples") {
-    testWrite((1, 2, 3),
-      List(1, 2, 3))
-    testWrite((1, "lol"),
-      List(1, "lol"))
-    testWrite((1, "lol", 3.0, 'a', List("dafuq", "fuu")),
-      List(1, "lol", 3.0, "a", List("dafuq", "fuu"))
-    )
+    testWrite((1, 2, 3), List(1, 2, 3))
+    testWrite((1, "lol"), List(1, "lol"))
+    testWrite((1, "lol", 3.0, 'a', List("dafuq", "fuu")), List(1, "lol", 3.0, "a", List("dafuq", "fuu")))
   }
 
   test("object") {
@@ -97,8 +93,9 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   }
 
   test("case class") {
-    testWrite(SomeCaseClass("dafuq", List(1, 2, 3)),
-      Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3), "someStrLen" -> 5)
+    testWrite(
+      SomeCaseClass("dafuq", List(1, 2, 3)),
+      Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3), "someStrLen" -> 5),
     )
   }
 
@@ -113,56 +110,54 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   }
 
   test("case class with auto optional fields") {
-    testWrite(CaseClassWithAutoOptionalFields("foo", Opt(42), Some(true), NOpt(Opt(123))), Map("str" -> "foo", "int" -> 42, "bul" -> true, "nint" -> 123))
-    testWrite(CaseClassWithAutoOptionalFields("foo", Opt.Empty, Some(true), NOpt(Opt.Empty)), Map("str" -> "foo", "bul" -> true, "nint" -> null))
+    testWrite(
+      CaseClassWithAutoOptionalFields("foo", Opt(42), Some(true), NOpt(Opt(123))),
+      Map("str" -> "foo", "int" -> 42, "bul" -> true, "nint" -> 123),
+    )
+    testWrite(
+      CaseClassWithAutoOptionalFields("foo", Opt.Empty, Some(true), NOpt(Opt.Empty)),
+      Map("str" -> "foo", "bul" -> true, "nint" -> null),
+    )
     testWrite(CaseClassWithAutoOptionalFields("foo", Opt.Empty, None, NOpt.empty), Map("str" -> "foo"))
   }
 
   test("reading nulls in case class with auto optional fields") {
-    testRead(Map("str" -> "foo", "int" -> null, "bul" -> true, "nint" -> null), CaseClassWithAutoOptionalFields("foo", Opt.Empty, Some(true), NOpt(Opt.Empty)))
-    testRead(Map("str" -> "foo", "int" -> null, "bul" -> null), CaseClassWithAutoOptionalFields("foo", Opt.Empty, None, NOpt.Empty))
+    testRead(
+      Map("str" -> "foo", "int" -> null, "bul" -> true, "nint" -> null),
+      CaseClassWithAutoOptionalFields("foo", Opt.Empty, Some(true), NOpt(Opt.Empty)),
+    )
+    testRead(
+      Map("str" -> "foo", "int" -> null, "bul" -> null),
+      CaseClassWithAutoOptionalFields("foo", Opt.Empty, None, NOpt.Empty),
+    )
   }
 
   test("case class like") {
-    testWrite(CaseClassLike("dafuq", List(1, 2, 3)),
-      Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3))
-    )
+    testWrite(CaseClassLike("dafuq", List(1, 2, 3)), Map("some.str" -> "dafuq", "intList" -> List(1, 2, 3)))
   }
 
   test("case class like with inherited apply/unapply") {
-    testWrite(HasInheritedApply("dafuq", List(1, 2, 3)),
-      Map("a" -> "dafuq", "lb" -> List(1, 2, 3))
-    )
+    testWrite(HasInheritedApply("dafuq", List(1, 2, 3)), Map("a" -> "dafuq", "lb" -> List(1, 2, 3)))
   }
 
   test("apply/unapply provider based codec") {
-    testWrite(ThirdParty(42, "lol"),
-      Map("str" -> "lol", "int" -> 42)
-    )
+    testWrite(ThirdParty(42, "lol"), Map("str" -> "lol", "int" -> 42))
   }
 
   test("varargs case class") {
-    testWrite(VarargsCaseClass(42, "foo", "bar"),
-      Map("int" -> 42, "strings" -> List("foo", "bar"))
-    )
+    testWrite(VarargsCaseClass(42, "foo", "bar"), Map("int" -> 42, "strings" -> List("foo", "bar")))
   }
 
   test("only varargs case class") {
-    testWrite(OnlyVarargsCaseClass("42", "420"),
-      Map("strings" -> List("42", "420"))
-    )
+    testWrite(OnlyVarargsCaseClass("42", "420"), Map("strings" -> List("42", "420")))
   }
 
   test("varargs case class like") {
-    testWrite(VarargsCaseClassLike("dafuq", 1, 2, 3),
-      Map("some.str" -> "dafuq", "ints" -> List(1, 2, 3))
-    )
+    testWrite(VarargsCaseClassLike("dafuq", 1, 2, 3), Map("some.str" -> "dafuq", "ints" -> List(1, 2, 3)))
   }
 
   test("only varargs case class like") {
-    testWrite(OnlyVarargsCaseClassLike("dafuq", "indeed"),
-      Map("strings" -> List("dafuq", "indeed"))
-    )
+    testWrite(OnlyVarargsCaseClassLike("dafuq", "indeed"), Map("strings" -> List("dafuq", "indeed")))
   }
 
   test("case class with default values") {
@@ -177,27 +172,41 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   test("recursive generic case class") {
     testWrite(
-      Node(123, List(
-        Node(42, List(
-          Node(52),
-          Node(53)
-        )),
-        Node(43)
-      )),
-      Map[String, Any]("value" -> 123, "children" -> List(
-        Map[String, Any]("value" -> 42, "children" -> List(
-          Map[String, Any]("value" -> 52, "children" -> List()),
-          Map[String, Any]("value" -> 53, "children" -> List())
-        )),
-        Map[String, Any]("value" -> 43, "children" -> List())
-      ))
+      Node(
+        123,
+        List(
+          Node(
+            42,
+            List(
+              Node(52),
+              Node(53),
+            ),
+          ),
+          Node(43),
+        ),
+      ),
+      Map[String, Any](
+        "value" -> 123,
+        "children" -> List(
+          Map[String, Any](
+            "value" -> 42,
+            "children" -> List(
+              Map[String, Any]("value" -> 52, "children" -> List()),
+              Map[String, Any]("value" -> 53, "children" -> List()),
+            ),
+          ),
+          Map[String, Any]("value" -> 43, "children" -> List()),
+        ),
+      ),
     )
   }
 
   test("recursively defined sealed hierarchy with explicit case class codec") {
     testWrite[CustomList](CustomTail, Map("CustomTail" -> Map()))
-    testWrite[CustomList](CustomCons(CustomCons(CustomTail)),
-      Map("CustomCons" -> Map("CustomCons" -> Map("CustomTail" -> Map()))))
+    testWrite[CustomList](
+      CustomCons(CustomCons(CustomTail)),
+      Map("CustomCons" -> Map("CustomCons" -> Map("CustomTail" -> Map()))),
+    )
   }
 
   test("value class") {
@@ -205,47 +214,66 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   }
 
   test("sealed hierarchy") {
-    testWrite[SealedBase](SealedBase.CaseObject,
-      Map("CaseObject" -> Map()))
-    testWrite[SealedBase](SealedBase.CaseClass("fuu"),
-      Map("CaseClass" -> Map("str" -> "fuu")))
-    testWrite[SealedBase](SealedBase.InnerBase.InnerCaseObject,
-      Map("InnerCaseObject" -> Map()))
-    testWrite[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"),
-      Map("InnerCaseClass" -> Map("str" -> "fuu")))
+    testWrite[SealedBase](SealedBase.CaseObject, Map("CaseObject" -> Map()))
+    testWrite[SealedBase](SealedBase.CaseClass("fuu"), Map("CaseClass" -> Map("str" -> "fuu")))
+    testWrite[SealedBase](SealedBase.InnerBase.InnerCaseObject, Map("InnerCaseObject" -> Map()))
+    testWrite[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"), Map("InnerCaseClass" -> Map("str" -> "fuu")))
   }
 
   test("flat sealed hierarchy") {
-    testWrite[FlatSealedBase](FlatSealedBase.FirstCase("fuu", 42),
-      Map("_case" -> "FirstCase", "_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU"))
-    testWrite[FlatSealedBase](FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
-      Map("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0), "upper_id" -> "BAR"))
-    testWrite[FlatSealedBase](FlatSealedBase.ThirdCase,
-      Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"))
-    testWrite[FlatSealedBase](FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)),
-      Map("_case" -> "RecursiveCase", "_id" -> "rec", "upper_id" -> "REC", "sub" ->
-        Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD")))
+    testWrite[FlatSealedBase](
+      FlatSealedBase.FirstCase("fuu", 42),
+      Map("_case" -> "FirstCase", "_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU"),
+    )
+    testWrite[FlatSealedBase](
+      FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
+      Map("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0), "upper_id" -> "BAR"),
+    )
+    testWrite[FlatSealedBase](
+      FlatSealedBase.ThirdCase,
+      Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"),
+    )
+    testWrite[FlatSealedBase](
+      FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)),
+      Map(
+        "_case" -> "RecursiveCase",
+        "_id" -> "rec",
+        "upper_id" -> "REC",
+        "sub" -> Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"),
+      ),
+    )
   }
 
   test("flat sealed hierarchy with transparent case") {
-    testWrite[TransparentFlatSealedBase](TransparentCaseWrap(TransparentFlatThing(42, "foo")),
-      Map("_case" -> "TransparentCaseWrap", "num" -> 42, "text" -> "foo")
+    testWrite[TransparentFlatSealedBase](
+      TransparentCaseWrap(TransparentFlatThing(42, "foo")),
+      Map("_case" -> "TransparentCaseWrap", "num" -> 42, "text" -> "foo"),
     )
   }
 
   test("random field access dependent flat sealed hierarchy reading") {
     testRead[FlatSealedBase](
       ListMap("_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU", "_case" -> "FirstCase"),
-      FlatSealedBase.FirstCase("fuu", 42))
+      FlatSealedBase.FirstCase("fuu", 42),
+    )
   }
 
   test("out of order field in flat sealed hierarchy") {
     testRead[FlatSealedBase](
       Map("_id" -> "fuu", "upper_id" -> "FUU", "random" -> 13, "_case" -> "FirstCase", "int" -> 42),
-      FlatSealedBase.FirstCase("fuu", 42))
+      FlatSealedBase.FirstCase("fuu", 42),
+    )
     testRead[FlatSealedBase](
-      Map("_id" -> "bar", "upper_id" -> "FUU", "random" -> 13, "_case" -> "SecondCase", "dbl" -> 3.14, "moar" -> List(1.0, 2.0)),
-      FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0))
+      Map(
+        "_id" -> "bar",
+        "upper_id" -> "FUU",
+        "random" -> 13,
+        "_case" -> "SecondCase",
+        "dbl" -> 3.14,
+        "moar" -> List(1.0, 2.0),
+      ),
+      FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
+    )
   }
 
   test("GADT") {
@@ -254,30 +282,33 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     testWrite[Expr[String]](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
     testWrite[Expr[Int]](IntExpr(42), Map("IntExpr" -> Map("int" -> 42)))
     testWrite[BaseExpr](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
-    testWrite[BaseExpr {type Value = String}](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
+    testWrite[BaseExpr { type Value = String }](StringExpr("stringzor"), Map("StringExpr" -> Map("str" -> "stringzor")))
   }
 
   test("recursive GADT") {
-    testWrite[RecExpr[Int]](IntRecExpr(42),
-      Map("_case" -> "IntRecExpr", "int" -> 42))
-    testWrite[RecExpr[Int]](NothingRecExpr,
-      Map("_case" -> "NothingRecExpr"))
-    testWrite[RecExpr[Int]](ArbitraryRecExpr(42),
-      Map("_case" -> "ArbitraryRecExpr", "value" -> 42))
-    testWrite[RecExpr[Int]](LazyRecExpr(IntRecExpr(42)),
-      Map("_case" -> "LazyRecExpr", "expr" -> Map("_case" -> "IntRecExpr", "int" -> 42)))
-    testWrite[RecExpr[RecBounded]](RecBoundedExpr(RecBounded(42)),
-      Map("_case" -> "RecBoundedExpr", "value" -> Map("int" -> 42))
+    testWrite[RecExpr[Int]](IntRecExpr(42), Map("_case" -> "IntRecExpr", "int" -> 42))
+    testWrite[RecExpr[Int]](NothingRecExpr, Map("_case" -> "NothingRecExpr"))
+    testWrite[RecExpr[Int]](ArbitraryRecExpr(42), Map("_case" -> "ArbitraryRecExpr", "value" -> 42))
+    testWrite[RecExpr[Int]](
+      LazyRecExpr(IntRecExpr(42)),
+      Map("_case" -> "LazyRecExpr", "expr" -> Map("_case" -> "IntRecExpr", "int" -> 42)),
+    )
+    testWrite[RecExpr[RecBounded]](
+      RecBoundedExpr(RecBounded(42)),
+      Map("_case" -> "RecBoundedExpr", "value" -> Map("int" -> 42)),
     )
   }
 
   test("pure GADT") {
     testWrite[PureGadtExpr[String]](StringLiteral("str"), Map("_case" -> "StringLiteral", "value" -> "str"))
-    testWrite[PureGadtExpr[String]](Plus(StringLiteral("str"), StringLiteral("fag")),
-      Map("_case" -> "Plus",
+    testWrite[PureGadtExpr[String]](
+      Plus(StringLiteral("str"), StringLiteral("fag")),
+      Map(
+        "_case" -> "Plus",
         "lhs" -> Map("_case" -> "StringLiteral", "value" -> "str"),
-        "rhs" -> Map("_case" -> "StringLiteral", "value" -> "fag")
-      ))
+        "rhs" -> Map("_case" -> "StringLiteral", "value" -> "fag"),
+      ),
+    )
   }
 
   // test type dealiasing during materialization
@@ -292,16 +323,20 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
         Leaf(1),
         Branch(
           Leaf(2),
-          Leaf(3)
+          Leaf(3),
+        ),
+      ),
+      Map(
+        "Branch" -> Map(
+          "left" -> Map("Leaf" -> Map("value" -> 1)),
+          "right" -> Map(
+            "Branch" -> Map(
+              "left" -> Map("Leaf" -> Map("value" -> 2)),
+              "right" -> Map("Leaf" -> Map("value" -> 3)),
+            )
+          ),
         )
       ),
-      Map("Branch" -> Map(
-        "left" -> Map("Leaf" -> Map("value" -> 1)),
-        "right" -> Map("Branch" -> Map(
-          "left" -> Map("Leaf" -> Map("value" -> 2)),
-          "right" -> Map("Leaf" -> Map("value" -> 3))
-        ))
-      ))
     )
   }
 
@@ -322,22 +357,41 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
     testWrite(
       TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true),
-      Map[String, Any]("StringKey" -> "lol", "IntKey" -> 42, "BooleanKey" -> true)
+      Map[String, Any]("StringKey" -> "lol", "IntKey" -> 42, "BooleanKey" -> true),
     )
   }
 
   test("customized flat sealed hierarchy") {
-    testWrite[CustomizedSeal](CustomizedCase("dafuq"),
-      Map("str" -> "dafuq"))
-    testWrite[CustomizedSeal](CustomizedObjekt,
-      Map("kejs" -> "CustomizedObjekt"))
+    testWrite[CustomizedSeal](CustomizedCase("dafuq"), Map("str" -> "dafuq"))
+    testWrite[CustomizedSeal](CustomizedObjekt, Map("kejs" -> "CustomizedObjekt"))
   }
 
   test("case class with more than 22 fields") {
     val inst = ItsOverTwentyTwo(
-      "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
-      "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20",
-      "v21", "v22", "v23")
+      "v1",
+      "v2",
+      "v3",
+      "v4",
+      "v5",
+      "v6",
+      "v7",
+      "v8",
+      "v9",
+      "v10",
+      "v11",
+      "v12",
+      "v13",
+      "v14",
+      "v15",
+      "v16",
+      "v17",
+      "v18",
+      "v19",
+      "v20",
+      "v21",
+      "v22",
+      "v23",
+    )
     val repr = (1 to 23).map(i => s"a$i" -> s"v$i").toMap
     testWrite[ItsOverTwentyTwo](inst, repr)
   }
@@ -345,24 +399,23 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   test("recursive materialization with intermediate sequence") {
     testWrite[HasColl](
       HasCollCase(List(DepCase("kek"))),
-      Map("_case" -> "HasCollCase", "coll" -> List(Map("_case" -> "DepCase", "str" -> "kek")))
+      Map("_case" -> "HasCollCase", "coll" -> List(Map("_case" -> "DepCase", "str" -> "kek"))),
     )
   }
 
   test("refined sealed type with type member") {
-    testWrite[SealedRefined {type X = Int}](
+    testWrite[SealedRefined { type X = Int }](
       SealedRefined.First(42),
-      Map("First" -> Map("foo" -> 42))
+      Map("First" -> Map("foo" -> 42)),
     )
   }
 
   test("recursive materialization of indirectly recursive type") {
     def testWithCodec(implicit codec: GenCodec[StepOne]): Unit = {
-      testWrite[StepOne](StepOne(StepTwo(Opt.Empty)),
-        Map("stepTwo" -> Map("stepOne" -> null))
-      )
-      testWrite[StepOne](StepOne(StepTwo(Opt(StepOne(StepTwo(Opt.Empty))))),
-        Map("stepTwo" -> Map("stepOne" -> Map("stepTwo" -> Map("stepOne" -> null))))
+      testWrite[StepOne](StepOne(StepTwo(Opt.Empty)), Map("stepTwo" -> Map("stepOne" -> null)))
+      testWrite[StepOne](
+        StepOne(StepTwo(Opt(StepOne(StepTwo(Opt.Empty))))),
+        Map("stepTwo" -> Map("stepOne" -> Map("stepTwo" -> Map("stepOne" -> null)))),
       )
     }
     testWithCodec(GenCodec.materializeRecursively)
@@ -377,12 +430,12 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   }
 
   test("Java builder based codec") {
-    testWrite[BuildablePojo](BuildablePojo.builder().build(),
-      Map())
-    testWrite[BuildablePojo](BuildablePojo.builder().setStr("foo").build(),
-      Map("str" -> "foo"))
-    testWrite[BuildablePojo](BuildablePojo.builder().setStr("foo").setFlags(JList(true, false)).setCool(false).build(),
-      Map("str" -> "foo", "flags" -> List(true, false), "cool" -> false))
+    testWrite[BuildablePojo](BuildablePojo.builder().build(), Map())
+    testWrite[BuildablePojo](BuildablePojo.builder().setStr("foo").build(), Map("str" -> "foo"))
+    testWrite[BuildablePojo](
+      BuildablePojo.builder().setStr("foo").setFlags(JList(true, false)).setCool(false).build(),
+      Map("str" -> "foo", "flags" -> List(true, false), "cool" -> false),
+    )
   }
 
   test("generated fields") {
@@ -395,8 +448,8 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
         "valUpper" -> "V",
         "getterUpper" -> "V",
         "varUpper" -> "V",
-        "lazyValUpper" -> "V"
-      )
+        "lazyValUpper" -> "V",
+      ),
     )
   }
 }

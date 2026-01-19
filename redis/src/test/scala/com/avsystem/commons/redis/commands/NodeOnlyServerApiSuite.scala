@@ -18,5 +18,5 @@ class NodeOnlyServerApiSuite extends RedisNodeCommandsSuite {
     clientKill(clients(2).id, Skipme(false)).assertEquals(1)
     clientKill(ClientType.Master).assertEquals(0)
   }
-  */
+   */
 }

@@ -12,8 +12,8 @@ import org.scalatest.time.{Seconds, Span}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class RedisClusterClientNonClusteredInitTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer {
+class RedisClusterClientNonClusteredInitTest
+  extends AnyFunSuite with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer {
 
   import RedisApi.Batches.StringTyped._
 
@@ -25,7 +25,7 @@ class RedisClusterClientNonClusteredInitTest extends AnyFunSuite
     val config = ClusterConfig(
       nodeConfigs = _ => nodeConfig,
       monitoringConnectionConfigs = _ => connConfig,
-      fallbackToSingleNode = fallbackToSingleNode
+      fallbackToSingleNode = fallbackToSingleNode,
     )
     new RedisClusterClient(List(NodeAddress(port = port)), config)
   }
@@ -55,8 +55,8 @@ class RedisClusterClientNonClusteredInitTest extends AnyFunSuite
   }
 }
 
-class RedisClusterClientInitTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredCluster {
+class RedisClusterClientInitTest
+  extends AnyFunSuite with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredCluster {
 
   import RedisApi.Batches.StringTyped._
 
@@ -76,8 +76,8 @@ class RedisClusterClientInitTest extends AnyFunSuite
   }
 }
 
-class RedisClusterClientInitDuringFailureTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredCluster {
+class RedisClusterClientInitDuringFailureTest
+  extends AnyFunSuite with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredCluster {
 
   import RedisApi.Batches.StringTyped._
 
@@ -86,8 +86,7 @@ class RedisClusterClientInitDuringFailureTest extends AnyFunSuite
   def createClient(ports: Int*) = new RedisClusterClient(ports.map(p => NodeAddress(port = p)))
 
   test("client init during failure test") {
-    new RedisConnectionClient(NodeAddress(port = 9000))
-      .executeBatch(shutdown(ShutdownModifier.Nosave))
+    new RedisConnectionClient(NodeAddress(port = 9000)).executeBatch(shutdown(ShutdownModifier.Nosave))
 
     val client = createClient(ports.head, ports.head + 1)
     client.initialized.futureValue shouldBe client
@@ -232,11 +231,12 @@ class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
       master <- slaveClient.executeBatch(clusterNodes.map(_.find(_.flags.myself).exists(_.flags.master)))
       _ <- {
         if (master) Future.successful(())
-        else for {
-          _ <- wait(delay)
-          _ <- slaveClient.executeBatch(clusterFailover(FailoverOption.Force).ignoreFailures)
-          _ <- failover(1.seconds)
-        } yield ()
+        else
+          for {
+            _ <- wait(delay)
+            _ <- slaveClient.executeBatch(clusterFailover(FailoverOption.Force).ignoreFailures)
+            _ <- failover(1.seconds)
+          } yield ()
       }
     } yield ()
     Await.result(redisClient.initialized.flatMapNow(_ => failover()), 2.minutes)

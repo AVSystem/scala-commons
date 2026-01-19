@@ -14,9 +14,9 @@ sealed abstract class BaseCborOutput(out: DataOutput) {
 
   private def unsignedInfo(unsignedBytes: Long): Int =
     if (unsignedBytes >= 0 && unsignedBytes < InitialByte.SingleByteValueInfo) unsignedBytes.toInt
-    else if ((unsignedBytes & 0xFFL) == unsignedBytes) InitialByte.SingleByteValueInfo
-    else if ((unsignedBytes & 0xFFFFL) == unsignedBytes) InitialByte.TwoBytesValueInfo
-    else if ((unsignedBytes & 0xFFFFFFFFL) == unsignedBytes) InitialByte.FourBytesValueInfo
+    else if ((unsignedBytes & 0xffL) == unsignedBytes) InitialByte.SingleByteValueInfo
+    else if ((unsignedBytes & 0xffffL) == unsignedBytes) InitialByte.TwoBytesValueInfo
+    else if ((unsignedBytes & 0xffffffffL) == unsignedBytes) InitialByte.FourBytesValueInfo
     else InitialByte.EightBytesValueInfo
 
   // unsignedBytes represents 8-byte unsigned integer
@@ -55,7 +55,7 @@ object CborOutput {
   def write[T: GenCodec](
     value: T,
     keyCodec: CborKeyCodec = CborKeyCodec.Default,
-    sizePolicy: SizePolicy = SizePolicy.Optional
+    sizePolicy: SizePolicy = SizePolicy.Optional,
   ): Array[Byte] = {
     val baos = new ByteArrayOutputStream
     GenCodec.write[T](new CborOutput(new DataOutputStream(baos), keyCodec, sizePolicy), value)
@@ -65,12 +65,11 @@ object CborOutput {
   def writeRawCbor[T: GenCodec](
     value: T,
     keyCodec: CborKeyCodec = CborKeyCodec.Default,
-    sizePolicy: SizePolicy = SizePolicy.Optional
+    sizePolicy: SizePolicy = SizePolicy.Optional,
   ): RawCbor = RawCbor(write(value, keyCodec, sizePolicy))
 }
 
-/**
-  * An [[com.avsystem.commons.serialization.Output Output]] implementation that serializes into
+/** An [[com.avsystem.commons.serialization.Output Output]] implementation that serializes into
   * [[https://tools.ietf.org/html/rfc7049 CBOR]].
   */
 class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy)
@@ -117,8 +116,7 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
           write(InitialByte.SinglePrecisionFloat)
           out.writeFloat(float)
         }
-      }
-      else {
+      } else {
         write(InitialByte.DoublePrecisionFloat)
         out.writeDouble(double)
       }
@@ -182,8 +180,9 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
 
 sealed abstract class CborSequentialOutput(
   out: DataOutput,
-  override val sizePolicy: SizePolicy
-) extends BaseCborOutput(out) with SequentialOutput {
+  override val sizePolicy: SizePolicy,
+) extends BaseCborOutput(out)
+    with SequentialOutput {
 
   protected[this] var size: Int = -1
   protected[this] var fresh: Boolean = true
@@ -211,8 +210,9 @@ sealed abstract class CborSequentialOutput(
 class CborListOutput(
   out: DataOutput,
   keyCodec: CborKeyCodec,
-  sizePolicy: SizePolicy
-) extends CborSequentialOutput(out, sizePolicy) with ListOutput {
+  sizePolicy: SizePolicy,
+) extends CborSequentialOutput(out, sizePolicy)
+    with ListOutput {
 
   def writeElement(): CborOutput = {
     ensureInitialWritten(MajorType.Array)
@@ -237,17 +237,16 @@ class CborListOutput(
 class CborObjectOutput(
   out: DataOutput,
   keyCodec: CborKeyCodec,
-  sizePolicy: SizePolicy
-) extends CborSequentialOutput(out, sizePolicy) with ObjectOutput {
+  sizePolicy: SizePolicy,
+) extends CborSequentialOutput(out, sizePolicy)
+    with ObjectOutput {
 
   private[this] var forcedKeyCodec: CborKeyCodec = _
-  private[this] def currentKeyCodec = if(forcedKeyCodec != null) forcedKeyCodec else keyCodec
+  private[this] def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
-  /**
-    * Returns a [[CborOutput]] for writing an arbitrary CBOR map key.
-    * This method is an extension of standard [[Output]] which only allows string-typed keys.
-    * If a key is written using this method then its corresponding value MUST be written using [[writeValue]]
-    * and [[writeField]] MUST NOT be used.
+  /** Returns a [[CborOutput]] for writing an arbitrary CBOR map key. This method is an extension of standard [[Output]]
+    * which only allows string-typed keys. If a key is written using this method then its corresponding value MUST be
+    * written using [[writeValue]] and [[writeField]] MUST NOT be used.
     */
   def writeKey(): CborOutput = {
     ensureInitialWritten(MajorType.Map)
@@ -259,10 +258,9 @@ class CborObjectOutput(
     new CborOutput(out, keyCodec, sizePolicy)
   }
 
-  /**
-    * Returns a [[CborOutput]] for writing a value of a CBOR map field whose key was previously written
-    * using [[writeKey]]. This method MUST ONLY be used after the key has been fully written with [[writeKey]].
-    * If [[writeKey]] and [[writeValue]] is used then [[writeField]] MUST NOT be used.
+  /** Returns a [[CborOutput]] for writing a value of a CBOR map field whose key was previously written using
+    * [[writeKey]]. This method MUST ONLY be used after the key has been fully written with [[writeKey]]. If
+    * [[writeKey]] and [[writeValue]] is used then [[writeField]] MUST NOT be used.
     */
   def writeValue(): CborOutput =
     new CborOutput(out, keyCodec, sizePolicy)

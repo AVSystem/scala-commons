@@ -8,7 +8,7 @@ object Opt {
   private object EmptyMarker extends Serializable
 
   def apply[A](value: A): Opt[A] = if (value != null) new Opt[A](value) else Opt.Empty
-  def unapply[A](opt: Opt[A]): Opt[A] = opt //name-based extractor
+  def unapply[A](opt: Opt[A]): Opt[A] = opt // name-based extractor
 
   def some[A](value: A): Opt[A] =
     if (value != null) new Opt[A](value)
@@ -22,21 +22,22 @@ object Opt {
 
   private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
-  final class WithFilter[+A] private[Opt](self: Opt[A], p: A => Boolean) {
-    def map[B](f: A => B): Opt[B] = self filter p map f
-    def flatMap[B](f: A => Opt[B]): Opt[B] = self filter p flatMap f
-    def foreach[U](f: A => U): Unit = self filter p foreach f
+  final class WithFilter[+A] private[Opt] (self: Opt[A], p: A => Boolean) {
+    def map[B](f: A => B): Opt[B] = self.filter(p) map f
+    def flatMap[B](f: A => Opt[B]): Opt[B] = self.filter(p) flatMap f
+    def foreach[U](f: A => U): Unit = self.filter(p).foreach(f)
     def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }
 
   final class LazyOptOps[A](private val opt: () => Opt[A]) extends AnyVal {
-    /** When a given condition is true, evaluates the `opt` argument and returns it.
-      * When the condition is false, `opt` is not evaluated and [[Opt.Empty]] is
-      * returned.
+
+    /** When a given condition is true, evaluates the `opt` argument and returns it. When the condition is false, `opt`
+      * is not evaluated and [[Opt.Empty]] is returned.
       */
     def when(cond: Boolean): Opt[A] = if (cond) opt() else Opt.Empty
-    /** Unless a given condition is true, this will evaluate the `opt` argument and
-      * return it. Otherwise, `opt` is not evaluated and [[Opt.Empty]] is returned.
+
+    /** Unless a given condition is true, this will evaluate the `opt` argument and return it. Otherwise, `opt` is not
+      * evaluated and [[Opt.Empty]] is returned.
       */
     @inline def unless(cond: Boolean): Opt[A] = when(!cond)
   }
@@ -44,17 +45,16 @@ object Opt {
   implicit def lazyOptOps[A](opt: => Opt[A]): LazyOptOps[A] = new LazyOptOps(() => opt)
 }
 
-/**
-  * Like [[Option]] but implemented as value class (avoids boxing) and treats `null` as no value.
-  * Therefore, there is no equivalent for `Some(null)`.
+/** Like [[Option]] but implemented as value class (avoids boxing) and treats `null` as no value. Therefore, there is no
+  * equivalent for `Some(null)`.
   *
-  * If you need a value-class version of [[Option]] which differentiates between no value and `null` value,
-  * use [[NOpt]].
+  * If you need a value-class version of [[Option]] which differentiates between no value and `null` value, use
+  * [[NOpt]].
   *
-  * WARNING: Unfortunately, using `Opt` in pattern matches turns off the exhaustivity checking.
-  * Please be aware of that tradeoff.
+  * WARNING: Unfortunately, using `Opt` in pattern matches turns off the exhaustivity checking. Please be aware of that
+  * tradeoff.
   */
-final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class Opt[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
   import Opt.*
 
@@ -94,9 +94,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
   @inline def orNull[B >: A](implicit ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
 
-  /**
-    * Analogous to `Option.map` except that when mapping function returns `null`,
-    * empty `Opt` is returned as a result.
+  /** Analogous to `Option.map` except that when mapping function returns `null`, empty `Opt` is returned as a result.
     */
   @inline def map[B](f: A => B): Opt[B] =
     if (isEmpty) Opt.Empty else Opt(f(value))
@@ -104,8 +102,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  /**
-    * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+  /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
     */
   @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
@@ -138,9 +135,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
     if (!isEmpty) f(value)
   }
 
-  /**
-    * Analogous to `Option.collect` except that when the function returns `null`,
-    * empty `Opt` is returned as a result.
+  /** Analogous to `Option.collect` except that when the function returns `null`, empty `Opt` is returned as a result.
     */
   @inline def collect[B](pf: PartialFunction[A, B]): Opt[B] =
     if (!isEmpty) {
@@ -166,8 +161,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
   @inline def zip[B](that: Opt[B]): Opt[(A, B)] =
     if (isEmpty || that.isEmpty) Opt.Empty else Opt((this.get, that.get))
 
-  /**
-    * Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
+  /** Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
     *
     * @param sideEffect - code to be executed if opt is empty
     * @return the same opt

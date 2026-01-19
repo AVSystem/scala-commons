@@ -5,8 +5,7 @@ import com.avsystem.commons.serialization.{ListOutput, ObjectOutput}
 import org.bson.types.{Decimal128, ObjectId}
 import org.bson.{BsonBinary, BsonValue, BsonWriter}
 
-final class BsonWriterOutput(bw: BsonWriter, override val legacyOptionEncoding: Boolean = false)
-  extends BsonOutput {
+final class BsonWriterOutput(bw: BsonWriter, override val legacyOptionEncoding: Boolean = false) extends BsonOutput {
 
   override def writeNull(): Unit =
     bw.writeNull()

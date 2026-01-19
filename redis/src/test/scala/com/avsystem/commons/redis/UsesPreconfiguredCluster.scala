@@ -9,9 +9,7 @@ import org.scalatest.Suite
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/**
-  * Author: ghik
-  * Created: 27/06/16.
+/** Author: ghik Created: 27/06/16.
   */
 trait UsesPreconfiguredCluster extends UsesActorSystem with UsesClusterServers { this: Suite =>
 

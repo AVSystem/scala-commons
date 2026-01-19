@@ -17,7 +17,11 @@ class FinalCaseClasses(g: Global) extends AnalyzerRule(g, "finalCaseClasses", Le
       if (isInner) {
         report(cd.pos, "Case classes should be marked as final")
       } else {
-        report(cd.pos, "Case classes should be marked as final. Due to the SI-4440 bug, it cannot be done here. Consider moving the case class to the companion object", level = Info)
+        report(
+          cd.pos,
+          "Case classes should be marked as final. Due to the SI-4440 bug, it cannot be done here. Consider moving the case class to the companion object",
+          level = Info,
+        )
       }
     case _ =>
   }

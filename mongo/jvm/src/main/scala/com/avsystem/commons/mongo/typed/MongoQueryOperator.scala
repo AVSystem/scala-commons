@@ -45,8 +45,7 @@ sealed trait MongoQueryOperator[T] extends Product {
 object MongoQueryOperator {
   def creator[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
 
-  final class Creator[T](val format: MongoFormat[T])
-    extends VanillaQueryOperatorsDsl[T, Seq[MongoQueryOperator[T]]] {
+  final class Creator[T](val format: MongoFormat[T]) extends VanillaQueryOperatorsDsl[T, Seq[MongoQueryOperator[T]]] {
 
     protected def wrapQueryOperators(ops: MongoQueryOperator[T]*): Seq[MongoQueryOperator[T]] = ops
   }
@@ -69,12 +68,13 @@ object MongoQueryOperator {
     search: String,
     language: Opt[TextSearchLanguage],
     caseSensitive: Opt[Boolean],
-    diacriticSensitive: Opt[Boolean]
+    diacriticSensitive: Opt[Boolean],
   ) extends MongoQueryOperator[T]
 
   final case class Size[C[X] <: Iterable[X], T](size: Int) extends MongoQueryOperator[C[T]]
   final case class ElemMatch[C[X] <: Iterable[X], T](filter: MongoFilter[T]) extends MongoQueryOperator[C[T]]
-  final case class All[C[X] <: Iterable[X], T](values: Iterable[T], format: MongoFormat[T]) extends MongoQueryOperator[C[T]]
+  final case class All[C[X] <: Iterable[X], T](values: Iterable[T], format: MongoFormat[T])
+    extends MongoQueryOperator[C[T]]
 
   final case class Not[T](filter: MongoOperatorsFilter[T]) extends MongoQueryOperator[T]
   final case class Raw[T](override val rawOperator: String, bson: BsonValue) extends MongoQueryOperator[T]

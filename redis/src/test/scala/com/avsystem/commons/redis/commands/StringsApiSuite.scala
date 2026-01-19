@@ -7,9 +7,7 @@ import com.avsystem.commons.redis._
 
 import scala.concurrent.duration._
 
-/**
-  * Author: ghik
-  * Created: 28/09/16.
+/** Author: ghik Created: 28/09/16.
   */
 trait StringsApiSuite extends CommandsSuite {
 
@@ -35,21 +33,24 @@ trait StringsApiSuite extends CommandsSuite {
     bitfield("key", BitField.signed(8).atWidths(0).incrby(50).overflowSat).assertEquals(Opt(127))
     bitfield("key", BitField.signed(8).atWidths(0).incrby(50).overflowFail).assertEquals(Opt.Empty)
     bitfield("key", BitField.unsigned(8).atWidths(1).set(42)).assertEquals(Opt(0))
-    bitfield("key",
+    bitfield(
+      "key",
       BitField.signed(8).atWidths(0).set(500).overflowFail,
       BitField.unsigned(8).atWidths(0).set(257),
-      BitField.unsigned(8).atWidths(0).get
+      BitField.unsigned(8).atWidths(0).get,
     ).assertEquals(Seq(Opt.Empty, Opt(127), Opt(1)))
   }
 
   apiTest("BITOP") {
     val withBinValue = valueType[ByteString]
     val keys = Seq("{key}1", "{key}2", "{key}3")
-    setup(List(
-      "{key}1" -> bin"00000000",
-      "{key}2" -> bin"11111111",
-      "{key}3" -> bin"01010101"
-    ).map({ case (k, v) => withBinValue.set(k, v) }).sequence)
+    setup(
+      List(
+        "{key}1" -> bin"00000000",
+        "{key}2" -> bin"11111111",
+        "{key}3" -> bin"01010101",
+      ).map { case (k, v) => withBinValue.set(k, v) }.sequence
+    )
 
     bitop(BitOp.And, "dest{key}", keys: _*).assertEquals(1)
     withBinValue.get("dest{key}").assertEquals(bin"00000000".opt)
@@ -71,13 +72,15 @@ trait StringsApiSuite extends CommandsSuite {
 
   apiTest("BITPOS") {
     val withBinValue = valueType[ByteString]
-    setup(List(
-      "{key}1" -> bin"00000000",
-      "{key}2" -> bin"11111111",
-      "{key}3" -> bin"00001111",
-      "{key}4" -> bin"11110000",
-      "{key}5" -> bin"1111000000001111"
-    ).map({ case (k, v) => withBinValue.set(k, v) }).sequence)
+    setup(
+      List(
+        "{key}1" -> bin"00000000",
+        "{key}2" -> bin"11111111",
+        "{key}3" -> bin"00001111",
+        "{key}4" -> bin"11110000",
+        "{key}5" -> bin"1111000000001111",
+      ).map { case (k, v) => withBinValue.set(k, v) }.sequence
+    )
 
     bitpos("{key}1", bit = true).assertEquals(-1)
     bitpos("{key}2", bit = false).assertEquals(8)
@@ -157,11 +160,10 @@ trait StringsApiSuite extends CommandsSuite {
     setup(
       set("{key}1", "value1"),
       set("{key}2", "value2"),
-      set("{key}3", "value3")
+      set("{key}3", "value3"),
     )
     mget(Nil).assertEquals(Seq.empty)
-    mget("{key}1", "{key}2", "{key}3", "{key}4")
-      .assertEquals(Seq("value1".opt, "value2".opt, "value3".opt, Opt.Empty))
+    mget("{key}1", "{key}2", "{key}3", "{key}4").assertEquals(Seq("value1".opt, "value2".opt, "value3".opt, Opt.Empty))
   }
 
   apiTest("MSET") {
@@ -169,7 +171,7 @@ trait StringsApiSuite extends CommandsSuite {
     mset(
       "{key}1" -> "value1",
       "{key}2" -> "value2",
-      "{key}3" -> "value3"
+      "{key}3" -> "value3",
     ).get
   }
 
@@ -177,12 +179,12 @@ trait StringsApiSuite extends CommandsSuite {
     msetnx(Nil).assertEquals(true)
     msetnx(
       "{key}1" -> "value1",
-      "{key}2" -> "value2"
+      "{key}2" -> "value2",
     ).assertEquals(true)
     msetnx(
       "{key}1" -> "value1",
       "{key}2" -> "value2",
-      "{key}3" -> "value3"
+      "{key}3" -> "value3",
     ).assertEquals(false)
   }
 

@@ -7,6 +7,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait StringsApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/append APPEND]] */
   def append(key: Key, value: Value): Result[Int] =
     execute(new Append(key, value))
@@ -95,8 +96,9 @@ trait StringsApi extends ApiSubset {
   def mget(key: Key, keys: Key*): Result[Seq[Opt[Value]]] =
     execute(new Mget(key +:: keys))
 
-  /** Executes [[http://redis.io/commands/mget MGET]]
-    * or simply returns empty `Seq` when `keys` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/mget MGET]] or simply returns empty `Seq` when `keys` is empty, without
+    * sending the command to Redis
+    */
   def mget(keys: Iterable[Key]): Result[Seq[Opt[Value]]] =
     execute(new Mget(keys))
 
@@ -104,8 +106,9 @@ trait StringsApi extends ApiSubset {
   def mset(keyValue: (Key, Value), keyValues: (Key, Value)*): Result[Unit] =
     execute(new Mset(keyValue +:: keyValues))
 
-  /** Executes [[http://redis.io/commands/mset MSET]]
-    * or does nothing when `keyValues` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/mset MSET]] or does nothing when `keyValues` is empty, without sending the
+    * command to Redis
+    */
   def mset(keyValues: Iterable[(Key, Value)]): Result[Unit] =
     execute(new Mset(keyValues))
 
@@ -113,8 +116,9 @@ trait StringsApi extends ApiSubset {
   def msetnx(keyValue: (Key, Value), keyValues: (Key, Value)*): Result[Boolean] =
     execute(new Msetnx(keyValue +:: keyValues))
 
-  /** Executes [[http://redis.io/commands/msetnx MSETNX]]
-    * or simply returns `true` when `keyValues` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/msetnx MSETNX]] or simply returns `true` when `keyValues` is empty, without
+    * sending the command to Redis
+    */
   def msetnx(keyValues: Iterable[(Key, Value)]): Result[Boolean] =
     execute(new Msetnx(keyValues))
 
@@ -127,7 +131,7 @@ trait StringsApi extends ApiSubset {
     key: Key,
     value: Value,
     expiration: OptArg[SetExpiration] = OptArg.Empty,
-    existence: OptArg[Existence] = OptArg.Empty
+    existence: OptArg[Existence] = OptArg.Empty,
   ): Result[Boolean] =
     execute(new Set(key, value, expiration.toOpt, existence.toOpt))
 
@@ -136,7 +140,7 @@ trait StringsApi extends ApiSubset {
     key: Key,
     value: Value,
     expiration: OptArg[SetExpiration] = OptArg.Empty,
-    existence: OptArg[Existence] = OptArg.Empty
+    existence: OptArg[Existence] = OptArg.Empty,
   ): Result[Opt[Value]] =
     execute(new SetGet(key, value, expiration.toOpt, existence.toOpt))
 
@@ -271,12 +275,19 @@ trait StringsApi extends ApiSubset {
     val encoded: Encoded = encoder("PSETEX").key(key).add(milliseconds).data(value).result
   }
 
-  private abstract class AbstractSet[T](decoder: ReplyDecoder[T])(
-    key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Existence], get: Boolean
-  ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
+  private abstract class AbstractSet[T](
+    decoder: ReplyDecoder[T]
+  )(
+    key: Key,
+    value: Value,
+    expiration: Opt[SetExpiration],
+    existence: Opt[Existence],
+    get: Boolean,
+  ) extends AbstractRedisCommand[T](decoder)
+      with NodeCommand {
 
-    val encoded: Encoded = encoder("SET").key(key).data(value).optAdd(expiration)
-      .optAdd(existence).addFlag("GET", get).result
+    val encoded: Encoded =
+      encoder("SET").key(key).data(value).optAdd(expiration).optAdd(existence).addFlag("GET", get).result
   }
 
   private final class Set(key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Existence])

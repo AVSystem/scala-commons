@@ -4,9 +4,7 @@ package redis
 import com.avsystem.commons.redis.config.ConnectionConfig
 import org.scalatest.Suite
 
-/**
-  * Author: ghik
-  * Created: 09/06/16.
+/** Author: ghik Created: 09/06/16.
   */
 trait UsesRedisConnectionClient extends UsesRedisServer with UsesActorSystem with UsesSslContext { this: Suite =>
   def useTls: Boolean = false

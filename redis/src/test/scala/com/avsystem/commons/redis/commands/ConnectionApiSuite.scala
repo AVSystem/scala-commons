@@ -5,9 +5,7 @@ import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.exception.ErrorReplyException
 import com.avsystem.commons.redis.{RedisApi, RedisConnectionCommandsSuite}
 
-/**
-  * Author: ghik
-  * Created: 29/09/16.
+/** Author: ghik Created: 29/09/16.
   */
 trait ConnectionApiSuite extends RedisConnectionCommandsSuite {
 

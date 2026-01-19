@@ -8,8 +8,7 @@ class ConstantDeclarations(g: Global) extends AnalyzerRule(g, "constantDeclarati
   import global._
 
   def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
-    case t@ValDef(_, name, tpt, rhs)
-      if t.symbol.hasGetter && t.symbol.owner.isEffectivelyFinal =>
+    case t @ ValDef(_, name, tpt, rhs) if t.symbol.hasGetter && t.symbol.owner.isEffectivelyFinal =>
 
       val getter = t.symbol.getterIn(t.symbol.owner)
       if (getter.isPublic && getter.isStable && getter.overrides.isEmpty) {

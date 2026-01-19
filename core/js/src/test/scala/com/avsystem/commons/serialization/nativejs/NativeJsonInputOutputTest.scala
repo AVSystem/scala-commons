@@ -31,9 +31,7 @@ class NativeJsonInputOutputTest extends AnyFunSuite {
     BilateralTestCase("raw string options", NativeFormatOptions.RawString),
     BilateralTestCase(
       "number options",
-      NativeFormatOptions(
-        longFormat = NativeLongFormat.JsNumber,
-        dateFormat = NativeDateFormat.JsNumber),
+      NativeFormatOptions(longFormat = NativeLongFormat.JsNumber, dateFormat = NativeDateFormat.JsNumber),
     ),
     BilateralTestCase(
       "typed options",

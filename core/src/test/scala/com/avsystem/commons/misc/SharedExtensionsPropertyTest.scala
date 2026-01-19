@@ -26,7 +26,7 @@ class SharedExtensionsPropertyTest extends AnyFunSuite with Matchers with ScalaC
 
   test("indexOfOpt(elem) should not return Opt.Empty when the element occurs in the list") {
     forAll(listWithElementGen) { case (elemList, elem) =>
-      elemList.indexOfOpt(elem) should not equal Opt.Empty
+      (elemList.indexOfOpt(elem) should not).equal(Opt.Empty)
     }
   }
 

@@ -33,11 +33,15 @@ class BadSingletonComponent(g: Global) extends AnalyzerRule(g, "badSingletonComp
     if (componentsTpe != NoType) {
       object traverser extends Traverser {
         override def traverse(tree: Tree): Unit = tree match {
-          case mdef@DefDef(_, _, Nil, Nil, _, Unwrap(app@Apply(_, List(arg, _))))
-            if app.symbol == cachedSym && mdef.symbol.owner.isClass && ThisType(mdef.symbol.owner) <:< componentsTpe =>
+          case mdef @ DefDef(_, _, Nil, Nil, _, Unwrap(app @ Apply(_, List(arg, _))))
+              if app.symbol == cachedSym && mdef.symbol.owner.isClass &&
+                ThisType(mdef.symbol.owner) <:< componentsTpe =>
             traverse(arg)
           case t if t.symbol == cachedSym =>
-            report(t.pos, "singleton(...) macro can only be used as a body of a parameterless method in a Components trait implementation")
+            report(
+              t.pos,
+              "singleton(...) macro can only be used as a body of a parameterless method in a Components trait implementation",
+            )
           case _ =>
             super.traverse(tree)
         }

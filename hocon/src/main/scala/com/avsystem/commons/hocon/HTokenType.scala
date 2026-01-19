@@ -31,7 +31,7 @@ final case class HToken(tokenType: HTokenType, idx: Int, pos: SourcePos) {
 }
 
 final class HTokenRange(val allTokens: IndexedSeq[HToken], val start: Int, val end: Int)
-  extends AbstractSeq[HToken] with IndexedSeq[HToken] { //TODO: IndexedSeqOptimized
+  extends AbstractSeq[HToken] with IndexedSeq[HToken] { // TODO: IndexedSeqOptimized
 
   require(allTokens.nonEmpty)
   require(start >= 0 && start <= allTokens.length)
@@ -39,8 +39,9 @@ final class HTokenRange(val allTokens: IndexedSeq[HToken], val start: Int, val e
   require(end >= start)
 
   val pos: SourcePos =
-    if (start == end) allTokens(start).pos.emptyStartPos else
-      allTokens(start).pos join allTokens(end - 1).pos
+    if (start == end) allTokens(start).pos.emptyStartPos
+    else
+      allTokens(start).pos.join(allTokens(end - 1).pos)
 
   def input: SourceFile = pos.input
 
@@ -143,24 +144,27 @@ class HLexer(input: SourceFile) {
       off = 0
       tokenIdx += 1
       HToken(HTokenType.Bof, tokenIdx, input.pos(off, off))
-    }
-    else if (off == chars.length) {
+    } else if (off == chars.length) {
       val pos = input.pos(off, off)
       off += 1
       HToken(HTokenType.Eof, tokenIdx, pos)
-    }
-    else {
-      HTokenType.values.iterator.flatMap { tt =>
-        val nextOff = tt.pass(chars, off)
-        if (nextOff <= off) Opt.Empty else Opt {
-          val token = HToken(tt, tokenIdx, input.pos(off, nextOff))
-          off = nextOff
-          tokenIdx += 1
-          token
+    } else {
+      HTokenType.values.iterator
+        .flatMap { tt =>
+          val nextOff = tt.pass(chars, off)
+          if (nextOff <= off) Opt.Empty
+          else
+            Opt {
+              val token = HToken(tt, tokenIdx, input.pos(off, nextOff))
+              off = nextOff
+              tokenIdx += 1
+              token
+            }
         }
-      }.nextOpt.getOrElse {
-        throw new Exception(s"Unexpected character ${chars.charAt(off)} at ${input.pos(off, off)}")
-      }
+        .nextOpt
+        .getOrElse {
+          throw new Exception(s"Unexpected character ${chars.charAt(off)} at ${input.pos(off, off)}")
+        }
     }
 
   def tokenize(): IndexedSeq[HToken] = {

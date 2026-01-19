@@ -12,13 +12,11 @@ object CustomImplicits {
 }
 
 abstract class CustomPolyDataCompanion[D[_]](
-  implicit instances: MacroInstances[CustomImplicits.type, MongoPolyAdtInstances[D]],
+  implicit instances: MacroInstances[CustomImplicits.type, MongoPolyAdtInstances[D]]
 ) extends AbstractMongoPolyDataCompanion[CustomImplicits.type, D](CustomImplicits)
 
-/**
-  * This class tests (through its compilation) if implicit resolution conflicts that were
-  * previously present in [[MongoPolyAdtInstances]] are fixed
-  * ([[https://github.com/AVSystem/scala-commons/pull/429 #429]]).
+/** This class tests (through its compilation) if implicit resolution conflicts that were previously present in
+  * [[MongoPolyAdtInstances]] are fixed ([[https://github.com/AVSystem/scala-commons/pull/429 #429]]).
   */
 case class PolyDataWithCustomImplicits[+T](wrappy: CustomWrappy, value: List[T])
 object PolyDataWithCustomImplicits extends CustomPolyDataCompanion[PolyDataWithCustomImplicits]

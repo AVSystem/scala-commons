@@ -4,9 +4,8 @@ package redis
 import com.avsystem.commons.redis.HasFlatMap.FlatMapOps
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 
-/**
-  * Typeclass that steers flat-mapping of [[RedisBatch]]es and [[RedisOp]]s with each other.
-  * It could be defined simpler as:
+/** Typeclass that steers flat-mapping of [[RedisBatch]]es and [[RedisOp]]s with each other. It could be defined simpler
+  * as:
   * {{{
   *   trait FlatMapper[-L[_],-R[_]] {
   *     def flatMap[A,B](left: L[A])(rightFun: A => R[B]): RedisOp[B]

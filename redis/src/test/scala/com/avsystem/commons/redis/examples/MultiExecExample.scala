@@ -8,8 +8,7 @@ import com.avsystem.commons.redis._
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Example that shows execution of simple `MULTI`-`EXEC` blocks. For full Redis transactions with optimistic locking
+/** Example that shows execution of simple `MULTI`-`EXEC` blocks. For full Redis transactions with optimistic locking
   * and `WATCH` command, see [[TransactionExample]].
   */
 object MultiExecExample extends App {

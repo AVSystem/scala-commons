@@ -17,8 +17,7 @@ object HoconInput {
     GenCodec.read[T](new HoconInput(config.root))
 }
 
-/**
-  * [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] marker object which allows inspection of
+/** [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] marker object which allows inspection of
   * `com.typesafe.config.ConfigValueType` on a [[HoconInput]] in a
   * [[com.avsystem.commons.serialization.GenCodec GenCodec]] implementation.
   */
@@ -26,16 +25,16 @@ object ConfigValueTypeMarker extends InputMetadata[ConfigValueType]
 
 trait BaseHoconInput {
   protected final def handleFailures[T](code: => T): T =
-    try code.opt.getOrElse(throw new ReadFailure("null")) catch {
+    try code.opt.getOrElse(throw new ReadFailure("null"))
+    catch {
       case rf: ReadFailure => throw rf
       case NonFatal(cause) => throw new ReadFailure(cause.getMessage, cause)
     }
 }
 
-/**
-  * An [[com.avsystem.commons.serialization.Input Input]] implementation which allows deserialization from
-  * HOCON (represented as `com.typesafe.config.Config` or `com.typesafe.config.ConfigValue`)
-  * using [[com.avsystem.commons.serialization.GenCodec GenCodec]].
+/** An [[com.avsystem.commons.serialization.Input Input]] implementation which allows deserialization from HOCON
+  * (represented as `com.typesafe.config.Config` or `com.typesafe.config.ConfigValue`) using
+  * [[com.avsystem.commons.serialization.GenCodec GenCodec]].
   */
 class HoconInput(value: ConfigValue) extends InputAndSimpleInput with BaseHoconInput {
   // For wrapping ConfigValue into Config in order to use its rich API
@@ -76,15 +75,16 @@ class HoconInput(value: ConfigValue) extends InputAndSimpleInput with BaseHoconI
   }
 
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] = typeMarker match {
-    case hoconTypeMarker: HoconTypeMarker[T] => hoconTypeMarker match {
-      case ConfigValueMarker => Opt(readValue())
-      case DurationMarker => Opt(readDuration())
-      case SizeInBytesMarker => Opt(readSizeInBytes())
-      case ConfigMemorySizeMarker => Opt(readMemorySize())
-      case PeriodMarker => Opt(readPeriod())
-      case TemporalAmountMarker => Opt(readTemporal())
-      case NumberMarker => Opt(readNumber())
-    }
+    case hoconTypeMarker: HoconTypeMarker[T] =>
+      hoconTypeMarker match {
+        case ConfigValueMarker => Opt(readValue())
+        case DurationMarker => Opt(readDuration())
+        case SizeInBytesMarker => Opt(readSizeInBytes())
+        case ConfigMemorySizeMarker => Opt(readMemorySize())
+        case PeriodMarker => Opt(readPeriod())
+        case TemporalAmountMarker => Opt(readTemporal())
+        case NumberMarker => Opt(readNumber())
+      }
     case _ => super.readCustom(typeMarker)
   }
 }
@@ -118,5 +118,4 @@ class HoconObjectInput(configObject: ConfigObject) extends ObjectInput with Base
     else Opt.Empty
 }
 
-class HoconFieldInput(val fieldName: String, value: ConfigValue)
-  extends HoconInput(value) with FieldInput
+class HoconFieldInput(val fieldName: String, value: ConfigValue) extends HoconInput(value) with FieldInput

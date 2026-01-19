@@ -27,8 +27,9 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
   }
 
   def checkLevel(minAllowed: Level, clientType: String): Unit =
-    batch.rawCommandPacks.emitCommandPacks(_.rawCommands(inTransaction = true)
-      .emitCommands(_.checkLevel(minAllowed, clientType)))
+    batch.rawCommandPacks.emitCommandPacks(
+      _.rawCommands(inTransaction = true).emitCommands(_.checkLevel(minAllowed, clientType))
+    )
 
   def createPreprocessor(replyCount: Int): ReplyPreprocessor = new ReplyPreprocessor {
     private var singleError: Opt[FailureReply] = Opt.Empty
@@ -79,8 +80,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
             case errorMsg: ErrorMsg => setDefaultError(errorMsg)
             case _ => setSingleError(new UnexpectedReplyException(s"Unexpected reply for EXEC: $message"))
           }
-          singleError orElse
-            errors.map(a => TransactionReply(IArraySeq.unsafeWrapArray(a))) orElse
+          singleError orElse errors.map(a => TransactionReply(IArraySeq.unsafeWrapArray(a))) orElse
             normalResult.map(TransactionReply.apply)
         case i =>
           message match {
@@ -97,15 +97,16 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
 
   def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): A =
     if (inTransaction) batch.decodeReplies(replies, index, inTransaction)
-    else replies(index.inc()) match {
-      case TransactionReply(elements) =>
-        batch.decodeReplies(elements, new Index, inTransaction = true)
-      case fr: FailureReply =>
-        batch.decodeReplies(_ => fr, new Index, inTransaction = true)
-      case msg =>
-        val failure = FailureReply(new UnexpectedReplyException(s"Unexpected reply for transaction: $msg"))
-        batch.decodeReplies(_ => failure, new Index, inTransaction = true)
-    }
+    else
+      replies(index.inc()) match {
+        case TransactionReply(elements) =>
+          batch.decodeReplies(elements, new Index, inTransaction = true)
+        case fr: FailureReply =>
+          batch.decodeReplies(_ => fr, new Index, inTransaction = true)
+        case msg =>
+          val failure = FailureReply(new UnexpectedReplyException(s"Unexpected reply for transaction: $msg"))
+          batch.decodeReplies(_ => failure, new Index, inTransaction = true)
+      }
 
   override def transaction: Transaction[A] = this
 }

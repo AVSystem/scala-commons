@@ -34,22 +34,21 @@ class SamMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       val sig = m.typeSignatureIn(targetTpe)
 
       val resultType = sig.finalResultType
-      val defParamss = sig.paramLists.map(_.map(ps => {
+      val defParamss = sig.paramLists.map(_.map { ps =>
         val implicitFlag = if (ps.isImplicit) Flag.IMPLICIT else NoFlags
         ValDef(Modifiers(Flag.PARAM | implicitFlag), ps.name.toTermName, TypeTree(ps.typeSignature), EmptyTree)
-      }))
+      })
 
       val unimplemented = q"???"
-      val baseResult = typecheck(
-        q"""
+      val baseResult = typecheck(q"""
           new $targetTpe {
             def ${m.name.toTermName}(...$defParamss): $resultType = $unimplemented
           }
          """)
 
-      val typedDefParamss = baseResult
-        .collect({ case dd: DefDef if dd.symbol.overrides.contains(m) => dd.vparamss })
-        .head
+      val typedDefParamss = baseResult.collect {
+        case dd: DefDef if dd.symbol.overrides.contains(m) => dd.vparamss
+      }.head
 
       def rewriteParams(function: Tree, defParamss: List[List[ValDef]]): Tree =
         (function, defParamss) match {

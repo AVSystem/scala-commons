@@ -11,25 +11,28 @@ import com.avsystem.commons.redis.exception.ClientStoppedException
 import org.apache.pekko.actor.{ActorSystem, Props}
 import org.apache.pekko.pattern.ask
 
-/**
-  * Redis client that uses a single, non-reconnectable connection.
-  * This is the most "raw" client implementation and the only one capable of directly executing connection state
-  * changing commands like `AUTH`, `CLIENT SETNAME`, `WATCH`, etc.
+/** Redis client that uses a single, non-reconnectable connection. This is the most "raw" client implementation and the
+  * only one capable of directly executing connection state changing commands like `AUTH`, `CLIENT SETNAME`, `WATCH`,
+  * etc.
   *
   * However, note that connection-setup commands like `AUTH` may also be specified in
-  * [[config.ConnectionConfig ConnectionConfig]]
-  * (which may also be specified for connections used by [[RedisNodeClient]] and [[RedisClusterClient]]).
+  * [[config.ConnectionConfig ConnectionConfig]] (which may also be specified for connections used by
+  * [[RedisNodeClient]] and [[RedisClusterClient]]).
   *
-  * This type of client should only be used when requiring capability of manual handling of connection state.
-  * If you simply need a single-connection, reconnectable client, use [[RedisNodeClient]] with connection pool size
-  * configured to 1.
+  * This type of client should only be used when requiring capability of manual handling of connection state. If you
+  * simply need a single-connection, reconnectable client, use [[RedisNodeClient]] with connection pool size configured
+  * to 1.
   */
-@deprecated("Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.", "2.21.0")
+@deprecated(
+  "Redis driver is scheduled for removal. It has not been actively tested since v2.21.0. Use a different library, e.g. redisson.",
+  "2.21.0",
+)
 final class RedisConnectionClient(
   val address: NodeAddress = NodeAddress.Default,
   val config: ConnectionConfig = ConnectionConfig(),
-)
-  (implicit system: ActorSystem) extends RedisClient with RedisConnectionExecutor { self =>
+)(implicit system: ActorSystem
+) extends RedisClient
+    with RedisConnectionExecutor { self =>
 
   private val initPromise = Promise[Unit]()
   private val connectionActor = {
@@ -44,10 +47,9 @@ final class RedisConnectionClient(
   private def ifReady[T](code: => Future[T]): Future[T] =
     failure.fold(code)(Future.failed)
 
-  /**
-    * Waits until Redis connection is initialized. Note that you can call [[executeBatch]] and [[executeOp]]
-    * even if the connection is not yet initialized - requests will be internally queued and executed after
-    * initialization is complete.
+  /** Waits until Redis connection is initialized. Note that you can call [[executeBatch]] and [[executeOp]] even if the
+    * connection is not yet initialized - requests will be internally queued and executed after initialization is
+    * complete.
     */
   def initialized: Future[this.type] =
     initPromise.future.mapNow(_ => this)
@@ -56,13 +58,19 @@ final class RedisConnectionClient(
     system.dispatcher
 
   def executeBatch[A](batch: RedisBatch[A], config: ExecutionConfig): Future[A] =
-    ifReady(connectionActor.ask(batch.rawCommandPacks.requireLevel(Level.Connection, "ConnectionClient"))(config.responseTimeout)
-      .map({ case pr: PacksResult => batch.decodeReplies(pr) })(config.decodeOn))
+    ifReady(
+      connectionActor
+        .ask(batch.rawCommandPacks.requireLevel(Level.Connection, "ConnectionClient"))(config.responseTimeout)
+        .map { case pr: PacksResult => batch.decodeReplies(pr) }(config.decodeOn)
+    )
 
-  //TODO: don't ignore executionConfig.decodeOn
+  // TODO: don't ignore executionConfig.decodeOn
   def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =
-    ifReady(system.actorOf(Props(new RedisOperationActor(connectionActor))).ask(op)(executionConfig.responseTimeout)
-      .mapNow({ case or: OpResult[A@unchecked] => or.get }))
+    ifReady(
+      system.actorOf(Props(new RedisOperationActor(connectionActor))).ask(op)(executionConfig.responseTimeout).mapNow {
+        case or: OpResult[A @unchecked] => or.get
+      }
+    )
 
   def close(): Unit = {
     val cause = new ClientStoppedException(address.opt)

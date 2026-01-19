@@ -13,8 +13,10 @@ class Any2StringAdd(g: Global) extends AnalyzerRule(g, "any2stringadd", Level.Of
   def analyze(unit: CompilationUnit): Unit = {
     unit.body.foreach(analyzeTree {
       case t if t.symbol == any2stringaddSym =>
-        report(t.pos, "concatenating arbitrary values with strings is disabled, " +
-          "use explicit toString or string interpolation")
+        report(
+          t.pos,
+          "concatenating arbitrary values with strings is disabled, " + "use explicit toString or string interpolation",
+        )
     })
   }
 }

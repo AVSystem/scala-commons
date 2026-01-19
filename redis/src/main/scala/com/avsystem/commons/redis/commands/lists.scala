@@ -6,6 +6,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait ListsApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/lindex LINDEX]] */
   def lindex(key: Key, index: Long): Result[Opt[Value]] =
     execute(new Lindex(key, index))
@@ -31,7 +32,7 @@ trait ListsApi extends ApiSubset {
     key: Key,
     element: Value,
     rank: OptArg[Long] = OptArg.Empty,
-    maxlen: OptArg[Long] = OptArg.Empty
+    maxlen: OptArg[Long] = OptArg.Empty,
   ): Result[Opt[Long]] =
     execute(new Lpos(key, element, rank.toOpt, maxlen.toOpt))
 
@@ -41,7 +42,7 @@ trait ListsApi extends ApiSubset {
     element: Value,
     count: Long,
     rank: OptArg[Long] = OptArg.Empty,
-    maxlen: OptArg[Long] = OptArg.Empty
+    maxlen: OptArg[Long] = OptArg.Empty,
   ): Result[Seq[Long]] =
     execute(new LposCount(key, element, count, rank.toOpt, maxlen.toOpt))
 
@@ -49,13 +50,14 @@ trait ListsApi extends ApiSubset {
   def lpush(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Lpush(key, value +:: values))
 
-  /** Executes [[http://redis.io/commands/lpush LPUSH]]
-    * NOTE: `values` MUST NOT be empty - consider using [[lpushOrLlen]] in such case. */
+  /** Executes [[http://redis.io/commands/lpush LPUSH]] NOTE: `values` MUST NOT be empty - consider using
+    * [[lpushOrLlen]] in such case.
+    */
   def lpush(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Lpush(key, values))
 
-  /** Executes [[http://redis.io/commands/lpush LPUSH]]
-    * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
+  /** Executes [[http://redis.io/commands/lpush LPUSH]] or [[http://redis.io/commands/llen LLEN]] when `values` is empty
+    */
   def lpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if (values.nonEmpty) lpush(key, values) else llen(key)
 
@@ -67,8 +69,9 @@ trait ListsApi extends ApiSubset {
   def lpushx(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Lpushx(key, values))
 
-  /** Executes [[http://redis.io/commands/lpush LPUSHX]]
-    * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
+  /** Executes [[http://redis.io/commands/lpush LPUSHX]] or [[http://redis.io/commands/llen LLEN]] when `values` is
+    * empty
+    */
   def lpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if (values.nonEmpty) lpushx(key, values) else llen(key)
 
@@ -100,13 +103,14 @@ trait ListsApi extends ApiSubset {
   def rpush(key: Key, value: Value, values: Value*): Result[Long] =
     execute(new Rpush(key, value +:: values))
 
-  /** Executes [[http://redis.io/commands/rpush RPUSH]]
-    * NOTE: `values` MUST NOT be empty - consider using [[rpushOrLlen]] in such case. */
+  /** Executes [[http://redis.io/commands/rpush RPUSH]] NOTE: `values` MUST NOT be empty - consider using
+    * [[rpushOrLlen]] in such case.
+    */
   def rpush(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Rpush(key, values))
 
-  /** Executes [[http://redis.io/commands/lpush RPUSH]]
-    * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
+  /** Executes [[http://redis.io/commands/lpush RPUSH]] or [[http://redis.io/commands/llen LLEN]] when `values` is empty
+    */
   def rpushOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if (values.nonEmpty) rpush(key, values) else llen(key)
 
@@ -118,8 +122,9 @@ trait ListsApi extends ApiSubset {
   def rpushx(key: Key, values: Iterable[Value]): Result[Long] =
     execute(new Rpushx(key, values))
 
-  /** Executes [[http://redis.io/commands/lpush RPUSHX]]
-    * or [[http://redis.io/commands/llen LLEN]] when `values` is empty */
+  /** Executes [[http://redis.io/commands/lpush RPUSHX]] or [[http://redis.io/commands/llen LLEN]] when `values` is
+    * empty
+    */
   def rpushxOrLlen(key: Key, values: Iterable[Value]): Result[Long] =
     if (values.nonEmpty) rpushx(key, values) else llen(key)
 
@@ -149,7 +154,8 @@ trait ListsApi extends ApiSubset {
 
   private final class Linsert(key: Key, before: Boolean, pivot: Value, value: Value)
     extends RedisPositiveLongCommand with NodeCommand {
-    val encoded: Encoded = encoder("LINSERT").key(key).add(if (before) "BEFORE" else "AFTER").data(pivot).data(value).result
+    val encoded: Encoded =
+      encoder("LINSERT").key(key).add(if (before) "BEFORE" else "AFTER").data(pivot).data(value).result
   }
 
   private final class Llen(key: Key) extends RedisLongCommand with NodeCommand {
@@ -167,14 +173,19 @@ trait ListsApi extends ApiSubset {
 
   private final class Lpos(key: Key, element: Value, rank: Opt[Long], maxlen: Opt[Long])
     extends RedisOptLongCommand with NodeCommand {
-    val encoded: Encoded = encoder("LPOS").key(key).data(element)
-      .optAdd("RANK", rank).optAdd("MAXLEN", maxlen).result
+    val encoded: Encoded = encoder("LPOS").key(key).data(element).optAdd("RANK", rank).optAdd("MAXLEN", maxlen).result
   }
 
   private final class LposCount(key: Key, element: Value, count: Long, rank: Opt[Long], maxlen: Opt[Long])
     extends RedisSeqCommand[Long](integerAsLong) with NodeCommand {
-    val encoded: Encoded = encoder("LPOS").key(key).data(element)
-      .add("COUNT").add(count).optAdd("RANK", rank).optAdd("MAXLEN", maxlen).result
+    val encoded: Encoded = encoder("LPOS")
+      .key(key)
+      .data(element)
+      .add("COUNT")
+      .add(count)
+      .optAdd("RANK", rank)
+      .optAdd("MAXLEN", maxlen)
+      .result
   }
 
   private final class Lpush(key: Key, values: Iterable[Value]) extends RedisLongCommand with NodeCommand {
@@ -185,8 +196,7 @@ trait ListsApi extends ApiSubset {
     val encoded: Encoded = encoder("LPUSHX").key(key).datas(values).result
   }
 
-  private final class Lrange(key: Key, start: Long, stop: Long)
-    extends RedisDataSeqCommand[Value] with NodeCommand {
+  private final class Lrange(key: Key, start: Long, stop: Long) extends RedisDataSeqCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("LRANGE").key(key).add(start).add(stop).result
   }
 
@@ -219,14 +229,16 @@ trait ListsApi extends ApiSubset {
   }
 
   private final class Blpop(keys: Iterable[Key], timeout: Int)
-    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkAsPair(bulkAs[Key], bulkAs[Value]))) with NodeCommand {
+    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkAsPair(bulkAs[Key], bulkAs[Value])))
+      with NodeCommand {
     val encoded: Encoded = encoder("BLPOP").keys(keys).add(timeout).result
     override def maxBlockingMillis: Int =
       if (timeout <= 0) Int.MaxValue else timeout * 1000
   }
 
   private final class Brpop(keys: Iterable[Key], timeout: Int)
-    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkAsPair(bulkAs[Key], bulkAs[Value]))) with NodeCommand {
+    extends AbstractRedisCommand[Opt[(Key, Value)]](nullMultiBulkOr(multiBulkAsPair(bulkAs[Key], bulkAs[Value])))
+      with NodeCommand {
     val encoded: Encoded = encoder("BRPOP").keys(keys).add(timeout).result
     override def maxBlockingMillis: Int =
       if (timeout <= 0) Int.MaxValue else timeout * 1000
@@ -240,7 +252,7 @@ trait ListsApi extends ApiSubset {
   }
 }
 
-class RemCount private(val raw: Long) extends AnyVal {
+class RemCount private (val raw: Long) extends AnyVal {
   def count: Long = math.abs(raw)
   def fromHead: Boolean = raw > 0
   def fromTail: Boolean = raw < 0

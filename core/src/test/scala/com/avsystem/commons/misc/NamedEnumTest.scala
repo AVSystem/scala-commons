@@ -47,14 +47,16 @@ class NamedEnumTest extends AnyFunSuite with Matchers {
 
   test("all possible ways of `name` override") {
     import SomeNamedEnum._
-    assert(byName == Map(
-      "First" -> First,
-      "Second" -> Second,
-      "Third" -> Third,
-      "Another one" -> Fourth,
-      "I am toplvl" -> TopLevel,
-      "I am from withName" -> FromWithName
-    ))
+    assert(
+      byName == Map(
+        "First" -> First,
+        "Second" -> Second,
+        "Third" -> Third,
+        "Another one" -> Fourth,
+        "I am toplvl" -> TopLevel,
+        "I am from withName" -> FromWithName,
+      )
+    )
   }
 
   test("object in two hierarchies") {

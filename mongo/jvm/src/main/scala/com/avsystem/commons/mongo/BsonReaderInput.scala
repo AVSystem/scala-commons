@@ -8,8 +8,7 @@ import org.bson.types.{Decimal128, ObjectId}
 
 import _root_.scala.annotation.tailrec
 
-class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false)
-  extends BsonInput {
+class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
 
   override def readNull(): Boolean =
     bsonType == BsonType.NULL && {
@@ -83,14 +82,13 @@ final class BsonReaderFieldInput(name: String, br: BsonReader, legacyOptionEncod
 
 final class BsonReaderIterator[T](br: BsonReader, endCallback: BsonReader => Unit, readElement: BsonReader => T)
   extends AbstractIterator[T] {
-  override def computeNext(): T = {
+  override def computeNext(): T =
     if (br.readBsonType() == BsonType.END_OF_DOCUMENT) {
       endCallback(br)
       endOfData()
     } else {
       readElement(br)
     }
-  }
 }
 
 final class BsonReaderListInput(it: BsonReaderIterator[BsonReaderInput]) extends ListInput {
@@ -99,12 +97,15 @@ final class BsonReaderListInput(it: BsonReaderIterator[BsonReaderInput]) extends
 }
 
 final class BsonReaderObjectInput(br: BsonReader, legacyOptionEncoding: Boolean) extends ObjectInput {
-  private[this] val it = new BsonReaderIterator(br, _.readEndDocument(),
-    br => new BsonReaderFieldInput(
-      KeyEscaper.unescape(br.readName()),
-      br,
-      legacyOptionEncoding
-    )
+  private[this] val it = new BsonReaderIterator(
+    br,
+    _.readEndDocument(),
+    br =>
+      new BsonReaderFieldInput(
+        KeyEscaper.unescape(br.readName()),
+        br,
+        legacyOptionEncoding,
+      ),
   )
 
   private[this] var peekMark: BsonReaderMark = br.getMark
@@ -123,18 +124,20 @@ final class BsonReaderObjectInput(br: BsonReader, legacyOptionEncoding: Boolean)
 
           @tailrec def loop(): Opt[BsonValue] =
             if (br.readBsonType() == BsonType.END_OF_DOCUMENT) Opt.Empty
-            else KeyEscaper.unescape(br.readName()) match {
-              case `name` => BsonValueUtils.decode(br).opt
-              case otherName =>
-                if (peekedFields eq null) {
-                  peekedFields = new MHashMap
-                }
-                peekedFields(otherName) = BsonValueUtils.decode(br)
-                peekMark = br.getMark
-                loop()
-            }
+            else
+              KeyEscaper.unescape(br.readName()) match {
+                case `name` => BsonValueUtils.decode(br).opt
+                case otherName =>
+                  if (peekedFields eq null) {
+                    peekedFields = new MHashMap
+                  }
+                  peekedFields(otherName) = BsonValueUtils.decode(br)
+                  peekMark = br.getMark
+                  loop()
+              }
 
-          try loop() finally savedMark.reset()
+          try loop()
+          finally savedMark.reset()
         }
 
         peekedValue.map(new BsonValueFieldInput(name, _, legacyOptionEncoding))

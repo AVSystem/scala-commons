@@ -5,9 +5,7 @@ import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
 import com.avsystem.commons.redis.protocol.RedisMsg
 
-/**
-  * Author: ghik
-  * Created: 29/07/16.
+/** Author: ghik Created: 29/07/16.
   */
 class TestDebugListener extends DebugListener {
   private var receiving = false

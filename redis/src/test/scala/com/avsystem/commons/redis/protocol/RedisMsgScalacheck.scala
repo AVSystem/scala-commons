@@ -6,9 +6,7 @@ import scala.annotation.nowarn
 import org.scalacheck.util.Buildable
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
-/**
-  * Author: ghik
-  * Created: 04/04/16.
+/** Author: ghik Created: 04/04/16.
   */
 object RedisMsgScalacheck {
   implicit val byteStringBuildable: Buildable[Byte, ByteString] =
@@ -40,7 +38,8 @@ object RedisMsgScalacheck {
   }
 
   val simpleBytes = (Byte.MinValue.toInt to Byte.MaxValue.toInt)
-    .filter(b => b != '\n'.toInt && b != '\r'.toInt).map(_.toByte)
+    .filter(b => b != '\n'.toInt && b != '\r'.toInt)
+    .map(_.toByte)
 
   def byteGen = Gen.chooseNum(Byte.MinValue, Byte.MaxValue, '\r'.toByte, '\n'.toByte)
   def simpleByteGen = Gen.oneOf(simpleBytes)
@@ -52,17 +51,23 @@ object RedisMsgScalacheck {
   def errorGen = simpleBytesGen.map(ErrorMsg(_))
   def integerGen = Arbitrary.arbitrary[Long].map(IntegerMsg(_))
 
-  def bulkStringGen: Gen[RedisMsg] = Gen.sized(s => Gen.choose(-1, s).flatMap {
-    case -1 => Gen.const(NullBulkStringMsg)
-    case n => Gen.buildableOfN[ByteString, Byte](n, byteGen).map(bs => BulkStringMsg(bs))
-  })
+  def bulkStringGen: Gen[RedisMsg] = Gen.sized(s =>
+    Gen.choose(-1, s).flatMap {
+      case -1 => Gen.const(NullBulkStringMsg)
+      case n => Gen.buildableOfN[ByteString, Byte](n, byteGen).map(bs => BulkStringMsg(bs))
+    }
+  )
 
-  def arrayGen: Gen[RedisMsg] = Gen.sized(s => Gen.choose(-1, s).flatMap {
-    case -1 => Gen.const(NullArrayMsg)
-    case 0 => Gen.const(ArrayMsg(IndexedSeq.empty))
-    case n => Gen.buildableOfN[IndexedSeq[RedisMsg], RedisMsg](n, Gen.resize(s / n, redisProtocolMsgGen))
-      .map(els => ArrayMsg(els))
-  })
+  def arrayGen: Gen[RedisMsg] = Gen.sized(s =>
+    Gen.choose(-1, s).flatMap {
+      case -1 => Gen.const(NullArrayMsg)
+      case 0 => Gen.const(ArrayMsg(IndexedSeq.empty))
+      case n =>
+        Gen
+          .buildableOfN[IndexedSeq[RedisMsg], RedisMsg](n, Gen.resize(s / n, redisProtocolMsgGen))
+          .map(els => ArrayMsg(els))
+    }
+  )
 
   def redisProtocolMsgGen: Gen[RedisMsg] =
     Gen.oneOf(simpleStringGen, errorGen, integerGen, bulkStringGen, arrayGen)

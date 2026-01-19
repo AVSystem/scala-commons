@@ -1,9 +1,7 @@
 package com.avsystem.commons
 package redis
 
-/**
-  * Author: ghik
-  * Created: 06/10/16.
+/** Author: ghik Created: 06/10/16.
   */
 object SeparateThreadExecutionContext extends ExecutionContext {
   def execute(runnable: Runnable): Unit = new Thread(runnable).start()

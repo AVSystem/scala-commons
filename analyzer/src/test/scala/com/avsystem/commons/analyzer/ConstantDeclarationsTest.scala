@@ -1,12 +1,12 @@
 package com.avsystem.commons
 package analyzer
 
-
 import org.scalatest.funsuite.AnyFunSuite
 
 final class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
   test("literal-valued constants should be non-lazy final vals with UpperCamelCase and no type annotation") {
-    assertErrors(4,
+    assertErrors(
+      4,
       scala"""
              |// bad
              |val a = 10
@@ -16,11 +16,13 @@ final class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
              |
              |// good
              |final val E = 10
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("effectively final, non-literal UpperCamelCase vals should be final") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |// bad
              |val A = "foo".trim
@@ -28,12 +30,12 @@ final class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
              |// good
              |final val B = "foo".trim
              |val c = "foo".trim
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("no constant checking in traits or non-final classes") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |trait Whatever {
              |  val a = 10
              |  val B = 10
@@ -53,8 +55,7 @@ final class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("no constant checking for overrides") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |trait Whatever {
              |  def a: Int
              |}
@@ -66,8 +67,7 @@ final class ConstantDeclarationsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("no constant checking for privates") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |private val a = 10
              |private val B = 10
              |private final val c = 10

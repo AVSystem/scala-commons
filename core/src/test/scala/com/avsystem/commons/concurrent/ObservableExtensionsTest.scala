@@ -11,8 +11,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.Factory
 
-class ObservableExtensionsTest extends AnyFunSuite with Matchers
-  with ScalaCheckDrivenPropertyChecks with ObservableExtensions with ScalaFutures {
+class ObservableExtensionsTest
+  extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ObservableExtensions with ScalaFutures {
   private implicit val scheduler: Scheduler = Scheduler(RunNowEC)
 
   test("headOptL") {
@@ -22,7 +22,7 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
   }
 
   test("headOptL - null handling") {
-    Observable.fromIterable(Seq(null, "abc", "xyz")) .headOptL.runToFuture.futureValue shouldBe Opt.Empty
+    Observable.fromIterable(Seq(null, "abc", "xyz")).headOptL.runToFuture.futureValue shouldBe Opt.Empty
   }
 
   test("findOptL") {
@@ -34,7 +34,8 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
   test("findOptL - null handling") {
     Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.some("abc")
     Observable.fromIterable(Seq(null, null)).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.Empty
-    Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_.startsWith("x")).runToFuture.futureValue shouldBe Opt.some("xyz")
+    Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_.startsWith("x")).runToFuture.futureValue shouldBe
+      Opt.some("xyz")
   }
 
   test("distinct") {
@@ -48,7 +49,12 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
       val f: Int => Int = _ % 256
 
       Observable.fromIterable(ints).distinctBy(f).toListL.runToFuture.futureValue shouldBe
-        ints.foldLeft(MLinkedHashMap.empty[Int, Int])((map, v) => f(v) |> (key => map.applyIf(!_.contains(key))(_ += key -> v))).valuesIterator.toList
+        ints
+          .foldLeft(MLinkedHashMap.empty[Int, Int])((map, v) =>
+            f(v) |> (key => map.applyIf(!_.contains(key))(_ += key -> v))
+          )
+          .valuesIterator
+          .toList
     }
   }
 

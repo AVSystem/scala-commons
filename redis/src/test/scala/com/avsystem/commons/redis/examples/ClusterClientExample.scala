@@ -8,8 +8,7 @@ import com.avsystem.commons.redis._
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Basic example showing how to execute simple command on [[RedisClusterClient]].
+/** Basic example showing how to execute simple command on [[RedisClusterClient]].
   */
 object ClusterClientExample extends App {
   implicit val actorSystem: ActorSystem = ActorSystem()

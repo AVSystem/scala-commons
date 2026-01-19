@@ -1,61 +1,51 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import com.avsystem.commons.annotation.{AnnotationAggregate, positioned}
+import com.avsystem.commons.annotation.{positioned, AnnotationAggregate}
 import com.avsystem.commons.meta._
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 import com.avsystem.commons.serialization._
 
-/**
-  * Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
-  * [[CborInput]]. The differences between this codec and regular codec are:
-  * <ul>
-  * <li>case class fields that are `Map`s are serialized with [[CborOptimizedCodecs.cborMapCodec]] so that
-  * map keys are not required to be strings - they can be of arbitrary type that has [[GenCodec]]</li>
-  * <li>you can optimize CBOR for your case classes and sealed hierarchies with annotations:
-  * [[cborKey]] and [[cborDiscriminator]], again taking advantage of the fact that CBOR map keys can be of
-  * arbitrary type and not just strings</li>
-  * </ul>
+/** Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
+  * [[CborInput]]. The differences between this codec and regular codec are: <ul> <li>case class fields that are `Map`s
+  * are serialized with [[CborOptimizedCodecs.cborMapCodec]] so that map keys are not required to be strings - they can
+  * be of arbitrary type that has [[GenCodec]]</li> <li>you can optimize CBOR for your case classes and sealed
+  * hierarchies with annotations: [[cborKey]] and [[cborDiscriminator]], again taking advantage of the fact that CBOR
+  * map keys can be of arbitrary type and not just strings</li> </ul>
   */
 abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtInstances[T]]) {
   implicit lazy val codec: GenObjectCodec[T] = instances(CborOptimizedCodecs, this).cborCodec
 }
 
-/**
-  * Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
+/** Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
   */
-abstract class HasCborCodecWithDeps[D, T](implicit
-  deps: ValueOf[D],
-  instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]]
+abstract class HasCborCodecWithDeps[D, T](
+  implicit deps: ValueOf[D],
+  instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
 ) {
   implicit lazy val codec: GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
 }
 
-/**
-  * Apply this annotation on a sealed trait/class whose companion extends [[HasCborCodec]] in order to customize
-  * the CBOR field key used for discriminator field. Note: this annotation automatically applies [[flatten]] annotation
-  * on the sealed trait/class.
+/** Apply this annotation on a sealed trait/class whose companion extends [[HasCborCodec]] in order to customize the
+  * CBOR field key used for discriminator field. Note: this annotation automatically applies [[flatten]] annotation on
+  * the sealed trait/class.
   */
-class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] = infer.value) extends AnnotationAggregate {
+class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] = infer.value)
+  extends AnnotationAggregate {
   val rawKey: RawCbor = CborOutput.writeRawCbor(discriminatorFieldKey)(codec)
 
   @flatten
   final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
-/**
-  * You can apply this annotation on:
-  * <ul>
-  * <li>Fields of a case class whose companion extends [[HasCborCodec]]. This way you can customize the raw CBOR
-  * key emitted for some field of that case class.</li>
-  * <li>Case classes and objects in a sealed hierarchy whose companion extends [[HasCborCodec]]. This way you can
-  * customize the raw CBOR discriminator value emitted for that case class/object. This applies to both
-  * nested and flat format (see [[flatten]]).</li>
-  * </ul>
+/** You can apply this annotation on: <ul> <li>Fields of a case class whose companion extends [[HasCborCodec]]. This way
+  * you can customize the raw CBOR key emitted for some field of that case class.</li> <li>Case classes and objects in a
+  * sealed hierarchy whose companion extends [[HasCborCodec]]. This way you can customize the raw CBOR discriminator
+  * value emitted for that case class/object. This applies to both nested and flat format (see [[flatten]]).</li> </ul>
   *
   * @example
-  * {{{
+  *   {{{
   *   case class Stuff(@cborKey(0) value: Int)
   *   object Stuff extends HasCborCodec[Stuff]
   *
@@ -63,7 +53,7 @@ class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] =
   *   @cborKey(1) case class IntCase(int: Int) extends Base
   *   @cborKey(2) case class StrCase(str: String) extends Base
   *   object Base extends HasCborCodec[Base]
-  * }}}
+  *   }}}
   */
 class cborKey[T](key: T, @infer codec: GenCodec[T] = infer.value) extends StaticAnnotation {
   val rawKey: RawCbor = CborOutput.writeRawCbor(key)(codec)
@@ -78,7 +68,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
   final class CborKeyInfo[T](
     @reifyName val sourceName: String,
     @optional @reifyAnnot val nameAnnot: Opt[name],
-    @optional @reifyAnnot val cborKey: Opt[cborKey[_]]
+    @optional @reifyAnnot val cborKey: Opt[cborKey[_]],
   ) {
     val stringKey: String = nameAnnot.fold(sourceName)(_.name)
     val rawKey: RawCbor = cborKey.fold(CborOutput.writeRawCbor(stringKey))(_.rawKey)
@@ -94,9 +84,9 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
     private val caseNamesKeyCodec =
       new MappingCborKeyCodec(cases.map(_.keyInfo))
 
-    private val discriminatorKeyCodec =
-      (discriminator zip flattenAnnot)
-        .map({ case (disc, flatten) => new DiscriminatorCborKeyCodec(flatten.caseFieldName, disc.rawKey) })
+    private val discriminatorKeyCodec = (discriminator zip flattenAnnot).map { case (disc, flatten) =>
+      new DiscriminatorCborKeyCodec(flatten.caseFieldName, disc.rawKey)
+    }
 
     def adjustCodec(codec: GenObjectCodec[T]): GenObjectCodec[T] = codec match {
       case nestedCodec: NestedSealedHierarchyCodec[T] =>
@@ -105,17 +95,15 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
             nestedCodec.typeRepr,
             nestedCodec.nullable,
             nestedCodec.caseNames,
-            nestedCodec.cases
+            nestedCodec.cases,
           ) {
             def caseDependencies: Array[GenCodec[_]] =
-              (nestedCodec.caseDependencies.iterator zip union.cases.iterator)
-                .map {
-                  case (caseCodec: ApplyUnapplyCodec[Any@unchecked], theCase: CborAdtMetadata.Record[Any@unchecked]) =>
-                    theCase.adjustCodec(caseCodec)
-                  case (codec, _) =>
-                    codec
-                }
-                .toArray
+              (nestedCodec.caseDependencies.iterator zip union.cases.iterator).map {
+                case (caseCodec: ApplyUnapplyCodec[Any @unchecked], theCase: CborAdtMetadata.Record[Any @unchecked]) =>
+                  theCase.adjustCodec(caseCodec)
+                case (codec, _) =>
+                  codec
+              }.toArray
           }
         new CborRawKeysCodec(codecWithAdjustedCaseCodecs, caseNamesKeyCodec)
 
@@ -130,7 +118,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
             flatCodec.caseDependentFieldNames,
             flatCodec.caseFieldName,
             flatCodec.defaultCaseIdx,
-            flatCodec.defaultCaseTransient
+            flatCodec.defaultCaseTransient,
           ) {
             override protected def doWriteCaseName(output: Output, caseName: String): Unit =
               if (!output.writeCustom(RawCbor, caseNamesKeyCodec.rawKeys(caseName))) {
@@ -143,14 +131,12 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
             def oooDependencies: Array[GenCodec[_]] = flatCodec.oooDependencies
 
             def caseDependencies: Array[GenCodec.OOOFieldsObjectCodec[_]] =
-              (flatCodec.caseDependencies.iterator zip union.cases.iterator)
-                .map {
-                  case (caseCodec: ApplyUnapplyCodec[Any@unchecked], theCase: CborAdtMetadata.Record[Any@unchecked]) =>
-                    theCase.adjustFlatCaseCodec(caseCodec)
-                  case (codec, _) =>
-                    codec
-                }
-                .toArray
+              (flatCodec.caseDependencies.iterator zip union.cases.iterator).map {
+                case (caseCodec: ApplyUnapplyCodec[Any @unchecked], theCase: CborAdtMetadata.Record[Any @unchecked]) =>
+                  theCase.adjustFlatCaseCodec(caseCodec)
+                case (codec, _) =>
+                  codec
+              }.toArray
           }
 
         discriminatorKeyCodec
@@ -180,7 +166,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
   @positioned(positioned.here)
   final class Record[T](
     @composite val keyInfo: CborKeyInfo[T],
-    @multi @adtParamMetadata val fields: List[Field[_]]
+    @multi @adtParamMetadata val fields: List[Field[_]],
   ) extends Case[T] {
     private val keyCodec = new MappingCborKeyCodec(fields.map(_.keyInfo))
 
@@ -191,10 +177,15 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
       new OOOFieldCborRawKeysCodec[T](codec, keyCodec)
 
     def ensureUniqueKeys(discriminatorKey: Opt[RawCbor]): Unit = {
-      for (disc <- discriminatorKey; field <- fields) {
+      for {
+        disc <- discriminatorKey
+        field <- fields
+      } {
         if (disc == field.keyInfo.rawKey) {
-          throw new Exception(s"field ${field.keyInfo.sourceName} in case class ${keyInfo.sourceName}" +
-            s" has the same CBOR key as the discriminator key")
+          throw new Exception(
+            s"field ${field.keyInfo.sourceName} in case class ${keyInfo.sourceName}" +
+              s" has the same CBOR key as the discriminator key"
+          )
         }
       }
       fields.groupBy(_.keyInfo.rawKey).foreach {
@@ -259,11 +250,13 @@ trait CborAdtPolyInstances[C[_]] {
   def metadata[T]: CborAdtMetadata[C[T]]
 }
 
-/**
-  * Like [[HasCborCodec]] but for parameterized (generic) data types.
+/** Like [[HasCborCodec]] but for parameterized (generic) data types.
   */
-abstract class HasPolyCborCodec[C[_]](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]]) {
+abstract class HasPolyCborCodec[C[_]](
+  implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]]
+) {
   private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing].validate())
 
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = validatedInstances.metadata[T].adjustCodec(validatedInstances.stdCodec[T])
+  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] =
+    validatedInstances.metadata[T].adjustCodec(validatedInstances.stdCodec[T])
 }

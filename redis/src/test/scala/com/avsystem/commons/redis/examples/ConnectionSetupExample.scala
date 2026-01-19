@@ -9,9 +9,8 @@ import com.avsystem.commons.redis.config._
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Examples showing how to configure various client implementations so that connections to Redis servers
-  * are properly initialized, e.g. authentication is performed.
+/** Examples showing how to configure various client implementations so that connections to Redis servers are properly
+  * initialized, e.g. authentication is performed.
   */
 object ConnectionSetupExample extends App {
   implicit val actorSystem: ActorSystem = ActorSystem()
@@ -43,7 +42,7 @@ object ConnectionSetupExample extends App {
   val clusterClient = new RedisClusterClient(
     config = ClusterConfig(
       nodeConfigs = _ => NodeConfig(connectionConfigs = _ => authConfig),
-      monitoringConnectionConfigs = _ => authConfig
+      monitoringConnectionConfigs = _ => authConfig,
     )
   )
 

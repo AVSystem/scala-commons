@@ -5,6 +5,4 @@ import com.avsystem.commons.mongo.DocKey
 import org.bson.BsonValue
 
 class DocKeySorting[T](val docKey: DocKey[T, _ <: BsonValue])
-  extends AnyVal
-    with BaseSorting
-    with DocKeyKeyValueHandling[T]
+  extends AnyVal with BaseSorting with DocKeyKeyValueHandling[T]

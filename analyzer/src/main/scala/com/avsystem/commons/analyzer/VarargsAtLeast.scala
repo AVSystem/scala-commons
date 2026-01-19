@@ -16,20 +16,24 @@ class VarargsAtLeast(g: Global) extends AnalyzerRule(g, "varargsAtLeast") {
     }
 
     unit.body.foreach(analyzeTree {
-      case t@Apply(fun, args)
-        if fun.tpe != null && fun.tpe.params.lastOption.map(_.tpe.typeSymbol).contains(definitions.RepeatedParamClass) &&
-          !args.lastOption.exists(isVarargParam) =>
+      case t @ Apply(fun, args)
+          if fun.tpe != null &&
+            fun.tpe.params.lastOption.map(_.tpe.typeSymbol).contains(definitions.RepeatedParamClass) &&
+            !args.lastOption.exists(isVarargParam) =>
 
         val required =
-          fun.tpe.params.last.annotations.find(_.tree.tpe <:< atLeastAnnotTpe).map(_.tree.children.tail).collect {
-            case List(Literal(Constant(n: Int))) => n
-          }.getOrElse(0)
+          fun.tpe.params.last.annotations
+            .find(_.tree.tpe <:< atLeastAnnotTpe)
+            .map(_.tree.children.tail)
+            .collect { case List(Literal(Constant(n: Int))) =>
+              n
+            }
+            .getOrElse(0)
 
         val actual = args.size - fun.tpe.params.size + 1
 
         if (actual < required) {
-          report(t.pos,
-            s"This method requires at least $required arguments for its repeated parameter, $actual passed.")
+          report(t.pos, s"This method requires at least $required arguments for its repeated parameter, $actual passed.")
         }
     })
   }

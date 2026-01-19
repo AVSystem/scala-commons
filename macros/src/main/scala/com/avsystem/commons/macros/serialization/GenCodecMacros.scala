@@ -60,7 +60,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         flatForSealedHierarchy(tpe, caseFieldName)
       case None =>
         super.materializeFor(tpe)
-    } else
+    }
+    else
       super.materializeFor(tpe)
   }
 
@@ -86,21 +87,24 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
   private def mkArray[T: Liftable](elemTpe: Tree, elems: Seq[T]): Tree =
     q"""
       val res = new $ScalaPkg.Array[$elemTpe](${elems.size})
-      ..${elems.zipWithIndex.map({ case (e, i) => q"res($i) = $e" })}
+      ..${elems.zipWithIndex.map { case (e, i) => q"res($i) = $e" }}
       res
      """
 
   private def generatedMembers(tpe: Type): List[(Symbol, Type)] =
-    tpe.members.filter(isGenerated).map { sym =>
-      val sig = sym.typeSignatureIn(tpe)
-      if (sig.typeParams.nonEmpty) {
-        abort(s"Generated member ${sym.name} of $tpe must not take type parameters")
+    tpe.members
+      .filter(isGenerated)
+      .map { sym =>
+        val sig = sym.typeSignatureIn(tpe)
+        if (sig.typeParams.nonEmpty) {
+          abort(s"Generated member ${sym.name} of $tpe must not take type parameters")
+        }
+        if (!sig.paramLists.forall(_.forall(p => p.isImplicit || p.asTerm.isParamWithDefault))) {
+          abort(s"Generated member ${sym.name} of $tpe must not take parameters unless they're implicit or have a default value")
+        }
+        (sym, sig.finalResultType)
       }
-      if (!sig.paramLists.forall(_.forall(p => p.isImplicit || p.asTerm.isParamWithDefault))) {
-        abort(s"Generated member ${sym.name} of $tpe must not take parameters unless they're implicit or have a default value")
-      }
-      (sym, sig.finalResultType)
-    }.toList
+      .toList
 
   def forSingleton(tpe: Type, singleValueTree: Tree): Tree = {
     val generated = generatedMembers(tpe)
@@ -121,10 +125,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
       q"""
         new $SerializationPkg.SingletonCodec[$tpe](${tpe.toString}, $safeSingleValue) {
-          ..${generated.map({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
+          ..${generated.map { case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) }}
           override def size(value: $tpe, output: $OptCls[$SerializationPkg.SequentialOutput]): $IntCls = ${generated.size}
           override def writeFields(output: $SerializationPkg.ObjectOutput, value: $tpe): $UnitCls = {
-            ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
+            ..${generated.map { case (sym, _) => generatedWrite(sym) }}
           }
         }
       """
@@ -148,7 +152,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       findAnnotation(p.sym, WhenAbsentAnnotType, tpe).fold(p) { annot =>
         val newDefault = annot.tree.children.tail.head
         if (!(newDefault.tpe <:< p.valueType)) {
-          abortAt(s"expected value of type ${p.valueType} in @whenAbsent annotation, got ${newDefault.tpe.widen}", p.sym.pos)
+          abortAt(
+            s"expected value of type ${p.valueType} in @whenAbsent annotation, got ${newDefault.tpe.widen}",
+            p.sym.pos,
+          )
         }
         p.copy(defaultValue = c.untypecheck(newDefault))
       }
@@ -159,7 +166,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val generated = generatedMembers(dtpe)
     val nameBySym = targetNameMap(params.map(_.sym) ++ generated.map(_._1))
 
-    val genDepNames = generated.map({ case (sym, _) => (sym, newDepName(sym)) }).toMap
+    val genDepNames = generated.map { case (sym, _) => (sym, newDepName(sym)) }.toMap
 
     def generatedDepDeclaration(sym: Symbol, depTpe: Type) =
       q"lazy val ${genDepNames(sym)} = ${super.dependency(depTpe, tcTpe, sym)}"
@@ -190,7 +197,9 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       else writeFieldNoTransientDefault(p, value)
 
     def writeField(p: ApplyParam, value: Tree, ignoreTransientDefault: Tree): Tree =
-      if (isTransientDefault(p)) // optimize code to avoid calling 'output.customEvent' when param does not have @transientDefault
+      if (
+        isTransientDefault(p)
+      ) // optimize code to avoid calling 'output.customEvent' when param does not have @transientDefault
         q"""
           if($ignoreTransientDefault) ${writeFieldNoTransientDefault(p, value)}
           else ${writeFieldTransientDefaultPossible(p, value)}
@@ -270,8 +279,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         q"output.isDefined && output.get.customEvent($IgnoreTransientDefaultMarkerObj, ())"
 
       def doCount(paramsToCount: List[ApplyParam], accessor: ApplyParam => Tree): Tree =
-        paramsToCount.foldLeft[Tree](q"0") {
-          (acc, p) => q"$acc + (if(${accessor(p)} == ${transientValue(p)}) 1 else 0)"
+        paramsToCount.foldLeft[Tree](q"0") { (acc, p) =>
+          q"$acc + (if(${accessor(p)} == ${transientValue(p)}) 1 else 0)"
         }
 
       def countOnlyOptionLike(accessor: ApplyParam => Tree): Tree =
@@ -320,10 +329,11 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
           abort(s"class marked as @transparent cannot have @generated members")
         }
 
-        val unwrapBody = if (canUseFields)
-          q"value.${p.sym.name}"
-        else
-          q"""
+        val unwrapBody =
+          if (canUseFields)
+            q"value.${p.sym.name}"
+          else
+            q"""
             val unapplyRes = $companion.$unapply[..${dtpe.typeArgs}](value)
             if(unapplyRes.isEmpty) unapplyFailed else unapplyRes.get
            """
@@ -338,7 +348,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       case _ =>
         abort(s"@transparent annotation found on class with ${params.size} parameters, expected exactly one.")
 
-    } else {
+    }
+    else {
 
       def readField(param: ApplyParam): Tree = {
         val defValue = Option(param.defaultValue).filter(_ != EmptyTree) orElse
@@ -357,7 +368,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
 
       val baseClass = TypeName(if (useProductCodec) "ProductCodec" else "ApplyUnapplyCodec")
 
-      def sizeMethod: List[Tree] = if (useProductCodec) Nil else {
+      def sizeMethod: List[Tree] = if (useProductCodec) Nil
+      else {
         val res =
           q"""
             def size(value: $dtpe, output: $OptCls[$SerializationPkg.SequentialOutput]): $IntCls =
@@ -366,17 +378,18 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         List(res)
       }
 
-      def writeMethod: Tree = if (useProductCodec) q"()" else
+      def writeMethod: Tree = if (useProductCodec) q"()"
+      else
         q"""
           def writeFields(output: $SerializationPkg.ObjectOutput, value: $dtpe) = {
             $writeFields
-            ..${generated.map({ case (sym, _) => generatedWrite(sym) })}
+            ..${generated.map { case (sym, _) => generatedWrite(sym) }}
           }
          """
 
       val allOptionLikes = params.flatMap(_.optionLike).toSet
-      val optionLikeDecls = allOptionLikes.collect {
-        case ii: InferredImplicit => mkPrivateLazyValOrDef(ii)
+      val optionLikeDecls = allOptionLikes.collect { case ii: InferredImplicit =>
+        mkPrivateLazyValOrDef(ii)
       }
 
       def fieldCodec(param: ApplyParam): Tree =
@@ -392,10 +405,12 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
         ) {
           ..$optionLikeDecls
           def dependencies = {
-            ..${cachedImplicitDeclarations(ci => if (!allOptionLikes.contains(ci)) q"val ${ci.name} = ${ci.body}" else q"()")}
+            ..${cachedImplicitDeclarations(ci =>
+          if (!allOptionLikes.contains(ci)) q"val ${ci.name} = ${ci.body}" else q"()"
+        )}
             ${mkArray(tq"$GenCodecCls[_]", params.map(fieldCodec))}
           }
-          ..${generated.collect({ case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) })}
+          ..${generated.collect { case (sym, depTpe) => generatedDepDeclaration(sym, depTpe) }}
           def instantiate(fieldValues: $SerializationPkg.FieldValues) =
             ${applyUnapply.mkApply(params.map(p => p.asArgument(readField(p))))}
           ..$sizeMethod
@@ -444,15 +459,19 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val classOf: Tree = q"classOf[$subtype]"
     val generated: List[(Symbol, Type)] = generatedMembers(subtype)
     val (defaultCase, transientCase) =
-      findAnnotation(sym, DefaultCaseAnnotType).map(_.tree).map {
-        case Apply(_, Nil) => (true, false)
-        case Apply(_, BooleanLiteral(transient) :: _) => (true, transient)
-        case Apply(_, arg :: _) => c.abort(arg.pos, s"Boolean literal expected as @defaultCase `transient` argument")
-      }.getOrElse((false, false))
+      findAnnotation(sym, DefaultCaseAnnotType)
+        .map(_.tree)
+        .map {
+          case Apply(_, Nil) => (true, false)
+          case Apply(_, BooleanLiteral(transient) :: _) => (true, transient)
+          case Apply(_, arg :: _) => c.abort(arg.pos, s"Boolean literal expected as @defaultCase `transient` argument")
+        }
+        .getOrElse((false, false))
 
     val targetNames: Map[Symbol, String] = targetNameMap(applyParams ++ generated.map(_._1))
-    val membersByName: Map[String, (Symbol, Type)] =
-      (applyParams.map(ap => (ap, actualParamType(ap))) ++ generated).map({ case (s, t) => (targetNames(s), (s, t)) }).toMap
+    val membersByName: Map[String, (Symbol, Type)] = (applyParams.map(ap => (ap, actualParamType(ap))) ++ generated).map {
+      case (s, t) => (targetNames(s), (s, t))
+    }.toMap
     val oooSymbols: List[Symbol] = membersByName.values.iterator.map(_._1).filter(isOutOfOrder).toList
     val oooFieldNames: Set[String] = oooSymbols.iterator.map(targetNames).toSet
 
@@ -521,8 +540,10 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       (otherSym, otherTpe) <- ci.membersByName.get(name)
     } {
       if (!isOutOfOrder(otherSym)) {
-        abort(s"Out of order parameter $name must be marked as @outOfOrder in every case class " +
-          "(or the annotation may be inherited)")
+        abort(
+          s"Out of order parameter $name must be marked as @outOfOrder in every case class " +
+            "(or the annotation may be inherited)"
+        )
       }
       if (!(otherTpe =:= ptpe)) {
         abort(s"Out of order parameter $name must have the same type in every case class")
@@ -593,9 +614,8 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     ms.typeParams.isEmpty && ms.paramLists == List(Nil) && {
       val expectedPrefix = if (ms.typeSignature.finalResultType =:= typeOf[Boolean]) "is" else "get"
       val nameStr = ms.name.decodedName.toString
-      nameStr.startsWith(expectedPrefix) &&
-        nameStr.length > expectedPrefix.length &&
-        nameStr.charAt(expectedPrefix.length).isUpper
+      nameStr.startsWith(expectedPrefix) && nameStr.length > expectedPrefix.length &&
+      nameStr.charAt(expectedPrefix.length).isUpper
     }
 
   private def isJavaSetter(ms: MethodSymbol): Boolean =
@@ -614,18 +634,19 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val deps = new mutable.ListBuffer[Tree]
 
     ttpe.members.iterator.foreach { getter =>
-      if(getter.isMethod && isJavaGetter(getter.asMethod)) {
+      if (getter.isMethod && isJavaGetter(getter.asMethod)) {
         val propType = getter.typeSignatureIn(ttpe).finalResultType
         val getterName = getter.name.decodedName.toString
         val setterName = getterName.replaceFirst("^(get|is)", "set")
 
         val setterOpt = btpe.member(TermName(setterName)).alternatives.find { s =>
           s.isMethod && isJavaSetter(s.asMethod) &&
-            s.typeSignatureIn(btpe).paramLists.head.head.typeSignature =:= propType
+          s.typeSignatureIn(btpe).paramLists.head.head.typeSignature =:= propType
         }
         setterOpt.foreach { setter =>
           val propName = setterName.charAt(3).toLower.toString + setterName.drop(4)
-          val errorCtx = ErrorCtx(s"Cannot materialize GenCodec for $ttpe because of problem with property $propName:\n", getter.pos)
+          val errorCtx =
+            ErrorCtx(s"Cannot materialize GenCodec for $ttpe because of problem with property $propName:\n", getter.pos)
           fieldNames += propName
           deps += inferCachedImplicit(getType(tq"$GenCodecCls[$propType]"), errorCtx).reference(Nil)
           getters += q"(v: $ttpe) => v.$getter()"

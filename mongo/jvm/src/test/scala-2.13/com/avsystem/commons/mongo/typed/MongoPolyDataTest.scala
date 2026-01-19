@@ -23,9 +23,11 @@ class MongoPolyDataTest extends AnyFunSuite {
     assert(Pmu.dsl[Int].ref(_.as[PolyMongoUnion.CaseOne[Int]].value).rawPath == "value")
     assert(Pmu.dsl[Int].as[PolyMongoUnion.CaseOne[Int]].ref(_.value).rawPath == "value")
     assert(Pmu.dsl[Int].ref(_.as[PolyMongoUnion.CaseOne[Int]].str).rawPath == "str")
-    assert(Pmu.dsl[PolyMongoUnion[Int]].ref(x =>
-      x.as[PolyMongoUnion.CaseOne[PolyMongoUnion[Int]]].value
-        .as[PolyMongoUnion.CaseOne[Int]].str
-    ).rawPath == "value.str")
+    assert(
+      Pmu
+        .dsl[PolyMongoUnion[Int]]
+        .ref(x => x.as[PolyMongoUnion.CaseOne[PolyMongoUnion[Int]]].value.as[PolyMongoUnion.CaseOne[Int]].str)
+        .rawPath == "value.str"
+    )
   }
 }

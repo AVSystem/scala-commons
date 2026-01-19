@@ -10,8 +10,7 @@ import monix.eval.Task
 import monix.reactive.Observable
 import org.bson.Document
 
-/**
-  * Better typed wrapper over [[MongoDatabase]].
+/** Better typed wrapper over [[MongoDatabase]].
   */
 class TypedMongoDatabase(
   val nativeDatabase: MongoDatabase,
@@ -36,10 +35,10 @@ class TypedMongoDatabase(
   def withReadConcern(readConcern: ReadConcern): TypedMongoDatabase =
     new TypedMongoDatabase(nativeDatabase.withReadConcern(readConcern), clientSession)
 
-  def getCollection[E <: BaseMongoEntity : MongoEntityMeta](name: String): TypedMongoCollection[E] =
+  def getCollection[E <: BaseMongoEntity: MongoEntityMeta](name: String): TypedMongoCollection[E] =
     new TypedMongoCollection[E](nativeDatabase.getCollection(name), clientSession)
 
-  //TODO: `runCommand`
+  // TODO: `runCommand`
 
   def drop: Task[Unit] =
     empty(optionalizeFirstArg(nativeDatabase.drop(sessionOrNull)))
@@ -60,9 +59,11 @@ class TypedMongoDatabase(
     name: String,
     setupOptions: CreateCollectionOptions => CreateCollectionOptions = identity,
   ): Task[Unit] =
-    empty(optionalizeFirstArg(
-      nativeDatabase.createCollection(sessionOrNull, name, setupOptions(new CreateCollectionOptions)),
-    ))
+    empty(
+      optionalizeFirstArg(
+        nativeDatabase.createCollection(sessionOrNull, name, setupOptions(new CreateCollectionOptions))
+      )
+    )
 
-  //TODO: `createView`, `watch`, `aggregate`
+  // TODO: `createView`, `watch`, `aggregate`
 }

@@ -5,7 +5,8 @@ import com.avsystem.commons.meta.multi
 import org.scalatest.funsuite.AnyFunSuite
 
 trait MangleOverloadsRaw {
-  @multi @mangleOverloads def select(@methodName name: String, @multi args: List[Int]): String
+  @multi
+  @mangleOverloads def select(@methodName name: String, @multi args: List[Int]): String
 }
 object MangleOverloadsRaw extends RawRpcCompanion[MangleOverloadsRaw]
 

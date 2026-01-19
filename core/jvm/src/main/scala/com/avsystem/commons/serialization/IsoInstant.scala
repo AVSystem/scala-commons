@@ -15,7 +15,8 @@ object IsoInstant {
   }
 
   def parse(string: String): Long =
-    try Instant.parse(string).toEpochMilli catch {
+    try Instant.parse(string).toEpochMilli
+    catch {
       case _: DateTimeParseException => throw new ReadFailure(s"invalid ISO instant: $string")
     }
 }

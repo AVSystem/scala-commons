@@ -3,14 +3,14 @@ package mongo.typed
 
 import org.bson.{BsonArray, BsonDocument}
 
-/**
-  * Represents a MongoDB filter. In particular, this may be a [[MongoDocumentFilter]] which can be used
-  * directly in database queries.
+/** Represents a MongoDB filter. In particular, this may be a [[MongoDocumentFilter]] which can be used directly in
+  * database queries.
   *
-  * [[MongoFilter]] may also represent a filter for a non-document value. Such filters may be used e.g. in
-  * queries that apply filters on values of an array.
+  * [[MongoFilter]] may also represent a filter for a non-document value. Such filters may be used e.g. in queries that
+  * apply filters on values of an array.
   *
-  * @tparam T type of the filtered value
+  * @tparam T
+  *   type of the filtered value
   */
 sealed trait MongoFilter[T] {
 
@@ -28,8 +28,7 @@ sealed trait MongoFilter[T] {
 object MongoFilter {
   def creator[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
 
-  class Creator[T](val format: MongoFormat[T])
-    extends QueryOperatorsDsl[T, MongoOperatorsFilter[T]] with DataTypeDsl[T] {
+  class Creator[T](val format: MongoFormat[T]) extends QueryOperatorsDsl[T, MongoOperatorsFilter[T]] with DataTypeDsl[T] {
 
     def SelfRef: MongoRef[T, T] =
       MongoRef.RootRef(format.assumeAdt)
@@ -38,7 +37,8 @@ object MongoFilter {
       MongoOperatorsFilter(ops)
 
     /** See [[MongoPropertyRef.satisfiesOperators]] */
-    def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]]): MongoOperatorsFilter[T] =
+    def satisfiesOperators(operators: MongoQueryOperator.Creator[T] => Seq[MongoQueryOperator[T]])
+      : MongoOperatorsFilter[T] =
       MongoOperatorsFilter(operators(new MongoQueryOperator.Creator(format)))
   }
 
@@ -53,14 +53,15 @@ object MongoFilter {
   final case class And[E](filters: Vector[MongoDocumentFilter[E]]) extends MongoDocumentFilter[E]
   final case class Or[E](filters: Vector[MongoDocumentFilter[E]]) extends MongoDocumentFilter[E]
   final case class Nor[E](filters: Vector[MongoDocumentFilter[E]]) extends MongoDocumentFilter[E]
-  //NOTE: $not is NOT allowed as a toplevel operator
+  // NOTE: $not is NOT allowed as a toplevel operator
 
   final case class PropertyValueFilter[E, T](
     property: MongoPropertyRef[E, T],
-    filter: MongoFilter[T]
+    filter: MongoFilter[T],
   ) extends MongoDocumentFilter[E]
 
-  def subtypeFilter[E, T](prefix: MongoRef[E, T], caseFieldName: String, caseNames: List[String], negated: Boolean): MongoDocumentFilter[E] = {
+  def subtypeFilter[E, T](prefix: MongoRef[E, T], caseFieldName: String, caseNames: List[String], negated: Boolean)
+    : MongoDocumentFilter[E] = {
     val operator = caseNames match {
       case List(single) if negated => MongoQueryOperator.Ne(single, MongoFormat[String])
       case List(single) => MongoQueryOperator.Eq(single, MongoFormat[String])
@@ -71,15 +72,15 @@ object MongoFilter {
   }
 }
 
-/**
-  * Represents a filter that applies a set of query operators on a value (e.g. `$$eq`, `$$lte`, etc.)
-  * Every operator may be used at most once. Such filter usually translates into a BSON document that looks like this:
+/** Represents a filter that applies a set of query operators on a value (e.g. `$$eq`, `$$lte`, etc.) Every operator may
+  * be used at most once. Such filter usually translates into a BSON document that looks like this:
   *
   * {{{
   *   {"$$ne": 5, "$$gte": 0, ...more operators}
   * }}}
   *
-  * @tparam T type of the filtered value
+  * @tparam T
+  *   type of the filtered value
   */
 final case class MongoOperatorsFilter[T](operators: Seq[MongoQueryOperator[T]]) extends MongoFilter[T] {
   def negated: MongoOperatorsFilter[T] =
@@ -99,8 +100,7 @@ final case class MongoOperatorsFilter[T](operators: Seq[MongoQueryOperator[T]]) 
   }
 }
 
-/**
-  * Represents a [[https://docs.mongodb.com/manual/tutorial/query-documents/ MongoDB query document]].
+/** Represents a [[https://docs.mongodb.com/manual/tutorial/query-documents/ MongoDB query document]].
   *
   * A [[MongoDocumentFilter]] is usually built by using [[MongoPropertyRef]] and its API.
   *
@@ -112,11 +112,11 @@ final case class MongoOperatorsFilter[T](operators: Seq[MongoQueryOperator[T]]) 
   *     MyEntity.ref(_.id).is("ID") && MyEntity.ref(_.number) > 8
   * }}}
   *
-  * NOTE: even though you can combine filters using logical `$$and` and `$$or` operators,
-  * MongoDB does not allow using the `$$not` operator on this level.
-  * It may only be specified for field-level filters.
+  * NOTE: even though you can combine filters using logical `$$and` and `$$or` operators, MongoDB does not allow using
+  * the `$$not` operator on this level. It may only be specified for field-level filters.
   *
-  * @tparam E type of the filtered value (that must translate into a document)
+  * @tparam E
+  *   type of the filtered value (that must translate into a document)
   */
 sealed trait MongoDocumentFilter[E] extends MongoFilter[E] {
 

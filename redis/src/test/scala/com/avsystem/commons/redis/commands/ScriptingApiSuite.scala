@@ -5,9 +5,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.exception.ErrorReplyException
 import com.avsystem.commons.redis.protocol.{BulkStringMsg, NullBulkStringMsg}
 
-/**
-  * Author: ghik
-  * Created: 05/10/16.
+/** Author: ghik Created: 05/10/16.
   */
 trait KeyedScriptingApiSuite extends CommandsSuite {
 

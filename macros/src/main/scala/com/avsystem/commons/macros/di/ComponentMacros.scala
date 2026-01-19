@@ -40,7 +40,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
       override def traverse(tree: Tree): Unit = tree match {
         case ComponentRef(_) => // stop
-        case t@(_: DefTree | _: Function | _: Bind) if t.symbol != null =>
+        case t @ (_: DefTree | _: Function | _: Bind) if t.symbol != null =>
           symsBuilder += t.symbol
           super.traverse(tree)
         case _ =>
@@ -57,7 +57,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         case _ => false
       }
       tree.foreach {
-        case t@ComponentRef(_) =>
+        case t @ ComponentRef(_) =>
           errorAt(s"illegal nested component reference inside expression representing component dependency", t.pos)
         case t if t.symbol != null && componentDefLocals.contains(t.symbol) =>
           errorAt(s"illegal local value or method reference inside expression representing component dependency", t.pos)
@@ -81,16 +81,15 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val transformedDefinition = DependencyExtractor.transform(definition)
 
-    val needsRetyping = transformedDefinition != definition ||
-      definition.exists {
-        case _: DefTree | _: Function | _: Bind => true
-        case _ => false
-      }
+    val needsRetyping = transformedDefinition != definition || definition.exists {
+      case _: DefTree | _: Function | _: Bind => true
+      case _ => false
+    }
     val finalDefinition =
       if (needsRetyping) c.untypecheck(transformedDefinition) else definition
 
     val asyncDefinition =
-      if(async) finalDefinition
+      if (async) finalDefinition
       else q"$DiPkg.Component.async($finalDefinition)"
 
     val result =
@@ -103,7 +102,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
         )
        """
 
-    //TODO: can I avoid recreating ComponentInfo?
+    // TODO: can I avoid recreating ComponentInfo?
     if (singleton)
       q"${c.prefix}.cached($result, ${c.prefix}.componentInfo($sourceInfo))"
     else
@@ -147,10 +146,11 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
     val componentMethods =
       c.prefix.actualType.members.iterator
-        .filter(s => s.isMethod && !s.isSynthetic).map(_.asMethod)
+        .filter(s => s.isMethod && !s.isSynthetic)
+        .map(_.asMethod)
         .filter { m =>
           m.typeParams.isEmpty && m.paramLists.isEmpty &&
-            m.typeSignatureIn(c.prefix.actualType).resultType <:< ComponentTpe
+          m.typeSignatureIn(c.prefix.actualType).resultType <:< ComponentTpe
         }
         .toList
 

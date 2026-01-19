@@ -5,8 +5,7 @@ import com.avsystem.commons.macros.misc.MiscMacros
 
 import scala.annotation.implicitNotFound
 
-/**
-  * Macro materialized typeclass which captures the single value of a singleton type.
+/** Macro materialized typeclass which captures the single value of a singleton type.
   */
 @implicitNotFound("Cannot derive value of ${T} - is not a singleton type")
 class ValueOf[T](val value: T) extends AnyVal

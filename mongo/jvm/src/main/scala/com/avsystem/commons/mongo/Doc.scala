@@ -3,8 +3,8 @@ package mongo
 
 import org.bson.{BsonDocument, BsonValue}
 
-/**
-  * @author MKej
+/** @author
+  *   MKej
   */
 class Doc(private val doc: BsonDocument) extends AnyVal {
   def get[A, BSON <: BsonValue](key: DocKey[A, BSON]): Option[A] =

@@ -11,9 +11,11 @@ class CheckBincompat(g: Global) extends AnalyzerRule(g, "bincompat") {
 
   def analyze(unit: CompilationUnit): Unit =
     unit.body.foreach(analyzeTree {
-      case tree@(_: Ident | _: Select | _: New) if tree.symbol != null &&
-        tree.symbol.annotations.exists(_.tree.tpe <:< bincompatAnnotType) =>
-        report(tree.pos, "Symbols annotated as @bincompat exist only for binary compatibility " +
-          "and should not be used directly")
+      case tree @ (_: Ident | _: Select | _: New)
+          if tree.symbol != null && tree.symbol.annotations.exists(_.tree.tpe <:< bincompatAnnotType) =>
+        report(
+          tree.pos,
+          "Symbols annotated as @bincompat exist only for binary compatibility " + "and should not be used directly",
+        )
     })
 }

@@ -3,8 +3,7 @@ package rpc
 
 import com.avsystem.commons.macros.rpc.RpcMacros
 
-/**
-  * Base trait for companion objects of raw RPC traits.
+/** Base trait for companion objects of raw RPC traits.
   */
 trait RawRpcCompanion[Raw] {
   type AsRawRpc[Real] = AsRaw[Raw, Real]
@@ -22,9 +21,8 @@ trait RawRpcCompanion[Raw] {
   def materializeAsReal[Real]: AsRealRpc[Real] = macro RpcMacros.rpcAsReal[Raw, Real]
   def materializeAsRawReal[Real]: AsRawRealRpc[Real] = macro RpcMacros.rpcAsRawReal[Raw, Real]
 
-  /**
-    * Like [[materializeAsRaw]] but for arbitrary real type instead of RPC trait.
-    * Scans all public methods of the real type (instead of abstract methods for RPC trait).
+  /** Like [[materializeAsRaw]] but for arbitrary real type instead of RPC trait. Scans all public methods of the real
+    * type (instead of abstract methods for RPC trait).
     */
   def materializeApiAsRaw[Real]: AsRawRpc[Real] = macro RpcMacros.apiAsRaw[Raw, Real]
 }

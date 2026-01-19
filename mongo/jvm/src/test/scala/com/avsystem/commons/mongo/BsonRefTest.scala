@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization.{GenCodec, name, transparent}
+import com.avsystem.commons.serialization.{name, transparent, GenCodec}
 import org.scalatest.funsuite.AnyFunSuite
 
 case class InnerClass(
@@ -22,7 +22,7 @@ object Wrapper {
 case class TestEntity(
   `$special.field`: String,
   wrapper: Wrapper,
-  @name("inner") innerClass: InnerClass
+  @name("inner") innerClass: InnerClass,
 )
 object TestEntity extends BsonRef.Creator[TestEntity] {
   implicit val codec: GenCodec[TestEntity] = GenCodec.materialize

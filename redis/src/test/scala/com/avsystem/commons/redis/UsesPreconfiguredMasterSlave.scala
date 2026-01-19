@@ -6,9 +6,7 @@ import java.io.File
 import org.apache.commons.io.FileUtils
 import org.scalatest.Suite
 
-/**
-  * Author: ghik
-  * Created: 27/06/16.
+/** Author: ghik Created: 27/06/16.
   */
 trait UsesPreconfiguredMasterSlave extends UsesActorSystem with UsesMasterSlaveServers { this: Suite =>
   def masterName: String = "testmaster"

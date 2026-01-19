@@ -9,7 +9,7 @@ trait BaseIterableUpdating[E, C[T] <: Iterable[T]] extends Any with BaseUpdating
   def addEachToSet(es: E*): Bson = useEs(es)(Updates.addEachToSet)
 
   def push(e: E): Bson = useE(e)(Updates.push)
-  //noinspection ConvertibleToMethodValue
+  // noinspection ConvertibleToMethodValue
   def pushEach(es: E*): Bson = useEs(es)(Updates.pushEach(_, _))
   def pushEachOptions(pushOptions: PushOptions, es: E*): Bson = useEs(es)(Updates.pushEach(_, _, pushOptions))
 

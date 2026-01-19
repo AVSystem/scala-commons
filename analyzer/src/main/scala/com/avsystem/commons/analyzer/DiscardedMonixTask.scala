@@ -53,9 +53,12 @@ class DiscardedMonixTask(g: Global) extends AnalyzerRule(g, "discardedMonixTask"
       checkDiscardedTask(prefix, discarded = false)
       checkDiscardedTask(body, discarded)
 
-    case _: Ident | _: Select | _: Apply | _: TypeApply if discarded &&
-      tree.tpe != null && tree.tpe <:< monixTaskTpe && !(tree.tpe <:< definitions.NullTpe) =>
-      report(tree.pos, "discarded Monix Task - this is probably a mistake because the Task must be run for its side effects")
+    case _: Ident | _: Select | _: Apply | _: TypeApply
+        if discarded && tree.tpe != null && tree.tpe <:< monixTaskTpe && !(tree.tpe <:< definitions.NullTpe) =>
+      report(
+        tree.pos,
+        "discarded Monix Task - this is probably a mistake because the Task must be run for its side effects",
+      )
 
     case tree =>
       tree.children.foreach(checkDiscardedTask(_, discarded = false))

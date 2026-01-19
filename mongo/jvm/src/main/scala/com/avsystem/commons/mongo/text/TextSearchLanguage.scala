@@ -3,17 +3,17 @@ package mongo.text
 
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
 
-/**
-  * Language supported by MongoDB text search.
+/** Language supported by MongoDB text search.
   *
-  * @param code ISO 639-1, ISO 639-3 or RLP code used by Mongo \$text operator
-  * @see [[https://docs.mongodb.com/manual/reference/text-search-languages/#text-search-languages]]
+  * @param code
+  *   ISO 639-1, ISO 639-3 or RLP code used by Mongo \$text operator
+  * @see
+  *   [[https://docs.mongodb.com/manual/reference/text-search-languages/#text-search-languages]]
   */
 final class TextSearchLanguage(val code: String)(implicit enumCtx: EnumCtx) extends AbstractValueEnum
 object TextSearchLanguage extends AbstractValueEnumCompanion[TextSearchLanguage] {
 
-  /**
-    * Uses simple tokenization with no list of stop words and no stemming.
+  /** Uses simple tokenization with no list of stop words and no stemming.
     */
   final val None: Value = new TextSearchLanguage("none")
 

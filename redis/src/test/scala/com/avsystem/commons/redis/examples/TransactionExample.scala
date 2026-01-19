@@ -9,10 +9,9 @@ import com.avsystem.commons.redis.exception.{NodeRemovedException, OptimisticLoc
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Example that shows execution of Redis transactions with optimistic locking
-  * (involving `WATCH` command and `MULTI`-`EXEC` block). If you simply need to wrap some commands in a
-  * `MULTI`-`EXEC` block (without optimistic locking), see [[PipeliningExample]] and [[MultiExecExample]].
+/** Example that shows execution of Redis transactions with optimistic locking (involving `WATCH` command and
+  * `MULTI`-`EXEC` block). If you simply need to wrap some commands in a `MULTI`-`EXEC` block (without optimistic
+  * locking), see [[PipeliningExample]] and [[MultiExecExample]].
   */
 object TransactionExample extends App {
   implicit val actorSystem: ActorSystem = ActorSystem()
@@ -55,7 +54,8 @@ object TransactionExample extends App {
 
   def executeTransactionOnCluster(): Future[Unit] =
     clusterClient.initialized.flatMap(client =>
-      client.currentState.clientForSlot(api.keySlot("key")).executeOp(transaction))
+      client.currentState.clientForSlot(api.keySlot("key")).executeOp(transaction)
+    )
 
   executeTransactionOnCluster().onComplete {
     case Success(()) => println("Transaction successful")

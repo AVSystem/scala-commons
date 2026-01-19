@@ -13,7 +13,7 @@ class Unwritable
 object Unwritable {
   implicit val codec: GenCodec[Unwritable] = GenCodec.create(
     _ => throw new ReadFailure("cannot"),
-    (_, _) => throw new WriteFailure("cannot")
+    (_, _) => throw new WriteFailure("cannot"),
   )
 }
 

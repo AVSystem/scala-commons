@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.rpc.{RpcTag, caseTag, paramTag, tagged}
+import com.avsystem.commons.rpc.{caseTag, paramTag, tagged, RpcTag}
 import org.scalatest.funsuite.AnyFunSuite
 
 class AdtTaggingTest extends AnyFunSuite {
@@ -16,7 +16,7 @@ class AdtTaggingTest extends AnyFunSuite {
   @paramTag[AdtTag](new Good)
   case class AdtClassInfo[T](
     @multi @tagged[Good] @adtParamMetadata goodParams: List[Info[_]],
-    @multi @tagged[Bad] @adtParamMetadata badParams: List[Info[_]]
+    @multi @tagged[Bad] @adtParamMetadata badParams: List[Info[_]],
   ) extends TypedMetadata[T] {
     def goodNames: List[String] = goodParams.map(_.name)
     def badNames: List[String] = badParams.map(_.name)
@@ -26,7 +26,7 @@ class AdtTaggingTest extends AnyFunSuite {
   @caseTag[AdtTag](new Good)
   case class AdtHierarchyInfo[T](
     @multi @tagged[Good] @adtCaseMetadata goodCases: List[Info[_]],
-    @multi @tagged[Bad] @adtCaseMetadata badCases: List[Info[_]]
+    @multi @tagged[Bad] @adtCaseMetadata badCases: List[Info[_]],
   ) extends TypedMetadata[T] {
     def goodNames: List[String] = goodCases.map(_.name)
     def badNames: List[String] = badCases.map(_.name)

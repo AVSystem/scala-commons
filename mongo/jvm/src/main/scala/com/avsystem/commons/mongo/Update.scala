@@ -4,8 +4,8 @@ package mongo
 import com.mongodb.client.model.{Updates => U}
 import org.bson.conversions.Bson
 
-/**
-  * @author MKej
+/** @author
+  *   MKej
   */
 object Update {
   def combine(updates: Bson*): Bson = U.combine(updates.asJava)

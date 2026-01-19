@@ -5,12 +5,14 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.protocol.{ArrayMsg, ErrorMsg, NullArrayMsg, RedisMsg}
 
 trait TransactionApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/watch WATCH]] */
   def watch(key: Key, keys: Key*): Result[Unit] =
     execute(new Watch(key +:: keys))
 
-  /** Executes [[http://redis.io/commands/watch WATCH]]
-    * or does nothing when `keys` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/watch WATCH]] or does nothing when `keys` is empty, without sending the
+    * command to Redis
+    */
   def watch(keys: Iterable[Key]): Result[Unit] =
     execute(new Watch(keys))
 

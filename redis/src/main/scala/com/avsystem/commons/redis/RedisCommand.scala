@@ -14,10 +14,9 @@ import scala.collection.mutable
 trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
   protected def decodeExpected: ReplyDecoder[A]
 
-  final protected def decode(replyMsg: RedisReply): A = replyMsg match {
+  protected final def decode(replyMsg: RedisReply): A = replyMsg match {
     case validReply: ValidRedisMsg =>
-      decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) =>
-        throw new UnexpectedReplyException(r.toString))
+      decodeExpected.applyOrElse(validReply, (r: ValidRedisMsg) => throw new UnexpectedReplyException(r.toString))
     case err: ErrorMsg =>
       throw new ErrorReplyException(err, this)
     case error: FailureReply =>
@@ -36,7 +35,7 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
     new RedisCommand[B] {
       def level: RawCommand.Level = self.level
       def encoded: ArrayMsg[BulkStringMsg] = self.encoded
-      def decodeExpected: ReplyDecoder[B] = self.decodeExpected andThen fun
+      def decodeExpected: ReplyDecoder[B] = self.decodeExpected.andThen(fun)
       override def immediateResult: Opt[B] =
         self.immediateResult.map(fun)
       override def updateWatchState(message: RedisMsg, state: WatchState): Unit =
@@ -45,9 +44,8 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
         self.maxBlockingMillis
     }
 
-  /**
-    * Returns optional value that may be used as immediate result of this command if it command can be treated as
-    * no-op. For example `DEL` command with no keys may simply return 0 as its immediate result.
+  /** Returns optional value that may be used as immediate result of this command if it command can be treated as no-op.
+    * For example `DEL` command with no keys may simply return 0 as its immediate result.
     */
   def immediateResult: Opt[A] = Opt.Empty
 
@@ -58,8 +56,7 @@ trait RedisCommand[+A] extends SinglePackBatch[A] with RawCommand { self =>
     immediateResult.fold(this: RedisBatch[A])(RedisBatch.success)
 }
 
-abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecoder[A])
-  extends RedisCommand[A]
+abstract class AbstractRedisCommand[A](protected val decodeExpected: ReplyDecoder[A]) extends RedisCommand[A]
 
 final class CommandEncoder(private val builder: mutable.ArrayBuilder[BulkStringMsg]) extends AnyVal {
   def result: ArrayMsg[BulkStringMsg] = ArrayMsg(IArraySeq.unsafeWrapArray(builder.result()))
@@ -92,13 +89,13 @@ final class CommandEncoder(private val builder: mutable.ArrayBuilder[BulkStringM
   def optData[V: RedisDataCodec](flag: String, value: Opt[V]): CommandEncoder =
     fluent(value.foreach(t => add(flag).data(t)))
   def keyDatas[K: RedisDataCodec, V: RedisDataCodec](keyDatas: IterableOnce[(K, V)]): CommandEncoder =
-    fluent(keyDatas.iterator.foreach({ case (k, v) => key(k).data(v) }))
+    fluent(keyDatas.iterator.foreach { case (k, v) => key(k).data(v) })
   def dataPairs[K: RedisDataCodec, V: RedisDataCodec](dataPairs: IterableOnce[(K, V)]): CommandEncoder =
-    fluent(dataPairs.iterator.foreach({ case (k, v) => data(k).data(v) }))
+    fluent(dataPairs.iterator.foreach { case (k, v) => data(k).data(v) })
   def dataPairs[R: RedisRecordCodec](record: R): CommandEncoder =
     fluent(builder ++= RedisRecordCodec[R].write(record))
   def argDataPairs[T: CommandArg, V: RedisDataCodec](argDataPairs: IterableOnce[(T, V)]): CommandEncoder =
-    fluent(argDataPairs.iterator.foreach({ case (a, v) => add(a).data(v) }))
+    fluent(argDataPairs.iterator.foreach { case (a, v) => add(a).data(v) })
 }
 
 object CommandEncoder {
@@ -118,69 +115,51 @@ object CommandEncoder {
       CommandArg((ce, v) => v.iterator.foreach(t => ce.add(t)))
 
     implicit def PairArg[A: CommandArg, B: CommandArg]: CommandArg[(A, B)] =
-      CommandArg {
-        case (ce, (a, b)) =>
-          ce.add(a)
-          ce.add(b)
+      CommandArg { case (ce, (a, b)) =>
+        ce.add(a)
+        ce.add(b)
       }
   }
 }
 
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
-abstract class RedisDataCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand(bulkAs[A])
+abstract class RedisDataCommand[A: RedisDataCodec] extends AbstractRedisCommand(bulkAs[A])
 
-abstract class RedisOptDataCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand(nullBulkOrAs[A])
+abstract class RedisOptDataCommand[A: RedisDataCodec] extends AbstractRedisCommand(nullBulkOrAs[A])
 
-abstract class RedisDataSeqCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[Seq[A]](multiBulkAsSeqOf[A])
+abstract class RedisDataSeqCommand[A: RedisDataCodec] extends AbstractRedisCommand[Seq[A]](multiBulkAsSeqOf[A])
 
-abstract class RedisDataSetCommand[A: RedisDataCodec]
-  extends AbstractRedisCommand[BSet[A]](multiBulkAsSetOf[A])
+abstract class RedisDataSetCommand[A: RedisDataCodec] extends AbstractRedisCommand[BSet[A]](multiBulkAsSetOf[A])
 
 abstract class RedisOptDataSeqCommand[A: RedisDataCodec]
   extends AbstractRedisCommand[Seq[Opt[A]]](multiBulkAsSeq(nullBulkOrAs[A]))
 
-abstract class RedisRawCommand
-  extends AbstractRedisCommand[ValidRedisMsg](undecoded)
+abstract class RedisRawCommand extends AbstractRedisCommand[ValidRedisMsg](undecoded)
 
-abstract class RedisNothingCommand
-  extends AbstractRedisCommand(failing)
+abstract class RedisNothingCommand extends AbstractRedisCommand(failing)
 
-abstract class RedisUnitCommand
-  extends AbstractRedisCommand[Unit](simpleOkAsUnit)
+abstract class RedisUnitCommand extends AbstractRedisCommand[Unit](simpleOkAsUnit)
 
-abstract class RedisLongCommand
-  extends AbstractRedisCommand[Long](integerAsLong)
+abstract class RedisLongCommand extends AbstractRedisCommand[Long](integerAsLong)
 
-abstract class RedisIntCommand
-  extends AbstractRedisCommand[Int](integerAsInt)
+abstract class RedisIntCommand extends AbstractRedisCommand[Int](integerAsInt)
 
-abstract class RedisOptLongCommand
-  extends AbstractRedisCommand[Opt[Long]](nullBulkOr(integerAsLong))
+abstract class RedisOptLongCommand extends AbstractRedisCommand[Opt[Long]](nullBulkOr(integerAsLong))
 
-abstract class RedisPositiveLongCommand
-  extends AbstractRedisCommand[Opt[Long]](positiveIntegerAsLongOpt)
+abstract class RedisPositiveLongCommand extends AbstractRedisCommand[Opt[Long]](positiveIntegerAsLongOpt)
 
-abstract class RedisOptDoubleCommand
-  extends AbstractRedisCommand[Opt[Double]](nullOrEmptyBulkOr(bulkAsDouble))
+abstract class RedisOptDoubleCommand extends AbstractRedisCommand[Opt[Double]](nullOrEmptyBulkOr(bulkAsDouble))
 
-abstract class RedisOptStringCommand
-  extends AbstractRedisCommand[Opt[String]](nullBulkOr(bulkAsUTF8))
+abstract class RedisOptStringCommand extends AbstractRedisCommand[Opt[String]](nullBulkOr(bulkAsUTF8))
 
-abstract class RedisBooleanCommand
-  extends AbstractRedisCommand[Boolean](integerAsBoolean)
+abstract class RedisBooleanCommand extends AbstractRedisCommand[Boolean](integerAsBoolean)
 
-abstract class RedisSimpleStringCommand
-  extends AbstractRedisCommand[String](simpleAsUTF8)
+abstract class RedisSimpleStringCommand extends AbstractRedisCommand[String](simpleAsUTF8)
 
-abstract class RedisBinaryCommand
-  extends AbstractRedisCommand[ByteString](bulkAsBinary)
+abstract class RedisBinaryCommand extends AbstractRedisCommand[ByteString](bulkAsBinary)
 
-abstract class RedisDoubleCommand
-  extends AbstractRedisCommand[Double](bulkAsDouble)
+abstract class RedisDoubleCommand extends AbstractRedisCommand[Double](bulkAsDouble)
 
 abstract class RedisScanCommand[T](decoder: ReplyDecoder[Seq[T]])
   extends AbstractRedisCommand[(Cursor, Seq[T])](multiBulkAsPair(bulkAsCursor, decoder))

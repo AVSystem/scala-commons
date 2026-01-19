@@ -7,8 +7,7 @@ import org.scalatest.matchers.should.Matchers
 
 class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("mkMap") {
-    List.range(0, 3).mkMap(identity, _.toString) shouldEqual
-      Map(0 -> "0", 1 -> "1", 2 -> "2")
+    List.range(0, 3).mkMap(identity, _.toString) shouldEqual Map(0 -> "0", 1 -> "1", 2 -> "2")
   }
 
   test("groupToMap") {
@@ -102,9 +101,9 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("IteratorOps.collectWhileDefined") {
-    assert(Iterator(1, 2, 3, 2, 1).collectWhileDefined({ case n if n < 3 => n * 2 }).toList == List(2, 4))
-    assert(Iterator[Int]().collectWhileDefined({ case n if n < 3 => n * 2 }).toList == Nil)
-    assert(Iterator(1, 2, 3, 2, 1).collectWhileDefined({ case n if n > 0 => n * 2 }).toList == List(2, 4, 6, 4, 2))
+    assert(Iterator(1, 2, 3, 2, 1).collectWhileDefined { case n if n < 3 => n * 2 }.toList == List(2, 4))
+    assert(Iterator[Int]().collectWhileDefined { case n if n < 3 => n * 2 }.toList == Nil)
+    assert(Iterator(1, 2, 3, 2, 1).collectWhileDefined { case n if n > 0 => n * 2 }.toList == List(2, 4, 6, 4, 2))
   }
 
   test("IteratorOps.distinctBy") {
@@ -115,14 +114,14 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("uncheckedMatch") {
-    val res = Option(42) uncheckedMatch {
-      case Some(int) => int
+    val res = Option(42).uncheckedMatch { case Some(int) =>
+      int
     }
     assert(res == 42)
 
     assertThrows[MatchError] {
-      Option.empty[Int] uncheckedMatch {
-        case Some(int) => int
+      Option.empty[Int].uncheckedMatch { case Some(int) =>
+        int
       }
     }
   }
@@ -165,8 +164,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
       val x = 5 + 2
     }.sourceCode
 
-    assert(src ==
-      """{
+    assert(src == """{
         |  println(123)
         |  val x = 5 + 2
         |}""".stripMargin)
@@ -179,7 +177,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("flatCollect") {
     val it = Iterator(69, 42)
     val fc = it.flatCollect { case i if i % 2 == 0 => Iterator(-i, i) }
-    assert(it.hasNext) //flatCollect should not consume eagerly
+    assert(it.hasNext) // flatCollect should not consume eagerly
     assert(fc.hasNext)
     assert(!it.hasNext)
     fc.toSeq should contain theSameElementsInOrderAs Seq(-42, 42)
@@ -200,8 +198,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
         |    abc
         |   abc""".stripMargin
 
-    assert(str.stripCommonIndent ==
-      """abc
+    assert(str.stripCommonIndent == """abc
         |  abc
         | abc""".stripMargin)
   }

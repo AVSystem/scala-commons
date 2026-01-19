@@ -9,6 +9,7 @@ import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.util.SingletonSeq
 
 trait SortedSetsApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
   def zadd(key: Key, memberScore: (Value, Double), memberScores: (Value, Double)*): Result[Int] =
     zadd(key, memberScore +:: memberScores)
@@ -19,21 +20,30 @@ trait SortedSetsApi extends ApiSubset {
 
   /** Executes [[http://redis.io/commands/zadd ZADD]] */
   def zadd(key: Key, score: Double, member: Value, members: Value*): Result[Int] =
-    execute(new Zadd(key, (member, score) +:: members.iterator.map((_, score)), emptyData = false, Opt.Empty, Opt.Empty, changed = false))
+    execute(
+      new Zadd(
+        key,
+        (member, score) +:: members.iterator.map((_, score)),
+        emptyData = false,
+        Opt.Empty,
+        Opt.Empty,
+        changed = false,
+      )
+    )
 
-  /** Executes [[http://redis.io/commands/zadd ZADD]]
-    * or simply returns 0 when `members` is empty */
+  /** Executes [[http://redis.io/commands/zadd ZADD]] or simply returns 0 when `members` is empty
+    */
   def zadd(key: Key, score: Double, members: Iterable[Value]): Result[Int] =
     execute(new Zadd(key, members.iterator.map((_, score)), members.isEmpty, Opt.Empty, Opt.Empty, changed = false))
 
-  /** Executes [[http://redis.io/commands/zadd ZADD]]
-    * or simply returns 0 when `memberScores` is empty */
+  /** Executes [[http://redis.io/commands/zadd ZADD]] or simply returns 0 when `memberScores` is empty
+    */
   def zadd(
     key: Key,
     memberScores: Iterable[(Value, Double)],
     existence: OptArg[Existence] = OptArg.Empty,
     comparison: OptArg[Comparison] = OptArg.Empty,
-    changed: Boolean = false
+    changed: Boolean = false,
   ): Result[Int] =
     execute(new Zadd(key, memberScores, memberScores.isEmpty, existence.toOpt, comparison.toOpt, changed))
 
@@ -96,7 +106,8 @@ trait SortedSetsApi extends ApiSubset {
     zinterWeights(keyWeight +:: keysWeights)
 
   /** Executes [[http://redis.io/commands/zinter ZINTER]] */
-  def zinterWeights(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[Value]] =
+  def zinterWeights(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty)
+    : Result[Seq[Value]] =
     execute(new Zinter(keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zinter ZINTER]] */
@@ -104,7 +115,8 @@ trait SortedSetsApi extends ApiSubset {
     zinterWithscores(key +:: keys)
 
   /** Executes [[http://redis.io/commands/zinter ZINTER]] */
-  def zinterWithscores(keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+  def zinterWithscores(keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty)
+    : Result[Seq[(Value, Double)]] =
     execute(new ZinterWithscores(keys, Opt.Empty, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zinter ZINTER]] */
@@ -112,29 +124,36 @@ trait SortedSetsApi extends ApiSubset {
     zinterWeightsWithscores(keyWeight +:: keysWeights)
 
   /** Executes [[http://redis.io/commands/zinter ZINTER]] */
-  def zinterWeightsWithscores(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+  def zinterWeightsWithscores(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty)
+    : Result[Seq[(Value, Double)]] =
     execute(new ZinterWithscores(keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]] */
   def zinterstore(destination: Key, key: Key, keys: Key*): Result[Long] =
     zinterstore(destination, key +:: keys)
 
-  /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]]
-    * NOTE: `keys` MUST NOT be empty */
-  def zinterstore(destination: Key, keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
+  /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]] NOTE: `keys` MUST NOT be empty
+    */
+  def zinterstore(destination: Key, keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty)
+    : Result[Long] =
     execute(new Zinterstore(destination, keys, Opt.Empty, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]] */
   def zinterstoreWeights(destination: Key, keyWeight: (Key, Double), keysWeights: (Key, Double)*): Result[Long] =
     zinterstoreWeights(destination, keyWeight +:: keysWeights)
 
-  /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]]
-    * NOTE: `keysWeights` MUST NOT be empty */
-  def zinterstoreWeights(destination: Key, keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
+  /** Executes [[http://redis.io/commands/zinterstore ZINTERSTORE]] NOTE: `keysWeights` MUST NOT be empty
+    */
+  def zinterstoreWeights(
+    destination: Key,
+    keysWeights: Iterable[(Key, Double)],
+    aggregation: OptArg[Aggregation] = OptArg.Empty,
+  ): Result[Long] =
     execute(new Zinterstore(destination, keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zlexcount ZLEXCOUNT]] */
-  def zlexcount(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf): Result[Long] =
+  def zlexcount(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf)
+    : Result[Long] =
     execute(new Zlexcount(key, min, max))
 
   /** Executes [[http://redis.io/commands/zmscore ZMSCORE]] */
@@ -182,15 +201,30 @@ trait SortedSetsApi extends ApiSubset {
     execute(new ZrangeWithscores(key, start, stop))
 
   /** Executes [[http://redis.io/commands/zrangebylex ZRANGEBYLEX]] */
-  def zrangebylex(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[Value]] =
+  def zrangebylex(
+    key: Key,
+    min: LexLimit[Value] = LexLimit.MinusInf,
+    max: LexLimit[Value] = LexLimit.PlusInf,
+    limit: OptArg[Limit] = OptArg.Empty,
+  ): Result[Seq[Value]] =
     execute(new Zrangebylex(key, min, max, limit.toOpt))
 
   /** Executes [[http://redis.io/commands/zrangebyscore ZRANGEBYSCORE]] */
-  def zrangebyscore(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[Value]] =
+  def zrangebyscore(
+    key: Key,
+    min: ScoreLimit = ScoreLimit.MinusInf,
+    max: ScoreLimit = ScoreLimit.PlusInf,
+    limit: OptArg[Limit] = OptArg.Empty,
+  ): Result[Seq[Value]] =
     execute(new Zrangebyscore(key, min, max, limit.toOpt))
 
   /** Executes [[http://redis.io/commands/zrangebyscore ZRANGEBYSCORE]] */
-  def zrangebyscoreWithscores(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+  def zrangebyscoreWithscores(
+    key: Key,
+    min: ScoreLimit = ScoreLimit.MinusInf,
+    max: ScoreLimit = ScoreLimit.PlusInf,
+    limit: OptArg[Limit] = OptArg.Empty,
+  ): Result[Seq[(Value, Double)]] =
     execute(new ZrangebyscoreWithscores(key, min, max, limit.toOpt))
 
   /** Executes [[http://redis.io/commands/zrank ZRANK]] */
@@ -205,13 +239,14 @@ trait SortedSetsApi extends ApiSubset {
   def zrem(key: Key, member: Value, members: Value*): Result[Int] =
     execute(new Zrem(key, member +:: members))
 
-  /** Executes [[http://redis.io/commands/zrem ZREM]]
-    * or simply returns 0 when `members` is empty */
+  /** Executes [[http://redis.io/commands/zrem ZREM]] or simply returns 0 when `members` is empty
+    */
   def zrem(key: Key, members: Iterable[Value]): Result[Int] =
     execute(new Zrem(key, members))
 
   /** Executes [[http://redis.io/commands/zremrangebylex ZREMRANGEBYLEX]] */
-  def zremrangebylex(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf): Result[Long] =
+  def zremrangebylex(key: Key, min: LexLimit[Value] = LexLimit.MinusInf, max: LexLimit[Value] = LexLimit.PlusInf)
+    : Result[Long] =
     execute(new Zremrangebylex(key, min, max))
 
   /** Executes [[http://redis.io/commands/zremrangebyrank ZREMRANGEBYRANK]] */
@@ -219,7 +254,8 @@ trait SortedSetsApi extends ApiSubset {
     execute(new Zremrangebyrank(key, start, stop))
 
   /** Executes [[http://redis.io/commands/zremrangebyscore ZREMRANGEBYSCORE]] */
-  def zremrangebyscore(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf): Result[Long] =
+  def zremrangebyscore(key: Key, min: ScoreLimit = ScoreLimit.MinusInf, max: ScoreLimit = ScoreLimit.PlusInf)
+    : Result[Long] =
     execute(new Zremrangebyscore(key, min, max))
 
   /** Executes [[http://redis.io/commands/zrevrange ZREVRANGE]] */
@@ -231,15 +267,30 @@ trait SortedSetsApi extends ApiSubset {
     execute(new ZrevrangeWithscores(key, start, stop))
 
   /** Executes [[http://redis.io/commands/zrevrangebylex ZREVRANGEBYLEX]] */
-  def zrevrangebylex(key: Key, max: LexLimit[Value] = LexLimit.PlusInf, min: LexLimit[Value] = LexLimit.MinusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[Value]] =
+  def zrevrangebylex(
+    key: Key,
+    max: LexLimit[Value] = LexLimit.PlusInf,
+    min: LexLimit[Value] = LexLimit.MinusInf,
+    limit: OptArg[Limit] = OptArg.Empty,
+  ): Result[Seq[Value]] =
     execute(new Zrevrangebylex(key, max, min, limit.toOpt))
 
   /** Executes [[http://redis.io/commands/zrevrangebyscore ZREVRANGEBYSCORE]] */
-  def zrevrangebyscore(key: Key, max: ScoreLimit = ScoreLimit.PlusInf, min: ScoreLimit = ScoreLimit.MinusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[Value]] =
+  def zrevrangebyscore(
+    key: Key,
+    max: ScoreLimit = ScoreLimit.PlusInf,
+    min: ScoreLimit = ScoreLimit.MinusInf,
+    limit: OptArg[Limit] = OptArg.Empty,
+  ): Result[Seq[Value]] =
     execute(new Zrevrangebyscore(key, max, min, limit.toOpt))
 
   /** Executes [[http://redis.io/commands/zrevrangebyscore ZREVRANGEBYSCORE]] */
-  def zrevrangebyscoreWithscores(key: Key, max: ScoreLimit = ScoreLimit.PlusInf, min: ScoreLimit = ScoreLimit.MinusInf, limit: OptArg[Limit] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+  def zrevrangebyscoreWithscores(
+    key: Key,
+    max: ScoreLimit = ScoreLimit.PlusInf,
+    min: ScoreLimit = ScoreLimit.MinusInf,
+    limit: OptArg[Limit] = OptArg.Empty,
+  ): Result[Seq[(Value, Double)]] =
     execute(new ZrevrangebyscoreWithscores(key, max, min, limit.toOpt))
 
   /** Executes [[http://redis.io/commands/zrevrank ZREVRANK]] */
@@ -247,7 +298,8 @@ trait SortedSetsApi extends ApiSubset {
     execute(new Zrevrank(key, member))
 
   /** Executes [[http://redis.io/commands/zscan ZSCAN]] */
-  def zscan(key: Key, cursor: Cursor, matchPattern: OptArg[Value] = OptArg.Empty, count: OptArg[Int] = OptArg.Empty): Result[(Cursor, Seq[(Value, Double)])] =
+  def zscan(key: Key, cursor: Cursor, matchPattern: OptArg[Value] = OptArg.Empty, count: OptArg[Int] = OptArg.Empty)
+    : Result[(Cursor, Seq[(Value, Double)])] =
     execute(new Zscan(key, cursor, matchPattern.toOpt, count.toOpt))
 
   /** Executes [[http://redis.io/commands/zscore ZSCORE]] */
@@ -267,7 +319,8 @@ trait SortedSetsApi extends ApiSubset {
     zunionWeights(keyWeight +:: keysWeights)
 
   /** Executes [[http://redis.io/commands/zunion ZUNION]] */
-  def zunionWeights(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[Value]] =
+  def zunionWeights(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty)
+    : Result[Seq[Value]] =
     execute(new Zunion(keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zunion ZUNION]] */
@@ -275,7 +328,8 @@ trait SortedSetsApi extends ApiSubset {
     zunionWithscores(key +:: keys)
 
   /** Executes [[http://redis.io/commands/zunion ZUNION]] */
-  def zunionWithscores(keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+  def zunionWithscores(keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty)
+    : Result[Seq[(Value, Double)]] =
     execute(new ZunionWithscores(keys, Opt.Empty, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zunion ZUNION]] */
@@ -283,24 +337,30 @@ trait SortedSetsApi extends ApiSubset {
     zunionWeightsWithscores(keyWeight +:: keysWeights)
 
   /** Executes [[http://redis.io/commands/zunion ZUNION]] */
-  def zunionWeightsWithscores(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Seq[(Value, Double)]] =
+  def zunionWeightsWithscores(keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty)
+    : Result[Seq[(Value, Double)]] =
     execute(new ZunionWithscores(keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]] */
   def zunionstore(destination: Key, key: Key, keys: Key*): Result[Long] = zunionstore(destination, key +:: keys)
 
-  /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]]
-    * NOTE: `keys` MUST NOT be empty */
-  def zunionstore(destination: Key, keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
+  /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]] NOTE: `keys` MUST NOT be empty
+    */
+  def zunionstore(destination: Key, keys: Iterable[Key], aggregation: OptArg[Aggregation] = OptArg.Empty)
+    : Result[Long] =
     execute(new Zunionstore(destination, keys, Opt.Empty, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]] */
   def zunionstoreWeights(destination: Key, keyWeight: (Key, Double), keysWeights: (Key, Double)*): Result[Long] =
     zunionstoreWeights(destination, keyWeight +:: keysWeights)
 
-  /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]]
-    * NOTE: `keysWeights` MUST NOT be empty */
-  def zunionstoreWeights(destination: Key, keysWeights: Iterable[(Key, Double)], aggregation: OptArg[Aggregation] = OptArg.Empty): Result[Long] =
+  /** Executes [[http://redis.io/commands/zunionstore ZUNIONSTORE]] NOTE: `keysWeights` MUST NOT be empty
+    */
+  def zunionstoreWeights(
+    destination: Key,
+    keysWeights: Iterable[(Key, Double)],
+    aggregation: OptArg[Aggregation] = OptArg.Empty,
+  ): Result[Long] =
     execute(new Zunionstore(destination, keysWeights.map(_._1), keysWeights.map(_._2).opt, aggregation.toOpt))
 
   /** Executes [[http://redis.io/commands/bzpopmax BZPOPMAX]] */
@@ -322,17 +382,26 @@ trait SortedSetsApi extends ApiSubset {
   private abstract class AbstractValuesWithScoresCommand
     extends AbstractRedisCommand[Seq[(Value, Double)]](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))
 
-  private abstract class AbstractZadd[T](decoder: ReplyDecoder[T])(
+  private abstract class AbstractZadd[T](
+    decoder: ReplyDecoder[T]
+  )(
     key: Key,
     memberScores: IterableOnce[(Value, Double)],
     existence: Opt[Existence],
     comparison: Opt[Comparison],
     changed: Boolean,
-    incr: Boolean
-  ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
+    incr: Boolean,
+  ) extends AbstractRedisCommand[T](decoder)
+      with NodeCommand {
 
-    val encoded: Encoded = encoder("ZADD").key(key).optAdd(existence).optAdd(comparison)
-      .addFlag("CH", changed).addFlag("INCR", incr).argDataPairs(memberScores.iterator.map(_.swap)).result
+    val encoded: Encoded = encoder("ZADD")
+      .key(key)
+      .optAdd(existence)
+      .optAdd(comparison)
+      .addFlag("CH", changed)
+      .addFlag("INCR", incr)
+      .argDataPairs(memberScores.iterator.map(_.swap))
+      .result
   }
 
   private final class Zadd(
@@ -341,7 +410,7 @@ trait SortedSetsApi extends ApiSubset {
     emptyData: Boolean,
     existence: Opt[Existence],
     comparison: Opt[Comparison],
-    changed: Boolean
+    changed: Boolean,
   ) extends AbstractZadd[Int](integerAsInt)(key, memberScores, existence, comparison, changed, incr = false) {
     override def immediateResult: Opt[Int] = if (emptyData) Opt(0) else Opt.Empty
   }
@@ -351,8 +420,15 @@ trait SortedSetsApi extends ApiSubset {
     member: Value,
     score: Double,
     existence: Opt[Existence],
-    comparison: Opt[Comparison]
-  ) extends AbstractZadd[Opt[Double]](nullBulkOr(bulkAsDouble))(key, (member, score).single, existence, comparison, changed = false, incr = true)
+    comparison: Opt[Comparison],
+  ) extends AbstractZadd[Opt[Double]](nullBulkOr(bulkAsDouble))(
+      key,
+      (member, score).single,
+      existence,
+      comparison,
+      changed = false,
+      incr = true,
+    )
 
   private final class Zcard(key: Key) extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("ZCARD").key(key).result
@@ -380,20 +456,35 @@ trait SortedSetsApi extends ApiSubset {
 
   private final class Zinter(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
     extends RedisDataSeqCommand[Value] with NodeCommand {
-    val encoded: Encoded = encoder("ZINTER").add(keys.size).keys(keys)
-      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
+    val encoded: Encoded =
+      encoder("ZINTER").add(keys.size).keys(keys).optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
   }
 
-  private final class Zinterstore(destination: Key, keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
-    extends RedisLongCommand with NodeCommand {
-    val encoded: Encoded = encoder("ZINTERSTORE").key(destination).add(keys.size).keys(keys)
-      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
+  private final class Zinterstore(
+    destination: Key,
+    keys: Iterable[Key],
+    weights: Opt[Iterable[Double]],
+    aggregation: Opt[Aggregation],
+  ) extends RedisLongCommand
+      with NodeCommand {
+    val encoded: Encoded = encoder("ZINTERSTORE")
+      .key(destination)
+      .add(keys.size)
+      .keys(keys)
+      .optAdd("WEIGHTS", weights)
+      .optAdd("AGGREGATE", aggregation)
+      .result
   }
 
   private final class ZinterWithscores(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
     extends AbstractValuesWithScoresCommand with NodeCommand {
-    val encoded: Encoded = encoder("ZINTER").add(keys.size).keys(keys)
-      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).add("WITHSCORES").result
+    val encoded: Encoded = encoder("ZINTER")
+      .add(keys.size)
+      .keys(keys)
+      .optAdd("WEIGHTS", weights)
+      .optAdd("AGGREGATE", aggregation)
+      .add("WITHSCORES")
+      .result
   }
 
   private final class Zlexcount(key: Key, min: LexLimit[Value], max: LexLimit[Value])
@@ -401,14 +492,20 @@ trait SortedSetsApi extends ApiSubset {
     val encoded: Encoded = encoder("ZLEXCOUNT").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).result
   }
 
-  private abstract class AbstractZrange[T](cmd: String, decoder: ReplyDecoder[Seq[T]])(
-    key: Key, start: Long, stop: Long, withscores: Boolean
-  ) extends AbstractRedisCommand[Seq[T]](decoder) with NodeCommand {
+  private abstract class AbstractZrange[T](
+    cmd: String,
+    decoder: ReplyDecoder[Seq[T]],
+  )(
+    key: Key,
+    start: Long,
+    stop: Long,
+    withscores: Boolean,
+  ) extends AbstractRedisCommand[Seq[T]](decoder)
+      with NodeCommand {
     val encoded: Encoded = encoder(cmd).key(key).add(start).add(stop).addFlag("WITHSCORES", withscores).result
   }
 
-  private final class Zpopmin(key: Key, count: Opt[Long])
-    extends AbstractValuesWithScoresCommand with NodeCommand {
+  private final class Zpopmin(key: Key, count: Opt[Long]) extends AbstractValuesWithScoresCommand with NodeCommand {
     val encoded: Encoded = encoder("ZPOPMIN").key(key).optAdd(count).result
   }
 
@@ -417,18 +514,15 @@ trait SortedSetsApi extends ApiSubset {
     val encoded: Encoded = encoder("ZMSCORE").key(key).datas(members).result
   }
 
-  private final class Zpopmax(key: Key, count: Opt[Long])
-    extends AbstractValuesWithScoresCommand with NodeCommand {
+  private final class Zpopmax(key: Key, count: Opt[Long]) extends AbstractValuesWithScoresCommand with NodeCommand {
     val encoded: Encoded = encoder("ZPOPMAX").key(key).optAdd(count).result
   }
 
-  private final class Zrandmember(key: Key)
-    extends RedisOptDataCommand[Value] with NodeCommand {
+  private final class Zrandmember(key: Key) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("ZRANDMEMBER").key(key).result
   }
 
-  private final class ZrandmemberCount(key: Key, count: Int)
-    extends RedisDataSeqCommand[Value] with NodeCommand {
+  private final class ZrandmemberCount(key: Key, count: Int) extends RedisDataSeqCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("ZRANDMEMBER").key(key).add(count).result
   }
 
@@ -442,7 +536,11 @@ trait SortedSetsApi extends ApiSubset {
 
   private final class ZrangeWithscores(key: Key, start: Long, stop: Long)
     extends AbstractZrange[(Value, Double)]("ZRANGE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(
-      key, start, stop, withscores = true)
+      key,
+      start,
+      stop,
+      withscores = true,
+    )
 
   private final class Zrangebylex(key: Key, min: LexLimit[Value], max: LexLimit[Value], limit: Opt[Limit])
     extends RedisDataSeqCommand[Value] with NodeCommand {
@@ -450,20 +548,44 @@ trait SortedSetsApi extends ApiSubset {
       encoder("ZRANGEBYLEX").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).optAdd("LIMIT", limit).result
   }
 
-  private abstract class AbstractZrangebyscore[T](cmd: String, decoder: ReplyDecoder[Seq[T]])(
-    key: Key, firstLimit: ScoreLimit, secondLimit: ScoreLimit, withscores: Boolean, limit: Opt[Limit]
-  ) extends AbstractRedisCommand[Seq[T]](decoder) with NodeCommand {
+  private abstract class AbstractZrangebyscore[T](
+    cmd: String,
+    decoder: ReplyDecoder[Seq[T]],
+  )(
+    key: Key,
+    firstLimit: ScoreLimit,
+    secondLimit: ScoreLimit,
+    withscores: Boolean,
+    limit: Opt[Limit],
+  ) extends AbstractRedisCommand[Seq[T]](decoder)
+      with NodeCommand {
     val encoded: Encoded =
-      encoder(cmd).key(key).add(firstLimit.repr).add(secondLimit.repr)
-        .addFlag("WITHSCORES", withscores).optAdd("LIMIT", limit).result
+      encoder(cmd)
+        .key(key)
+        .add(firstLimit.repr)
+        .add(secondLimit.repr)
+        .addFlag("WITHSCORES", withscores)
+        .optAdd("LIMIT", limit)
+        .result
   }
 
   private final class Zrangebyscore(key: Key, min: ScoreLimit, max: ScoreLimit, limit: Opt[Limit])
-    extends AbstractZrangebyscore[Value]("ZRANGEBYSCORE", multiBulkAsSeqOf[Value])(key, min, max, withscores = false, limit)
+    extends AbstractZrangebyscore[Value]("ZRANGEBYSCORE", multiBulkAsSeqOf[Value])(
+      key,
+      min,
+      max,
+      withscores = false,
+      limit,
+    )
 
   private final class ZrangebyscoreWithscores(key: Key, min: ScoreLimit, max: ScoreLimit, limit: Opt[Limit])
     extends AbstractZrangebyscore[(Value, Double)]("ZRANGEBYSCORE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(
-      key, min, max, withscores = true, limit)
+      key,
+      min,
+      max,
+      withscores = true,
+      limit,
+    )
 
   private final class Zrank(key: Key, member: Value) extends RedisOptLongCommand with NodeCommand {
     val encoded: Encoded = encoder("ZRANK").key(key).data(member).result
@@ -479,8 +601,7 @@ trait SortedSetsApi extends ApiSubset {
     val encoded: Encoded = encoder("ZREMRANGEBYLEX").key(key).add(LexLimit.repr(min)).add(LexLimit.repr(max)).result
   }
 
-  private final class Zremrangebyrank(key: Key, start: Long, stop: Long)
-    extends RedisLongCommand with NodeCommand {
+  private final class Zremrangebyrank(key: Key, start: Long, stop: Long) extends RedisLongCommand with NodeCommand {
     val encoded: Encoded = encoder("ZREMRANGEBYRANK").key(key).add(start).add(stop).result
   }
 
@@ -493,19 +614,33 @@ trait SortedSetsApi extends ApiSubset {
     extends AbstractZrange[Value]("ZREVRANGE", multiBulkAsSeqOf[Value])(key, start, stop, withscores = false)
 
   private final class ZrevrangeWithscores(key: Key, start: Long, stop: Long)
-    extends AbstractZrange[(Value, Double)]("ZREVRANGE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(key, start, stop, withscores = true)
+    extends AbstractZrange[(Value, Double)]("ZREVRANGE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(
+      key,
+      start,
+      stop,
+      withscores = true,
+    )
 
   private final class Zrevrangebylex(key: Key, max: LexLimit[Value], min: LexLimit[Value], limit: Opt[Limit])
     extends RedisDataSeqCommand[Value] with NodeCommand {
-    val encoded: Encoded = encoder("ZREVRANGEBYLEX").key(key).add(LexLimit.repr(max)).add(LexLimit.repr(min)).optAdd("LIMIT", limit).result
+    val encoded: Encoded =
+      encoder("ZREVRANGEBYLEX").key(key).add(LexLimit.repr(max)).add(LexLimit.repr(min)).optAdd("LIMIT", limit).result
   }
 
   private final class Zrevrangebyscore(key: Key, max: ScoreLimit, min: ScoreLimit, limit: Opt[Limit])
-    extends AbstractZrangebyscore[Value]("ZREVRANGEBYSCORE", multiBulkAsSeqOf[Value])(key, max, min, withscores = false, limit)
+    extends AbstractZrangebyscore[Value]("ZREVRANGEBYSCORE", multiBulkAsSeqOf[Value])(
+      key,
+      max,
+      min,
+      withscores = false,
+      limit,
+    )
 
   private final class ZrevrangebyscoreWithscores(key: Key, max: ScoreLimit, min: ScoreLimit, limit: Opt[Limit])
-    extends AbstractZrangebyscore[(Value, Double)]("ZREVRANGEBYSCORE", flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble))(
-      key, max, min, withscores = true, limit)
+    extends AbstractZrangebyscore[(Value, Double)](
+      "ZREVRANGEBYSCORE",
+      flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble),
+    )(key, max, min, withscores = true, limit)
 
   private final class Zrevrank(key: Key, member: Value) extends RedisOptLongCommand with NodeCommand {
     val encoded: Encoded = encoder("ZREVRANK").key(key).data(member).result
@@ -513,7 +648,8 @@ trait SortedSetsApi extends ApiSubset {
 
   private final class Zscan(key: Key, cursor: Cursor, matchPattern: Opt[Value], count: Opt[Int])
     extends RedisScanCommand[(Value, Double)](flatMultiBulkAsPairSeq(bulkAs[Value], bulkAsDouble)) with NodeCommand {
-    val encoded: Encoded = encoder("ZSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
+    val encoded: Encoded =
+      encoder("ZSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
   private final class Zscore(key: Key, member: Value) extends RedisOptDoubleCommand with NodeCommand {
@@ -522,20 +658,35 @@ trait SortedSetsApi extends ApiSubset {
 
   private final class Zunion(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
     extends RedisDataSeqCommand[Value] with NodeCommand {
-    val encoded: Encoded = encoder("ZUNION").add(keys.size).keys(keys)
-      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
+    val encoded: Encoded =
+      encoder("ZUNION").add(keys.size).keys(keys).optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
   }
 
-  private final class Zunionstore(destination: Key, keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
-    extends RedisLongCommand with NodeCommand {
-    val encoded: Encoded = encoder("ZUNIONSTORE").key(destination).add(keys.size).keys(keys)
-      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).result
+  private final class Zunionstore(
+    destination: Key,
+    keys: Iterable[Key],
+    weights: Opt[Iterable[Double]],
+    aggregation: Opt[Aggregation],
+  ) extends RedisLongCommand
+      with NodeCommand {
+    val encoded: Encoded = encoder("ZUNIONSTORE")
+      .key(destination)
+      .add(keys.size)
+      .keys(keys)
+      .optAdd("WEIGHTS", weights)
+      .optAdd("AGGREGATE", aggregation)
+      .result
   }
 
   private final class ZunionWithscores(keys: Iterable[Key], weights: Opt[Iterable[Double]], aggregation: Opt[Aggregation])
     extends AbstractValuesWithScoresCommand with NodeCommand {
-    val encoded: Encoded = encoder("ZUNION").add(keys.size).keys(keys)
-      .optAdd("WEIGHTS", weights).optAdd("AGGREGATE", aggregation).add("WITHSCORES").result
+    val encoded: Encoded = encoder("ZUNION")
+      .add(keys.size)
+      .keys(keys)
+      .optAdd("WEIGHTS", weights)
+      .optAdd("AGGREGATE", aggregation)
+      .add("WITHSCORES")
+      .result
   }
 
   private final class Bzpopmax(keys: Iterable[Key], timeout: Int)
@@ -560,11 +711,12 @@ trait SortedSetsApi extends ApiSubset {
 }
 
 case class ScoreLimit(value: Double, inclusive: Boolean) {
-  def repr: String = (if (!inclusive) "(" else "") + (value match {
-    case Double.NegativeInfinity => "-inf"
-    case Double.PositiveInfinity => "+inf"
-    case _ => value.toString
-  })
+  def repr: String = (if (!inclusive) "(" else "") +
+    (value match {
+      case Double.NegativeInfinity => "-inf"
+      case Double.PositiveInfinity => "+inf"
+      case _ => value.toString
+    })
 }
 object ScoreLimit {
   def incl(value: Double) = ScoreLimit(value, inclusive = true)

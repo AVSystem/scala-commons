@@ -18,7 +18,8 @@ final class SentinelsMonitoringActor(
   onInitFailure: Throwable => Unit,
   onMasterChange: RedisNodeClient => Unit,
   stateObserver: OptArg[SentinelStateObserver] = OptArg.Empty,
-) extends Actor with ActorLazyLogging {
+) extends Actor
+    with ActorLazyLogging {
 
   import RedisApi.Batches.StringTyped._
   import SentinelsMonitoringActor._
@@ -66,30 +67,31 @@ final class SentinelsMonitoringActor(
     }
 
   def receive: Receive = {
-    case pr: PacksResult => Try(FetchState.decodeReplies(pr)) match {
-      case Success((masterAddr, otherSentinels)) =>
-        val thisSentinel = sender()
-        updateMaster(masterAddr)
+    case pr: PacksResult =>
+      Try(FetchState.decodeReplies(pr)) match {
+        case Success((masterAddr, otherSentinels)) =>
+          val thisSentinel = sender()
+          updateMaster(masterAddr)
 
-        otherSentinels.foreach(getConnection(_, seed = false))
-        sentinels.foreach { case (addr, conn) =>
-          if (conn != thisSentinel && !otherSentinels.contains(addr)) {
-            context.stop(conn)
-            sentinels.remove(addr)
+          otherSentinels.foreach(getConnection(_, seed = false))
+          sentinels.foreach { case (addr, conn) =>
+            if (conn != thisSentinel && !otherSentinels.contains(addr)) {
+              context.stop(conn)
+              sentinels.remove(addr)
+            }
           }
-        }
 
-      case Failure(cause) =>
-        log.error(s"Failed to fetch master node for $masterName from a sentinel", cause)
-        if (master.isEmpty) {
-          seedFailures += cause
-          if (seedFailures.size == seedSentinels.size) {
-            val failure = new MasterSlaveInitializationException(masterName, seedSentinels)
-            seedFailures.foreach(failure.addSuppressed)
-            onInitFailure(failure)
+        case Failure(cause) =>
+          log.error(s"Failed to fetch master node for $masterName from a sentinel", cause)
+          if (master.isEmpty) {
+            seedFailures += cause
+            if (seedFailures.size == seedSentinels.size) {
+              val failure = new MasterSlaveInitializationException(masterName, seedSentinels)
+              seedFailures.foreach(failure.addSuppressed)
+              onInitFailure(failure)
+            }
           }
-        }
-    }
+      }
 
     case PubSubEvent.Message(SwitchMasterChannel, BulkStringMsg(newMasterInfo)) =>
       // <master-name> <old-ip> <old-port> <new-ip> <new-port>

@@ -3,7 +3,6 @@ package redis.commands
 
 import com.avsystem.commons.redis._
 
-
 trait SetsApiSuite extends CommandsSuite {
 
   import RedisApi.Batches.StringTyped._
@@ -25,7 +24,7 @@ trait SetsApiSuite extends CommandsSuite {
     setup(
       sadd("{key}1", "a", "b", "c"),
       sadd("{key}2", "b", "d"),
-      sadd("{key}3", "c", "d")
+      sadd("{key}3", "c", "d"),
     )
     sdiff("{key}1", "{key}2", "{key}3").assertEquals(Set("a"))
   }
@@ -34,7 +33,7 @@ trait SetsApiSuite extends CommandsSuite {
     setup(
       sadd("{key}1", "a", "b", "c"),
       sadd("{key}2", "b", "d"),
-      sadd("{key}3", "c", "d")
+      sadd("{key}3", "c", "d"),
     )
     sdiffstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(1)
     smembers("{key}d").assertEquals(Set("a"))
@@ -44,7 +43,7 @@ trait SetsApiSuite extends CommandsSuite {
     setup(
       sadd("{key}1", "a", "b", "c"),
       sadd("{key}2", "b", "a"),
-      sadd("{key}3", "c", "a")
+      sadd("{key}3", "c", "a"),
     )
     sinter("{key}1", "{key}2", "{key}3").assertEquals(Set("a"))
   }
@@ -53,7 +52,7 @@ trait SetsApiSuite extends CommandsSuite {
     setup(
       sadd("{key}1", "a", "b", "c"),
       sadd("{key}2", "b", "a"),
-      sadd("{key}3", "c", "a")
+      sadd("{key}3", "c", "a"),
     )
     sinterstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(1)
     smembers("{key}d").assertEquals(Set("a"))
@@ -83,7 +82,7 @@ trait SetsApiSuite extends CommandsSuite {
   apiTest("SMOVE") {
     setup(
       sadd("{key}1", "a", "b"),
-      sadd("{key}2", "c", "d")
+      sadd("{key}2", "c", "d"),
     )
     smove("{key}1", "{key}2", "?").assertEquals(false)
     smove("{key}1", "{key}2", "a").assertEquals(true)
@@ -132,7 +131,7 @@ trait SetsApiSuite extends CommandsSuite {
     setup(
       sadd("{key}1", "a", "b", "c"),
       sadd("{key}2", "b", "d"),
-      sadd("{key}3", "c", "e")
+      sadd("{key}3", "c", "e"),
     )
     sunion(Nil).assertEquals(Set.empty)
     sunion("{key}1", "{key}2", "{key}3").assertEquals(Set("a", "b", "c", "d", "e"))
@@ -142,7 +141,7 @@ trait SetsApiSuite extends CommandsSuite {
     setup(
       sadd("{key}1", "a", "b", "c"),
       sadd("{key}2", "b", "d"),
-      sadd("{key}3", "c", "e")
+      sadd("{key}3", "c", "e"),
     )
     sunionstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(5)
     smembers("{key}d").assertEquals(Set("a", "b", "c", "d", "e"))

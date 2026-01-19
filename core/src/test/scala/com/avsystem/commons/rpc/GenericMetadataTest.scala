@@ -8,7 +8,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class GenericMeta[T](
   @reifyName name: String,
   @multi @rpcTypeParamMetadata typeParams: List[GenericMeta.TypeParam],
-  @multi @rpcMethodMetadata methods: List[GenericMeta.Method[_]]
+  @multi @rpcMethodMetadata methods: List[GenericMeta.Method[_]],
 ) {
   def repr: String = {
     val targs = typeParams.map(_.typeString)
@@ -22,7 +22,7 @@ object GenericMeta extends RpcMetadataCompanion[GenericMeta] {
 
   case class Param[T](
     @reifyName name: String,
-    @infer @forTypeParams tpe: List[TypeString[_]] => TypeString[T]
+    @infer @forTypeParams tpe: List[TypeString[_]] => TypeString[T],
   ) extends TypedMetadata[T] {
     def repr(targs: List[TypeString[_]]): String =
       s"$name: ${tpe(targs)}"
@@ -32,7 +32,7 @@ object GenericMeta extends RpcMetadataCompanion[GenericMeta] {
     @reifyName name: String,
     @multi @rpcTypeParamMetadata typeParams: List[TypeParam],
     @multi @rpcParamMetadata params: List[Param[_]],
-    @infer @forTypeParams result: List[TypeString[_]] => TypeString[T]
+    @infer @forTypeParams result: List[TypeString[_]] => TypeString[T],
   ) extends TypedMetadata[T] {
     def repr(targs: List[TypeString[_]]): String = {
       val fullTargs = targs ++ typeParams.map(_.typeString)
@@ -55,8 +55,7 @@ object GenericTrait {
 
 class GenericMetadataTest extends AnyFunSuite {
   test("generic metadata") {
-    assert(GenericTrait.meta.repr ==
-      """GenericTrait[A, B] {
+    assert(GenericTrait.meta.repr == """GenericTrait[A, B] {
         |  method(a: A, int: Int): List[A]
         |  genericMethod[C](map: Map[A, C]): Map[B, C]
         |}""".stripMargin)

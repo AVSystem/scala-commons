@@ -4,9 +4,7 @@ package redis.util
 import org.apache.pekko.actor.Actor
 import org.apache.pekko.event.LoggingAdapter
 
-/**
-  * Author: ghik
-  * Created: 12/04/16.
+/** Author: ghik Created: 12/04/16.
   */
 trait ActorLazyLogging { self: Actor =>
   object log {

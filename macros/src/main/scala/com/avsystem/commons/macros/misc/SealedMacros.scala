@@ -13,12 +13,16 @@ class SealedMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
   def caseObjectsFor[T: WeakTypeTag]: Tree = instrument {
     val tpe = weakTypeOf[T]
-    knownSubtypes(tpe).map { subtypes =>
-      val objects = subtypes.map(subTpe => singleValueFor(subTpe)
-        .getOrElse(abort(s"All possible values of a SealedEnum must be objects but $subTpe is not")))
-      val result = q"$ListObj(..$objects)"
-      if (tpe <:< OrderedEnumType) q"$result.sorted" else result
-    }.getOrElse(abort(s"$tpe is not a sealed trait or class"))
+    knownSubtypes(tpe)
+      .map { subtypes =>
+        val objects = subtypes.map(subTpe =>
+          singleValueFor(subTpe)
+            .getOrElse(abort(s"All possible values of a SealedEnum must be objects but $subTpe is not"))
+        )
+        val result = q"$ListObj(..$objects)"
+        if (tpe <:< OrderedEnumType) q"$result.sorted" else result
+      }
+      .getOrElse(abort(s"$tpe is not a sealed trait or class"))
   }
 
   def instancesFor[TC: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {

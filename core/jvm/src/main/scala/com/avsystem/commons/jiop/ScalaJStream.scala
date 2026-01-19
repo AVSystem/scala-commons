@@ -4,7 +4,7 @@ package jiop
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Factory
 
-final class ScalaJStream[+A](private val jStream: JStream[A@uV]) extends AnyVal {
+final class ScalaJStream[+A](private val jStream: JStream[A @uV]) extends AnyVal {
   def asJava[B >: A]: JStream[B] =
     jStream.asInstanceOf[JStream[B]]
 
@@ -128,7 +128,7 @@ final class ScalaJStream[+A](private val jStream: JStream[A@uV]) extends AnyVal 
   def sorted(comparator: (A, A) => Int): ScalaJStream[A] =
     new ScalaJStream(jStream.sorted(jComparator(comparator)))
 
-  def toArray[B >: A <: AnyRef : ClassTag]: Array[B] =
+  def toArray[B >: A <: AnyRef: ClassTag]: Array[B] =
     jStream.toArray[B](jIntFunction(n => new Array[B](n)))
 
   def to[C](fac: Factory[A, C]): C = {

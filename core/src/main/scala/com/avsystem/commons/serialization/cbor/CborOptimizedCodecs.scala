@@ -8,29 +8,27 @@ import com.avsystem.commons.serialization._
 import scala.collection.Factory
 
 trait CborOptimizedCodecs {
-  /**
-    * Creates a `GenCodec` for map type that leverages CBOR's ability to write object keys of arbitrary type.
-    * Map keys are not written as strings but are serialized into raw CBOR instead.
-    * Therefore, this codec requires a `GenCodec` for key type rather than `GenKeyCodec` required by standard
-    * map codec.
+
+  /** Creates a `GenCodec` for map type that leverages CBOR's ability to write object keys of arbitrary type. Map keys
+    * are not written as strings but are serialized into raw CBOR instead. Therefore, this codec requires a `GenCodec`
+    * for key type rather than `GenKeyCodec` required by standard map codec.
     *
-    * If the underlying `Input` or `Output` is not a CBOR input/output and there is no `GenKeyCodec`
-    * for key type then a fallback `GenKeyCodec` is used that converts keys into strings by taking HEX representation
-    * of their CBOR serialization. If the key type has a `GenKeyCodec` then this `GenCodec` behaves exactly the same
-    * as the standard one for non-CBOR inputs/outputs.
+    * If the underlying `Input` or `Output` is not a CBOR input/output and there is no `GenKeyCodec` for key type then a
+    * fallback `GenKeyCodec` is used that converts keys into strings by taking HEX representation of their CBOR
+    * serialization. If the key type has a `GenKeyCodec` then this `GenCodec` behaves exactly the same as the standard
+    * one for non-CBOR inputs/outputs.
     */
-  implicit def cborMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec : OptGenKeyCodec, V: GenCodec](
+  implicit def cborMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](
     implicit fac: Factory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] = mkMapCodec(implicit keyCodec => GenCodec.mapCodec[M, K, V])
 
-  implicit def cborJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec : OptGenKeyCodec, V: GenCodec](
+  implicit def cborJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](
     implicit fac: JFactory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] = mkMapCodec(implicit keyCodec => GenCodec.jMapCodec[M, K, V])
 
-  private def mkMapCodec[M[X, Y] <: AnyRef, K: GenCodec : OptGenKeyCodec, V: GenCodec](
+  private def mkMapCodec[M[X, Y] <: AnyRef, K: GenCodec: OptGenKeyCodec, V: GenCodec](
     mkStdCodec: GenKeyCodec[K] => GenObjectCodec[M[K, V]]
-  )(implicit
-    fac: Factory[(K, V), M[K, V]]
+  )(implicit fac: Factory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] = {
     val hexKeysStdCodec = mkStdCodec(new GenKeyCodec[K] {
       def read(key: String): K = CborInput.readRawCbor[K](RawCbor.fromHex(key))
@@ -76,7 +74,8 @@ class CborRawKeysCodec[T](stdObjectCodec: GenObjectCodec[T], keyCodec: CborKeyCo
   }
 }
 
-class OOOFieldCborRawKeysCodec[T](stdObjectCodec: OOOFieldsObjectCodec[T], keyCodec: CborKeyCodec) extends OOOFieldsObjectCodec[T] {
+class OOOFieldCborRawKeysCodec[T](stdObjectCodec: OOOFieldsObjectCodec[T], keyCodec: CborKeyCodec)
+  extends OOOFieldsObjectCodec[T] {
   def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = {
     input.customEvent(ForceCborKeyCodec, keyCodec)
     stdObjectCodec.readObject(input, outOfOrderFields)
@@ -91,11 +90,10 @@ class OOOFieldCborRawKeysCodec[T](stdObjectCodec: OOOFieldsObjectCodec[T], keyCo
   def nullable: Boolean = stdObjectCodec.nullable
 }
 
-/**
-  * Makes sure that [[CborRawKeysCodec]] for map types behaves exactly the same for non-CBOR inputs/outputs as
-  * standard `GenCodec` when the key type has a `GenKeyCodec`. However, when `GenKeyCodec` is not available for key
-  * type, [[CborRawKeysCodec]] can still work with non-CBOR inputs/outputs by serializing keys into CBOR and taking
-  * their HEX representation as standard string keys.
+/** Makes sure that [[CborRawKeysCodec]] for map types behaves exactly the same for non-CBOR inputs/outputs as standard
+  * `GenCodec` when the key type has a `GenKeyCodec`. However, when `GenKeyCodec` is not available for key type,
+  * [[CborRawKeysCodec]] can still work with non-CBOR inputs/outputs by serializing keys into CBOR and taking their HEX
+  * representation as standard string keys.
   */
 case class OptGenKeyCodec[K](keyCodec: Opt[GenKeyCodec[K]])
 object OptGenKeyCodec extends OptGenKeyCodecLowPriority {

@@ -47,8 +47,12 @@ trait BaseJsonOutput {
         if (esc != 1) {
           builder.append(esc)
         } else {
-          builder.append('u').append(toHex((ch >> 12) & 0xF)).append(toHex((ch >> 8) & 0xF))
-            .append(toHex((ch >> 4) & 0xF)).append(toHex(ch & 0xF))
+          builder
+            .append('u')
+            .append(toHex((ch >> 12) & 0xf))
+            .append(toHex((ch >> 8) & 0xf))
+            .append(toHex((ch >> 4) & 0xf))
+            .append(toHex(ch & 0xf))
         }
       }
       i += 1
@@ -62,8 +66,7 @@ trait BaseJsonOutput {
       writeSpaces(builder, n - 1)
     }
 
-  protected final def toHex(nibble: Int): Char =
-    (nibble + (if (nibble >= 10) 'a' - 10 else '0')).toChar
+  protected final def toHex(nibble: Int): Char = (nibble + (if (nibble >= 10) 'a' - 10 else '0')).toChar
 }
 
 final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = JsonOptions.Default, depth: Int = 0)
@@ -110,7 +113,7 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
       var i = 0
       while (i < binary.length) {
         val b = binary(i)
-        builder.append(toHex((b >> 4) & 0xF)).append(toHex(b & 0xF))
+        builder.append(toHex((b >> 4) & 0xf)).append(toHex(b & 0xf))
         i += 1
       }
       builder.append('"')
