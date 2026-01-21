@@ -1,6 +1,5 @@
 logLevel := Level.Warn
 
-addSbtPlugin("com.github.ghik" % "sbt-nosbt" % "0.2.1")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.20.2")
 addSbtPlugin("org.scala-js" % "sbt-jsdependencies" % "1.0.2")
 addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.3")
