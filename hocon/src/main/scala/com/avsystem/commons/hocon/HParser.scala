@@ -15,9 +15,9 @@ object HParser {
 }
 class HParser(tokens: IndexedSeq[HToken]) {
 
-  import HParser._
-  import HTokenType._
-  import HTree._
+  import HParser.*
+  import HTokenType.*
+  import HTree.*
 
   private var idx = 0
 
@@ -117,7 +117,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     if (braces) {
       ensure(LBrace)
     }
-    val stats = parseElems((() => parseStat()), if (braces) Opt(RBrace) else Opt.Empty)
+    val stats = parseElems(() => parseStat(), if (braces) Opt(RBrace) else Opt.Empty)
     if (braces) {
       ensure(RBrace)
     } else {
@@ -132,7 +132,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
   def parseArray(): HArray = {
     val start = skipWs()
     ensure(LBracket)
-    val elems = parseElems((() => parseValue()), Opt(RBracket))
+    val elems = parseElems(() => parseValue(), Opt(RBracket))
     ensure(RBracket)
     HArray(elems)(rangeFrom(start))
   }
@@ -224,7 +224,8 @@ class HParser(tokens: IndexedSeq[HToken]) {
     val start = skipWs()
     val values = new MListBuffer[HValue]
     values += parseNonConcat()
-    while (aheadAny(LBrace, LBracket, Splice, QuotedString, MultilineString) || ahead(unquotedStringPart(inKey = false))) {
+    while (aheadAny(LBrace, LBracket, Splice, QuotedString, MultilineString) || ahead(unquotedStringPart(inKey = false)))
+    {
       values += parseNonConcat()
     }
     values.last match {

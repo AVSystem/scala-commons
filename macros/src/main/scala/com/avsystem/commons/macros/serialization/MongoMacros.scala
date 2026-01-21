@@ -5,7 +5,7 @@ import scala.reflect.macros.blackbox
 
 class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.*
 
   def MongoTypedPkg: Tree = q"$CommonsPkg.mongo.typed"
   lazy val MongoRefCls: Symbol = getType(tq"$MongoTypedPkg.MongoRef[_, _]").typeSymbol

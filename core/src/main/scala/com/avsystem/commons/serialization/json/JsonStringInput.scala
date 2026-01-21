@@ -40,7 +40,7 @@ class JsonStringInput(
 
   private def expectedError(tpe: JsonType) =
     throw new ParseException(
-      s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue} ${reader.posInfo(startIdx)}"
+      s"Expected $tpe but got ${reader.jsonType}: ${reader.currentValue} ${reader.posInfo(startIdx)}",
     )
 
   private def checkedValue[T](jsonType: JsonType): T =
@@ -234,7 +234,7 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
   prepareForNext(first = true)
 
   private var peekIdx = if (end) -1 else reader.index
-  //todo: wtf
+  // todo: wtf
 //  private var peekedFields: CrossUtils.NativeDict[Int] | Null = scala.compiletime.uninitialized
 
   private def prepareForNext(first: Boolean): Unit = {
@@ -469,9 +469,10 @@ final class JsonReader(val json: String) {
     }
   }
 
-  /** @return
-    *   startIndex
-    */
+  /**
+   * @return
+   *   startIndex
+   */
   def parseValue(): Int = {
     @inline def update(newValue: Any, newTpe: JsonType): Unit = {
       value = newValue

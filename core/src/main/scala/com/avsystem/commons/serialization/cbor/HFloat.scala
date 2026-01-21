@@ -54,10 +54,10 @@ object HFloat {
             significand += 1
           }
 
-          if (exp >= MinExponent && exp <= MaxExponent)
-            new HFloat((signBit | ((exp + ExponentBias) << ExponentShift) | significand).toShort)
-          else if (exp > MaxExponent)
-            if (neg) NegativeInfinity else PositiveInfinity
+          if (exp >= MinExponent && exp <= MaxExponent) new HFloat(
+            (signBit | ((exp + ExponentBias) << ExponentShift) | significand).toShort,
+          )
+          else if (exp > MaxExponent) if (neg) NegativeInfinity else PositiveInfinity
           else if (exp >= MinExponent - ExponentShift) { // subnormal half-precision float
             val sshift = MinExponent - exp
             var subnormalSignificand = ((1 << ExponentShift) | significand) >>> sshift
@@ -71,14 +71,15 @@ object HFloat {
     }
 }
 
-/** IEEE 754 half-precision floating point number [[https://en.wikipedia.org/wiki/Half-precision_floating-point_format]]
-  *
-  * This class only implements conversion to and from standard `Float` (single precision floating point). Arithmetic is
-  * not implemented.
-  */
+/**
+ * IEEE 754 half-precision floating point number [[https://en.wikipedia.org/wiki/Half-precision_floating-point_format]]
+ *
+ * This class only implements conversion to and from standard `Float` (single precision floating point). Arithmetic is
+ * not implemented.
+ */
 final class HFloat(val raw: Short) extends AnyVal {
 
-  import HFloat._
+  import HFloat.*
 
   private def bits: Int =
     raw.toInt & 0xffff

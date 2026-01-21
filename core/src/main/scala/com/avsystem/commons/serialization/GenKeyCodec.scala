@@ -9,10 +9,11 @@ import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
 
 import scala.annotation.implicitNotFound
 
-/** Typeclass which implements two-directional conversion between values of some type and field names used in
-  * [[ObjectOutput.writeField]] and [[ObjectInput.nextField]] ([[FieldInput.fieldName]]). Every type which has a
-  * natural, unambiguous string representation should have a `GenKeyCodec`.
-  */
+/**
+ * Typeclass which implements two-directional conversion between values of some type and field names used in
+ * [[ObjectOutput.writeField]] and [[ObjectInput.nextField]] ([[FieldInput.fieldName]]). Every type which has a
+ * natural, unambiguous string representation should have a `GenKeyCodec`.
+ */
 @implicitNotFound("No GenKeyCodec found for ${T}")
 trait GenKeyCodec[T] {
   def read(key: String): T
@@ -25,9 +26,10 @@ trait GenKeyCodec[T] {
 object GenKeyCodec {
   def apply[T](implicit gkc: GenKeyCodec[T]): GenKeyCodec[T] = gkc
 
-  /** Materializes a `GenKeyCodec` for a "sealed enum" (sealed hierarchy with case objects at the bottom). The generated
-    * codec uses object name by default as key value. This can be adjusted with `@name` annotation.
-    */
+  /**
+   * Materializes a `GenKeyCodec` for a "sealed enum" (sealed hierarchy with case objects at the bottom). The generated
+   * codec uses object name by default as key value. This can be adjusted with `@name` annotation.
+   */
   def forSealedEnum[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forSealedEnum[T]
 
   def forTransparentWrapper[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forTransparentWrapper[T]

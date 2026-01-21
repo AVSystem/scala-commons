@@ -4,8 +4,9 @@ package spring
 import scala.annotation.nowarn
 import org.springframework.beans.factory.support.AbstractBeanDefinition
 
-/** Created: 17-03-2014 Author: ghik
-  */
+/**
+ * Created: 17-03-2014 Author: ghik
+ */
 object AttrNames {
   final val AbstractAttr = "%abstract"
   final val ArgTypesAttr = "%arg-types"
@@ -72,7 +73,7 @@ object AttrNames {
     ScopeAttr,
   )
 
-  final val AutowireMapping: Map[String,Int] = Map(
+  final val AutowireMapping: Map[String, Int] = Map(
     "no" -> AbstractBeanDefinition.AUTOWIRE_NO,
     "byName" -> AbstractBeanDefinition.AUTOWIRE_BY_NAME,
     "byType" -> AbstractBeanDefinition.AUTOWIRE_BY_TYPE,
@@ -80,14 +81,14 @@ object AttrNames {
     "autodetect" -> AbstractBeanDefinition.AUTOWIRE_AUTODETECT: @nowarn,
   )
 
-  final val ReverseAutowireMapping: Map[Int,String] = AutowireMapping.map(_.swap)
+  final val ReverseAutowireMapping: Map[Int, String] = AutowireMapping.map(_.swap)
 
-  final val DependencyCheckMapping: Map[String,Int] = Map(
+  final val DependencyCheckMapping: Map[String, Int] = Map(
     "none" -> AbstractBeanDefinition.DEPENDENCY_CHECK_NONE,
     "simple" -> AbstractBeanDefinition.DEPENDENCY_CHECK_SIMPLE,
     "objects" -> AbstractBeanDefinition.DEPENDENCY_CHECK_OBJECTS,
     "all" -> AbstractBeanDefinition.DEPENDENCY_CHECK_ALL,
   )
 
-  final val ReverseDependencyCheckMapping: Map[Int,String] = DependencyCheckMapping.map(_.swap)
+  final val ReverseDependencyCheckMapping: Map[Int, String] = DependencyCheckMapping.map(_.swap)
 }

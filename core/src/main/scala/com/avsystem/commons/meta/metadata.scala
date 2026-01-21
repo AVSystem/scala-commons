@@ -3,25 +3,28 @@ package meta
 
 import com.avsystem.commons.serialization.{transparent, HasGenCodec}
 
-/** This trait must be extended by all method metadata classes and all parameter metadata classes. For method metadata,
-  * type parameter `T` will be matched against each real method result type. For parameter metadata, type parameter `T`
-  * will be matched against each real parameter type.
-  */
+/**
+ * This trait must be extended by all method metadata classes and all parameter metadata classes. For method metadata,
+ * type parameter `T` will be matched against each real method result type. For parameter metadata, type parameter `T`
+ * will be matched against each real parameter type.
+ */
 trait TypedMetadata[T]
 
-/** Captures case class parameter's default value. Used as type of ADT metadata parameter annotated with
-  * [[reifyDefaultValue]].
-  */
+/**
+ * Captures case class parameter's default value. Used as type of ADT metadata parameter annotated with
+ * [[reifyDefaultValue]].
+ */
 final class DefaultValue[T](dv: => T) {
   def value: T = dv
 }
 
-/** Information about real parameter flags and modifiers as defined in Scala code.
-  */
+/**
+ * Information about real parameter flags and modifiers as defined in Scala code.
+ */
 @transparent
 final case class ParamFlags(rawFlags: Int) extends AnyVal {
 
-  import ParamFlags._
+  import ParamFlags.*
 
   def |(other: ParamFlags): ParamFlags = new ParamFlags(rawFlags | other.rawFlags)
   def &(other: ParamFlags): ParamFlags = new ParamFlags(rawFlags & other.rawFlags)
@@ -66,17 +69,18 @@ object ParamFlags extends HasGenCodec[ParamFlags] {
   final val Synthetic: ParamFlags = nextFlag()
 }
 
-/** Information about real parameter position in its method. All indices start from 0.
-  *
-  * @param index
-  *   overall index of the parameter, among all parameter lists
-  * @param indexOfList
-  *   index of parameter list that this parameter belongs to
-  * @param indexInList
-  *   index of the parameter inside its parameter list
-  * @param indexInRaw
-  *   index of the parameter in its corresponding `@multi` metadata parameter (or zero if not `@multi`)
-  */
+/**
+ * Information about real parameter position in its method. All indices start from 0.
+ *
+ * @param index
+ *   overall index of the parameter, among all parameter lists
+ * @param indexOfList
+ *   index of parameter list that this parameter belongs to
+ * @param indexInList
+ *   index of the parameter inside its parameter list
+ * @param indexInRaw
+ *   index of the parameter in its corresponding `@multi` metadata parameter (or zero if not `@multi`)
+ */
 final case class ParamPosition(
   index: Int,
   indexOfList: Int,
@@ -85,14 +89,15 @@ final case class ParamPosition(
 )
 object ParamPosition extends HasGenCodec[ParamPosition]
 
-/** Information about real method position in its containing API. Order of methods is determined by declaration order
-  * and linearization order (inherited methods come after directly defined or overridden methods).
-  *
-  * @param index
-  *   overall index of the method
-  * @param indexInRaw
-  *   index of the method in its corresponding `@multi` metadata parameter (or zero of not `@multi`)
-  */
+/**
+ * Information about real method position in its containing API. Order of methods is determined by declaration order
+ * and linearization order (inherited methods come after directly defined or overridden methods).
+ *
+ * @param index
+ *   overall index of the method
+ * @param indexInRaw
+ *   index of the method in its corresponding `@multi` metadata parameter (or zero of not `@multi`)
+ */
 final case class MethodPosition(
   index: Int,
   indexInRaw: Int,
@@ -115,12 +120,13 @@ final case class SymbolSource(
 )
 object SymbolSource extends HasGenCodec[SymbolSource]
 
-/** Information about class or trait flags and modifiers as defined in Scala code.
-  */
+/**
+ * Information about class or trait flags and modifiers as defined in Scala code.
+ */
 @transparent
 final case class TypeFlags(rawFlags: Int) extends AnyVal {
 
-  import TypeFlags._
+  import TypeFlags.*
 
   def |(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags | other.rawFlags)
   def &(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags & other.rawFlags)
@@ -168,12 +174,13 @@ object TypeFlags extends HasGenCodec[TypeFlags] {
   final val Object: TypeFlags = nextFlag()
 }
 
-/** Information about method (also `val` or `var`) flags and modifiers as defined in Scala code.
-  */
+/**
+ * Information about method (also `val` or `var`) flags and modifiers as defined in Scala code.
+ */
 @transparent
 final case class MethodFlags(rawFlags: Int) extends AnyVal {
 
-  import MethodFlags._
+  import MethodFlags.*
 
   def |(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags | other.rawFlags)
   def &(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags & other.rawFlags)

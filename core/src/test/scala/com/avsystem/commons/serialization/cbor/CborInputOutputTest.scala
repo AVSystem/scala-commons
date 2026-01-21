@@ -3,7 +3,7 @@ package serialization.cbor
 
 import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.json.JsonStringOutput
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
@@ -71,7 +71,7 @@ class CborInputOutputTest extends AnyFunSuite {
     value: T,
     binary: String,
     keyCodec: CborKeyCodec = CborKeyCodec.Default,
-  )(implicit pos: Position
+  )(implicit pos: Position,
   ): Unit =
     test(s"${pos.lineNumber}: $value") {
       assertRoundtrip(value, binary, keyCodec)
@@ -81,7 +81,7 @@ class CborInputOutputTest extends AnyFunSuite {
     value: T,
     binary: String,
     keyCodec: CborKeyCodec = CborKeyCodec.Default,
-  )(implicit pos: Position
+  )(implicit pos: Position,
   ): Unit = {
     val baos = new ByteArrayOutputStream
     val output = new CborOutput(new DataOutputStream(baos), keyCodec, SizePolicy.Optional)
@@ -234,7 +234,7 @@ class CborInputOutputTest extends AnyFunSuite {
   test("writing with CBOR optimized codec to non-CBOR output") {
     assert(
       JsonStringOutput.write(CustomKeysRecord(42, second = true, "foo", Map("foo" -> 1), Map(1 -> "foo"))) ==
-        """{"first":42,"second":true,"third":"foo","strMap":{"foo":1},"intMap":{"1":"foo"}}"""
+        """{"first":42,"second":true,"third":"foo","strMap":{"foo":1},"intMap":{"1":"foo"}}""",
     )
   }
 

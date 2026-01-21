@@ -23,7 +23,7 @@ object NativeJsonInputOutputTest {
 }
 
 class NativeJsonInputOutputTest extends AnyFunSuite {
-  import NativeJsonInputOutputTest._
+  import NativeJsonInputOutputTest.*
 
   case class BilateralTestCase(name: String, options: NativeFormatOptions, testStringRepr: Boolean = true)
 
@@ -49,7 +49,7 @@ class NativeJsonInputOutputTest extends AnyFunSuite {
       bilateralTyped(testModel, options)
     }
 
-    if (testStringRepr) {
+    if testStringRepr then {
       test(s"Bilateral serialization to string - $name") {
         bilateralString(testModel, options)
       }

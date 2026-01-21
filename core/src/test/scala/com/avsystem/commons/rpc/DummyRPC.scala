@@ -76,7 +76,7 @@ object DummyRPC {
       with TypedMetadata[T]
 
   case class TypeParamMetadata(
-    @reifyName name: String
+    @reifyName name: String,
   )
 
   case class ProcedureSignature(

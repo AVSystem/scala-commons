@@ -3,12 +3,13 @@ package misc
 
 import scala.runtime.ScalaRunTime
 
-/** Implements common case class & case object methods normally synthesized by the compiler. Extending this trait by
-  * case class or case object prevents the compiler from synthesizing these methods which can reduce generated JS size
-  * at penalty of not-exactly-precise implementation of `canEqual` and `equals` and its runtime performance. For this
-  * reason, non-abstract classes extending this trait should always be final. If possible, prefer using [[AbstractCase]]
-  * rather than this trait.
-  */
+/**
+ * Implements common case class & case object methods normally synthesized by the compiler. Extending this trait by
+ * case class or case object prevents the compiler from synthesizing these methods which can reduce generated JS size
+ * at penalty of not-exactly-precise implementation of `canEqual` and `equals` and its runtime performance. For this
+ * reason, non-abstract classes extending this trait should always be final. If possible, prefer using [[AbstractCase]]
+ * rather than this trait.
+ */
 trait CaseMethods extends Any with Product {
   override def hashCode: Int = ScalaRunTime._hashCode(this)
   override def equals(obj: Any): Boolean = obj match {
@@ -21,7 +22,8 @@ trait CaseMethods extends Any with Product {
   def canEqual(that: Any): Boolean = getClass.isAssignableFrom(that.getClass)
 }
 
-/** Base class for case classes that reduces amount of code that the compiler generates for them. Useful primarily for
-  * JS size reduction. See [[CaseMethods]] for more details.
-  */
+/**
+ * Base class for case classes that reduces amount of code that the compiler generates for them. Useful primarily for
+ * JS size reduction. See [[CaseMethods]] for more details.
+ */
 abstract class AbstractCase extends CaseMethods

@@ -6,7 +6,7 @@ import com.avsystem.commons.macros.misc.{FailMsg, Ok, Res}
 
 private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
 
-  import c.universe._
+  import c.universe.*
 
   class MethodMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealMethodTarget with ArityParam {

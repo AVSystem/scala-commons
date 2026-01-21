@@ -51,7 +51,7 @@ class ObservableExtensionsTest
       Observable.fromIterable(ints).distinctBy(f).toListL.runToFuture.futureValue shouldBe
         ints
           .foldLeft(MLinkedHashMap.empty[Int, Int])((map, v) =>
-            f(v) |> (key => map.applyIf(!_.contains(key))(_ += key -> v))
+            f(v) |> (key => map.applyIf(!_.contains(key))(_ += key -> v)),
           )
           .valuesIterator
           .toList

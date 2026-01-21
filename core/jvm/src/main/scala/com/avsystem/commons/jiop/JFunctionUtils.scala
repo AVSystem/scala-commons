@@ -1,12 +1,13 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.{function => juf}
+import java.util.function as juf
 
 import com.avsystem.commons.misc.Sam
 
-/** Utils to convert Scala functions and expressions to most common Java functional interfaces.
-  */
+/**
+ * Utils to convert Scala functions and expressions to most common Java functional interfaces.
+ */
 trait JFunctionUtils {
   type JBiConsumer[T, U] = juf.BiConsumer[T, U]
   type JBiFunction[T, U, R] = juf.BiFunction[T, U, R]
@@ -52,9 +53,9 @@ trait JFunctionUtils {
   type JToLongFunction[T] = juf.ToLongFunction[T]
   type JUnaryOperator[T] = juf.UnaryOperator[T]
 
-  def jBiConsumer[T, U](code: (T, U) => Any): JBiConsumer[T,U] = Sam[JBiConsumer[T, U]](code)
-  def jBiFunction[T, U, R](fun: (T, U) => R): JBiFunction[T,U,R] = Sam[JBiFunction[T, U, R]](fun)
-  def jBiPredicate[T, U](pred: (T, U) => Boolean): JBiPredicate[T,U] = Sam[JBiPredicate[T, U]](pred)
+  def jBiConsumer[T, U](code: (T, U) => Any): JBiConsumer[T, U] = Sam[JBiConsumer[T, U]](code)
+  def jBiFunction[T, U, R](fun: (T, U) => R): JBiFunction[T, U, R] = Sam[JBiFunction[T, U, R]](fun)
+  def jBiPredicate[T, U](pred: (T, U) => Boolean): JBiPredicate[T, U] = Sam[JBiPredicate[T, U]](pred)
   def jBinaryOperator[T](op: (T, T) => T): JBinaryOperator[T] = Sam[JBinaryOperator[T]](op)
   def jBooleanSupplier(expr: => Boolean): JBooleanSupplier = Sam[JBooleanSupplier](expr)
   def jConsumer[T](code: T => Any): JConsumer[T] = Sam[JConsumer[T]](code)
@@ -66,7 +67,7 @@ trait JFunctionUtils {
   def jDoubleToIntFunction(fun: Double => Int): JDoubleToIntFunction = Sam[JDoubleToIntFunction](fun)
   def jDoubleToLongFunction(fun: Double => Long): JDoubleToLongFunction = Sam[JDoubleToLongFunction](fun)
   def jDoubleUnaryOperator(op: Double => Double): JDoubleUnaryOperator = Sam[JDoubleUnaryOperator](op)
-  def jFunction[T, R](fun: T => R): JFunction[T,R] = Sam[JFunction[T, R]](fun)
+  def jFunction[T, R](fun: T => R): JFunction[T, R] = Sam[JFunction[T, R]](fun)
   def jIntBinaryOperator(op: (Int, Int) => Int): JIntBinaryOperator = Sam[JIntBinaryOperator](op)
   def jIntConsumer(code: Int => Any): JIntConsumer = Sam[JIntConsumer](code)
   def jIntFunction[R](fun: Int => R): JIntFunction[R] = Sam[JIntFunction[R]](fun)
@@ -88,11 +89,11 @@ trait JFunctionUtils {
   def jObjLongConsumer[T](code: (T, Long) => Any): JObjLongConsumer[T] = Sam[JObjLongConsumer[T]](code)
   def jPredicate[T](pred: T => Boolean): JPredicate[T] = Sam[JPredicate[T]](pred)
   def jSupplier[T](expr: => T): JSupplier[T] = Sam[JSupplier[T]](expr)
-  def jToDoubleBiFunction[T, U](fun: (T, U) => Double): JToDoubleBiFunction[T,U] = Sam[JToDoubleBiFunction[T, U]](fun)
+  def jToDoubleBiFunction[T, U](fun: (T, U) => Double): JToDoubleBiFunction[T, U] = Sam[JToDoubleBiFunction[T, U]](fun)
   def jToDoubleFunction[T](fun: T => Double): JToDoubleFunction[T] = Sam[JToDoubleFunction[T]](fun)
-  def jToIntBiFunction[T, U](fun: (T, U) => Int): JToIntBiFunction[T,U] = Sam[JToIntBiFunction[T, U]](fun)
+  def jToIntBiFunction[T, U](fun: (T, U) => Int): JToIntBiFunction[T, U] = Sam[JToIntBiFunction[T, U]](fun)
   def jToIntFunction[T](fun: T => Int): JToIntFunction[T] = Sam[JToIntFunction[T]](fun)
-  def jToLongBiFunction[T, U](fun: (T, U) => Long): JToLongBiFunction[T,U] = Sam[JToLongBiFunction[T, U]](fun)
+  def jToLongBiFunction[T, U](fun: (T, U) => Long): JToLongBiFunction[T, U] = Sam[JToLongBiFunction[T, U]](fun)
   def jToLongFunction[T](fun: T => Long): JToLongFunction[T] = Sam[JToLongFunction[T]](fun)
   def jUnaryOperator[T](op: T => T): JUnaryOperator[T] = Sam[JUnaryOperator[T]](op)
 }

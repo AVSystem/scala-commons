@@ -2,10 +2,10 @@ package com.avsystem.commons
 package serialization.cbor
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 
-import java.io.{ObjectInput => _, _}
+import java.io.{ObjectInput as _, *}
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
 
@@ -163,12 +163,13 @@ object CborInput {
   private final val Two64 = BigInt(1) << 64
 }
 
-/** An [[com.avsystem.commons.serialization.Input Input]] implementation that deserializes from
-  * [[https://tools.ietf.org/html/rfc7049 CBOR]].
-  */
+/**
+ * An [[com.avsystem.commons.serialization.Input Input]] implementation that deserializes from
+ * [[https://tools.ietf.org/html/rfc7049 CBOR]].
+ */
 class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimpleInput {
 
-  import reader._
+  import reader.*
 
   def readNull(): Boolean = peekInitial() match {
     case InitialByte.Null =>
@@ -258,7 +259,7 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
       unexpected(ib, "integer or bignum")
   }
 
-  def readBigDecimal(): BigDecimal = {
+  def readBigDecimal(): BigDecimal =
 //    requireTag(_ == Tag.DecimalFraction, "expected value tagged as decimal fraction")
     nextInitial() match {
       case InitialByte(MajorType.Array, 2) =>
@@ -268,7 +269,6 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
       case ib =>
         unexpected(ib, s"two element array")
     }
-  }
 
   def readBinary(): Array[Byte] = nextInitial() match {
     case InitialByte.IndefiniteLength(MajorType.ByteString) =>
@@ -374,7 +374,7 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
     }
 
   private def skip(initialByte: InitialByte): Unit = {
-    import MajorType._
+    import MajorType.*
     initialByte match {
       case InitialByte(Unsigned | Negative, info) =>
         advance(unsignedSize(info))
@@ -421,8 +421,7 @@ abstract class CborSequentialInput(reader: CborReader, private var size: Int) ex
   }
 
   protected def prepareForNext(): Unit =
-    if (!hasNext)
-      throw new NoSuchElementException
+    if (!hasNext) throw new NoSuchElementException
     else if (size > 0) {
       size -= 1
     }
@@ -440,23 +439,25 @@ class CborListInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
 class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   extends CborSequentialInput(reader, size) with ObjectInput {
 
-  private var forcedKeyCodec: CborKeyCodec | Null= scala.compiletime.uninitialized
+  private var forcedKeyCodec: CborKeyCodec | Null = scala.compiletime.uninitialized
   private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec.nn else keyCodec
 
-  /** Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard [[ObjectOutput]]
-    * which only allows string-typed keys. If this method is used to read the key then value MUST be read with
-    * [[nextValue()]] and [[nextField()]] MUST NOT be used.
-    */
+  /**
+   * Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard [[ObjectOutput]]
+   * which only allows string-typed keys. If this method is used to read the key then value MUST be read with
+   * [[nextValue()]] and [[nextField()]] MUST NOT be used.
+   */
   def nextKey(): CborInput = {
     prepareForNext()
     new CborInput(reader, keyCodec)
   }
 
-  /** Returns a [[CborOutput]] for reading the value of a CBOR field whose key was previously read with [[nextKey()]].
-    * This method MUST ONLY be used after the key was fully read using [[nextKey()]]. Fully reading the input means that
-    * all its bytes must be consumed. For example, if the key is an array or object then all its elements/fields must be
-    * consumed. If this method is used to read the field value then [[nextField()]] MUST NOT be used.
-    */
+  /**
+   * Returns a [[CborOutput]] for reading the value of a CBOR field whose key was previously read with [[nextKey()]].
+   * This method MUST ONLY be used after the key was fully read using [[nextKey()]]. Fully reading the input means that
+   * all its bytes must be consumed. For example, if the key is an array or object then all its elements/fields must be
+   * consumed. If this method is used to read the field value then [[nextField()]] MUST NOT be used.
+   */
   def nextValue(): CborInput =
     new CborInput(reader, keyCodec)
 
@@ -480,7 +481,7 @@ abstract class CborChunkedInput(reader: CborReader) {
   protected def majorType: MajorType
   protected def doReadChunk(info: Int): Chunk
 
-  import reader._
+  import reader.*
 
   private def byteOrText: String = majorType match {
     case MajorType.ByteString => "byte"

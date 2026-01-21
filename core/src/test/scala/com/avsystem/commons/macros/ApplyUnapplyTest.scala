@@ -15,7 +15,7 @@ object ApplyUnapplyTest {
 
   trait Custom[T]
   object Custom {
-    def apply[T](t: T): Custom[T]| Null = null
+    def apply[T](t: T): Custom[T] | Null = null
     def unapply[T](whatever: Custom[T]): Option[T] = None
   }
 

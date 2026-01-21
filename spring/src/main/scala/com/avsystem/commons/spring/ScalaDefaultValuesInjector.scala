@@ -4,7 +4,7 @@ package spring
 import java.lang.reflect.{Constructor, Method, Modifier}
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder
 import org.springframework.beans.factory.config.{BeanDefinition, BeanDefinitionHolder, ConfigurableListableBeanFactory}
-import org.springframework.beans.factory.support._
+import org.springframework.beans.factory.support.*
 import org.springframework.core.{ParameterNameDiscoverer, StandardReflectionParameterNameDiscoverer}
 
 import scala.annotation.tailrec
@@ -31,11 +31,11 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
         traverse(bdw.getBeanDefinition)
       case vh: ValueHolder =>
         traverse(vh.getValue)
-      case ml: ManagedList[_] =>
+      case ml: ManagedList[?] =>
         ml.asScala.foreach(traverse)
-      case ms: ManagedSet[_] =>
+      case ms: ManagedSet[?] =>
         ms.asScala.foreach(traverse)
-      case mm: ManagedMap[_, _] =>
+      case mm: ManagedMap[?, ?] =>
         mm.asScala.foreach { case (k, v) =>
           traverse(k)
           traverse(v)
@@ -67,7 +67,7 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
           val constrVals = bd.getConstructorArgumentValues
           val factoryExec = factoryExecs.head
           val paramNames = factoryExec match {
-            case c: Constructor[_] => paramNameDiscoverer.getParameterNames(c)
+            case c: Constructor[?] => paramNameDiscoverer.getParameterNames(c)
             case m: Method => paramNameDiscoverer.getParameterNames(m)
           }
           (0 until factoryExec.getParameterCount).foreach { i =>

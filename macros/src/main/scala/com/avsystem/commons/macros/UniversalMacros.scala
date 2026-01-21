@@ -5,7 +5,7 @@ import scala.reflect.macros.blackbox
 
 class UniversalMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.*
 
   def sourceCode: Tree = {
     if (!ctx.compilerSettings.contains("-Yrangepos")) {

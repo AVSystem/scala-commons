@@ -24,9 +24,10 @@ final class CharSubSequence private (
 }
 object CharSubSequence {
 
-  /** Creates a subsequence of a `CharSequence` which is guaranteed to be a wrapper and never a copy (unlike standard
-    * `subSequence` method).
-    */
+  /**
+   * Creates a subsequence of a `CharSequence` which is guaranteed to be a wrapper and never a copy (unlike standard
+   * `subSequence` method).
+   */
   def apply(seq: CharSequence, start: Int, end: Int): CharSequence =
     if (start < 0 || end > seq.length || start > end) throw new IllegalArgumentException
     else if (start == 0 && end == seq.length) seq

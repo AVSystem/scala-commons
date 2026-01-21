@@ -1,14 +1,15 @@
 package com.avsystem.commons
 package collection
 
-import scala.collection.{immutable => sci, mutable => scm}
-import scala.{collection => sc}
+import scala.collection.{immutable as sci, mutable as scm}
+import scala.collection as sc
 
-/** Aliases for Scala collections which are both concise and leave no doubt about whether the collection type is
-  * immutable, mutable or the base type (read only).
-  *
-  * `B` stands for base (read only) `I` stands for immutable `M` stands for mutable
-  */
+/**
+ * Aliases for Scala collections which are both concise and leave no doubt about whether the collection type is
+ * immutable, mutable or the base type (read only).
+ *
+ * `B` stands for base (read only) `I` stands for immutable `M` stands for mutable
+ */
 trait CollectionAliases {
   type BIterable[+A] = sc.Iterable[A]
   final def BIterable: sc.Iterable.type = sc.Iterable

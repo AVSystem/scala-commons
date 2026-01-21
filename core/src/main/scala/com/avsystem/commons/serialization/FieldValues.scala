@@ -23,7 +23,7 @@ final class FieldValues(
 
   private val values = new Array[Any](fieldNames.length)
 
-  import FieldValues._
+  import FieldValues.*
 
   def readField(input: FieldInput): Unit =
     if (!tryReadField(input)) {

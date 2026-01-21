@@ -1,6 +1,6 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.SharedExtensions._
+import com.avsystem.commons.SharedExtensions.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -13,7 +13,7 @@ class OptArgTest extends AnyFunSuite with Matchers {
   }
 
   test("empty") {
-    val str: String| Null = null
+    val str: String | Null = null
     val opt = OptArg(str)
     opt match {
       case OptArg.Empty =>

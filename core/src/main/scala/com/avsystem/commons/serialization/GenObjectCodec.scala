@@ -5,9 +5,10 @@ import com.avsystem.commons.derivation.DeferredInstance
 
 import scala.annotation.implicitNotFound
 
-/** Subtype of [[GenCodec]] which captures serialization to an "object", i.e. through [[ObjectOutput]] and
-  * [[ObjectInput]].
-  */
+/**
+ * Subtype of [[GenCodec]] which captures serialization to an "object", i.e. through [[ObjectOutput]] and
+ * [[ObjectInput]].
+ */
 @implicitNotFound("No GenObjectCodec found for ${T}")
 trait GenObjectCodec[T] extends GenCodec[T] {
   def readObject(input: ObjectInput): T
@@ -36,13 +37,16 @@ object GenObjectCodec {
 
   def materialize[T]: GenObjectCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
   inline def materialize[T]: GenObjectCodec[T] = ${ materializeImpl[T] }
-  def materializeImpl[T: Type](using Quotes): Expr[GenObjectCodec[T]] = '{???}
+  def materializeImpl[T: Type](using Quotes): Expr[GenObjectCodec[T]] = '{ ??? }
 
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenObjectCodec[T] = macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenObjectCodec[T] =
+    macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
 
   inline def fromApplyUnapplyProvider[T](inline applyUnapplyProvider: Any): GenObjectCodec[T] =
     ${ fromApplyUnapplyProviderImpl[T]('applyUnapplyProvider) }
-  def fromApplyUnapplyProviderImpl[T: Type](applyUnapplyProvider: Expr[Any])(using Quotes): Expr[GenObjectCodec[T]] = '{???}
+  def fromApplyUnapplyProviderImpl[T: Type](applyUnapplyProvider: Expr[Any])(using Quotes): Expr[GenObjectCodec[T]] = '{
+    ???
+  }
 
   def create[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
     new GenObjectCodec[T] {

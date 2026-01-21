@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.TypeString
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -17,7 +17,7 @@ class GenericMeta[T](
 }
 object GenericMeta extends RpcMetadataCompanion[GenericMeta] {
   case class TypeParam(@reifyName name: String) {
-    def typeString: TypeString[_] = new TypeString(name)
+    def typeString: TypeString[?] = new TypeString(name)
   }
 
   case class Param[T](
@@ -56,8 +56,8 @@ object GenericTrait {
 class GenericMetadataTest extends AnyFunSuite {
   test("generic metadata") {
     assert(GenericTrait.meta.repr == """GenericTrait[A, B] {
-        |  method(a: A, int: Int): List[A]
-        |  genericMethod[C](map: Map[A, C]): Map[B, C]
-        |}""".stripMargin)
+                                       |  method(a: A, int: Int): List[A]
+                                       |  genericMethod[C](map: Map[A, C]): Map[B, C]
+                                       |}""".stripMargin)
   }
 }

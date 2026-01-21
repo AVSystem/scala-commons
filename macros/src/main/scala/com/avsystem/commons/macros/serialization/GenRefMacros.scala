@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.*
 
   val GenRefTpe: Type = getType(tq"$SerializationPkg.GenRef[_,_]")
   val MapTpe: Type = typeOf[collection.Map[_, _]]

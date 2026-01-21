@@ -24,7 +24,7 @@ object Base extends HasGenCodec[Base]
 
 class GenCodecErrorsTest extends AnyFunSuite {
   def causeChain(t: Throwable): List[Throwable] =
-    if (t == null) Nil
+    if t == null then Nil
     else t :: causeChain(t.getCause)
 
   test("deep reading failure test") {

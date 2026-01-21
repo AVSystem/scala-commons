@@ -5,12 +5,13 @@ import com.avsystem.commons.macros.AbstractMacroCommons
 
 import scala.reflect.macros.blackbox
 
-/** The "legacy" macros for RPC based on `RPCFramework`. Superseded by generalized, "framework-less" RPC macro engine,
-  * `RpcMacros`.
-  */
+/**
+ * The "legacy" macros for RPC based on `RPCFramework`. Superseded by generalized, "framework-less" RPC macro engine,
+ * `RpcMacros`.
+ */
 final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.*
 
   def RpcPackage: Tree = q"$CommonsPkg.rpc"
   lazy val RPCFrameworkType: Type = staticType(tq"$RpcPackage.RPCFramework")
@@ -49,10 +50,11 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
      """
   }
 
-  /** Macro that extracts `AsRealRPC`, `AsRawRPC` and `RPCMetadata` from a companion of RPC interface that extends
-    * `RPCCompanion`. Macro is necessary to make sure that each callsite keeps all the type information needed for
-    * ScalaJS DCE to do its job properly.
-    */
+  /**
+   * Macro that extracts `AsRealRPC`, `AsRawRPC` and `RPCMetadata` from a companion of RPC interface that extends
+   * `RPCCompanion`. Macro is necessary to make sure that each callsite keeps all the type information needed for
+   * ScalaJS DCE to do its job properly.
+   */
   def typeClassFromFullInfo: Tree = {
     val TypeRef(frameworkTpe, _, List(rpcTpe)) = c.prefix.actualType.baseType(RPCCompanionSym)
     q"(${c.prefix}.fullRpcInfo: $frameworkTpe#FullRPCInfo[$rpcTpe]).${c.macroApplication.symbol.name.toTermName}"

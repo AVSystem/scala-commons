@@ -4,14 +4,15 @@ package concurrent
 import scala.collection.mutable
 import scala.concurrent.ExecutionContextExecutor
 
-/** DO NOT USE THIS IF YOU DON'T KNOW WHAT YOU'RE DOING.
-  *
-  * This execution context runs callbacks immediately in whatever happens to be current thread. This may help with
-  * performance but is otherwise very unsafe. It may introduce unwanted load or block some crucial threads in the
-  * system. This may even collapse the entire system in pessimistic case.
-  *
-  * Note: Since Scala 2.13, this is essentially the same thing as [[ExecutionContext.parasitic]].
-  */
+/**
+ * DO NOT USE THIS IF YOU DON'T KNOW WHAT YOU'RE DOING.
+ *
+ * This execution context runs callbacks immediately in whatever happens to be current thread. This may help with
+ * performance but is otherwise very unsafe. It may introduce unwanted load or block some crucial threads in the
+ * system. This may even collapse the entire system in pessimistic case.
+ *
+ * Note: Since Scala 2.13, this is essentially the same thing as [[ExecutionContext.parasitic]].
+ */
 object RunNowEC extends ExecutionContextExecutor {
   def get: ExecutionContextExecutor = this
 
@@ -34,13 +35,14 @@ object RunInQueueEC extends RunInQueueEC {
   }
 }
 
-/** DO NOT USE THIS IF YOU DON'T KNOW WHAT YOU'RE DOING.
-  *
-  * This execution context runs callbacks immediately in whatever happens to be current thread, additionally maintaining
-  * a queue that may prevent stack from growing.
-  *
-  * This may help with performance but is otherwise very unsafe.
-  */
+/**
+ * DO NOT USE THIS IF YOU DON'T KNOW WHAT YOU'RE DOING.
+ *
+ * This execution context runs callbacks immediately in whatever happens to be current thread, additionally maintaining
+ * a queue that may prevent stack from growing.
+ *
+ * This may help with performance but is otherwise very unsafe.
+ */
 class RunInQueueEC extends ExecutionContextExecutor {
   private val queueTL = new ThreadLocal[mutable.Queue[Runnable]] {
     override def initialValue = new mutable.Queue[Runnable]

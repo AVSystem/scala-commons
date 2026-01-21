@@ -25,7 +25,7 @@ class CborChunkedTest extends AnyFunSuite {
     val input = new CborInput(new CborReader(RawCbor(bytes)), CborKeyCodec.Default)
     val chin = input.readChunkedString()
     val buf = new MListBuffer[String]
-    while (chin.hasNext) {
+    while chin.hasNext do {
       buf += chin.readChunk()
     }
     assert(buf.result() == chunks)
@@ -47,7 +47,7 @@ class CborChunkedTest extends AnyFunSuite {
     val input = new CborInput(new CborReader(RawCbor(bytes)), CborKeyCodec.Default)
     val chin = input.readChunkedBinary()
     val buf = new MListBuffer[Array[Byte]]
-    while (chin.hasNext) {
+    while chin.hasNext do {
       buf += chin.readChunk()
     }
     assert(buf.result().map(Bytes(_)) == chunks.map(Bytes(_)))

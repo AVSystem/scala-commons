@@ -5,7 +5,7 @@ import com.avsystem.commons.misc.TypedMap
 import scala.annotation.nowarn
 
 import scala.collection.immutable.ListMap
-import JavaCodecs._
+import JavaCodecs.*
 
 trait SimpleIOCodecTest extends AbstractCodecTest {
   type Raw = Any
@@ -24,7 +24,7 @@ class SimpleGenCodecRoundtripTest extends GenCodecRoundtripTest with SimpleIOCod
 @nowarn
 class SimpleGenCodecTest extends SimpleIOCodecTest {
 
-  import CodecTestData._
+  import CodecTestData.*
 
   test("java collections") {
     testWrite[JCollection[Int]](jArrayList, List(1, 2, 3))
@@ -333,9 +333,9 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
             "Branch" -> Map(
               "left" -> Map("Leaf" -> Map("value" -> 2)),
               "right" -> Map("Leaf" -> Map("value" -> 3)),
-            )
+            ),
           ),
-        )
+        ),
       ),
     )
   }
@@ -353,7 +353,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   }
 
   test("typed map") {
-    import SealedKey._
+    import SealedKey.*
 
     testWrite(
       TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true),

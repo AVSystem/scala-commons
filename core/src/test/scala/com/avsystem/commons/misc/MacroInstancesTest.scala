@@ -20,7 +20,7 @@ object ComplexInstancesTest {
   }
 
   abstract class HasComplexInstances[T](
-    implicit macroInstances: MacroInstances[DependencyImplicits.type, ComplexInstances[T]]
+    implicit macroInstances: MacroInstances[DependencyImplicits.type, ComplexInstances[T]],
   ) {
     val instances: ComplexInstances[T] = macroInstances(DependencyImplicits, this)
   }
@@ -38,7 +38,7 @@ object MultipleImplicitImportsTest {
   }
 
   abstract class HasGenCodecUsingAB[T](
-    implicit instances: MacroInstances[(ACodec.type, BCodec.type), () => GenCodec[T]]
+    implicit instances: MacroInstances[(ACodec.type, BCodec.type), () => GenCodec[T]],
   ) {
     implicit lazy val codec: GenCodec[T] = instances((ACodec, BCodec), this).apply()
   }
@@ -54,7 +54,7 @@ object AnnotationReferringToEnclosingObjectTest {
   object Meta extends AdtMetadataCompanion[Meta]
 
   abstract class HasMeta[T](
-    implicit instances: MacroInstances[Unit, () => Meta[T]]
+    implicit instances: MacroInstances[Unit, () => Meta[T]],
   ) {
     implicit val meta: Meta[T] = instances((), this).apply()
   }

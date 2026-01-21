@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import java.{lang => jl, util => ju}
+import java.{lang as jl, util as ju}
 import scala.collection.Factory
 
 trait JCollectionUtils extends JFactories {
@@ -168,7 +168,7 @@ trait JCollectionUtils extends JFactories {
   }
   object JSortedMapCreator {
     implicit def asJSortedMapFactory[M[X, Y] <: JSortedMap[X, Y], K: Ordering, V](
-      creator: JSortedMapCreator[M]
+      creator: JSortedMapCreator[M],
     ): Factory[(K, V), M[K, V]] =
       new JMapFactory(creator.empty[K, V])
   }
@@ -213,7 +213,7 @@ trait JCollectionUtils extends JFactories {
     }
   }
 
-  import JCollectionUtils._
+  import JCollectionUtils.*
 
   implicit def pairIterableOps[A, B](coll: IterableOnce[(A, B)]): pairIterableOps[A, B] = new pairIterableOps(coll)
 }

@@ -18,7 +18,7 @@ abstract class FileBasedSuite(testdir: String) extends AnyFunSuite {
       case idx => (contents.take(idx), contents.drop(idx + separator.length))
     }
     val output = process(input)
-    if (updateTestFiles && output != expectedOutput) {
+    if updateTestFiles && output != expectedOutput then {
       IO.writeTestResource(path, input + separator + output)
     }
     assert(output == expectedOutput)
@@ -27,7 +27,7 @@ abstract class FileBasedSuite(testdir: String) extends AnyFunSuite {
   def assertContents(actual: String, expectedFile: String): Unit = {
     val filePath = s"$testdir/$expectedFile"
     val expected = IO.readTestResource(filePath)
-    if (updateTestFiles) {
+    if updateTestFiles then {
       IO.writeTestResource(filePath, actual)
     }
     assert(actual == expected)

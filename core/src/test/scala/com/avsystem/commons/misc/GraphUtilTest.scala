@@ -27,21 +27,21 @@ class GraphUtilTest extends AnyFunSuite {
 
     val exp =
       assert(log.result() == """onEnter 1
-          |onEnter 2
-          |onEnter 3
-          |onEnter 5
-          |onExit 5
-          |onEnter 6
-          |onEnter 7
-          |onCycle 2
-          |onExit 7
-          |onExit 6
-          |onExit 3
-          |onEnter 4
-          |onRevisit 5
-          |onExit 4
-          |onExit 2
-          |onExit 1
-          |""".stripMargin)
+                               |onEnter 2
+                               |onEnter 3
+                               |onEnter 5
+                               |onExit 5
+                               |onEnter 6
+                               |onEnter 7
+                               |onCycle 2
+                               |onExit 7
+                               |onExit 6
+                               |onExit 3
+                               |onEnter 4
+                               |onRevisit 5
+                               |onExit 4
+                               |onExit 2
+                               |onExit 1
+                               |""".stripMargin)
   }
 }

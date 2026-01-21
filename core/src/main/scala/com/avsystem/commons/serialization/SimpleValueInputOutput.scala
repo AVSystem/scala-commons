@@ -16,32 +16,33 @@ object SimpleValueOutput {
   }
 }
 
-/** An [[Output]] for [[GenCodec]] which serializes data into plain Scala objects.
-  *
-  *   - "lists" are represented as Scala `List`s
-  *   - "objects" are represented as `String`-keyed Scala `Map`s
-  *   - simple values (strings, numbers, booleans, byte arrays) are represented as themselves, unchanged
-  *
-  * In other words, serialized value yield by `SimpleValueOutput` is a Scala object guaranteed to be one of:
-  *   - `null`
-  *   - `Int`
-  *   - `Long`
-  *   - `Double`
-  *   - `BigInt`
-  *   - `BigDecimal`
-  *   - `Boolean`
-  *   - `String`
-  *   - `Array[Byte]`
-  *   - `scala.collection.Seq[Any]` where every element is also one of the listed types
-  *   - `scala.collection.Map[String,Any]` where every value is also one of the listed types
-  *
-  * Such format is often useful as an intermediate representation. For example, it can be later safely passed to
-  * standard Java serialization. However, for performance reasons it's recommended to implement dedicated [[Input]] and
-  * [[Output]] for the final format (e.g. binary or JSON).
-  *
-  * @param consumer
-  *   consumer of serialized value, which is guaranteed to meet the above rules
-  */
+/**
+ * An [[Output]] for [[GenCodec]] which serializes data into plain Scala objects.
+ *
+ *   - "lists" are represented as Scala `List`s
+ *   - "objects" are represented as `String`-keyed Scala `Map`s
+ *   - simple values (strings, numbers, booleans, byte arrays) are represented as themselves, unchanged
+ *
+ * In other words, serialized value yield by `SimpleValueOutput` is a Scala object guaranteed to be one of:
+ *   - `null`
+ *   - `Int`
+ *   - `Long`
+ *   - `Double`
+ *   - `BigInt`
+ *   - `BigDecimal`
+ *   - `Boolean`
+ *   - `String`
+ *   - `Array[Byte]`
+ *   - `scala.collection.Seq[Any]` where every element is also one of the listed types
+ *   - `scala.collection.Map[String,Any]` where every value is also one of the listed types
+ *
+ * Such format is often useful as an intermediate representation. For example, it can be later safely passed to
+ * standard Java serialization. However, for performance reasons it's recommended to implement dedicated [[Input]] and
+ * [[Output]] for the final format (e.g. binary or JSON).
+ *
+ * @param consumer
+ *   consumer of serialized value, which is guaranteed to meet the above rules
+ */
 class SimpleValueOutput(
   consumer: Any => Unit,
   newObjectRepr: => mutable.Builder[(String, Any), BMap[String, Any]],
@@ -82,11 +83,12 @@ object SimpleValueInput {
     GenCodec.read[T](new SimpleValueInput(raw))
 }
 
-/** An [[Input]] for [[GenCodec]] complementary to [[SimpleValueOutput]].
-  *
-  * @param value
-  *   serialized value yield by [[SimpleValueOutput]]
-  */
+/**
+ * An [[Input]] for [[GenCodec]] complementary to [[SimpleValueOutput]].
+ *
+ * @param value
+ *   serialized value yield by [[SimpleValueOutput]]
+ */
 class SimpleValueInput(value: Any) extends InputAndSimpleInput {
   private def doRead[A >: Null <: AnyRef: ClassTag]: A =
     doReadUnboxed[A, A]

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.rpc.DummyRPC._
+import com.avsystem.commons.rpc.DummyRPC.*
 import com.avsystem.commons.serialization.{optionalParam, transientDefault, whenAbsent, HasGenCodec}
 import scala.annotation.nowarn
 

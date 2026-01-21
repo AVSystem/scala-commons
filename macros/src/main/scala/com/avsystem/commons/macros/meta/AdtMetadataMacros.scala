@@ -10,7 +10,7 @@ import scala.reflect.macros.blackbox
 
 private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) with MacroMetadatas {
 
-  import c.universe._
+  import c.universe.*
 
   final lazy val AdtParamMetadataAT: Type = staticType(tq"$MetaPackage.adtParamMetadata")
   final lazy val AdtCaseMetadataAT: Type = staticType(tq"$MetaPackage.adtCaseMetadata")
@@ -183,7 +183,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
 
     if (paramMdParams.nonEmpty && caseMdParams.nonEmpty) {
       reportProblem(
-        s"having both @adtParamMetadata and @adtCaseMetadata parameters in the same class doesn't make sense"
+        s"having both @adtParamMetadata and @adtCaseMetadata parameters in the same class doesn't make sense",
       )
     }
 
@@ -229,7 +229,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
             val unmatchedReport = errors
               .map { case (mdParam, err) =>
                 val unmatchedError = mdParam.unmatchedError.getOrElse(
-                  s"${mdParam.shortDescription.capitalize} ${mdParam.nameStr} did not match"
+                  s"${mdParam.shortDescription.capitalize} ${mdParam.nameStr} did not match",
                 )
                 s" * $unmatchedError:\n   ${indent(err, "   ")}"
               }
@@ -366,7 +366,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
       matchedCase <- matchTagsAndFilters(MatchedAdtCase(adtCase, this, indexInRaw, Nil))
       mdType <- actualMetadataType(arity.collectedType, adtCase.tpe, "data type", verbatim = false)
       tree <- materializeOneOf(mdType)(t =>
-        new AdtMetadataConstructor(t, Some(this), Some(this)).tryMaterializeFor(adtCase)
+        new AdtMetadataConstructor(t, Some(this), Some(this)).tryMaterializeFor(adtCase),
       )
     } yield AdtCaseMapping(matchedCase, tree)
   }
@@ -451,7 +451,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     if (!(arity.collectedType =:= getType(tq"$CommonsPkg.meta.DefaultValue[$adtParamType]"))) {
       reportProblem(
         s"type of @reifyDefaultValue metadata parameter must be " +
-          s"DefaultValue[$adtParamType] but got ${arity.collectedType}"
+          s"DefaultValue[$adtParamType] but got ${arity.collectedType}",
       )
     }
 
@@ -516,7 +516,7 @@ private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends Abstract
     val adtTpe = weakTypeOf[Real].dealias
     val metadataTpe = c.macroApplication.tpe.dealias
     val applyUnapply = applyUnapplyFor(adtTpe, applyUnapplyProvider).getOrElse(
-      abort(s"Cannot derive $metadataTpe from `apply` and `unapply`/`unapplySeq` methods of ${applyUnapplyProvider.tpe}")
+      abort(s"Cannot derive $metadataTpe from `apply` and `unapply`/`unapplySeq` methods of ${applyUnapplyProvider.tpe}"),
     )
     val adtSymbol = new AdtClass(adtTpe, 0, None, applyUnapply)
 

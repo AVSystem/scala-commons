@@ -109,7 +109,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("IteratorOps.distinctBy") {
     assert(
       Iterator("ab", "ba", "ac", "cd", "ad", "bd", "be", "fu").distinctBy(_.charAt(0)).toList ==
-        List("ab", "ba", "cd", "fu")
+        List("ab", "ba", "cd", "fu"),
     )
   }
 
@@ -165,9 +165,9 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
     }.sourceCode
 
     assert(src == """{
-        |  println(123)
-        |  val x = 5 + 2
-        |}""".stripMargin)
+                    |  println(123)
+                    |  val x = 5 + 2
+                    |}""".stripMargin)
   }
 
   test("withSourceCode") {
@@ -199,8 +199,8 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
         |   abc""".stripMargin
 
     assert(str.stripCommonIndent == """abc
-        |  abc
-        | abc""".stripMargin)
+                                      |  abc
+                                      | abc""".stripMargin)
   }
 
   test("Try.tapFailure - Success case") {
@@ -213,7 +213,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("Try.tapFailure - Failure case") {
-    var capturedThrowable: Throwable|Null = null
+    var capturedThrowable: Throwable | Null = null
     val exception = new RuntimeException("test exception")
     val failureTry = Failure(exception)
 

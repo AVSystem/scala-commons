@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.meta.OptionLike
-import com.avsystem.commons.serialization.GenCodec._
+import com.avsystem.commons.serialization.GenCodec.*
 
 import scala.annotation.tailrec
 
@@ -105,8 +105,8 @@ abstract class ApplyUnapplyCodec[T](
 }
 object ApplyUnapplyCodec {
   def materialize[T]: ApplyUnapplyCodec[T] = macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
-  inline def materialize[T]: ApplyUnapplyCodec[T] = ${materializeImpl[T]}
-  def materializeImpl[T](using Quotes): Expr[ApplyUnapplyCodec[T]] = '{???}
+  inline def materialize[T]: ApplyUnapplyCodec[T] = ${ materializeImpl[T] }
+  def materializeImpl[T](using Quotes): Expr[ApplyUnapplyCodec[T]] = '{ ??? }
 }
 
 abstract class ProductCodec[T <: Product](

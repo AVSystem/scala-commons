@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package jiop
 
-import java.{util => ju}
+import java.util as ju
 
 trait JOptionalUtils {
 
-  import JOptionalUtils._
+  import JOptionalUtils.*
 
   type JOptional[T] = ju.Optional[T]
   type JOptionalDouble = ju.OptionalDouble
@@ -116,9 +116,10 @@ object JOptionalUtils {
 
   final class option2AsJava[T](private val option: Option[T]) extends AnyVal {
 
-    /** Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
-      * not able to hold null
-      */
+    /**
+     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
+     * not able to hold null
+     */
     def toJOptional: JOptional[T] =
       if (option.isDefined) ju.Optional.of(option.get) else ju.Optional.empty()
 
@@ -128,9 +129,10 @@ object JOptionalUtils {
   final class opt2AsJava[T](private val rawOrNull: Any) extends AnyVal {
     private def opt: Opt[T] = Opt(rawOrNull.asInstanceOf[T])
 
-    /** Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
-      * not able to hold null
-      */
+    /**
+     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
+     * not able to hold null
+     */
     def toJOptional: JOptional[T] =
       if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
 
@@ -142,9 +144,10 @@ object JOptionalUtils {
   final class nopt2AsJava[T](private val rawOrNull: Any) extends AnyVal {
     private def opt: NOpt[T] = NOpt(rawOrNull.asInstanceOf[T])
 
-    /** Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
-      * not able to hold null
-      */
+    /**
+     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
+     * not able to hold null
+     */
     def toJOptional: JOptional[T] =
       if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
 
@@ -154,9 +157,10 @@ object JOptionalUtils {
   final class optArg2AsJava[T](private val rawOrNull: Any) extends AnyVal {
     private def opt: OptArg[T] = OptArg(rawOrNull.asInstanceOf[T])
 
-    /** Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
-      * not able to hold null
-      */
+    /**
+     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
+     * not able to hold null
+     */
     def toJOptional: JOptional[T] =
       if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
 

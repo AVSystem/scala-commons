@@ -9,8 +9,9 @@ trait AcceptsAdditionalCustomMarkers extends AcceptsCustomEvents {
     markers(marker) || super.customEvent(marker, event)
 }
 
-/** [[Input]] implementation that adds additional markers [[CustomEventMarker]] to the provided [[Input]] instance
-  */
+/**
+ * [[Input]] implementation that adds additional markers [[CustomEventMarker]] to the provided [[Input]] instance
+ */
 final class CustomMarkersInputWrapper private (
   override protected val wrapped: Input,
   override protected val markers: Set[CustomEventMarker[?]],
@@ -60,8 +61,9 @@ object CustomMarkersInputWrapper {
   }
 }
 
-/** [[Output]] implementation that adds additional markers [[CustomEventMarker]] to the provided [[Output]] instance
-  */
+/**
+ * [[Output]] implementation that adds additional markers [[CustomEventMarker]] to the provided [[Output]] instance
+ */
 final class CustomMarkersOutputWrapper private (
   override protected val wrapped: Output,
   override protected val markers: Set[CustomEventMarker[?]],

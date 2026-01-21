@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 abstract class CodecMacroCommons(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.*
 
   final def SerializationPkg: Tree = q"$CommonsPkg.serialization"
   final lazy val NameAnnotType = staticType(tq"$SerializationPkg.name")

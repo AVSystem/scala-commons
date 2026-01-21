@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import java.io.{DataInputStream, DataOutputStream}
-import java.{lang => jl}
+import java.lang as jl
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
@@ -32,7 +32,7 @@ private object FormatConstants {
   final val BigDecimalMarker: Byte = 15
 }
 
-import com.avsystem.commons.serialization.FormatConstants._
+import com.avsystem.commons.serialization.FormatConstants.*
 
 class StreamInput(is: DataInputStream) extends InputAndSimpleInput {
   private[serialization] val markerByte = is.readByte()
@@ -157,7 +157,7 @@ private class StreamListInput(is: DataInputStream) extends ListInput {
 
 private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
 
-  import StreamObjectInput._
+  import StreamObjectInput.*
 
   private var currentField: FieldInput = NoneYet
 

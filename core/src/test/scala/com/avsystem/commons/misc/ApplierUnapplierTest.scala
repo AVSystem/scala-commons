@@ -52,7 +52,7 @@ object Custom {
 
 class ApplierUnapplierTest extends AnyFunSuite {
   def roundtrip[T](
-    value: T
+    value: T,
   )(implicit
     applier: Applier[T],
     unapplier: Unapplier[T],

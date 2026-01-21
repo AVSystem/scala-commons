@@ -12,7 +12,7 @@ class NOptTest extends AnyFunSuite {
   }
 
   test("empty test") {
-    val str: String| Null = null
+    val str: String | Null = null
     val opt = NOpt(str)
     opt match {
       case NOpt.Empty =>
@@ -20,7 +20,7 @@ class NOptTest extends AnyFunSuite {
   }
 
   test("null some test") {
-    val str: String| Null = null
+    val str: String | Null = null
     val opt = NOpt.some(str)
     opt match {
       case NOpt(null) =>

@@ -4,11 +4,12 @@ package serialization.cbor
 import com.avsystem.commons.serialization.CustomEventMarker
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
-/** Custom encoder for CBOR field names. This can be used to encode textual object keys (e.g. case class field names) as
-  * arbitrary CBOR data types, e.g. in order to make the final representation more compact, every textual field name may
-  * have a numeric label assigned. This numeric label is written as key into the [[CborObjectOutput]] rather than the
-  * textual field name.
-  */
+/**
+ * Custom encoder for CBOR field names. This can be used to encode textual object keys (e.g. case class field names) as
+ * arbitrary CBOR data types, e.g. in order to make the final representation more compact, every textual field name may
+ * have a numeric label assigned. This numeric label is written as key into the [[CborObjectOutput]] rather than the
+ * textual field name.
+ */
 trait CborKeyCodec {
   def writeFieldKey(fieldName: String, output: CborOutput): Unit
   def readFieldKey(input: CborInput): String
@@ -36,9 +37,10 @@ object CborKeyCodec {
 
 }
 
-/** Defines translation between textual object field names and corresponding numeric labels. May be used to reduce size
-  * of CBOR representation of objects.
-  */
+/**
+ * Defines translation between textual object field names and corresponding numeric labels. May be used to reduce size
+ * of CBOR representation of objects.
+ */
 @deprecated("use CborKeyCodec instead", "2.3.0")
 trait FieldLabels {
   def label(field: String): Opt[Int]
@@ -52,7 +54,8 @@ object FieldLabels {
   }
 }
 
-/** Use this with `ObjectOutput.customEvent`/`ObjectInput.customEvent` in order to set custom CBOR key codec for some
-  * particular object output or input.
-  */
+/**
+ * Use this with `ObjectOutput.customEvent`/`ObjectInput.customEvent` in order to set custom CBOR key codec for some
+ * particular object output or input.
+ */
 object ForceCborKeyCodec extends CustomEventMarker[CborKeyCodec]

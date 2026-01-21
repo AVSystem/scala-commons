@@ -4,7 +4,7 @@ package macros
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.reflect.runtime.{universe => ru}
+import scala.reflect.runtime.universe as ru
 
 object TypeClassDerivationTest {
 
@@ -45,7 +45,7 @@ object TypeClassDerivationTest {
       def tpe = underlying.tpe
       override def hashCode(): Int = System.identityHashCode(underlying)
       override def equals(obj: Any): Boolean = obj match {
-        case df: Deferred[_] => underlying eq df.underlying
+        case df: Deferred[?] => underlying eq df.underlying
         case _ => false
       }
     }
@@ -68,7 +68,7 @@ object TypeClassDerivationTest {
 
 class TypeClassDerivationTest extends AnyFunSuite {
 
-  import TypeClassDerivationTest._
+  import TypeClassDerivationTest.*
 
   test("unknown test") {
     assert(materialize[Int] == UnknownTC(typeRepr[Int]))
@@ -95,7 +95,7 @@ class TypeClassDerivationTest extends AnyFunSuite {
           ("str", TC.forString, None),
           ("int", TC.forInt, Some(DefVal(42))),
         ),
-      )
+      ),
     )
   }
 
@@ -118,7 +118,7 @@ class TypeClassDerivationTest extends AnyFunSuite {
           ("SealedObj", SingletonTC(typeRepr[SealedObj.type], SealedObj)),
           ("SubSealedCase", ApplyUnapplyTC(typeRepr[SubSealedCase], List(("i", TC.forInt, None), ("w", Whatever.tc, None)))),
         ),
-      )
+      ),
     )
   }
 
@@ -135,7 +135,7 @@ class TypeClassDerivationTest extends AnyFunSuite {
           ("str", TC.forString, None),
           ("next", TC.Deferred(Recursive.tc), None),
         ),
-      )
+      ),
     )
   }
 
@@ -149,9 +149,9 @@ class TypeClassDerivationTest extends AnyFunSuite {
       IndiRec.tc == ApplyUnapplyTC(
         typeRepr[IndiRec],
         List(
-          ("children", ForList(TC.Deferred(IndiRec.tc)), None)
+          ("children", ForList(TC.Deferred(IndiRec.tc)), None),
         ),
-      )
+      ),
     )
   }
 
@@ -182,7 +182,7 @@ class TypeClassDerivationTest extends AnyFunSuite {
               ),
             ),
           ),
-        )
+        ),
       )
     }
     doTest[String]

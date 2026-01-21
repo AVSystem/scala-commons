@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import com.avsystem.commons.jiop.GuavaInterop._
+import com.avsystem.commons.jiop.GuavaInterop.*
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -216,7 +216,7 @@ class JavaInteropTest extends AnyFunSuite {
     val gfut = SettableFuture.create[Int]
     val sfut = gfut.asScala.transform(identity, identity)
 
-    var value: Try[Int]| Null = null
+    var value: Try[Int] | Null = null
     sfut.onComplete {
       value = _
     }
@@ -231,8 +231,8 @@ class JavaInteropTest extends AnyFunSuite {
     val sprom = SettableFuture.create[String].asScalaPromise
     val fprom = SettableFuture.create[String].asScalaPromise
 
-    var sres: Try[String]| Null = null
-    var fres: Try[String]| Null = null
+    var sres: Try[String] | Null = null
+    var fres: Try[String] | Null = null
 
     sprom.future.onComplete {
       sres = _
@@ -272,7 +272,7 @@ class JavaInteropTest extends AnyFunSuite {
 
   test("option to optional converter should work") {
     val string: String = "alamakota"
-    val empty: String| Null = null
+    val empty: String | Null = null
 
     assert(Option(string).asJava == JOptional(string))
     assert(Option(empty).asJava == JOptional.empty)
@@ -289,7 +289,7 @@ class JavaInteropTest extends AnyFunSuite {
 
   test("optional to option converter should work") {
     val string: String = "alamakota"
-    val empty: String| Null = null
+    val empty: String | Null = null
 
     assert(Option(string) == JOptional(string).asScala)
     assert(Option(empty) == JOptional.empty.asScala)

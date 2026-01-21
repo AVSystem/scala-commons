@@ -43,10 +43,10 @@ inThisBuild(
         browseUrl = url("https://github.com/AVSystem/scala-commons"),
         connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
         devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
-      )
+      ),
     ),
     developers := List(
-      Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak"))
+      Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak")),
     ),
     scalaVersion := "3.8.0",
     crossScalaVersions := Seq("3.8.0", "2.13.18"),
@@ -79,12 +79,12 @@ inThisBuild(
           "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
           "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
         ),
-      )
+      ),
     ),
-  )
+  ),
 )
 
-def commonSettings: Seq[Def.Setting[_]] = Seq(
+def commonSettings: Seq[Def.Setting[?]] = Seq(
   Compile / scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13)) =>
@@ -115,7 +115,6 @@ def commonSettings: Seq[Def.Setting[_]] = Seq(
           "-deprecation",
           "-feature",
           // "-explain",
-//          "-new-syntax", //todo: enable
           "-unchecked",
           "-language:noAutoTupling",
           "-Vprofile",
@@ -142,6 +141,8 @@ def commonSettings: Seq[Def.Setting[_]] = Seq(
           "-language:implicitConversions", // todo: disable
           "-Xignore-scala2-macros", // todo: disable
           "-language:experimental.macros",
+          "-rewrite",
+          "-old-syntax", //todo: -new-syntax
         )
     }
   },
@@ -293,7 +294,7 @@ lazy val `core-js` = project
     sameNameAs(core),
     sourceDirsSettings(_.getParentFile),
     libraryDependencies ++= Seq(
-      "io.monix" %%% "monix" % monixVersion % Optional
+      "io.monix" %%% "monix" % monixVersion % Optional,
     ),
   )
 
@@ -346,7 +347,7 @@ lazy val hocon = project
   .settings(
     jvmCommonSettings,
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config" % typesafeConfigVersion
+      "com.typesafe" % "config" % typesafeConfigVersion,
     ),
   )
 

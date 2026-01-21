@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import java.util.{Base64 => JBase64}
+import java.util.Base64 as JBase64
 
 object Base64 {
   def encode(bytes: Array[Byte], withoutPadding: Boolean = false, urlSafe: Boolean = false): String = {

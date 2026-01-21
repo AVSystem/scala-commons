@@ -19,18 +19,21 @@ trait TaskExtensions {
 object TaskExtensions extends TaskExtensions {
   final class TaskOps[T](private val task: Task[T]) extends AnyVal {
 
-    /** Similar to [[Task.timeoutWith]] but exception instance is created lazily (for performance)
-      */
+    /**
+     * Similar to [[Task.timeoutWith]] but exception instance is created lazily (for performance)
+     */
     def lazyTimeout(after: FiniteDuration, msg: => String): Task[T] =
       task.timeoutTo(after, Task.defer(Task.raiseError(new TimeoutException(msg))))
 
-    /** Similar to [[Task.tapEval]], accepts simple consumer function as an argument
-      */
+    /**
+     * Similar to [[Task.tapEval]], accepts simple consumer function as an argument
+     */
     def tapL(f: T => Unit): Task[T] =
       task.map(_.setup(f))
 
-    /** Similar to [[Task.tapError]], accepts [[PartialFunction]] as an argument
-      */
+    /**
+     * Similar to [[Task.tapError]], accepts [[PartialFunction]] as an argument
+     */
     def tapErrorL[B](f: PartialFunction[Throwable, B]): Task[T] =
       task.tapError(t => Task(f.applyOpt(t)))
   }

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package spring
 
-import com.typesafe.config._
+import com.typesafe.config.*
 
 trait HoconType[T] {
 
@@ -23,7 +23,7 @@ trait HoconType[T] {
 
 object HoconType {
 
-  import com.typesafe.config.ConfigValueType._
+  import com.typesafe.config.ConfigValueType.*
 
   implicit object anyHoconType extends HoconType[Any] {
     def get(value: ConfigValue): Object =
@@ -138,7 +138,7 @@ object HoconType {
       (leftTry, rightTry) match {
         case (Failure(left), Failure(right)) =>
           throw new IllegalArgumentException(
-            "Could not parse config value as one of two types:\n" + left.getMessage + "\n" + right.getMessage
+            "Could not parse config value as one of two types:\n" + left.getMessage + "\n" + right.getMessage,
           )
         case (Success(left), _) => Left(left)
         case (_, Success(right)) => Right(right)

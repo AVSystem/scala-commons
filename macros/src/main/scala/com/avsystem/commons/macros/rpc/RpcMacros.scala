@@ -10,7 +10,7 @@ import scala.reflect.macros.blackbox
 private[commons] abstract class RpcMacroCommons(ctx: blackbox.Context)
   extends AbstractMacroCommons(ctx) with MacroSymbols {
 
-  import c.universe._
+  import c.universe.*
 
   final def AsRealCls: Tree = tq"$RpcPackage.AsReal"
   final def AsRealObj: Tree = q"$RpcPackage.AsReal"
@@ -46,7 +46,7 @@ private[commons] abstract class RpcMacroCommons(ctx: blackbox.Context)
 private[commons] final class RpcMacros(ctx: blackbox.Context)
   extends RpcMacroCommons(ctx) with RpcSymbols with RpcMappings with RpcMetadatas {
 
-  import c.universe._
+  import c.universe.*
 
   def rpcAsReal[Raw: WeakTypeTag, Real: WeakTypeTag]: Tree = instrument {
     val raw = RawRpcTrait(weakTypeOf[Raw].dealias)

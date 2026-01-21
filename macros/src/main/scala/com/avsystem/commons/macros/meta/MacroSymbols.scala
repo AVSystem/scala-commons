@@ -10,7 +10,7 @@ import scala.collection.mutable.ListBuffer
 
 private[commons] trait MacroSymbols extends MacroCommons {
 
-  import c.universe._
+  import c.universe.*
 
   final def RpcPackage = q"$CommonsPkg.rpc"
   final def MetaPackage = q"$CommonsPkg.meta"
@@ -51,7 +51,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     if (valueMember.isAbstract)
       subject.reportProblem(
         "could not determine actual value of optional parameter type;" +
-          "optional parameters must be typed as Option/Opt/OptArg etc."
+          "optional parameters must be typed as Option/Opt/OptArg etc.",
       )
     else
       valueMember.typeSignatureIn(optionLikeType)
@@ -92,7 +92,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
         else if (param.allowNamedMulti && param.allowListedMulti)
           param.reportProblem(
             s"@multi ${param.shortDescription} must be a PartialFunction of String " +
-              s"(for by-name mapping) or Iterable (for sequence)"
+              s"(for by-name mapping) or Iterable (for sequence)",
           )
         else if (param.allowListedMulti)
           param.reportProblem(s"@multi ${param.shortDescription} must be an Iterable")

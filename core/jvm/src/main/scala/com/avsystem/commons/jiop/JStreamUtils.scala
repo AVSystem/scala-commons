@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import java.{util => ju}
+import java.util as ju
 
 trait JStreamUtils {
   type JBaseStream[T, S <: ju.stream.BaseStream[T, S]] = ju.stream.BaseStream[T, S]
@@ -11,7 +11,7 @@ trait JStreamUtils {
   type JLongStream = ju.stream.LongStream
   type JCollector[T, A, R] = ju.stream.Collector[T, A, R]
 
-  import JStreamUtils._
+  import JStreamUtils.*
 
   implicit def jStream2AsScala[T](jStream: JStream[T]): JStream2AsScala[T] =
     new JStream2AsScala(jStream)

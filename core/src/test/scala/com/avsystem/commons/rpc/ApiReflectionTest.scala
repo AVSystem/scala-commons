@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.TypeString
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -28,7 +28,7 @@ case class MethodInfo[T](
 
   val paramLists: List[List[ParamInfo[_]]] = {
     def extract(listIdx: Int, params: List[ParamInfo[_]]): List[List[ParamInfo[_]]] =
-      if (listIdx == paramListCount) Nil
+      if listIdx == paramListCount then Nil
       else
         params.span(_.pos.indexOfList == listIdx) match {
           case (nextList, rest) =>
@@ -41,15 +41,15 @@ case class MethodInfo[T](
     val typeParamsRepr = typeParams.map(_.name).mkStringOrEmpty("[", ", ", "]")
     val paramsRepr = paramLists.map(_.map(_.repr(typeParams)).mkString("(", ", ", ")")).mkString
     val resultTypeString = resultTs(typeParams.map(_.typeString))
-    val coolRepr = if (cool) "@cool " else ""
+    val coolRepr = if cool then "@cool " else ""
     s"$coolRepr${flags.baseDecl} $name$typeParamsRepr$paramsRepr: $resultTypeString"
   }
 }
 
 case class TypeParamInfo(
-  @reifyName name: String
+  @reifyName name: String,
 ) {
-  def typeString: TypeString[_] = new TypeString(name)
+  def typeString: TypeString[?] = new TypeString(name)
 }
 
 case class ParamInfo[T](
@@ -59,7 +59,7 @@ case class ParamInfo[T](
   @forTypeParams @infer ts: List[TypeString[_]] => TypeString[T],
 ) extends TypedMetadata[T] {
   def repr(tparams: List[TypeParamInfo]): String = {
-    val implicitMod = if (pos.indexInList == 0 && flags.isImplicit) "implicit " else ""
+    val implicitMod = if pos.indexInList == 0 && flags.isImplicit then "implicit " else ""
     s"$implicitMod$name: ${ts(tparams.map(_.typeString))}"
   }
 }
@@ -78,148 +78,157 @@ class SimpleApi {
 class ApiReflectionTest extends AnyFunSuite {
   test("String API JDK11") {
     assume(System.getProperty("java.specification.version") == "11")
-    assert(ApiInfo.materialize[String].repr == """String {
-        |  def length(): Int
-        |  def isEmpty(): Boolean
-        |  def charAt(x$1: Int): Char
-        |  def codePointAt(x$1: Int): Int
-        |  def codePointBefore(x$1: Int): Int
-        |  def codePointCount(x$1: Int, x$2: Int): Int
-        |  def offsetByCodePoints(x$1: Int, x$2: Int): Int
-        |  def getChars(x$1: Int, x$2: Int, x$3: Array[Char], x$4: Int): Unit
-        |  def getBytes(x$1: Int, x$2: Int, x$3: Array[Byte], x$4: Int): Unit
-        |  def getBytes(x$1: String): Array[Byte]
-        |  def getBytes(x$1: java.nio.charset.Charset): Array[Byte]
-        |  def getBytes(): Array[Byte]
-        |  def contentEquals(x$1: StringBuffer): Boolean
-        |  def contentEquals(x$1: CharSequence): Boolean
-        |  def equalsIgnoreCase(x$1: String): Boolean
-        |  def compareTo(x$1: String): Int
-        |  def compareToIgnoreCase(x$1: String): Int
-        |  def regionMatches(x$1: Int, x$2: String, x$3: Int, x$4: Int): Boolean
-        |  def regionMatches(x$1: Boolean, x$2: Int, x$3: String, x$4: Int, x$5: Int): Boolean
-        |  def startsWith(x$1: String, x$2: Int): Boolean
-        |  def startsWith(x$1: String): Boolean
-        |  def endsWith(x$1: String): Boolean
-        |  def indexOf(x$1: Int): Int
-        |  def indexOf(x$1: Int, x$2: Int): Int
-        |  def lastIndexOf(x$1: Int): Int
-        |  def lastIndexOf(x$1: Int, x$2: Int): Int
-        |  def indexOf(x$1: String): Int
-        |  def indexOf(x$1: String, x$2: Int): Int
-        |  def lastIndexOf(x$1: String): Int
-        |  def lastIndexOf(x$1: String, x$2: Int): Int
-        |  def substring(x$1: Int): String
-        |  def substring(x$1: Int, x$2: Int): String
-        |  def subSequence(x$1: Int, x$2: Int): CharSequence
-        |  def concat(x$1: String): String
-        |  def replace(x$1: Char, x$2: Char): String
-        |  def matches(x$1: String): Boolean
-        |  def contains(x$1: CharSequence): Boolean
-        |  def replaceFirst(x$1: String, x$2: String): String
-        |  def replaceAll(x$1: String, x$2: String): String
-        |  def replace(x$1: CharSequence, x$2: CharSequence): String
-        |  def split(x$1: String, x$2: Int): Array[String]
-        |  def split(x$1: String): Array[String]
-        |  def toLowerCase(x$1: java.util.Locale): String
-        |  def toLowerCase(): String
-        |  def toUpperCase(x$1: java.util.Locale): String
-        |  def toUpperCase(): String
-        |  def trim(): String
-        |  def strip(): String
-        |  def stripLeading(): String
-        |  def stripTrailing(): String
-        |  def isBlank(): Boolean
-        |  def lines(): java.util.stream.Stream[String]
-        |  def chars(): java.util.stream.IntStream
-        |  def codePoints(): java.util.stream.IntStream
-        |  def toCharArray(): Array[Char]
-        |  def intern(): String
-        |  def repeat(x$1: Int): String
-        |  final def +(x$1: Any): String
-        |}""".stripMargin)
+    assert(
+      ApiInfo.materialize[String].repr ==
+        """String {
+          |  def length(): Int
+          |  def isEmpty(): Boolean
+          |  def charAt(x$1: Int): Char
+          |  def codePointAt(x$1: Int): Int
+          |  def codePointBefore(x$1: Int): Int
+          |  def codePointCount(x$1: Int, x$2: Int): Int
+          |  def offsetByCodePoints(x$1: Int, x$2: Int): Int
+          |  def getChars(x$1: Int, x$2: Int, x$3: Array[Char], x$4: Int): Unit
+          |  def getBytes(x$1: Int, x$2: Int, x$3: Array[Byte], x$4: Int): Unit
+          |  def getBytes(x$1: String): Array[Byte]
+          |  def getBytes(x$1: java.nio.charset.Charset): Array[Byte]
+          |  def getBytes(): Array[Byte]
+          |  def contentEquals(x$1: StringBuffer): Boolean
+          |  def contentEquals(x$1: CharSequence): Boolean
+          |  def equalsIgnoreCase(x$1: String): Boolean
+          |  def compareTo(x$1: String): Int
+          |  def compareToIgnoreCase(x$1: String): Int
+          |  def regionMatches(x$1: Int, x$2: String, x$3: Int, x$4: Int): Boolean
+          |  def regionMatches(x$1: Boolean, x$2: Int, x$3: String, x$4: Int, x$5: Int): Boolean
+          |  def startsWith(x$1: String, x$2: Int): Boolean
+          |  def startsWith(x$1: String): Boolean
+          |  def endsWith(x$1: String): Boolean
+          |  def indexOf(x$1: Int): Int
+          |  def indexOf(x$1: Int, x$2: Int): Int
+          |  def lastIndexOf(x$1: Int): Int
+          |  def lastIndexOf(x$1: Int, x$2: Int): Int
+          |  def indexOf(x$1: String): Int
+          |  def indexOf(x$1: String, x$2: Int): Int
+          |  def lastIndexOf(x$1: String): Int
+          |  def lastIndexOf(x$1: String, x$2: Int): Int
+          |  def substring(x$1: Int): String
+          |  def substring(x$1: Int, x$2: Int): String
+          |  def subSequence(x$1: Int, x$2: Int): CharSequence
+          |  def concat(x$1: String): String
+          |  def replace(x$1: Char, x$2: Char): String
+          |  def matches(x$1: String): Boolean
+          |  def contains(x$1: CharSequence): Boolean
+          |  def replaceFirst(x$1: String, x$2: String): String
+          |  def replaceAll(x$1: String, x$2: String): String
+          |  def replace(x$1: CharSequence, x$2: CharSequence): String
+          |  def split(x$1: String, x$2: Int): Array[String]
+          |  def split(x$1: String): Array[String]
+          |  def toLowerCase(x$1: java.util.Locale): String
+          |  def toLowerCase(): String
+          |  def toUpperCase(x$1: java.util.Locale): String
+          |  def toUpperCase(): String
+          |  def trim(): String
+          |  def strip(): String
+          |  def stripLeading(): String
+          |  def stripTrailing(): String
+          |  def isBlank(): Boolean
+          |  def lines(): java.util.stream.Stream[String]
+          |  def chars(): java.util.stream.IntStream
+          |  def codePoints(): java.util.stream.IntStream
+          |  def toCharArray(): Array[Char]
+          |  def intern(): String
+          |  def repeat(x$1: Int): String
+          |  final def +(x$1: Any): String
+          |}""".stripMargin,
+    )
   }
 
   test("String API JDK17") {
     assume(System.getProperty("java.specification.version") == "17")
-    assert(ApiInfo.materialize[String].repr == """String {
-        |  def length(): Int
-        |  def isEmpty(): Boolean
-        |  def charAt(x$1: Int): Char
-        |  def codePointAt(x$1: Int): Int
-        |  def codePointBefore(x$1: Int): Int
-        |  def codePointCount(x$1: Int, x$2: Int): Int
-        |  def offsetByCodePoints(x$1: Int, x$2: Int): Int
-        |  def getChars(x$1: Int, x$2: Int, x$3: Array[Char], x$4: Int): Unit
-        |  def getBytes(x$1: Int, x$2: Int, x$3: Array[Byte], x$4: Int): Unit
-        |  def getBytes(x$1: String): Array[Byte]
-        |  def getBytes(x$1: java.nio.charset.Charset): Array[Byte]
-        |  def getBytes(): Array[Byte]
-        |  def contentEquals(x$1: StringBuffer): Boolean
-        |  def contentEquals(x$1: CharSequence): Boolean
-        |  def equalsIgnoreCase(x$1: String): Boolean
-        |  def compareTo(x$1: String): Int
-        |  def compareToIgnoreCase(x$1: String): Int
-        |  def regionMatches(x$1: Int, x$2: String, x$3: Int, x$4: Int): Boolean
-        |  def regionMatches(x$1: Boolean, x$2: Int, x$3: String, x$4: Int, x$5: Int): Boolean
-        |  def startsWith(x$1: String, x$2: Int): Boolean
-        |  def startsWith(x$1: String): Boolean
-        |  def endsWith(x$1: String): Boolean
-        |  def indexOf(x$1: Int): Int
-        |  def indexOf(x$1: Int, x$2: Int): Int
-        |  def lastIndexOf(x$1: Int): Int
-        |  def lastIndexOf(x$1: Int, x$2: Int): Int
-        |  def indexOf(x$1: String): Int
-        |  def indexOf(x$1: String, x$2: Int): Int
-        |  def lastIndexOf(x$1: String): Int
-        |  def lastIndexOf(x$1: String, x$2: Int): Int
-        |  def substring(x$1: Int): String
-        |  def substring(x$1: Int, x$2: Int): String
-        |  def subSequence(x$1: Int, x$2: Int): CharSequence
-        |  def concat(x$1: String): String
-        |  def replace(x$1: Char, x$2: Char): String
-        |  def matches(x$1: String): Boolean
-        |  def contains(x$1: CharSequence): Boolean
-        |  def replaceFirst(x$1: String, x$2: String): String
-        |  def replaceAll(x$1: String, x$2: String): String
-        |  def replace(x$1: CharSequence, x$2: CharSequence): String
-        |  def split(x$1: String, x$2: Int): Array[String]
-        |  def split(x$1: String): Array[String]
-        |  def toLowerCase(x$1: java.util.Locale): String
-        |  def toLowerCase(): String
-        |  def toUpperCase(x$1: java.util.Locale): String
-        |  def toUpperCase(): String
-        |  def trim(): String
-        |  def strip(): String
-        |  def stripLeading(): String
-        |  def stripTrailing(): String
-        |  def isBlank(): Boolean
-        |  def lines(): java.util.stream.Stream[String]
-        |  def indent(x$1: Int): String
-        |  def stripIndent(): String
-        |  def translateEscapes(): String
-        |  def transform[R](x$1: java.util.function.Function[_ >: String, _ <: R]): R
-        |  def chars(): java.util.stream.IntStream
-        |  def codePoints(): java.util.stream.IntStream
-        |  def toCharArray(): Array[Char]
-        |  def formatted(x$1: Seq[AnyRef]): String
-        |  def intern(): String
-        |  def repeat(x$1: Int): String
-        |  def describeConstable(): java.util.Optional[String]
-        |  def resolveConstantDesc(x$1: java.lang.invoke.MethodHandles.Lookup): String
-        |  final def +(x$1: Any): String
-        |}""".stripMargin)
+    assert(
+      ApiInfo.materialize[String].repr ==
+        """String {
+          |  def length(): Int
+          |  def isEmpty(): Boolean
+          |  def charAt(x$1: Int): Char
+          |  def codePointAt(x$1: Int): Int
+          |  def codePointBefore(x$1: Int): Int
+          |  def codePointCount(x$1: Int, x$2: Int): Int
+          |  def offsetByCodePoints(x$1: Int, x$2: Int): Int
+          |  def getChars(x$1: Int, x$2: Int, x$3: Array[Char], x$4: Int): Unit
+          |  def getBytes(x$1: Int, x$2: Int, x$3: Array[Byte], x$4: Int): Unit
+          |  def getBytes(x$1: String): Array[Byte]
+          |  def getBytes(x$1: java.nio.charset.Charset): Array[Byte]
+          |  def getBytes(): Array[Byte]
+          |  def contentEquals(x$1: StringBuffer): Boolean
+          |  def contentEquals(x$1: CharSequence): Boolean
+          |  def equalsIgnoreCase(x$1: String): Boolean
+          |  def compareTo(x$1: String): Int
+          |  def compareToIgnoreCase(x$1: String): Int
+          |  def regionMatches(x$1: Int, x$2: String, x$3: Int, x$4: Int): Boolean
+          |  def regionMatches(x$1: Boolean, x$2: Int, x$3: String, x$4: Int, x$5: Int): Boolean
+          |  def startsWith(x$1: String, x$2: Int): Boolean
+          |  def startsWith(x$1: String): Boolean
+          |  def endsWith(x$1: String): Boolean
+          |  def indexOf(x$1: Int): Int
+          |  def indexOf(x$1: Int, x$2: Int): Int
+          |  def lastIndexOf(x$1: Int): Int
+          |  def lastIndexOf(x$1: Int, x$2: Int): Int
+          |  def indexOf(x$1: String): Int
+          |  def indexOf(x$1: String, x$2: Int): Int
+          |  def lastIndexOf(x$1: String): Int
+          |  def lastIndexOf(x$1: String, x$2: Int): Int
+          |  def substring(x$1: Int): String
+          |  def substring(x$1: Int, x$2: Int): String
+          |  def subSequence(x$1: Int, x$2: Int): CharSequence
+          |  def concat(x$1: String): String
+          |  def replace(x$1: Char, x$2: Char): String
+          |  def matches(x$1: String): Boolean
+          |  def contains(x$1: CharSequence): Boolean
+          |  def replaceFirst(x$1: String, x$2: String): String
+          |  def replaceAll(x$1: String, x$2: String): String
+          |  def replace(x$1: CharSequence, x$2: CharSequence): String
+          |  def split(x$1: String, x$2: Int): Array[String]
+          |  def split(x$1: String): Array[String]
+          |  def toLowerCase(x$1: java.util.Locale): String
+          |  def toLowerCase(): String
+          |  def toUpperCase(x$1: java.util.Locale): String
+          |  def toUpperCase(): String
+          |  def trim(): String
+          |  def strip(): String
+          |  def stripLeading(): String
+          |  def stripTrailing(): String
+          |  def isBlank(): Boolean
+          |  def lines(): java.util.stream.Stream[String]
+          |  def indent(x$1: Int): String
+          |  def stripIndent(): String
+          |  def translateEscapes(): String
+          |  def transform[R](x$1: java.util.function.Function[_ >: String, _ <: R]): R
+          |  def chars(): java.util.stream.IntStream
+          |  def codePoints(): java.util.stream.IntStream
+          |  def toCharArray(): Array[Char]
+          |  def formatted(x$1: Seq[AnyRef]): String
+          |  def intern(): String
+          |  def repeat(x$1: Int): String
+          |  def describeConstable(): java.util.Optional[String]
+          |  def resolveConstantDesc(x$1: java.lang.invoke.MethodHandles.Lookup): String
+          |  final def +(x$1: Any): String
+          |}""".stripMargin,
+    )
   }
 
   test("Simple API") {
-    assert(ApiInfo.materialize[SimpleApi].repr == """com.avsystem.commons.rpc.SimpleApi {
-        |  final val Thing: String
-        |  @cool lazy val CoolThing: Int
-        |  def noParamLists: Int
-        |  def noParams(): String
-        |  def multiParamLists(int: Int)(str: String)(): Double
-        |  def takesImplicits(int: Int)(implicit ord: Ordering[Int], moar: DummyImplicit): String
-        |  def takesTypeArgs[A, B](as: List[A], bs: Set[B]): Map[A, B]
-        |}""".stripMargin)
+    assert(
+      ApiInfo.materialize[SimpleApi].repr ==
+        """com.avsystem.commons.rpc.SimpleApi {
+          |  final val Thing: String
+          |  @cool lazy val CoolThing: Int
+          |  def noParamLists: Int
+          |  def noParams(): String
+          |  def multiParamLists(int: Int)(str: String)(): Double
+          |  def takesImplicits(int: Int)(implicit ord: Ordering[Int], moar: DummyImplicit): String
+          |  def takesTypeArgs[A, B](as: List[A], bs: Set[B]): Map[A, B]
+          |}""".stripMargin,
+    )
   }
 }

@@ -25,10 +25,11 @@ object AsRaw extends FallbackAsRaw {
 
   def materialize[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 
-  /** Like [[materialize]] but for arbitrary real type instead of RPC trait. Scans all public methods of the real type
-    * (instead of abstract methods for RPC trait). Methods can be manually excluded using
-    * [[com.avsystem.commons.meta.ignore ignore]] annotation.
-    */
+  /**
+   * Like [[materialize]] but for arbitrary real type instead of RPC trait. Scans all public methods of the real type
+   * (instead of abstract methods for RPC trait). Methods can be manually excluded using
+   * [[com.avsystem.commons.meta.ignore ignore]] annotation.
+   */
   def materializeForApi[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.apiAsRaw[Raw, Real]
 
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
@@ -37,7 +38,7 @@ object AsRaw extends FallbackAsRaw {
 
   @implicitNotFound("#{forPlain}")
   implicit def notFoundForTry[Raw, Real](
-    implicit forPlain: ImplicitNotFound[AsRaw[Raw, Real]]
+    implicit forPlain: ImplicitNotFound[AsRaw[Raw, Real]],
   ): ImplicitNotFound[AsRaw[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 trait FallbackAsRaw { this: AsRaw.type =>
@@ -69,7 +70,7 @@ object AsReal extends FallbackAsReal {
 
   @implicitNotFound("#{forPlain}")
   implicit def notFoundForTry[Raw, Real](
-    implicit forPlain: ImplicitNotFound[AsReal[Raw, Real]]
+    implicit forPlain: ImplicitNotFound[AsReal[Raw, Real]],
   ): ImplicitNotFound[AsReal[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 trait FallbackAsReal { this: AsReal.type =>
@@ -78,7 +79,7 @@ trait FallbackAsReal { this: AsReal.type =>
 }
 
 @implicitNotFound(
-  "Cannot serialize and deserialize between ${Real} and ${Raw}, appropriate AsRawReal instance not found"
+  "Cannot serialize and deserialize between ${Real} and ${Raw}, appropriate AsRawReal instance not found",
 )
 trait AsRawReal[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
 object AsRawReal extends AsRawRealLowPrio {
@@ -112,10 +113,11 @@ trait FallbackAsRawReal { this: AsRawReal.type =>
 object RpcMetadata {
   def materialize[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[Real]
 
-  /** Like [[materialize]] but for arbitrary real type instead of RPC trait. Scans all public methods of the real type
-    * (instead of abstract methods for RPC trait). Methods can be manually excluded using
-    * [[com.avsystem.commons.meta.ignore ignore]] annotation.
-    */
+  /**
+   * Like [[materialize]] but for arbitrary real type instead of RPC trait. Scans all public methods of the real type
+   * (instead of abstract methods for RPC trait). Methods can be manually excluded using
+   * [[com.avsystem.commons.meta.ignore ignore]] annotation.
+   */
   def materializeForApi[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.apiMetadata[Real]
 
   def auto[T]: T = macro macros.misc.WhiteMiscMacros.autoAnnotationMetadata

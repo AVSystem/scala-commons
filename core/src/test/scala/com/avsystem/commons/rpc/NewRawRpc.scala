@@ -4,7 +4,7 @@ package rpc
 import java.util.regex.Matcher
 
 import com.avsystem.commons.annotation.AnnotationAggregate
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.TypeString
 
 trait DummyParamTag extends RpcTag with AnnotationAggregate
@@ -79,7 +79,7 @@ object Utils {
   }
 }
 
-import com.avsystem.commons.rpc.Utils._
+import com.avsystem.commons.rpc.Utils.*
 
 case class DoSomethings(
   @rpcMethodMetadata doSomething: DoSomethingSignature,
@@ -97,7 +97,7 @@ case class NewRpcMetadata[T: TypeString](
   @multi @rpcMethodMetadata prefixers: Map[String, PrefixMetadata[_]],
 ) {
   def repr(open: List[NewRpcMetadata[_]]): String =
-    if (open.contains(this)) "<recursive>\n"
+    if open.contains(this) then "<recursive>\n"
     else {
       val membersStr =
         s"DO SOMETHING ELSE: ${doSomethings.doSomethingElse.nonEmpty}\n" +
@@ -161,7 +161,7 @@ case class CallMetadata[T](
 }
 
 case class GetterParams(
-  @encoded @rpcParamMetadata head: ParameterMetadata[_],
+  @encoded @rpcParamMetadata head: ParameterMetadata[?],
   @multi @rpcParamMetadata tail: List[ParameterMetadata[_]],
 ) {
   def repr: String = (head :: tail).map(_.repr(Nil)).mkString("ARGS:\n", "\n", "")
@@ -172,7 +172,7 @@ case class GetterMetadata[T](
   position: MethodPosition,
   @composite params: GetterParams,
   @infer @checked resultMetadata: NewRpcMetadata.Lazy[T],
-)(implicit val typeString: TypeString[T]
+)(implicit val typeString: TypeString[T],
 ) extends TypedMetadata[T]
     with MethodMetadata[T] {
   def repr(open: List[NewRpcMetadata[_]]): String =
@@ -185,7 +185,7 @@ case class PostMetadata[T: TypeString](
   @reifyAnnot post: POST,
   @tagged[header] @multi @verbatim @rpcParamMetadata headers: Vector[ParameterMetadata[String]],
   @multi @rpcParamMetadata body: MLinkedHashMap[String, ParameterMetadata[_]],
-)(implicit val typeString: TypeString[T]
+)(implicit val typeString: TypeString[T],
 ) extends TypedMetadata[T]
     with MethodMetadata[T] {
 
@@ -206,7 +206,7 @@ case class PrefixMetadata[T](
 }
 
 case class TypeParameterMetadata(@reifyName name: String) {
-  def typeString: TypeString[_] = new TypeString(name)
+  def typeString: TypeString[?] = new TypeString(name)
 }
 
 case class ParameterMetadata[T](
@@ -221,7 +221,7 @@ case class ParameterMetadata[T](
 ) extends TypedMetadata[T] {
   def repr(tparams: List[TypeParameterMetadata]): String = {
     val tparamTss = tparams.map(tp => new TypeString(tp.name))
-    val flagsStr = if (flags != ParamFlags.Empty) s"[$flags]" else ""
+    val flagsStr = if flags != ParamFlags.Empty then s"[$flags]" else ""
     val posStr = s"${pos.index}:${pos.indexOfList}:${pos.indexInList}:${pos.indexInRaw}"
     val metasStr = metas.map(m => s"@suchMeta(${m.intMeta},${m.strMeta})").mkStringOrEmpty(" ", " ", "")
     s"$flagsStr${nameInfo.repr}@$posStr: ${typeString(tparamTss)} suchMeta=$suchMeta$metasStr"
@@ -232,12 +232,12 @@ case class NameInfo(
   @reifyName name: String,
   @reifyName(useRawName = true) rpcName: String,
 ) {
-  def repr: String = name + (if (rpcName != name) s"<$rpcName>" else "")
+  def repr: String = name + (if rpcName != name then s"<$rpcName>" else "")
 }
 
 @allowIncomplete
 case class PartialMetadata[T](
-  @multi @rpcMethodMetadata @annotated[POST] @notAnnotated[negFilter] posts: List[PostMethod[_]]
+  @multi @rpcMethodMetadata @annotated[POST] @notAnnotated[negFilter] posts: List[PostMethod[_]],
 ) {
   def repr: String = posts.map(_.repr).mkString("\n")
 }
@@ -252,7 +252,7 @@ case class PostMethod[T](
 }
 
 case class HeaderParam[T](
-  @reifyAnnot header: header
+  @reifyAnnot header: header,
 ) extends TypedMetadata[T] {
   def repr: String = header.name
 }

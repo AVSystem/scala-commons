@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.json
 
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 
 import scala.annotation.tailrec
 

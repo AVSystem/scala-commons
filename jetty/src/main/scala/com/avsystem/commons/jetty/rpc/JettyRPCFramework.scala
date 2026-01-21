@@ -119,7 +119,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
           call.map(handlePut).get
         case _ =>
           throw new IllegalArgumentException(
-            s"Request HTTP method is ${request.getMethod}, only POST or PUT are supported"
+            s"Request HTTP method is ${request.getMethod}, only POST or PUT are supported",
           )
       }
     }

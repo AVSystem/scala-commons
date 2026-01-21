@@ -1,14 +1,14 @@
 package com.avsystem.commons
 package serialization.nativejs
 
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.json.RawJson
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 
 final class NativeJsonOutput(
-  valueConsumer: js.Any|Null => Unit,
+  valueConsumer: js.Any | Null => Unit,
   options: NativeFormatOptions,
 ) extends OutputAndSimpleOutput {
 
@@ -48,7 +48,7 @@ final class NativeJsonOutput(
     new NativeJsonObjectOutput(valueConsumer, options)
 
   override def writeBinary(binary: Array[Byte]): Unit = {
-    import js.JSConverters._
+    import js.JSConverters.*
     valueConsumer(binary.toJSArray)
   }
 
@@ -71,7 +71,7 @@ final class NativeJsonListOutput(
   valueConsumer: js.Any => Unit,
   options: NativeFormatOptions,
 ) extends ListOutput {
-  private val builder = new js.Array[js.Any|Null]()
+  private val builder = new js.Array[js.Any | Null]()
 
   override def writeElement(): Output = new NativeJsonOutput(el => builder.append(el), options)
   override def finish(): Unit = valueConsumer(builder)
@@ -81,7 +81,7 @@ final class NativeJsonObjectOutput(
   valueConsumer: js.Any => Unit,
   options: NativeFormatOptions,
 ) extends ObjectOutput {
-  private val builder = js.Dictionary.empty[js.Any|Null]
+  private val builder = js.Dictionary.empty[js.Any | Null]
 
   override def writeField(key: String): Output = new NativeJsonOutput(el => builder(key) = el, options)
   override def finish(): Unit = valueConsumer(builder)
@@ -89,7 +89,7 @@ final class NativeJsonObjectOutput(
 
 object NativeJsonOutput {
   def write[T: GenCodec](value: T, options: NativeFormatOptions = NativeFormatOptions.RawString): js.Any = {
-    var result: js.Any |Null= null
+    var result: js.Any | Null = null
     GenCodec.write(new NativeJsonOutput(value => result = value, options), value)
     result.nn
   }

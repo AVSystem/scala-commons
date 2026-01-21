@@ -46,13 +46,13 @@ object TypeStringTest {
     testTypeString[Set.type]("Set.type")
     testTypeString[List[Int]]("List[Int]")
     testTypeString[Set[_]]("Set[_]")
-    testTypeString[Set[_ <: String]]("Set[_ <: String]")
+    testTypeString[Set[? <: String]]("Set[_ <: String]")
     testTypeString[Set[T] forSome { type T <: List[T] }]("Set[T] forSome {type T <: List[T]}")
     testTypeString[Map[T, T] forSome { type T <: String }]("Map[T, T] forSome {type T <: String}")
     testTypeString[Map[K, V] forSome { type K; type V <: List[K] }]("Map[K, V] forSome {type K; type V <: List[K]}")
     testTypeString[fu.z.type forSome { val fu: OFuu }]("fu.z.type forSome {val fu: TypeStringTest.OFuu}")
     testTypeString[fu.z.type forSome { val fu: OFuu with Singleton }](
-      "fu.z.type forSome {val fu: TypeStringTest.OFuu with Singleton}"
+      "fu.z.type forSome {val fu: TypeStringTest.OFuu with Singleton}",
     )
     testTypeString[fu.bar.q.type forSome { val fu: OFuu }]("fu.bar.q.type forSome {val fu: TypeStringTest.OFuu}")
     testTypeString[AnyRef with Serializable]("AnyRef with Serializable")
@@ -123,7 +123,7 @@ class TypeStringTest extends AnyFunSuite {
   //  testTypeString[this.type]("this.type")
   testTypeString[List[Int]]("List[Int]")
   testTypeString[Set[_]]("Set[_]")
-  testTypeString[Set[_ <: String]]("Set[_ <: String]")
+  testTypeString[Set[? <: String]]("Set[_ <: String]")
   testTypeString[Map[T, T] forSome { type T <: String }]("Map[T, T] forSome {type T <: String}")
   //  testTypeString[fu.z.type forSome {val fu: Fuu}]("fu.z.type forSome {val fu: Fuu}")
   //  testTypeString[fu.z.type forSome {val fu: Fuu with Singleton}]("fu.z.type forSome {val fu: Fuu with Singleton}")
@@ -135,7 +135,7 @@ class TypeStringTest extends AnyFunSuite {
 
 object UnrelatedTypeString {
 
-  import TypeStringTest._
+  import TypeStringTest.*
 
   def defineTests[T: TypeString](suite: TypeStringTest): Unit = {
     import suite.testTypeString
@@ -158,13 +158,13 @@ object UnrelatedTypeString {
     testTypeString[Set.type]("Set.type")
     testTypeString[List[Int]]("List[Int]")
     testTypeString[Set[_]]("Set[_]")
-    testTypeString[Set[_ <: String]]("Set[_ <: String]")
+    testTypeString[Set[? <: String]]("Set[_ <: String]")
     testTypeString[Set[T] forSome { type T <: List[T] }]("Set[T] forSome {type T <: List[T]}")
     testTypeString[Map[T, T] forSome { type T <: String }]("Map[T, T] forSome {type T <: String}")
     testTypeString[Map[K, V] forSome { type K; type V <: List[K] }]("Map[K, V] forSome {type K; type V <: List[K]}")
     testTypeString[fu.z.type forSome { val fu: OFuu }]("fu.z.type forSome {val fu: TypeStringTest.OFuu}")
     testTypeString[fu.z.type forSome { val fu: OFuu with Singleton }](
-      "fu.z.type forSome {val fu: TypeStringTest.OFuu with Singleton}"
+      "fu.z.type forSome {val fu: TypeStringTest.OFuu with Singleton}",
     )
     testTypeString[fu.bar.q.type forSome { val fu: OFuu }]("fu.bar.q.type forSome {val fu: TypeStringTest.OFuu}")
     testTypeString[AnyRef with Serializable]("AnyRef with Serializable")

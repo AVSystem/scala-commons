@@ -31,7 +31,7 @@ class HoconInputTest extends GenCodecRoundtripTest {
     val sb = new JStringBuilder
     write(new JsonStringOutput(sb))
     val config = ConfigFactory.parseString(s"""{"f":${sb.toString}}""")
-    if (config.getIsNull("f")) ConfigValueFactory.fromAnyRef(null) else config.getValue("f")
+    if config.getIsNull("f") then ConfigValueFactory.fromAnyRef(null) else config.getValue("f")
   }
 
   def createInput(raw: ConfigValue): Input =
@@ -88,7 +88,7 @@ class HoconInputTest extends GenCodecRoundtripTest {
         |  clazzMap {
         |    "com.avsystem.commons.hocon.HoconInputTest" = "abc"
         |  }
-        |}""".stripMargin
+        |}""".stripMargin,
     )
     val expected = CustomCodecsClass(
       duration = 1.minute,

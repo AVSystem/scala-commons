@@ -5,9 +5,10 @@ import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.serialization.Base64
 
-/** General purpose wrapper over byte array which adds `equals`, `hashCode` and `toString` which work on array elements
-  * instead of object identity.
-  */
+/**
+ * General purpose wrapper over byte array which adds `equals`, `hashCode` and `toString` which work on array elements
+ * instead of object identity.
+ */
 final case class Bytes(bytes: Array[Byte]) {
   def hex: String = bytes.iterator.map(b => f"${b & 0xff}%02X").mkString
 

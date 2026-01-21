@@ -10,7 +10,7 @@ class AdtTaggingTest extends AnyFunSuite {
   class Bad extends AdtTag
 
   case class Info[T](
-    @reifyName name: String
+    @reifyName name: String,
   ) extends TypedMetadata[T]
 
   @paramTag[AdtTag](new Good)

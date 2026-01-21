@@ -3,7 +3,7 @@ package jiop
 
 import java.util.Comparator
 import java.util.concurrent.Callable
-import java.{lang => jl, math => jm, util => ju}
+import java.{lang as jl, math as jm, util as ju}
 
 import com.avsystem.commons.misc.{Sam, TimestampConversions}
 

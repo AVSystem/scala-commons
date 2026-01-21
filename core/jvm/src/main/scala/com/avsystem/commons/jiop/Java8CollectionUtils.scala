@@ -3,7 +3,7 @@ package jiop
 
 trait Java8CollectionUtils {
 
-  import Java8CollectionUtils._
+  import Java8CollectionUtils.*
 
   implicit def jIteratorOps[A](it: JIterator[A]): jIteratorOps[A] = new jIteratorOps(it)
   implicit def jIterableOps[A](it: JIterable[A]): jIterableOps[A] = new jIterableOps(it)

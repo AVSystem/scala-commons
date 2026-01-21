@@ -36,8 +36,8 @@ class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
 
   testKnownSubtypes[InvGadt[_], (InvInt, InvString, InvGen[_], InvBounded[_], InvRecBounded[_])]
   testKnownSubtypes[InvGadt[
-    _ <: String
-  ], (InvInt, InvString, InvGen[_ <: String], InvBounded[_ <: String], InvRecBounded[_ <: String])]
+    ? <: String,
+  ], (InvInt, InvString, InvGen[? <: String], InvBounded[? <: String], InvRecBounded[? <: String])]
   testKnownSubtypes[InvGadt[Set[_]], (InvInt, InvString, InvGen[Set[_]], InvBounded[Set[_]], InvRecBounded[Set[_]])]
   testKnownSubtypes[
     InvGadt[Set[X]] forSome { type X },
@@ -74,8 +74,8 @@ class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
 
   testKnownSubtypes[CovGadt[_], (CovInt, CovString, CovGen[Any], CovInvGen[_])]
   testKnownSubtypes[CovGadt[Any], (CovInt, CovString, CovGen[Any], CovInvGen[_])]
-  testKnownSubtypes[CovGadt[Nothing], (CovInt, CovString, CovGen[Nothing], CovInvGen[_ <: Nothing])]
-  testKnownSubtypes[CovGadt[A], (CovInt, CovString, CovGen[A], CovInvGen[_ <: A])]
+  testKnownSubtypes[CovGadt[Nothing], (CovInt, CovString, CovGen[Nothing], CovInvGen[? <: Nothing])]
+  testKnownSubtypes[CovGadt[A], (CovInt, CovString, CovGen[A], CovInvGen[? <: A])]
 
   sealed trait ContraGadt[-T]
   case class ContraInt(lol: Int) extends ContraGadt[Int]
@@ -85,9 +85,9 @@ class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
 
   // ContraInvGen case unnecessarily bloated but that shouldn't be a problem
   testKnownSubtypes[ContraGadt[_], (ContraInt, ContraString, ContraGen[_], ContraInvGen[X] forSome { type Y; type X >: Y })]
-  testKnownSubtypes[ContraGadt[Any], (ContraInt, ContraString, ContraGen[Any], ContraInvGen[_ >: Any])]
+  testKnownSubtypes[ContraGadt[Any], (ContraInt, ContraString, ContraGen[Any], ContraInvGen[? >: Any])]
   testKnownSubtypes[ContraGadt[Nothing], (ContraInt, ContraString, ContraGen[Nothing], ContraInvGen[_])]
-  testKnownSubtypes[ContraGadt[A], (ContraInt, ContraString, ContraGen[A], ContraInvGen[_ >: A])]
+  testKnownSubtypes[ContraGadt[A], (ContraInt, ContraString, ContraGen[A], ContraInvGen[? >: A])]
 
   sealed trait CovGeneric[+T]
   case class ListCovGeneric[+T](lt: List[T]) extends CovGeneric[List[T]]

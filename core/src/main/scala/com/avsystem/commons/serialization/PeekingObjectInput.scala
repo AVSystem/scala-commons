@@ -1,8 +1,9 @@
 package com.avsystem.commons
 package serialization
 
-/** Wrapper over [[ObjectInput]] that lets you peek next field name without advancing the input.
-  */
+/**
+ * Wrapper over [[ObjectInput]] that lets you peek next field name without advancing the input.
+ */
 final class PeekingObjectInput(original: ObjectInput) extends ObjectInput {
   private var peekedField: FieldInput | Null = scala.compiletime.uninitialized
 

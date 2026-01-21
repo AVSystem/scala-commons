@@ -14,7 +14,7 @@ object TestUtils {
   def invokeMacroPrivateMethod: Int = macro invokeMacroPrivateMethodImpl
 
   def invokeMacroPrivateMethodImpl(c: blackbox.Context): c.Tree = {
-    import c.universe._
+    import c.universe.*
     q"${c.prefix}.macroPrivateMethod"
   }
 

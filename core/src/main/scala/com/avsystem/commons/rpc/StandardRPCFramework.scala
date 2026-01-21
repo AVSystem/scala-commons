@@ -1,11 +1,12 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 
-/** Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods with `Unit`
-  * return type.
-  */
+/**
+ * Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods with `Unit`
+ * return type.
+ */
 trait ProcedureRPCFramework extends RPCFramework {
   type RawRPC <: ProcedureRawRPC
 
@@ -22,9 +23,10 @@ trait ProcedureRPCFramework extends RPCFramework {
       with TypedMetadata[Unit]
 }
 
-/** Mix in this trait into your RPC framework to support remote functions, i.e. methods which asynchronously return some
-  * result (`Future[A]` where `A` has a `Reader` and `Writer`).
-  */
+/**
+ * Mix in this trait into your RPC framework to support remote functions, i.e. methods which asynchronously return some
+ * result (`Future[A]` where `A` has a `Reader` and `Writer`).
+ */
 trait FunctionRPCFramework extends RPCFramework {
   type RawRPC <: FunctionRawRPC
 
@@ -44,8 +46,9 @@ trait FunctionRPCFramework extends RPCFramework {
   implicit def writerBasedFutureAsRaw[T: Writer]: AsRaw[Future[RawValue], Future[T]] = _.mapNow(write[T])
 }
 
-/** Mix in this trait into your RPC framework to support getters, i.e. methods that return RPC subinterfaces
-  */
+/**
+ * Mix in this trait into your RPC framework to support getters, i.e. methods that return RPC subinterfaces
+ */
 trait GetterRPCFramework extends RPCFramework {
   type RawRPC <: GetterRawRPC
 

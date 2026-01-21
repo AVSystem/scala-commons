@@ -2,7 +2,7 @@ package com.avsystem.commons
 package misc
 
 import com.avsystem.commons.annotation.positioned
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 import com.avsystem.commons.serialization.{name, GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo}
 
 trait GenCodecStructure[T] {
@@ -11,7 +11,7 @@ trait GenCodecStructure[T] {
 }
 
 abstract class HasGenCodecStructure[T](
-  implicit macroInstances: MacroInstances[Unit, GenCodecStructure[T]]
+  implicit macroInstances: MacroInstances[Unit, GenCodecStructure[T]],
 ) {
   implicit val genCodec: GenCodec[T] = macroInstances((), this).codec
   implicit val genStructure: GenStructure[T] = macroInstances((), this).structure
@@ -49,7 +49,7 @@ sealed trait GenCase[T] extends TypedMetadata[T] {
 }
 
 case class GenSealedParent[T](
-  @infer repr: TypeString[T]
+  @infer repr: TypeString[T],
 ) extends TypedMetadata[T]
 
 @positioned(positioned.here) case class GenCustomCase[T](
@@ -106,8 +106,8 @@ case class Galaxy(name: String, distance: Long) extends MaterialBeing
 
 class Peculiarity extends Being
 object Peculiarity {
-  implicit val codec: GenCodec[Peculiarity]| Null = null
-  implicit val structure: GenStructure[Peculiarity]| Null = null
+  implicit val codec: GenCodec[Peculiarity] | Null = null
+  implicit val structure: GenStructure[Peculiarity] | Null = null
 }
 
 case object God extends Being

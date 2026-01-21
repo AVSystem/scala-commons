@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization.cbor
 
 import com.avsystem.commons.serialization.GenCodec.WriteFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 
 import java.io.{ByteArrayOutputStream, DataOutput, DataOutputStream}
@@ -69,9 +69,10 @@ object CborOutput {
   ): RawCbor = RawCbor(write(value, keyCodec, sizePolicy))
 }
 
-/** An [[com.avsystem.commons.serialization.Output Output]] implementation that serializes into
-  * [[https://tools.ietf.org/html/rfc7049 CBOR]].
-  */
+/**
+ * An [[com.avsystem.commons.serialization.Output Output]] implementation that serializes into
+ * [[https://tools.ietf.org/html/rfc7049 CBOR]].
+ */
 class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy)
   extends BaseCborOutput(out) with OutputAndSimpleOutput {
 
@@ -148,8 +149,7 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
 
   override def writeTimestamp(millis: Long): Unit = {
 //    writeTag(Tag.EpochDateTime)
-    if (millis % 1000 == 0)
-      writeLong(millis / 1000)
+    if (millis % 1000 == 0) writeLong(millis / 1000)
     else
       writeDouble(millis.toDouble / 1000)
   }
@@ -241,13 +241,14 @@ class CborObjectOutput(
 ) extends CborSequentialOutput(out, sizePolicy)
     with ObjectOutput {
 
-  private var forcedKeyCodec: CborKeyCodec| Null = scala.compiletime.uninitialized
+  private var forcedKeyCodec: CborKeyCodec | Null = scala.compiletime.uninitialized
   private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec.nn else keyCodec
 
-  /** Returns a [[CborOutput]] for writing an arbitrary CBOR map key. This method is an extension of standard [[Output]]
-    * which only allows string-typed keys. If a key is written using this method then its corresponding value MUST be
-    * written using [[writeValue]] and [[writeField]] MUST NOT be used.
-    */
+  /**
+   * Returns a [[CborOutput]] for writing an arbitrary CBOR map key. This method is an extension of standard [[Output]]
+   * which only allows string-typed keys. If a key is written using this method then its corresponding value MUST be
+   * written using [[writeValue]] and [[writeField]] MUST NOT be used.
+   */
   def writeKey(): CborOutput = {
     ensureInitialWritten(MajorType.Map)
     if (size > 0) {
@@ -258,10 +259,11 @@ class CborObjectOutput(
     new CborOutput(out, keyCodec, sizePolicy)
   }
 
-  /** Returns a [[CborOutput]] for writing a value of a CBOR map field whose key was previously written using
-    * [[writeKey]]. This method MUST ONLY be used after the key has been fully written with [[writeKey]]. If
-    * [[writeKey]] and [[writeValue]] is used then [[writeField]] MUST NOT be used.
-    */
+  /**
+   * Returns a [[CborOutput]] for writing a value of a CBOR map field whose key was previously written using
+   * [[writeKey]]. This method MUST ONLY be used after the key has been fully written with [[writeKey]]. If
+   * [[writeKey]] and [[writeValue]] is used then [[writeField]] MUST NOT be used.
+   */
   def writeValue(): CborOutput =
     new CborOutput(out, keyCodec, sizePolicy)
 

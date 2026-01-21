@@ -381,7 +381,7 @@ trait TupleGenCodecs { this: GenCodec.type =>
     mkTupleCodec(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20, r21, r22)
 
 }
-def mkTupleCodecImpl[T: Type](elementCodecsExpr: Expr[Seq[GenCodec[?]]])(using Quotes): Expr[GenCodec[T]] = '{???}
+def mkTupleCodecImpl[T: Type](elementCodecsExpr: Expr[Seq[GenCodec[?]]])(using Quotes): Expr[GenCodec[T]] = '{ ??? }
 
 object GenTupleDBCodecs {
   def main(args: Array[String]): Unit = {
@@ -395,7 +395,7 @@ object GenTupleDBCodecs {
         s"""
            |implicit def tuple${i}Codec[${types.mkString(",")}]($implicits): DBCodec[$tupleType] =
            |  mkTupleCodec(${(1 to i).map(j => s"r$j").mkString(",")})
-        """.stripMargin
+        """.stripMargin,
       )
     }
   }

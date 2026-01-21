@@ -11,29 +11,33 @@ import java.util.UUID
 import scala.annotation.{implicitNotFound, tailrec}
 import scala.collection.Factory
 
-/** Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized from
-  * [[Input]] (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
-  * objects, without being bound to particular format like JSON. The actual format is determined by implementation of
-  * [[Input]] and [[Output]].
-  *
-  * There are convenient macros for automatic derivation of [[GenCodec]] instances (`materialize` and
-  * `materializeRecursively`). However, [[GenCodec]] instances still need to be explicitly declared and won't be derived
-  * "automagically".
-  */
+/**
+ * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized from
+ * [[Input]] (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
+ * objects, without being bound to particular format like JSON. The actual format is determined by implementation of
+ * [[Input]] and [[Output]].
+ *
+ * There are convenient macros for automatic derivation of [[GenCodec]] instances (`materialize` and
+ * `materializeRecursively`). However, [[GenCodec]] instances still need to be explicitly declared and won't be derived
+ * "automagically".
+ */
 @implicitNotFound("No GenCodec found for ${T}")
 trait GenCodec[T] {
 
-  /** Deserializes a value of type `T` from an [[Input]].
-    */
+  /**
+   * Deserializes a value of type `T` from an [[Input]].
+   */
   def read(input: Input): T
 
-  /** Serializes a value of type `T` into an [[Output]].
-    */
+  /**
+   * Serializes a value of type `T` into an [[Output]].
+   */
   def write(output: Output, value: T): Unit
 
-  /** Transforms this codec into a codec of other type using a bidirectional conversion between the original and new
-    * type.
-    */
+  /**
+   * Transforms this codec into a codec of other type using a bidirectional conversion between the original and new
+   * type.
+   */
   final def transform[U](onWrite: U => T, onRead: T => U): GenCodec[U] =
     new GenCodec.Transformed[U, T](this, onWrite, onRead)
 }
@@ -41,40 +45,42 @@ trait GenCodec[T] {
 object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def apply[T](implicit codec: GenCodec[T]): GenCodec[T] = codec
 
-  /** Macro that automatically materializes a [[GenCodec]] for some type `T`, which must be one of: <ul> <li>singleton
-    * type, e.g. an `object`</li> <li>case class whose every field type has its own [[GenCodec]]</li>
-    * <li>(generalization of case classes) class or trait whose companion object has a pair of case-class-like `apply`
-    * and `unapply` methods and every parameter type of `apply` method has its own [[GenCodec]] </li> <li>sealed
-    * hierarchy in which every non-abstract subclass either has its own [[GenCodec]] or it can be automatically
-    * materialized with the same mechanism</li> </ul> Note that automatic materialization does NOT descend into types
-    * that `T` is made of (e.g. types of case class fields must have their own codecs independently declared). If you
-    * want recursive materialization, use `materializeRecursively`.
-    */
+  /**
+   * Macro that automatically materializes a [[GenCodec]] for some type `T`, which must be one of: <ul> <li>singleton
+   * type, e.g. an `object`</li> <li>case class whose every field type has its own [[GenCodec]]</li>
+   * <li>(generalization of case classes) class or trait whose companion object has a pair of case-class-like `apply`
+   * and `unapply` methods and every parameter type of `apply` method has its own [[GenCodec]] </li> <li>sealed
+   * hierarchy in which every non-abstract subclass either has its own [[GenCodec]] or it can be automatically
+   * materialized with the same mechanism</li> </ul> Note that automatic materialization does NOT descend into types
+   * that `T` is made of (e.g. types of case class fields must have their own codecs independently declared). If you
+   * want recursive materialization, use `materializeRecursively`.
+   */
   def materialize[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
   inline def materialize[T]: GenCodec[T] = ${ materializeImpl[T] }
   def materializeImpl[T: Type](using Quotes) = '{ ??? }
 
-  /** Materializes a [[GenCodec]] for type `T` using `apply` and `unapply`/`unapplySeq` methods available on passed
-    * `applyUnapplyProvider` object. The signatures of `apply` and `unapply` must be as if `T` was a case class and
-    * `applyUnapplyProvider` was its companion object. This is useful for easy derivation of [[GenCodec]] for third
-    * party classes which don't have their own companion objects with `apply` and `unapply`. So essentially the
-    * `applyUnapplyProvider` is a "fake companion object" of type `T`.
-    *
-    * Example:
-    * {{{
-    *   class ThirdParty { ... }
-    *
-    *   object ThirdPartyFakeCompanion {
-    *     def apply(int: Int, string: String): ThirdParty = ...
-    *     def unapply(tp: ThirdParty): Option[(Int, String)] = ...
-    *   }
-    *
-    *   implicit val thirdPartyCodec: GenCodec[ThirdParty] =
-    *     GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
-    * }}}
-    */
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+  /**
+   * Materializes a [[GenCodec]] for type `T` using `apply` and `unapply`/`unapplySeq` methods available on passed
+   * `applyUnapplyProvider` object. The signatures of `apply` and `unapply` must be as if `T` was a case class and
+   * `applyUnapplyProvider` was its companion object. This is useful for easy derivation of [[GenCodec]] for third
+   * party classes which don't have their own companion objects with `apply` and `unapply`. So essentially the
+   * `applyUnapplyProvider` is a "fake companion object" of type `T`.
+   *
+   * Example:
+   * {{{
+   *   class ThirdParty { ... }
+   *
+   *   object ThirdPartyFakeCompanion {
+   *     def apply(int: Int, string: String): ThirdParty = ...
+   *     def unapply(tp: ThirdParty): Option[(Int, String)] = ...
+   *   }
+   *
+   *   implicit val thirdPartyCodec: GenCodec[ThirdParty] =
+   *     GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
+   * }}}
+   */
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] =
+    macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
 
   inline def fromApplyUnapplyProvider[T](inline applyUnapplyProvider: Any): GenCodec[T] =
     ${ fromApplyUnapplyProviderImpl[T]('applyUnapplyProvider) }
@@ -85,16 +91,17 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   inline def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = ${ applyUnapplyCodecImpl[T] }
   def applyUnapplyCodecImpl[T: Type](using Quotes): Expr[ApplyUnapplyCodec[T]] = '{ ??? }
 
-  /** Materializes a [[GenCodec]] for a POJO that has a fluent builder. The fluent builder must have setters
-    * corresponding to the POJO's getters. Each setter must return the builder itself (because it's fluent). The builder
-    * is assumed to have default value for each field. These values are considered "transient", i.e. the codec will omit
-    * them during serialization, similarly to [[transientDefault]] annotation in case classes.
-    *
-    * @param newBuilder
-    *   an expression that creates a fresh builder
-    * @param build
-    *   a function that builds the final value (typically `_.build()` or `_.get()`)
-    */
+  /**
+   * Materializes a [[GenCodec]] for a POJO that has a fluent builder. The fluent builder must have setters
+   * corresponding to the POJO's getters. Each setter must return the builder itself (because it's fluent). The builder
+   * is assumed to have default value for each field. These values are considered "transient", i.e. the codec will omit
+   * them during serialization, similarly to [[transientDefault]] annotation in case classes.
+   *
+   * @param newBuilder
+   *   an expression that creates a fresh builder
+   * @param build
+   *   a function that builds the final value (typically `_.build()` or `_.get()`)
+   */
   def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] = ???
 //    macro macros.serialization.GenCodecMacros.fromJavaBuilder[T, B]
 
@@ -170,11 +177,12 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def nonNullList[T](readFun: ListInput => T, writeFun: (ListOutput, T) => Any): GenCodec[T] =
     createList(readFun, writeFun, allowNull = false)
 
-  /** Helper method to manually implement a `GenCodec` that writes an object. NOTE: in most cases the easiest way to
-    * have a custom object codec is to manually implement `apply` and `unapply`/`unapplySeq` methods in companion object
-    * of your type or use [[fromApplyUnapplyProvider]] if the type comes from a third party code and you can't modify
-    * its companion object.
-    */
+  /**
+   * Helper method to manually implement a `GenCodec` that writes an object. NOTE: in most cases the easiest way to
+   * have a custom object codec is to manually implement `apply` and `unapply`/`unapplySeq` methods in companion object
+   * of your type or use [[fromApplyUnapplyProvider]] if the type comes from a third party code and you can't modify
+   * its companion object.
+   */
   def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean)
     : GenObjectCodec[T] =
     new ObjectCodec[T] {
@@ -215,7 +223,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   case class NotSingleField(typeRepr: String, empty: Boolean)
     extends ReadFailure(
       s"Cannot read $typeRepr, expected object with exactly one field but got " +
-        (if (empty) "empty object" else "more than one")
+        (if (empty) "empty object" else "more than one"),
     )
   case class CaseReadFailed(typeRepr: String, caseName: String, cause: Throwable)
     extends ReadFailure(s"Failed to read case $caseName of $typeRepr", cause)
@@ -257,13 +265,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     def writeNonNull(output: Output, value: T): Unit
 
     override final def write(output: Output, value: T): Unit =
-      if (value == null)
-        if (nullable) output.writeNull() else throw new WriteFailure("null")
+      if (value == null) if (nullable) output.writeNull() else throw new WriteFailure("null")
       else writeNonNull(output, value)
 
     override final def read(input: Input): T =
-      if (input.readNull())
-        if (nullable) null.asInstanceOf[T] else throw new ReadFailure("null")
+      if (input.readNull()) if (nullable) null.asInstanceOf[T] else throw new ReadFailure("null")
       else readNonNull(input)
   }
 
@@ -295,10 +301,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
-  /** Convenience base class for `GenCodec`s that serialize values as objects. NOTE: if you need to implement a custom
-    * `GenCodec` that writes an object, the best way to do it is to have manually implemented `apply` and `unapply` in
-    * companion object or by using [[GenCodec.fromApplyUnapplyProvider]].
-    */
+  /**
+   * Convenience base class for `GenCodec`s that serialize values as objects. NOTE: if you need to implement a custom
+   * `GenCodec` that writes an object, the best way to do it is to have manually implemented `apply` and `unapply` in
+   * companion object or by using [[GenCodec.fromApplyUnapplyProvider]].
+   */
   trait ObjectCodec[T] extends GenObjectCodec[T] with NullSafeCodec[T] {
     def readObject(input: ObjectInput): T
     def writeObject(output: ObjectOutput, value: T): Unit
@@ -381,7 +388,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   def underlyingCodec(codec: GenCodec[?]): GenCodec[?] = codec match {
-    case tc: Transformed[_, _] => underlyingCodec(tc.wrapped)
+    case tc: Transformed[?, ?] => underlyingCodec(tc.wrapped)
     case _ => codec
   }
 
@@ -553,22 +560,22 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
   implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
-    implicit fac: Factory[T, C[T]]
+    implicit fac: Factory[T, C[T]],
   ): GenCodec[C[T] & BSeq[T]] =
     nullableList[C[T] & BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
-    implicit fac: Factory[T, C[T]]
+    implicit fac: Factory[T, C[T]],
   ): GenCodec[C[T] & BSet[T]] =
     nullableList[C[T] & BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
   implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
-    implicit cbf: JFactory[T, C[T]]
+    implicit cbf: JFactory[T, C[T]],
   ): GenCodec[C[T] & JCollection[T]] =
     nullableList[C[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
   implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit fac: Factory[(K, V), M[K, V]]
+    implicit fac: Factory[(K, V), M[K, V]],
   ): GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
@@ -576,7 +583,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     )
 
   implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: JFactory[(K, V), M[K, V]]
+    implicit cbf: JFactory[(K, V), M[K, V]],
   ): GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
@@ -657,14 +664,16 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
 trait RecursiveAutoCodecs { this: GenCodec.type =>
 
-  /** Like `materialize`, but descends into types that `T` is made of (e.g. case class field types).
-    */
+  /**
+   * Like `materialize`, but descends into types that `T` is made of (e.g. case class field types).
+   */
   def materializeRecursively[T]: GenCodec[T] = ???
 //    macro macros.serialization.GenCodecMacros.materializeRecursively[T]
 
 //  inline def materializeRecursively[T]: GenCodec[T] = ${materializeRecursivelyImpl[T]}
-  /** INTERNAL API. Should not be used directly.
-    */
+  /**
+   * INTERNAL API. Should not be used directly.
+   */
   implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
     ???
 //    macro macros.serialization.GenCodecMacros.materializeImplicitly[T]

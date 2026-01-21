@@ -23,27 +23,28 @@ object OptRef {
   private val nullFunc: Any => Null = _ => null
 
   final class WithFilter[+A] private[OptRef] (self: OptRef[A], p: A => Boolean) {
-    def map[B](f: A => B): OptRef[B] = self.filter(p) `map` f
-    def flatMap[B](f: A => OptRef[B]): OptRef[B] = self.filter(p) `flatMap` f
+    def map[B](f: A => B): OptRef[B] = self.filter(p).`map`(f)
+    def flatMap[B](f: A => OptRef[B]): OptRef[B] = self.filter(p).`flatMap`(f)
     def foreach[U](f: A => U): Unit = self.filter(p).foreach(f)
     def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }
 }
 
-/** Like [[Opt]] but has better Java interop thanks to the fact that wrapped value has type `A` instead of `Any`. For
-  * example, Scala method defined like this:
-  * {{{
-  *   def takeMaybeString(str: OptRef[String]): Unit
-  * }}}
-  * will be seen by Java as:
-  * {{{
-  *   public void takeMaybeString(String str);
-  * }}}
-  * and `null` will be used to represent absence of value. <p/> This comes at the cost of `A` having to be a nullable
-  * type. Also, empty value is represented internally using `null` which unfortunately makes [[OptRef]] suffer from
-  * SI-7396 (`hashCode` fails on `OptRef.Empty` which means that you can't add [[OptRef]] values into hash sets or use
-  * them as hash map keys).
-  */
+/**
+ * Like [[Opt]] but has better Java interop thanks to the fact that wrapped value has type `A` instead of `Any`. For
+ * example, Scala method defined like this:
+ * {{{
+ *   def takeMaybeString(str: OptRef[String]): Unit
+ * }}}
+ * will be seen by Java as:
+ * {{{
+ *   public void takeMaybeString(String str);
+ * }}}
+ * and `null` will be used to represent absence of value. <p/> This comes at the cost of `A` having to be a nullable
+ * type. Also, empty value is represented internally using `null` which unfortunately makes [[OptRef]] suffer from
+ * SI-7396 (`hashCode` fails on `OptRef.Empty` which means that you can't add [[OptRef]] values into hash sets or use
+ * them as hash map keys).
+ */
 final class OptRef[+A] private (private val value: A | Null) extends AnyVal with OptBase[A] with Serializable {
   @inline def isEmpty: Boolean = value == null
   @inline def isDefined: Boolean = !isEmpty
@@ -76,8 +77,9 @@ final class OptRef[+A] private (private val value: A | Null) extends AnyVal with
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value.nn)
 
-  /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
-    */
+  /**
+   * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+   */
   @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
     if (isEmpty) ifEmpty else f(value.nn)
 
@@ -127,12 +129,13 @@ final class OptRef[+A] private (private val value: A | Null) extends AnyVal with
   @inline def zip[B](that: OptRef[B]): OptRef[(A, B)] =
     if (isEmpty || that.isEmpty) OptRef.Empty else OptRef((this.get, that.get))
 
-  /** Apply side effect only if OptRef is empty. It's a bit like foreach for OptRef.Empty
-    *
-    * @param sideEffect - code to be executed if optRef is empty
-    * @return the same optRef
-    * @example {{{captionOptRef.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
-    */
+  /**
+   * Apply side effect only if OptRef is empty. It's a bit like foreach for OptRef.Empty
+   *
+   * @param sideEffect - code to be executed if optRef is empty
+   * @return the same optRef
+   * @example {{{captionOptRef.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+   */
   @inline def forEmpty(sideEffect: => Unit): OptRef[A] = {
     if (isEmpty) {
       sideEffect

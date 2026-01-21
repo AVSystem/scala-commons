@@ -3,9 +3,9 @@ package serialization.json
 
 import com.avsystem.commons.serialization.CodecTestData.{CustomizedSeal, FlatSealedBase, OtherCustomCase}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck._
+import org.scalacheck.*
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -33,7 +33,7 @@ class JsonStringInputOutputTest
     val input = new JsonStringInput(new JsonReader(jsonList))
     val li = input.readList()
     val resBuilder = new ListBuffer[String]
-    while (li.hasNext) {
+    while li.hasNext do {
       resBuilder += li.nextElement().readRawJson()
     }
     assert(resBuilder.result() == jsons)
@@ -60,7 +60,7 @@ class JsonStringInputOutputTest
     val input = new JsonStringInput(new JsonReader(jsonList))
     val oi = input.readObject()
     val resBuilder = IListMap.newBuilder[String, String]
-    while (oi.hasNext) {
+    while oi.hasNext do {
       val fi = oi.nextField()
       resBuilder += ((fi.fieldName, fi.readRawJson()))
     }
@@ -162,16 +162,16 @@ class JsonStringInputOutputTest
     val map = Map("a" -> List(1, 2), "b" -> List(3, 4, 5))
     val prettyJson = write[Map[String, List[Int]]](map, options)
     assert(prettyJson == """{
-        |  "a": [
-        |    1,
-        |    2
-        |  ],
-        |  "b": [
-        |    3,
-        |    4,
-        |    5
-        |  ]
-        |}""".stripMargin)
+                           |  "a": [
+                           |    1,
+                           |    2
+                           |  ],
+                           |  "b": [
+                           |    3,
+                           |    4,
+                           |    5
+                           |  ]
+                           |}""".stripMargin)
     assert(read[Map[String, List[Int]]](prettyJson, options) == map)
   }
 
@@ -369,7 +369,7 @@ class JsonStringInputOutputTest
     implicit val arbTree: Arbitrary[DeepNestedTestCC] =
       Arbitrary {
         def sized(sz: Int): Gen[DeepNestedTestCC] =
-          if (sz == 0) for (t <- arbitrary[TestCC]) yield DeepNestedTestCC(t, null)
+          if sz == 0 then for t <- arbitrary[TestCC] yield DeepNestedTestCC(t, null)
           else
             for {
               t <- arbitrary[TestCC]

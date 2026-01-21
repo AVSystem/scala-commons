@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 
 private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
-  import c.universe._
+  import c.universe.*
 
   def collectMethodMappings[Raw <: RealMethodTarget with AritySymbol, M](
     rawSymbols: List[Raw],
@@ -16,7 +16,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     realMethods: List[RealMethod],
     allowIncomplete: Boolean,
   )(
-    createMapping: (Raw, MatchedMethod) => Res[M]
+    createMapping: (Raw, MatchedMethod) => Res[M],
   ): List[M] = {
 
     val failedReals = new ListBuffer[String]
@@ -83,7 +83,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     private def validatedWhenAbsentValue(annotatedDefault: Tree, expectedTpe: Type): Tree = {
       if (!(annotatedDefault.tpe <:< expectedTpe)) {
         realParam.reportProblem(
-          s"expected value of type $expectedTpe in @whenAbsent annotation, " + s"got ${annotatedDefault.tpe.widen}"
+          s"expected value of type $expectedTpe in @whenAbsent annotation, " + s"got ${annotatedDefault.tpe.widen}",
         )
       }
       val transformer = new Transformer {
@@ -136,7 +136,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       if (realParam.encodingDependency && prevListParams.nonEmpty) {
         realParam.reportProblem(
           "implicit dependency parameters cannot have default values " +
-            "unless they are in the first parameter list - note: you can use @whenAbsent instead"
+            "unless they are in the first parameter list - note: you can use @whenAbsent instead",
         )
       }
       val prevListParamss = List(prevListParams).filter(_.nonEmpty)
@@ -329,7 +329,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         else
           FailMsg(
             s"${realParam.problemStr}:\nexpected real parameter exactly of type " +
-              s"$encArgType, got ${realParam.actualType}"
+              s"$encArgType, got ${realParam.actualType}",
           )
       } else {
         val errorCtx = ErrorCtx(s"${realParam.problemStr}:\n", realParam.pos)
@@ -345,7 +345,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
             Some(errorCtx),
             realParam.tparamReferences,
             implicitParams,
-          )
+          ),
         )
       }
     }
@@ -548,7 +548,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       rawParam.arity match {
         case _: ParamArity.Single =>
           val unmatchedErrorMsg = rawParam.unmatchedError.getOrElse(
-            s"${raw.shortDescription} ${rawParam.pathStr} was not matched by real parameter"
+            s"${raw.shortDescription} ${rawParam.pathStr} was not matched by real parameter",
           )
           parser.extractSingle(consume, createErp(_, 0), unmatchedErrorMsg).map(ParamMapping.Single(rawParam, _))
         case _: ParamArity.Optional =>
@@ -618,7 +618,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         case (rpcName, head :: tail) =>
           head.realMethod.reportProblem(
             s"it has the same RPC name ($rpcName) as ${tail.size} other methods - " +
-              s"if you want to overload RPC methods, disambiguate them with @rpcName"
+              s"if you want to overload RPC methods, disambiguate them with @rpcName",
           )
         case _ =>
       }

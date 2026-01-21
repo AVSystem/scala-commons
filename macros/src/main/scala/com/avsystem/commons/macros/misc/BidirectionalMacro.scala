@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.*
 
   final val SELECTOR_DUMMY: TermName = TermName("<unapply-selector>")
   final val UNAPPLY: TermName = TermName("unapply")

@@ -1,22 +1,22 @@
 package com.avsystem.commons
 package spring
 
-import com.avsystem.commons.spring.AttrNames._
-import com.typesafe.config._
+import com.avsystem.commons.spring.AttrNames.*
+import com.typesafe.config.*
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder
 import org.springframework.beans.factory.config.{BeanDefinitionHolder, ConstructorArgumentValues, RuntimeBeanNameReference, RuntimeBeanReference}
-import org.springframework.beans.factory.support._
+import org.springframework.beans.factory.support.*
 import org.springframework.beans.{MutablePropertyValues, PropertyValue}
 import org.springframework.core.io.Resource
 
-import java.{util => ju}
+import java.util as ju
 import scala.annotation.nowarn
 
 class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends AbstractBeanDefinitionReader(registry) {
 
-  import com.avsystem.commons.spring.HoconBeanDefinitionReader.Keys._
-  import com.typesafe.config.ConfigValueType._
+  import com.avsystem.commons.spring.HoconBeanDefinitionReader.Keys.*
+  import com.typesafe.config.ConfigValueType.*
 
   private implicit class ConfigValueExtensions(value: ConfigValue) {
     def as[T: HoconType]: T =
@@ -49,7 +49,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
     allowed: Set[String] = Set.empty,
     props: Boolean = false,
   )(
-    obj: ConfigObject
+    obj: ConfigObject,
   ): Unit = {
     require(
       required.forall(obj.containsKey),
@@ -61,11 +61,9 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
     )
     val allAllowed = required ++ requiredAny ++ allowed
     iterate(obj) { (key, value) =>
-      if (!allAllowed.contains(key))
-        badAttr(key, value)
+      if (!allAllowed.contains(key)) badAttr(key, value)
     } { (key, value) =>
-      if (!props)
-        badProp(key, value)
+      if (!props) badProp(key, value)
     }
   }
 
@@ -339,7 +337,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
           throw new RuntimeException(s"Could not read definition of bean $key at ${value.origin.description}", e)
       }
     }.toVector
-    beanDefs.foreach((registry.registerBeanDefinition).tupled)
+    beanDefs.foreach(registry.registerBeanDefinition.tupled)
     beanDefs.size
   }
 
@@ -357,8 +355,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
         (currentConfig, conditionalObject) =>
           val props = getProps(conditionalObject.as[ConfigObject])
 
-          if (props(Condition).as[Boolean])
-            readConditionals(props(Config).as[Config]).withFallback(currentConfig)
+          if (props(Condition).as[Boolean]) readConditionals(props(Config).as[Config]).withFallback(currentConfig)
           else
             currentConfig
       }

@@ -5,7 +5,7 @@ import scala.reflect.macros.blackbox
 
 class BsonRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.*
 
   final def MongoPkg: Tree = q"$CommonsPkg.mongo"
 

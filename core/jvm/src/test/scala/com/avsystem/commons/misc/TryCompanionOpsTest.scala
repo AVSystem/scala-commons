@@ -4,9 +4,10 @@ package misc
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/** @author
-  *   Wojciech Milewski
-  */
+/**
+ * @author
+ *   Wojciech Milewski
+ */
 class TryCompanionOpsTest extends AnyFlatSpec with Matchers {
 
   "Try.sequence" should "convert empty list" in {
@@ -62,8 +63,8 @@ class TryCompanionOpsTest extends AnyFlatSpec with Matchers {
     val list: List[Int] = 1 :: 2 :: 3 :: 4 :: 5 :: 6 :: Nil
 
     val result = Try.traverse(list) { i =>
-      if (i == 3) Failure(npe)
-      else if (i == 5) Failure(ise)
+      if i == 3 then Failure(npe)
+      else if i == 5 then Failure(ise)
       else Success(i)
     }
 

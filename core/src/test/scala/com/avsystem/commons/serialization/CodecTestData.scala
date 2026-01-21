@@ -52,7 +52,7 @@ object CodecTestData {
   val set: Set[Int] = Set(1, 2, 3)
   val map = Map("1" -> 1, "2" -> 2, "3" -> 3)
   val hashMap = IHashMap("1" -> 1, "2" -> 2, "3" -> 3)
-  val intMap: Map[Int,Int] = Map(1 -> 1, 2 -> 2, 3 -> 3)
+  val intMap: Map[Int, Int] = Map(1 -> 1, 2 -> 2, 3 -> 3)
   val doubleMap = Map(1.0 -> 1, 2.0 -> 2, 3.0 -> 3)
 
   case class ValueClass(str: String) extends AnyVal
@@ -150,7 +150,7 @@ object CodecTestData {
       (out, value) => out.writeSimple().writeString(value.name),
     )
   }
-  case class CaseClassWithWildcard(stuff: Stuff[_])
+  case class CaseClassWithWildcard(stuff: Stuff[?])
   object CaseClassWithWildcard extends HasGenCodec[CaseClassWithWildcard]
 
   case class CaseClassWithOptionalFields(
