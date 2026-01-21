@@ -62,10 +62,10 @@ object RawCommand {
     def allows(other: Level): Boolean = raw <= other.raw
   }
   object Level {
-    final val Unsafe = Level(0)
-    final val Connection = Level(1)
-    final val Operation = Level(2)
-    final val Node = Level(3)
+    final val Unsafe: Level = Level(0)
+    final val Connection: Level = Level(1)
+    final val Operation: Level = Level(2)
+    final val Node: Level = Level(3)
   }
 }
 

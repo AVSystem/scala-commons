@@ -33,7 +33,7 @@ trait LowPriorityRedisDataCodecs { this: RedisDataCodec.type =>
 }
 
 object RedisDataUtils {
-  final val Null = ByteString(0)
+  final val Null: ByteString = ByteString(0)
 }
 
 object RedisDataOutput {

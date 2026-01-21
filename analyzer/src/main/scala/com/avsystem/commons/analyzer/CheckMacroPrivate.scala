@@ -7,9 +7,9 @@ class CheckMacroPrivate(g: Global) extends AnalyzerRule(g, "macroPrivate") {
 
   import global._
 
-  lazy val macroPrivateAnnotTpe = classType("com.avsystem.commons.annotation.macroPrivate")
+  lazy val macroPrivateAnnotTpe: Type = classType("com.avsystem.commons.annotation.macroPrivate")
 
-  def analyze(unit: CompilationUnit) = if (macroPrivateAnnotTpe != NoType) {
+  def analyze(unit: CompilationUnit): Unit = if (macroPrivateAnnotTpe != NoType) {
     def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
       case `tree` | EmptyTree =>
         tree match {

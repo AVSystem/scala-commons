@@ -8,9 +8,9 @@ import java.{lang => jl, math => jm, util => ju}
 import com.avsystem.commons.misc.{Sam, TimestampConversions}
 
 trait JBasicUtils {
-  def jRunnable(code: => Any) = Sam[Runnable](code)
-  def jCallable[T](expr: => T) = Sam[Callable[T]](expr)
-  def jComparator[T](cmp: (T, T) => Int) = Sam[Comparator[T]](cmp)
+  def jRunnable(code: => Any): Runnable = Sam[Runnable](code)
+  def jCallable[T](expr: => T): Callable[T] = Sam[Callable[T]](expr)
+  def jComparator[T](cmp: (T, T) => Int): Comparator[T] = Sam[Comparator[T]](cmp)
 
   implicit def jDateTimestampConversions(date: JDate): TimestampConversions =
     new TimestampConversions(date.getTime)

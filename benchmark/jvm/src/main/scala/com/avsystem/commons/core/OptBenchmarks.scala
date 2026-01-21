@@ -12,7 +12,7 @@ case class NullList(value: Int, tail: NullList) {
   }
 }
 object NullList {
-  final val Example = (0 until 1000).foldRight(NullList(1000, null)) {
+  final val Example: NullList = (0 until 1000).foldRight(NullList(1000, null)) {
     (value, tail) => NullList(value, tail)
   }
 }
@@ -57,7 +57,7 @@ case class OptionList(value: Int, tail: Option[OptionList]) {
   }
 }
 object OptionList {
-  final val Example = (0 until 1000).foldRight(OptionList(1000, None)) {
+  final val Example: OptionList = (0 until 1000).foldRight(OptionList(1000, None)) {
     (value, tail) => OptionList(value, Some(tail))
   }
 }

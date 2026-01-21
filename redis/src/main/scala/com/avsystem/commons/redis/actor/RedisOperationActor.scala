@@ -55,7 +55,7 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
       context.stop(self)
     }
 
-  def receive = {
+  def receive: PartialFunction[Any,Unit] = {
     case op: RedisOp[Any] if listener == null =>
       listener = sender()
       try handleOperation(op, reserving = true)

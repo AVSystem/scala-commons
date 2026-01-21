@@ -390,8 +390,8 @@ case class SlotRange(start: Int, end: Int) {
   override def toString: String = if (start == end) start.toString else s"$start-$end"
 }
 object SlotRange {
-  final val LastSlot = Hash.TotalSlots - 1
-  final val Full = SlotRange(0, LastSlot)
+  final val LastSlot: Int = Hash.TotalSlots - 1
+  final val Full: SlotRange = SlotRange(0, LastSlot)
 }
 
 final class BumpepochResult(implicit enumCtx: EnumCtx) extends AbstractValueEnum {

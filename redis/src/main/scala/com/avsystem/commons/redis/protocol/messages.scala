@@ -28,13 +28,13 @@ object FailureReply {
 sealed trait RedisMsg extends RedisReply
 sealed trait ValidRedisMsg extends RedisMsg
 case class SimpleStringMsg(string: ByteString) extends ValidRedisMsg {
-  override def toString = s"$productPrefix(${RedisMsg.escape(string)})"
+  override def toString: String = s"$productPrefix(${RedisMsg.escape(string)})"
 }
 object SimpleStringMsg {
   def apply(str: String): SimpleStringMsg = SimpleStringMsg(ByteString(str))
 }
 final case class ErrorMsg(errorString: ByteString) extends RedisMsg {
-  override def toString = s"$productPrefix(${RedisMsg.escape(errorString)})"
+  override def toString: String = s"$productPrefix(${RedisMsg.escape(errorString)})"
   lazy val errorCode: String = errorString.indexOf(' '.toByte) match {
     case -1 => errorString.utf8String
     case i => errorString.slice(0, i).utf8String
@@ -59,7 +59,7 @@ object CommandKeyMsg {
 case object NullArrayMsg extends ValidRedisMsg
 final case class ArrayMsg[+E <: RedisMsg](elements: IndexedSeq[E]) extends ValidRedisMsg
 object ArrayMsg {
-  final val Empty = ArrayMsg(IndexedSeq.empty)
+  final val Empty: ArrayMsg[Nothing] = ArrayMsg(IndexedSeq.empty)
 }
 
 object SimpleStringStr {
@@ -68,9 +68,9 @@ object SimpleStringStr {
 }
 
 object RedisMsg {
-  final val Ok = SimpleStringMsg(ByteString("OK"))
-  final val Queued = SimpleStringMsg(ByteString("QUEUED"))
-  final val Nokey = SimpleStringMsg(ByteString("NOKEY"))
+  final val Ok: SimpleStringMsg = SimpleStringMsg(ByteString("OK"))
+  final val Queued: SimpleStringMsg = SimpleStringMsg(ByteString("QUEUED"))
+  final val Nokey: SimpleStringMsg = SimpleStringMsg(ByteString("NOKEY"))
 
   def escape(bs: ByteString, quote: Boolean = true): String = {
     val sb = new StringBuilder(if (quote) "\"" else "")
@@ -275,7 +275,7 @@ object RedisMsg {
     private[this] var numberValue: Long = 0
     private[this] val dataBuilder = new ByteStringBuilder
 
-    def fail(msg: String) = throw new InvalidDataException(msg)
+    def fail(msg: String): Nothing = throw new InvalidDataException(msg)
 
     def decodeMore(bytes: ByteString)(consumer: RedisMsg => Unit): Unit = {
       @tailrec def completed(msg: RedisMsg): Unit = {

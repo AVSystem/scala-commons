@@ -263,8 +263,8 @@ object RemCount {
     new RemCount(if (fromHead) count else -count)
   }
   final val All = new RemCount(0)
-  def fromHead(count: Long) = RemCount(count, fromHead = true)
-  def fromTail(count: Long) = RemCount(count, fromHead = false)
+  def fromHead(count: Long): RemCount = RemCount(count, fromHead = true)
+  def fromTail(count: Long): RemCount = RemCount(count, fromHead = false)
 }
 
 sealed trait ListEnd extends Product with Serializable

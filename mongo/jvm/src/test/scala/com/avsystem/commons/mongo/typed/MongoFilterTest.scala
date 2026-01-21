@@ -12,10 +12,10 @@ class MongoFilterTest extends AnyFunSuite {
   final val Ute = UnionTestEntity
   final val Ir = InnerRecord
 
-  final val IntRef = Rte.ref(_.int)
+  final val IntRef: MongoPropertyRef[RecordTestEntity,Int] = Rte.ref(_.int)
   final val IntOptRef = Rte.ref(_.intOpt)
-  final val IntsRef = Rte.ref(_.intList)
-  final val StrRef = Rte.ref(_.renamedStr)
+  final val IntsRef: MongoPropertyRef[RecordTestEntity,List[Int]] = Rte.ref(_.intList)
+  final val StrRef: MongoPropertyRef[RecordTestEntity,String] = Rte.ref(_.renamedStr)
 
   test("empty") {
     assert(MongoFilter.empty[UnionTestEntity].toBson.toString == "{}")

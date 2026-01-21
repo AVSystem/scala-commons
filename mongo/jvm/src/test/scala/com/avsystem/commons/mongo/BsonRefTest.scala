@@ -10,7 +10,7 @@ case class InnerClass(
 object InnerClass extends BsonRef.Creator[InnerClass] {
   implicit val codec: GenCodec[InnerClass] = GenCodec.materialize
 
-  final val MapRef = ref(_.map)
+  final val MapRef: BsonRef[InnerClass,Map[String,String]] = ref(_.map)
 }
 
 @transparent

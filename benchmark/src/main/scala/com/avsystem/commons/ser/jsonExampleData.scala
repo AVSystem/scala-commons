@@ -14,7 +14,7 @@ case class Something(
 )
 @nowarn
 object Something extends HasGenCodec[Something] {
-  val Example = Something(
+  val Example: Something = Something(
     "The Name of Something",
     2017,
     List(
@@ -30,7 +30,7 @@ object Something extends HasGenCodec[Something] {
     )
   )
 
-  final val ExampleJsonString = JsonStringOutput.write(Example)
+  final val ExampleJsonString: String = JsonStringOutput.write(Example)
 }
 
 case class Primitives(
@@ -41,9 +41,9 @@ case class Primitives(
 )
 @nowarn
 object Primitives extends HasGenCodec[Primitives] {
-  val Example = Primitives(b = true, 42, 4332565, 3.14)
+  val Example: Primitives = Primitives(b = true, 42, 4332565, 3.14)
 
-  final val ExampleJsonString = JsonStringOutput.write(Example)
+  final val ExampleJsonString: String = JsonStringOutput.write(Example)
 }
 
 case class Stuff(map: Map[String, Boolean], factor: Double)
@@ -61,13 +61,13 @@ case class Case6(i: Int) extends SealedStuff with FlatSealedStuff
 case class Case7(i: Int) extends SealedStuff with FlatSealedStuff
 @nowarn
 object SealedStuff extends HasGenCodec[SealedStuff] {
-  final val ExampleList = List[SealedStuff](Case5(5), Case3(3), Case1(1), Case7(7), Case2(2), Case4(4), Case6(6))
-  final val ExampleJsonString = JsonStringOutput.write(ExampleList)
+  final val ExampleList: List[SealedStuff] = List[SealedStuff](Case5(5), Case3(3), Case1(1), Case7(7), Case2(2), Case4(4), Case6(6))
+  final val ExampleJsonString: String = JsonStringOutput.write(ExampleList)
 }
 object FlatSealedStuff extends HasGenCodec[FlatSealedStuff] {
 
-  final val ExampleList = List[FlatSealedStuff](Case5(5), Case3(3), Case1(1), Case7(7), Case2(2), Case4(4), Case6(6))
-  final val ExampleJsonString = JsonStringOutput.write(ExampleList)
+  final val ExampleList: List[FlatSealedStuff] = List[FlatSealedStuff](Case5(5), Case3(3), Case1(1), Case7(7), Case2(2), Case4(4), Case6(6))
+  final val ExampleJsonString: String = JsonStringOutput.write(ExampleList)
 }
 
 case class Foo(s: String, d: Double, i: Int, l: Long, bs: List[Boolean])
@@ -77,5 +77,5 @@ object Foo extends HasGenCodec[Foo] {
     ("b" * i) -> Foo("a" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
   }.toMap
 
-  final val ExampleJsonString = JsonStringOutput.write(ExampleMap)
+  final val ExampleJsonString: String = JsonStringOutput.write(ExampleMap)
 }

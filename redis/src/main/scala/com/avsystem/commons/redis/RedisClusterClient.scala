@@ -376,7 +376,7 @@ final class RedisClusterClient(
 }
 
 private object RedisClusterClient {
-  final val GetClientTimeout = Timeout(1.seconds)
+  final val GetClientTimeout: Timeout = Timeout(1.seconds)
 
   case class CollectionPacks(coll: BIndexedSeq[RawCommandPack]) extends RawCommandPacks {
     def emitCommandPacks(consumer: RawCommandPack => Unit): Unit = coll.foreach(consumer)

@@ -63,8 +63,8 @@ case class JsonOptions(
   binaryFormat: JsonBinaryFormat = JsonBinaryFormat.ByteArray,
 )
 object JsonOptions {
-  final val Default = JsonOptions()
-  final val Pretty = JsonOptions(formatting = JsonFormatting.Pretty)
+  final val Default: JsonOptions = JsonOptions()
+  final val Pretty: JsonOptions = JsonOptions(formatting = JsonFormatting.Pretty)
 }
 
 case class JsonFormatting(

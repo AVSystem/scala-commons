@@ -46,13 +46,13 @@ object CodecTestData {
   val jDoubleHashMap: JHashMap[Double, Int] = doubleMap(new JHashMap[Double, Int])
   val jLinkedHashMap: JLinkedHashMap[String, Int] = stringMap(new JLinkedHashMap[String, Int])
 
-  val some = Option(42)
-  val none = Option.empty[Int]
-  val list = List(1, 2, 3)
-  val set = Set(1, 2, 3)
+  val some: Option[Int] = Option(42)
+  val none: Option[Int] = None
+  val list: List[Int] = List(1, 2, 3)
+  val set: Set[Int] = Set(1, 2, 3)
   val map = Map("1" -> 1, "2" -> 2, "3" -> 3)
   val hashMap = IHashMap("1" -> 1, "2" -> 2, "3" -> 3)
-  val intMap = Map(1 -> 1, 2 -> 2, 3 -> 3)
+  val intMap: Map[Int,Int] = Map(1 -> 1, 2 -> 2, 3 -> 3)
   val doubleMap = Map(1.0 -> 1, 2.0 -> 2, 3.0 -> 3)
 
   case class ValueClass(str: String) extends AnyVal

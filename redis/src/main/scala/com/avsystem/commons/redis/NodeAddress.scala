@@ -8,8 +8,8 @@ object NodeAddress {
   final val DefaultPort = 6379
   final val DefaultSentinelPort = 26379
 
-  final val Default = NodeAddress()
-  final val DefaultSentinel = NodeAddress(port = DefaultSentinelPort)
+  final val Default: NodeAddress = NodeAddress()
+  final val DefaultSentinel: NodeAddress = NodeAddress(port = DefaultSentinelPort)
 
   def parse(str: String): NodeAddress = {
     val Array(ip, port) = str.split(':')
@@ -18,5 +18,5 @@ object NodeAddress {
 }
 final case class NodeAddress(ip: String = NodeAddress.DefaultIP, port: Int = NodeAddress.DefaultPort) {
   def socketAddress = new InetSocketAddress(ip, port)
-  override def toString = s"$ip:$port"
+  override def toString: String = s"$ip:$port"
 }

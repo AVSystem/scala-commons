@@ -159,7 +159,7 @@ trait OrderedEnum {
 }
 object OrderedEnum {
   private object reusableOrdering extends Ordering[OrderedEnum] {
-    def compare(x: OrderedEnum, y: OrderedEnum) = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
+    def compare(x: OrderedEnum, y: OrderedEnum): Int = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
   }
   implicit def ordering[T <: OrderedEnum]: Ordering[T] =
     reusableOrdering.asInstanceOf[Ordering[T]]

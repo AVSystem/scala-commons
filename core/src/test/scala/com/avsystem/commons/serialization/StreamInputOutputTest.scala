@@ -31,7 +31,7 @@ case class FieldTypes(
 
 class StreamInputOutputTest extends AnyFunSuite {
 
-  val fieldTypesInstance = FieldTypes(
+  val fieldTypesInstance: FieldTypes = FieldTypes(
     null,
     (),
     "str",
@@ -58,13 +58,13 @@ class StreamInputOutputTest extends AnyFunSuite {
   implicit val objCodec: GenCodec[Obj] = GenCodec.materialize[Obj]
   implicit val fieldTypesCodec: GenCodec[FieldTypes] = GenCodec.materialize[FieldTypes]
 
-  def outputs() = {
+  def outputs(): (ByteArrayOutputStream, StreamOutput) = {
     val os = new ByteArrayOutputStream()
     val output = new StreamOutput(new DataOutputStream(os))
     (os, output)
   }
 
-  def inputs(os: ByteArrayOutputStream) = {
+  def inputs(os: ByteArrayOutputStream): (ByteArrayInputStream, StreamInput) = {
     val is = new ByteArrayInputStream(os.toByteArray)
     val input = new StreamInput(new DataInputStream(is))
     (is, input)

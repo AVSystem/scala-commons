@@ -210,8 +210,8 @@ private object StreamObjectInput {
     def skip(): Unit = nope
   }
 
-  val NoneYet = EmptyFieldInput("NONE")
-  val End = EmptyFieldInput("END")
+  val NoneYet: EmptyFieldInput = EmptyFieldInput("NONE")
+  val End: EmptyFieldInput = EmptyFieldInput("END")
 }
 
 class StreamOutput(os: DataOutputStream) extends OutputAndSimpleOutput {

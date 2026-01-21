@@ -14,7 +14,7 @@ trait CborKeyCodec {
   def readFieldKey(input: CborInput): String
 }
 object CborKeyCodec {
-  final val Default = new CborKeyCodec {
+  final val Default: CborKeyCodec = new CborKeyCodec {
     def writeFieldKey(fieldName: String, output: CborOutput): Unit = output.writeString(fieldName)
     def readFieldKey(input: CborInput): String = input.readString()
   }

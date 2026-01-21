@@ -352,25 +352,25 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
     case NonFatal(e) => throw CaseWriteFailed(typeRepr, caseName, e)
   }
 
-  protected final def unknownCase(value: T) =
+  protected final def unknownCase(value: T): Nothing =
     throw UnknownWrittenCase(typeRepr, value)
 
-  protected final def fieldMissing(field: String) =
+  protected final def fieldMissing(field: String): Nothing =
     throw MissingField(typeRepr, field)
 
-  protected final def unknownCase(caseName: String) =
+  protected final def unknownCase(caseName: String): Nothing =
     throw UnknownCase(typeRepr, caseName)
 
-  protected final def missingCase(fieldToRead: String) =
+  protected final def missingCase(fieldToRead: String): Nothing =
     throw MissingCase(typeRepr, caseFieldName, Opt(fieldToRead))
 
-  protected final def missingCase =
+  protected final def missingCase: Nothing =
     throw MissingCase(typeRepr, caseFieldName, Opt.Empty)
 
-  protected final def notSingleField(empty: Boolean) =
+  protected final def notSingleField(empty: Boolean): Nothing =
     throw NotSingleField(typeRepr, empty)
 
-  protected final def unapplyFailed =
+  protected final def unapplyFailed: Nothing =
     throw UnapplyFailed(typeRepr)
 }
 

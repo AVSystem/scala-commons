@@ -19,7 +19,7 @@ class MongoCodec[A, BSON <: BsonValue](
   val aClass = cta.runtimeClass.asInstanceOf[Class[A]]
   val bsonClass = ctbson.runtimeClass.asInstanceOf[Class[BSON]]
 
-  def decode(reader: BsonReader, decoderContext: DecoderContext) =
+  def decode(reader: BsonReader, decoderContext: DecoderContext): A =
     bsonCodec.fromBson(registry.get(bsonClass).decode(reader, decoderContext))
 
   def encode(writer: BsonWriter, value: A, encoderContext: EncoderContext) =

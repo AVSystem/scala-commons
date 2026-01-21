@@ -63,7 +63,7 @@ object BsonCodecBenchmark {
   val strKey: DocKey[String, BsonString] = string.key("str")
   val listKey: DocKey[List[Int], BsonArray] = int32.collection[List].key("list")
 
-  val nestedCodec = new DocumentCodec[Nested] {
+  val nestedCodec: DocumentCodec[Nested] = new DocumentCodec[Nested] {
     override def toDocument(t: Nested): Doc = Doc()
       .put(listKey, t.list)
       .put(intKey, t.int)
@@ -76,7 +76,7 @@ object BsonCodecBenchmark {
 
   val nestedKey: DocKey[Nested, BsonDocument] = nestedCodec.bsonCodec.key("nested")
 
-  val somethingCodec = new DocumentCodec[Toplevel] {
+  val somethingCodec: DocumentCodec[Toplevel] = new DocumentCodec[Toplevel] {
     override def toDocument(t: Toplevel): Doc = Doc()
       .put(intKey, t.int)
       .put(nestedKey, t.nested)

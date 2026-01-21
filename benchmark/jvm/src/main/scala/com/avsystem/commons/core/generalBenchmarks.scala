@@ -67,7 +67,7 @@ class LoopBenchmark {
 }
 
 object LoopBenchmark {
-  val collection = (1 to 100).toList
+  val collection: List[Int] = (1 to 100).toList
 }
 
 class Box(var n: Int) {

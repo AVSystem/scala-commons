@@ -10,11 +10,11 @@ object TypeClassDerivationTest {
 
   def materialize[T]: TC[T] = macro macros.TestMacros.materialize[T]
 
-  def typeRepr[T: ru.WeakTypeTag] = ru.weakTypeOf[T].toString
+  def typeRepr[T: ru.WeakTypeTag]: String = ru.weakTypeOf[T].toString
 
   class DefVal(v: => Any) {
     lazy val value = v
-    override def equals(other: Any) = other match {
+    override def equals(other: Any): Boolean = other match {
       case otherDef: DefVal => value == otherDef.value
       case _ => false
     }
@@ -50,7 +50,7 @@ object TypeClassDerivationTest {
       }
     }
     object Deferred {
-      def apply[T](underlying: TC[T]) = {
+      def apply[T](underlying: TC[T]): Deferred[T] = {
         val res = new Deferred[T]
         res.underlying = underlying
         res

@@ -215,7 +215,7 @@ lazy val root = project
       analyzer,
       macros,
       `core-js`,
-      comprof,
+//      comprof,
     ),
   )
 
@@ -269,7 +269,7 @@ def sameNameAs(proj: Project) =
 
 lazy val macros = project.settings(
   jvmCommonSettings,
-  scalaVersion := "2.13.12",
+  scalaVersion := "2.13.18",
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
 )
 

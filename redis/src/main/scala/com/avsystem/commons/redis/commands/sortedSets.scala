@@ -719,8 +719,8 @@ case class ScoreLimit(value: Double, inclusive: Boolean) {
     })
 }
 object ScoreLimit {
-  def incl(value: Double) = ScoreLimit(value, inclusive = true)
-  def excl(value: Double) = ScoreLimit(value, inclusive = false)
+  def incl(value: Double): ScoreLimit = ScoreLimit(value, inclusive = true)
+  def excl(value: Double): ScoreLimit = ScoreLimit(value, inclusive = false)
 
   val MinusInf: ScoreLimit = ScoreLimit.incl(Double.NegativeInfinity)
   val PlusInf: ScoreLimit = ScoreLimit.incl(Double.PositiveInfinity)

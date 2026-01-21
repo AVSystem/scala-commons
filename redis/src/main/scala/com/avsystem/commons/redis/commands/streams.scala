@@ -534,7 +534,7 @@ case class XPendingOverview(
   countByConsumer: BMap[XConsumer, Long],
 )
 object XPendingOverview {
-  final val Empty = XPendingOverview(0, XEntryId.Zero, XEntryId.Zero, Map.empty)
+  final val Empty: XPendingOverview = XPendingOverview(0, XEntryId.Zero, XEntryId.Zero, Map.empty)
 }
 
 case class XPendingEntry(

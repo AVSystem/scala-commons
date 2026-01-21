@@ -7,9 +7,9 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
 
   import global._
 
-  lazy val explicitGenericsAnnotTpe = classType("com.avsystem.commons.annotation.explicitGenerics")
+  lazy val explicitGenericsAnnotTpe: Type = classType("com.avsystem.commons.annotation.explicitGenerics")
 
-  def analyze(unit: CompilationUnit) = if (explicitGenericsAnnotTpe != NoType) {
+  def analyze(unit: CompilationUnit): Unit = if (explicitGenericsAnnotTpe != NoType) {
     def requiresExplicitGenerics(sym: Symbol): Boolean =
       sym != NoSymbol && (sym :: sym.overrides).flatMap(_.annotations).exists(_.tree.tpe <:< explicitGenericsAnnotTpe)
 

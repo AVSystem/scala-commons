@@ -44,7 +44,7 @@ object DocTest {
   val Cool = "cool"
   val Shiny = "shiny"
 
-  val something = new BsonCodec[Something, BsonString] {
+  val something: DocKey[Something,BsonString] = new BsonCodec[Something, BsonString] {
     override def fromBson(bson: BsonString) = bson.getValue match {
       case Cool => SomethingCool
       case Shiny => SomethingShiny
@@ -55,7 +55,7 @@ object DocTest {
     })
   }.key("something")
 
-  val somethingCool = new BsonCodec[SomethingCool.type, BsonString] {
+  val somethingCool: DocKey[SomethingCool.type,BsonString] = new BsonCodec[SomethingCool.type, BsonString] {
     override def fromBson(bson: BsonString) = SomethingCool
     override def toBson(a: SomethingCool.type) = new BsonString(Cool)
   }.key("somethingCool")

@@ -358,7 +358,7 @@ object ClientId {
     ClientId(java.lang.Long.parseUnsignedLong(str))
 }
 final case class ClientAddress(ip: String, port: Int) extends ClientFilter {
-  override def toString = s"$ip:$port"
+  override def toString: String = s"$ip:$port"
 }
 object ClientAddress {
   def apply(str: String): ClientAddress = {
@@ -574,7 +574,7 @@ object CommandFlags {
   val Fast = new CommandFlags(1 << 12)
   val Movablekeys = new CommandFlags(1 << 13)
 
-  val byRepr = Map(
+  val byRepr: Map[String,CommandFlags] = Map(
     "write" -> Write,
     "readonly" -> Readonly,
     "denyoom" -> Denyoom,
@@ -597,9 +597,9 @@ case class MasterRole(replOffset: Long, slaveOffsets: Seq[(NodeAddress, Long)]) 
 case class SlaveRole(master: NodeAddress, replState: ReplState, receivedDataOffset: Long) extends RedisRole
 case class SentinelRole(masterNames: Seq[String]) extends RedisRole
 object RedisRole {
-  final val MasterStr = BulkStringMsg(ByteString("master"))
-  final val SlaveStr = BulkStringMsg(ByteString("slave"))
-  final val SentinelStr = BulkStringMsg(ByteString("sentinel"))
+  final val MasterStr: BulkStringMsg = BulkStringMsg(ByteString("master"))
+  final val SlaveStr: BulkStringMsg = BulkStringMsg(ByteString("slave"))
+  final val SentinelStr: BulkStringMsg = BulkStringMsg(ByteString("sentinel"))
 }
 
 sealed abstract class ReplState(val name: String) extends NamedEnum

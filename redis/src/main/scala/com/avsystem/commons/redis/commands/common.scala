@@ -20,7 +20,7 @@ case class Cursor(raw: Long) extends AnyVal {
   override def toString: String = raw.toString
 }
 object Cursor {
-  final val NoCursor = Cursor(0)
+  final val NoCursor: Cursor = Cursor(0)
 }
 
 abstract class ParsedInfo(info: String, attrSeparator: String, nameValueSeparator: String) {

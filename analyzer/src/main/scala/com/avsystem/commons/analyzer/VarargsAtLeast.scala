@@ -7,7 +7,7 @@ class VarargsAtLeast(g: Global) extends AnalyzerRule(g, "varargsAtLeast") {
 
   import global._
 
-  lazy val atLeastAnnotTpe = classType("com.avsystem.commons.annotation.atLeast")
+  lazy val atLeastAnnotTpe: Type = classType("com.avsystem.commons.annotation.atLeast")
 
   def analyze(unit: CompilationUnit): Unit = if (atLeastAnnotTpe != NoType) {
     def isVarargParam(tree: Tree) = tree match {

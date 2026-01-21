@@ -1,5 +1,6 @@
 logLevel := Level.Warn
 
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.20.2")
 addSbtPlugin("org.scala-js" % "sbt-jsdependencies" % "1.0.2")
 addSbtPlugin("org.jetbrains.scala" % "sbt-ide-settings" % "1.1.3")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")

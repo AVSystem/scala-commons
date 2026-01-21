@@ -26,31 +26,31 @@ object HoconType {
   import com.typesafe.config.ConfigValueType._
 
   implicit object anyHoconType extends HoconType[Any] {
-    def get(value: ConfigValue) =
+    def get(value: ConfigValue): Object =
       requireNonNull(value).unwrapped
   }
 
   implicit object anyRefHoconType extends HoconType[AnyRef] {
-    def get(value: ConfigValue) =
+    def get(value: ConfigValue): Object =
       requireNonNull(value).unwrapped
   }
 
   implicit object nullHoconType extends HoconType[Null] {
-    def get(value: ConfigValue) = {
+    def get(value: ConfigValue): Null = {
       requireType(NULL, value)
       null
     }
   }
 
   implicit object stringHoconType extends HoconType[String] {
-    def get(value: ConfigValue) = {
+    def get(value: ConfigValue): String = {
       requireType(STRING, value)
       value.unwrapped.asInstanceOf[String]
     }
   }
 
   implicit object booleanHoconType extends HoconType[Boolean] {
-    def get(value: ConfigValue) = {
+    def get(value: ConfigValue): Boolean = {
       requireType(BOOLEAN, value)
       value.unwrapped.asInstanceOf[Boolean]
     }
@@ -78,7 +78,7 @@ object HoconType {
   }
 
   implicit object configHoconType extends HoconType[Config] {
-    def get(value: ConfigValue) = {
+    def get(value: ConfigValue): Config = {
       requireType(OBJECT, value)
       value.asInstanceOf[ConfigObject].toConfig
     }
@@ -89,14 +89,14 @@ object HoconType {
   }
 
   implicit object configObjectHoconType extends HoconType[ConfigObject] {
-    def get(value: ConfigValue) = {
+    def get(value: ConfigValue): ConfigObject = {
       requireType(OBJECT, value)
       value.asInstanceOf[ConfigObject]
     }
   }
 
   implicit object configListHoconType extends HoconType[ConfigList] {
-    def get(value: ConfigValue) = {
+    def get(value: ConfigValue): ConfigList = {
       requireType(LIST, value)
       value.asInstanceOf[ConfigList]
     }

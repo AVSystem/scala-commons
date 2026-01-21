@@ -17,9 +17,9 @@ trait GuavaInterop {
   type GSupplier[T] = gbase.Supplier[T]
   type GPredicate[T] = gbase.Predicate[T]
 
-  def gFunction[F, T](fun: F => T) = Sam[GFunction[F, T]](fun)
-  def gSupplier[T](expr: => T) = Sam[GSupplier[T]](expr)
-  def gPredicate[T](pred: T => Boolean) = Sam[GPredicate[T]](pred)
+  def gFunction[F, T](fun: F => T): GFunction[F,T] = Sam[GFunction[F, T]](fun)
+  def gSupplier[T](expr: => T): GSupplier[T] = Sam[GSupplier[T]](expr)
+  def gPredicate[T](pred: T => Boolean): GPredicate[T] = Sam[GPredicate[T]](pred)
 
   implicit def toDecorateAsScala[T](gfut: ListenableFuture[T]): DecorateFutureAsScala[T] =
     new DecorateFutureAsScala(gfut)

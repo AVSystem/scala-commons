@@ -23,7 +23,7 @@ object Toplevel {
 @State(Scope.Thread)
 class StreamInputOutputBenchmark {
 
-  val something = Toplevel(35, Nested(List(121, 122, 123, 124, 125, 126), 53), "lol")
+  val something: Toplevel = Toplevel(35, Nested(List(121, 122, 123, 124, 125, 126), 53), "lol")
 
   val inputArray: Array[Byte] = {
     val os = new ByteArrayOutputStream()

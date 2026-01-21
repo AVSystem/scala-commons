@@ -11,7 +11,7 @@ case class ApiInfo[T](
   @infer ts: TypeString[T],
   @multi @mangleOverloads @rpcMethodMetadata methods: List[MethodInfo[_]],
 ) extends TypedMetadata[T] {
-  def repr = s"${ts.value} {${methods.map(m => "\n  " + m.repr).mkString}\n}"
+  def repr: String = s"${ts.value} {${methods.map(m => "\n  " + m.repr).mkString}\n}"
 }
 object ApiInfo extends ApiMetadataCompanion[ApiInfo]
 

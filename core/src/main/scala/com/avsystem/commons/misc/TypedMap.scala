@@ -66,7 +66,7 @@ class TypedMap[K[_]](val raw: Map[K[_], Any]) extends AnyVal {
 
   def size: Int = raw.size
 
-  override def toString = s"TypedMap($raw)"
+  override def toString: String = s"TypedMap($raw)"
 }
 
 object TypedMap {

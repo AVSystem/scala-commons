@@ -36,10 +36,10 @@ object PubSubEvent {
   final case class Pmessage(pattern: String, channel: String, message: ValidRedisMsg) extends PubSubEvent
   case object ConnectionLost extends PubSubEvent
 
-  final val MessageStr = BulkStringMsg(ByteString("message"))
-  final val PmessageStr = BulkStringMsg(ByteString("pmessage"))
-  final val SubscribeStr = BulkStringMsg(ByteString("subscribe"))
-  final val PsubscribeStr = BulkStringMsg(ByteString("psubscribe"))
-  final val UnsubscribeStr = BulkStringMsg(ByteString("unsubscribe"))
-  final val PunsubscribeStr = BulkStringMsg(ByteString("punsubscribe"))
+  final val MessageStr: BulkStringMsg = BulkStringMsg(ByteString("message"))
+  final val PmessageStr: BulkStringMsg = BulkStringMsg(ByteString("pmessage"))
+  final val SubscribeStr: BulkStringMsg = BulkStringMsg(ByteString("subscribe"))
+  final val PsubscribeStr: BulkStringMsg = BulkStringMsg(ByteString("psubscribe"))
+  final val UnsubscribeStr: BulkStringMsg = BulkStringMsg(ByteString("unsubscribe"))
+  final val PunsubscribeStr: BulkStringMsg = BulkStringMsg(ByteString("punsubscribe"))
 }

@@ -80,14 +80,14 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
     throw new IllegalArgumentException(s"Unexpected property $key at ${value.origin.description}")
 
   private object BeanDefinition {
-    val BeanOnlyAttrs = BeanAttrs - MetaAttr
+    val BeanOnlyAttrs: Set[String] = BeanAttrs - MetaAttr
 
-    def unapply(obj: ConfigObject) =
+    def unapply(obj: ConfigObject): Option[ConfigObject] =
       if (BeanOnlyAttrs.exists(obj.as[ConfigObject].keySet.contains)) Some(obj) else None
   }
 
   private class ObjectWithAttributePresentExtractor(elementAttr: String) {
-    def unapply(obj: ConfigObject) =
+    def unapply(obj: ConfigObject): Option[ConfigObject] =
       if (obj.containsKey(elementAttr)) Some(obj) else None
   }
 

@@ -208,8 +208,8 @@ trait ReplicationInfo extends RedisInfo {
 object ReplicationInfo extends RedisInfoSection[ReplicationInfo]("replication")
 
 case class SlaveInfo(infoLine: String) extends ParsedInfo(infoLine, ",", "=") {
-  def addr = NodeAddress(attrMap("ip"), attrMap("port").toInt)
-  def state = SlaveState.byName(attrMap("state"))
+  def addr: NodeAddress = NodeAddress(attrMap("ip"), attrMap("port").toInt)
+  def state: SlaveState = SlaveState.byName(attrMap("state"))
   def offset: Long = attrMap("offset").toLong
   def lag: Long = attrMap("lag").toLong
 }

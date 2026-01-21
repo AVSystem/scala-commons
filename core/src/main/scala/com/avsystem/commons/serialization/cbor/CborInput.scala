@@ -149,7 +149,7 @@ final class CborReader(val data: RawCbor) {
     result
   }
 
-  def unexpected(ib: InitialByte, expected: String) =
+  def unexpected(ib: InitialByte, expected: String): Nothing =
     throw new ReadFailure(s"Unexpected initial byte: $ib, expected $expected")
 }
 

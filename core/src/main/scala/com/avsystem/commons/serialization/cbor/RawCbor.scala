@@ -49,7 +49,7 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
     else safeCopy
 }
 object RawCbor extends TypeMarker[RawCbor] {
-  final val Empty = RawCbor(Array.empty)
+  final val Empty: RawCbor = RawCbor(Array.empty)
 
   def apply(bytes: Array[Byte]): RawCbor =
     RawCbor(bytes, 0, bytes.length)

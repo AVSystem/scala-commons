@@ -42,7 +42,7 @@ class Timestamp(val millis: Long) extends AnyVal with Comparable[Timestamp] {
   override def toString: String = IsoInstant.format(millis)
 }
 object Timestamp {
-  final val Zero = Timestamp(0)
+  final val Zero: Timestamp = Timestamp(0)
 
   def apply(millis: Long): Timestamp = new Timestamp(millis)
   def unapply(timestamp: Timestamp): Opt[Long] = Opt(timestamp.millis)

@@ -83,8 +83,8 @@ object RedisApi {
   object Raw {
     def apply[S <: RedisSerialization: ValueOf]: Raw[S] = new Raw(ValueOf[S])
 
-    final val StringTyped = apply[RedisSerialization.Strings.type]
-    final val BinaryTyped = apply[RedisSerialization.ByteStrings.type]
+    final val StringTyped: Raw[RedisSerialization.Strings.type] = apply[RedisSerialization.Strings.type]
+    final val BinaryTyped: Raw[RedisSerialization.ByteStrings.type] = apply[RedisSerialization.ByteStrings.type]
   }
 
   class Batches[S <: RedisSerialization](val serialization: S)
@@ -99,8 +99,8 @@ object RedisApi {
   object Batches {
     def apply[S <: RedisSerialization: ValueOf]: Batches[S] = new Batches(ValueOf[S])
 
-    final val StringTyped = apply[RedisSerialization.Strings.type]
-    final val BinaryTyped = apply[RedisSerialization.ByteStrings.type]
+    final val StringTyped: Batches[RedisSerialization.Strings.type] = apply[RedisSerialization.Strings.type]
+    final val BinaryTyped: Batches[RedisSerialization.ByteStrings.type] = apply[RedisSerialization.ByteStrings.type]
   }
 
   /** Entry point for API variants which expose only keyed commands.
