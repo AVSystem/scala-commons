@@ -6,5 +6,5 @@ package derivation
   */
 sealed trait AllowImplicitMacro[T]
 object AllowImplicitMacro {
-  def apply[T]: AllowImplicitMacro[T] = null
+  def apply[T]: AllowImplicitMacro[T] |Null= null
 }

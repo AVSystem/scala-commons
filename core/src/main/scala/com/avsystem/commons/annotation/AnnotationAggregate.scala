@@ -49,8 +49,7 @@ trait AnnotationAggregate extends StaticAnnotation {
     */
   def aggregated: List[StaticAnnotation]
 
-  protected def reifyAggregated: List[StaticAnnotation] = macro macros.misc.MiscMacros.aggregatedAnnots
-  inline protected def reifyAggregated: List[StaticAnnotation] = ${reifyAggregatedImpl }
+  def reifyAggregated: List[StaticAnnotation] = ???
 }
 
 def reifyAggregatedImpl(using Quotes): Expr[List[StaticAnnotation]]  = '{???}

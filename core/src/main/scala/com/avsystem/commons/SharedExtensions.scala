@@ -3,8 +3,8 @@ package com.avsystem.commons
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.*
 
-import scala.annotation.{nowarn, tailrec}
-import scala.collection.{mutable, AbstractIterator, BuildFrom, Factory}
+import scala.annotation.nowarn
+import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
 
 trait SharedExtensions {
   type Quotes = scala.quoted.Quotes
@@ -19,7 +19,7 @@ trait SharedExtensions {
 
   implicit def lazyUniversalOps[A](a: => A): LazyUniversalOps[A] = new LazyUniversalOps(() => a)
 
-  implicit def nullableOps[A >: Null](a: A): NullableOps[A] = new NullableOps(a)
+  implicit def nullableOps[A](a: A | Null): NullableOps[A] = new NullableOps(a)
 
   implicit def stringOps(str: String): StringOps = new StringOps(str)
 
@@ -134,30 +134,42 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     /** Prints AST of the prefix in a compilation error. Useful for debugging macros.
       */
-    def showAst: A = macro macros.UniversalMacros.showAst[A]
 
-    /** Prints raw AST of the prefix in a compilation error. Useful for debugging macros.
-      */
-    def showRawAst: A = macro macros.UniversalMacros.showRawAst[A]
-
-    def showSymbol: A = macro macros.UniversalMacros.showSymbol[A]
-
-    def showSymbolFullName: A = macro macros.UniversalMacros.showSymbolFullName[A]
-
-    def showType: A = macro macros.UniversalMacros.showType[A]
-
-    def showRawType: A = macro macros.UniversalMacros.showRawType[A]
-
-    def showTypeSymbol: A = macro macros.UniversalMacros.showTypeSymbol[A]
-
-    def showTypeSymbolFullName: A = macro macros.UniversalMacros.showTypeSymbolFullName[A]
-
-    /** Returns source code of the prefix expression as string, exactly as in the source file. Strips common
-      * indentation. Requires -Yrangepos enabled.
-      */
-    def sourceCode: String = macro macros.UniversalMacros.sourceCode
-
-    def withSourceCode: (A, String) = macro macros.UniversalMacros.withSourceCode
+      //todo
+//    def showAst: A = macro macros.UniversalMacros.showAst[A]
+//
+//    /** Prints raw AST of the prefix in a compilation error. Useful for debugging macros.
+//      */
+//    inline def showAst[A] = ${ dummyImpl }
+//    def showRawAst: A = macro macros.UniversalMacros.showRawAst[A]
+//    inline def showRawAst[A] = ${ dummyImpl }
+//
+//    def showSymbol: A = macro macros.UniversalMacros.showSymbol[A]
+//    inline def showSymbol[A] = ${ dummyImpl }
+//
+//    def showSymbolFullName: A = macro macros.UniversalMacros.showSymbolFullName[A]
+//    inline def showSymbolFullName[A] = ${ dummyImpl }
+//
+//    def showType: A = macro macros.UniversalMacros.showType[A]
+//    inline def showType[A] = ${ dummyImpl }
+//
+//    def showRawType: A = macro macros.UniversalMacros.showRawType[A]
+//    inline def showRawType[A] = ${ dummyImpl }
+//
+//    def showTypeSymbol: A = macro macros.UniversalMacros.showTypeSymbol[A]
+//    inline def showTypeSymbol[A] = ${ dummyImpl }
+//
+//    def showTypeSymbolFullName: A = macro macros.UniversalMacros.showTypeSymbolFullName[A]
+//    inline def showTypeSymbolFullName[A] = ${ dummyImpl }
+//
+//    /** Returns source code of the prefix expression as string, exactly as in the source file. Strips common
+//      * indentation. Requires -Yrangepos enabled.
+//      */
+//    def sourceCode: String = macro macros.UniversalMacros.sourceCode
+//    inline def sourceCode[A] = ${ dummyImpl }
+//
+//    def withSourceCode: (A, String) = macro macros.UniversalMacros.withSourceCode
+//    inline def withSourceCode[A]: (A, String) = ${ dummyImpl }
 
     def debugMacro: A = a
   }
@@ -186,7 +198,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       }
   }
 
-  class NullableOps[A >: Null](private val a: A) extends AnyVal {
+  class NullableOps[A](private val a: A | Null) extends AnyVal {
     def optRef: OptRef[A] = OptRef(a)
   }
 
@@ -224,7 +236,7 @@ object SharedExtensionsUtils extends SharedExtensions {
         { m =>
           val insertSpace = m.end == m.start + 1 && m.start - 1 >= 0 && m.end < str.length &&
             !Character.isWhitespace(str.charAt(m.start - 1)) && !Character.isWhitespace(str.charAt(m.end))
-          if (insertSpace) " " else m.matched.substring(1)
+          if (insertSpace) " " else m.matched.nn.substring(1)
         },
       )
 
@@ -305,7 +317,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       mapNow(_ => ())
 
     def toVoid: Future[Void] =
-      mapNow(_ => null: Void)
+      mapNow(_ => null.asInstanceOf[Void])
 
     /** Returns a `Future` that completes with the specified `result`, but only after this future completes.
       */
@@ -410,7 +422,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `Some(null)` is translated to
       * `OptRef.Empty`.
       */
-    def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+    def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
       if (option.isEmpty) OptRef.Empty else OptRef(boxing.fun(option.get))
 
     def toNOpt: NOpt[A] =
@@ -452,7 +464,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `Success(null)` is translated to
       * `OptRef.Empty`.
       */
-    def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+    def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
       if (tr.isFailure) OptRef.Empty else OptRef(boxing.fun(tr.get))
 
     def toNOpt: NOpt[A] =
@@ -721,7 +733,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     def collectWhileDefined[B](pf: PartialFunction[A, B]): Iterator[B] =
       new AbstractIterator[B] {
         private var fetched = false
-        private var value: NOpt[B] = scala.compiletime.uninitialized
+        private var value: NOpt[B] = NOpt.Empty
 
         private def fetch(): Unit =
           if (it.hasNext) {
@@ -842,3 +854,5 @@ object SharedExtensionsUtils extends SharedExtensions {
       orElse(Ordering.by(f))
   }
 }
+
+def dummyImpl[A](using Quotes): Expr[A] = '{???}

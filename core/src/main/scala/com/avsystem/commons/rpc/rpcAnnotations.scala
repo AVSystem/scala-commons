@@ -270,7 +270,7 @@ final class unmatchedParam[Tag <: RpcTag](error: String) extends RawMethodAnnota
   * @param defaultTag
   *   default tag value assumed for untagged methods
   */
-final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawRpcAnnotation
+final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag| Null = null) extends RawRpcAnnotation
 
 /** Parameter tagging lets you have more explicit control over which raw parameters can match which real parameters.
   * This way you can have some of the parameters annotated in order to treat them differently, e.g. they may be
@@ -313,12 +313,12 @@ final class methodTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends
   * @param defaultTag
   *   default tag value assumed for untagged real parameters
   */
-final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
+final class paramTag[BaseTag <: RpcTag](val defaultTag: BaseTag| Null = null) extends RawSymAnnotation
 
 /** Like [[paramTag]] or [[methodTag]] but used for tagging case classes in sealed hierarchies when materializing ADT
   * metadata for them.
   */
-final class caseTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends RawSymAnnotation
+final class caseTag[BaseTag <: RpcTag](val defaultTag: BaseTag| Null = null) extends RawSymAnnotation
 
 /** Annotation applied on raw methods or raw parameters that limits matching real methods or real parameters to only
   * these annotated as `Tag`. See [[methodTag]] and [[paramTag]] for more explanation. NOTE: `Tag` may also be some
@@ -330,4 +330,4 @@ final class caseTag[BaseTag <: RpcTag](val defaultTag: BaseTag = null) extends R
   *   default tag value assumed for untagged methods/parameters - if specified, this effectively means that raw
   *   method/parameter will also match untagged real methods/parameters and assume the default tag value for them
   */
-final class tagged[Tag <: RpcTag](val whenUntagged: Tag = null) extends RawMethodAnnotation with RawParamAnnotation
+final class tagged[Tag <: RpcTag](val whenUntagged: Tag| Null = null) extends RawMethodAnnotation with RawParamAnnotation

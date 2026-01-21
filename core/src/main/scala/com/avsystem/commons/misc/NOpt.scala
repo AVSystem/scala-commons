@@ -12,7 +12,7 @@ object NOpt {
     * [[NOpt]]. Note however that [[NOpt]] does have a representation of "present null" (which can be obtained using
     * [[NOpt.some]]).
     */
-  def apply[A](value: A): NOpt[A] =
+  def apply[A](value: A | Null): NOpt[A] =
     if (value == null) NOpt.Empty
     else new NOpt(value)
 
@@ -41,7 +41,7 @@ object NOpt {
   */
 final class NOpt[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
-  import NOpt._
+  import NOpt.*
 
   private def value: A = (if (rawValue.asInstanceOf[AnyRef] eq NullMarker) null else rawValue).asInstanceOf[A]
 
@@ -70,7 +70,7 @@ final class NOpt[+A] private (private val rawValue: Any) extends AnyVal with Opt
     * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `NOpt(null)` is translated to
     * `OptRef.Empty`.
     */
-  @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+  @inline def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
   /** Converts this `NOpt` into `OptArg`. Because `OptArg` cannot hold `null`, `NOpt(null)` is translated to

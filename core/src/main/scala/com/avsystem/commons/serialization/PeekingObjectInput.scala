@@ -4,14 +4,14 @@ package serialization
 /** Wrapper over [[ObjectInput]] that lets you peek next field name without advancing the input.
   */
 final class PeekingObjectInput(original: ObjectInput) extends ObjectInput {
-  private var peekedField: FieldInput = scala.compiletime.uninitialized
+  private var peekedField: FieldInput | Null = scala.compiletime.uninitialized
 
   override def knownSize: Int = original.knownSize
 
   def peekNextFieldName: Opt[String] = peekedField match {
     case null if original.hasNext =>
       peekedField = original.nextField()
-      peekedField.fieldName.opt
+      peekedField.nn.fieldName.opt
     case null => Opt.Empty
     case fi => fi.fieldName.opt
   }

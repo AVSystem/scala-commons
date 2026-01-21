@@ -3,10 +3,10 @@ package com.avsystem.commons.misc
 import com.avsystem.commons.IIterable
 
 object OptRef {
-  def apply[A >: Null](value: A): OptRef[A] = new OptRef[A](value)
-  def unapply[A >: Null](opt: OptRef[A]): OptRef[A] = opt // name-based extractor
+  def apply[A](value: A | Null): OptRef[A] = new OptRef[A](value)
+  def unapply[A](opt: OptRef[A]): OptRef[A] = opt // name-based extractor
 
-  def some[A >: Null](value: A): OptRef[A] =
+  def some[A](value: A | Null): OptRef[A] =
     if (value != null) new OptRef[A](value)
     else throw new NullPointerException
 
@@ -15,17 +15,16 @@ object OptRef {
       if (optRef.isEmpty) Opt.Empty else Opt(unboxing.fun(optRef.get))
   }
 
-  implicit def opt2Iterable[A >: Null](xo: OptRef[A]): IIterable[A] = xo.toList
+  implicit def opt2Iterable[A](xo: OptRef[A]): IIterable[A] = xo.toList
 
-  final val Empty: OptRef[Null] = new OptRef[Null](null)
-
-  def empty[A >: Null]: OptRef[A] = Empty
+  final val Empty: OptRef[Nothing] = new OptRef[Nothing](null.asInstanceOf[Nothing])
+  def empty[A]: OptRef[A] = Empty
 
   private val nullFunc: Any => Null = _ => null
 
-  final class WithFilter[+A >: Null] private[OptRef] (self: OptRef[A], p: A => Boolean) {
-    def map[B >: Null](f: A => B): OptRef[B] = self.filter(p) `map` f
-    def flatMap[B >: Null](f: A => OptRef[B]): OptRef[B] = self.filter(p) `flatMap` f
+  final class WithFilter[+A] private[OptRef] (self: OptRef[A], p: A => Boolean) {
+    def map[B](f: A => B): OptRef[B] = self.filter(p) `map` f
+    def flatMap[B](f: A => OptRef[B]): OptRef[B] = self.filter(p) `flatMap` f
     def foreach[U](f: A => U): Unit = self.filter(p).foreach(f)
     def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }
@@ -45,13 +44,13 @@ object OptRef {
   * SI-7396 (`hashCode` fails on `OptRef.Empty` which means that you can't add [[OptRef]] values into hash sets or use
   * them as hash map keys).
   */
-final class OptRef[+A >: Null] private (private val value: A) extends AnyVal with OptBase[A] with Serializable {
+final class OptRef[+A] private (private val value: A | Null) extends AnyVal with OptBase[A] with Serializable {
   @inline def isEmpty: Boolean = value == null
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 
   @inline def get: A =
-    if (isEmpty) throw new NoSuchElementException("empty OptRef") else value
+    if (isEmpty) throw new NoSuchElementException("empty OptRef") else value.nn
 
   @inline def toOpt: Opt[A] =
     Opt(value)
@@ -66,66 +65,66 @@ final class OptRef[+A >: Null] private (private val value: A) extends AnyVal wit
     if (isEmpty) OptArg.Empty else OptArg(value)
 
   @inline def getOrElse[B >: A](default: => B): B =
-    if (isEmpty) default else value
+    if (isEmpty) default else value.nn
 
   @inline def orNull[B >: A](implicit ev: Null <:< B): B =
     value.asInstanceOf[B]
 
-  @inline def map[B >: Null](f: A => B): OptRef[B] =
-    if (isEmpty) OptRef.Empty else OptRef(f(value))
+  @inline def map[B](f: A => B | Null): OptRef[B] =
+    if (isEmpty) OptRef.Empty else OptRef(f(value.nn))
 
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
-    if (isEmpty) ifEmpty else f(value)
+    if (isEmpty) ifEmpty else f(value.nn)
 
   /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
     */
   @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
-    if (isEmpty) ifEmpty else f(value)
+    if (isEmpty) ifEmpty else f(value.nn)
 
-  @inline def flatMap[B >: Null](f: A => OptRef[B]): OptRef[B] =
-    if (isEmpty) OptRef.Empty else f(value)
+  @inline def flatMap[B](f: A => OptRef[B]): OptRef[B] =
+    if (isEmpty) OptRef.Empty else f(value.nn)
 
   @inline def filter(p: A => Boolean): OptRef[A] =
-    if (isEmpty || p(value)) this else OptRef.Empty
+    if (isEmpty || p(value.nn)) this else OptRef.Empty
 
   @inline def withFilter(p: A => Boolean): OptRef.WithFilter[A] =
     new OptRef.WithFilter[A](this, p)
 
   @inline def filterNot(p: A => Boolean): OptRef[A] =
-    if (isEmpty || !p(value)) this else OptRef.Empty
+    if (isEmpty || !p(value.nn)) this else OptRef.Empty
 
   @inline def contains[A1 >: A](elem: A1): Boolean =
-    !isEmpty && value == elem
+    !isEmpty && value.nn == elem
 
   @inline def exists(p: A => Boolean): Boolean =
-    !isEmpty && p(value)
+    !isEmpty && p(value.nn)
 
   @inline def forall(p: A => Boolean): Boolean =
-    isEmpty || p(value)
+    isEmpty || p(value.nn)
 
   @inline def foreach[U](f: A => U): Unit = {
-    if (!isEmpty) f(value)
+    if (!isEmpty) f(value.nn)
   }
 
-  @inline def collect[B >: Null](pf: PartialFunction[A, B]): OptRef[B] =
-    if (!isEmpty) new OptRef(pf.applyOrElse(value, OptRef.nullFunc)) else OptRef.Empty
+  @inline def collect[B](pf: PartialFunction[A, B]): OptRef[B] =
+    if (!isEmpty) new OptRef(pf.applyOrElse(value.nn, OptRef.nullFunc)) else OptRef.Empty
 
   @inline def orElse[B >: A](alternative: => OptRef[B]): OptRef[B] =
     if (isEmpty) alternative else this
 
   @inline def iterator: Iterator[A] =
-    if (isEmpty) Iterator.empty else Iterator.single(value)
+    if (isEmpty) Iterator.empty else Iterator.single(value.nn)
 
   @inline def toList: List[A] =
-    if (isEmpty) List() else new ::(value, Nil)
+    if (isEmpty) List() else new ::(value.nn, Nil)
 
   @inline def toRight[X](left: => X): Either[X, A] =
-    if (isEmpty) Left(left) else Right(value)
+    if (isEmpty) Left(left) else Right(value.nn)
 
   @inline def toLeft[X](right: => X): Either[A, X] =
-    if (isEmpty) Right(right) else Left(value)
+    if (isEmpty) Right(right) else Left(value.nn)
 
-  @inline def zip[B >: Null](that: OptRef[B]): OptRef[(A, B)] =
+  @inline def zip[B](that: OptRef[B]): OptRef[(A, B)] =
     if (isEmpty || that.isEmpty) OptRef.Empty else OptRef((this.get, that.get))
 
   /** Apply side effect only if OptRef is empty. It's a bit like foreach for OptRef.Empty

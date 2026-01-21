@@ -28,7 +28,7 @@ class IgnoreTransientDefaultMarkerTest extends AbstractCodecTest {
   override type Raw = Any
 
   def writeToOutput(write: Output => Unit): Any = {
-    var result: Any = null
+    var result: Any| Null = null
     write(CustomMarkersOutputWrapper(new SimpleValueOutput(v => result = v), IgnoreTransientDefaultMarker))
     result
   }

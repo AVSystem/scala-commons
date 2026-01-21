@@ -38,7 +38,7 @@ object RedisDataUtils {
 
 object RedisDataOutput {
   def write[T: GenCodec](value: T): ByteString = {
-    var bs: ByteString = null
+    var bs: ByteString| Null = null
     GenCodec.write(new RedisDataOutput(bs = _), value)
     bs
   }

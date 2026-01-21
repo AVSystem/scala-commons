@@ -26,12 +26,15 @@ trait MetadataCompanion[M[_]] {
 
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
     implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
+    inline implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = ${lazyMetadataImpl}
 
     @implicitNotFound("#{forNotLazy}")
     implicit def notFound[T](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
       ImplicitNotFound()
   }
 }
+
+def lazyMetadataImpl(using Quotes) = '{???}
 
 /** Like [[MetadataCompanion]] but allows the metadata class' type parameter to be bounded
   *
@@ -56,6 +59,7 @@ trait BoundedMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]] {
 
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
     implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
+    inline implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = ${lazyMetadataImpl}
 
     @implicitNotFound("#{forNotLazy}")
     implicit def notFound[T >: Lo <: Hi](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =

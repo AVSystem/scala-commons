@@ -10,7 +10,7 @@ trait ActorLazyLogging { self: Actor =>
   object log {
     val rawLog: LoggingAdapter = org.apache.pekko.event.Logging(context.system, self)
 
-    def error(msg: => String, cause: Throwable = null): Unit =
+    def error(msg: => String, cause: Throwable|Null = null): Unit =
       if (rawLog.isErrorEnabled) {
         if (cause == null) {
           rawLog.error(msg)

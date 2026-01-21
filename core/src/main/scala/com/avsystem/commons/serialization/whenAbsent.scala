@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.meta.infer.valueImpl
+
 /** An alternative way to provide default value for case class parameter used during deserialization with `GenCodec`
   * when its field is missing in data being deserialized. Normally, Scala-level default parameter values are picked up,
   * but you may want to use this annotation instead if you don't want to pollute your Scala classes with unintended
@@ -38,4 +40,7 @@ object whenAbsent {
     * which is possible only with default value in annotation.
     */
   def value[T]: T = macro macros.misc.WhiteMiscMacros.whenAbsentValue
+
+  inline def value[T]: T = ${ valueImpl[T] }
+  def valueImpl[T](using Quotes): Expr[T] = {???}
 }

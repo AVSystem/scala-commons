@@ -7,7 +7,7 @@ object CrossUtils {
 
   def newNativeArray[A: ClassTag](size: Int): NativeArray[A] = new Array[A](size)
   def newNativeDict[A]: NativeDict[A] = new MHashMap[String, A]
-  def unsetArrayValue: Any = null
+  def unsetArrayValue: Any|Null = null
 
   def wrappedArray[A: ClassTag](elems: A*): MIndexedSeq[A] = Array(elems*)
   def arrayBuffer[A]: MIndexedSeq[A] & MBuffer[A] = new MArrayBuffer[A]

@@ -51,8 +51,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     * want recursive materialization, use `materializeRecursively`.
     */
   def materialize[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
-  inline def materialize[T]: GenCodec[T] = ${materializeImpl[T]}
-  def materializeImpl[T: Type](using Quotes) = '{???}
+  inline def materialize[T]: GenCodec[T] = ${ materializeImpl[T] }
+  def materializeImpl[T: Type](using Quotes) = '{ ??? }
 
   /** Materializes a [[GenCodec]] for type `T` using `apply` and `unapply`/`unapplySeq` methods available on passed
     * `applyUnapplyProvider` object. The signatures of `apply` and `unapply` must be as if `T` was a case class and
@@ -73,16 +73,17 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     *     GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
     * }}}
     */
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro
+    macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
 
   inline def fromApplyUnapplyProvider[T](inline applyUnapplyProvider: Any): GenCodec[T] =
     ${ fromApplyUnapplyProviderImpl[T]('applyUnapplyProvider) }
 
-  def fromApplyUnapplyProviderImpl[T: Type](applyUnapplyProvider: Expr[Any])(using Quotes): Expr[GenCodec[T]] = '{???}
+  def fromApplyUnapplyProviderImpl[T: Type](applyUnapplyProvider: Expr[Any])(using Quotes): Expr[GenCodec[T]] = '{ ??? }
   def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
 
   inline def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = ${ applyUnapplyCodecImpl[T] }
-  def applyUnapplyCodecImpl[T: Type](using Quotes): Expr[ApplyUnapplyCodec[T]] = '{???}
+  def applyUnapplyCodecImpl[T: Type](using Quotes): Expr[ApplyUnapplyCodec[T]] = '{ ??? }
 
   /** Materializes a [[GenCodec]] for a POJO that has a fluent builder. The fluent builder must have setters
     * corresponding to the POJO's getters. Each setter must return the builder itself (because it's fluent). The builder
@@ -99,7 +100,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
 //  inline def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] = ${fromJavaBuilderImpl[T, B]('newBuilder, 'build)}
 
-  def fromJavaBuilderImpl[T: Type, B: Type](newBuilder: Expr[B], build: Expr[B => T])(using Quotes): Expr[GenCodec[T]] = '{???}
+  def fromJavaBuilderImpl[T: Type, B: Type](newBuilder: Expr[B], build: Expr[B => T])(using Quotes): Expr[GenCodec[T]] =
+    '{ ??? }
 
   @explicitGenerics
   def read[T: GenCodec](input: Input): T =
@@ -194,7 +196,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   def forSealedEnum[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.forSealedEnum[T]
 
-  class ReadFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
+  class ReadFailure(msg: String, cause: Throwable | Null) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
 
     override def fillInStackTrace(): Throwable =
@@ -224,7 +226,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   case class MapFieldReadFailed(fieldName: String, cause: Throwable)
     extends ReadFailure(s"Failed to read map field $fieldName", cause)
 
-  class WriteFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
+  class WriteFailure(msg: String, cause: Throwable | Null) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
 
     override def fillInStackTrace(): Throwable =
@@ -402,7 +404,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val UnitCodec: GenCodec[Unit] =
     create[Unit](i => if (i.readNull()) () else notNull, (o, _) => o.writeNull())
   implicit lazy val VoidCodec: GenCodec[Void] =
-    create[Void](i => if (i.readNull()) null else notNull, (o, _) => o.writeNull())
+    create[Void](i => if (i.readNull()) null.asInstanceOf[Void] else notNull, (o, _) => o.writeNull())
 
   implicit lazy val BooleanCodec: GenCodec[Boolean] = nonNullSimple(_.readBoolean(), _ `writeBoolean` _)
   implicit lazy val CharCodec: GenCodec[Char] = nonNullSimple(_.readChar(), _ `writeChar` _)
@@ -530,8 +532,10 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   // these are covered by the generic `seqCodec` and `setCodec` but making them explicit may be easier
   // for the compiler and also make IntelliJ less confused
-  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] = seqCodec[BSeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
-  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] = seqCodec[ISeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] =
+    seqCodec[BSeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] =
+    seqCodec[ISeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
   implicit def mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]
   implicit def bindexedSeqCodec[T: GenCodec]: GenCodec[BIndexedSeq[T]] = seqCodec[BIndexedSeq, T]
   implicit def iindexedSeqCodec[T: GenCodec]: GenCodec[IIndexedSeq[T]] = seqCodec[IIndexedSeq, T]
@@ -616,7 +620,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit def optArgCodec[T: GenCodec]: GenCodec[OptArg[T]] =
     new Transformed[OptArg[T], Opt[T]](optCodec[T], _.toOpt, _.toOptArg)
 
-  implicit def optRefCodec[T >: Null: GenCodec]: GenCodec[OptRef[T]] =
+  implicit def optRefCodec[T: GenCodec]: GenCodec[OptRef[T]] =
     new Transformed[OptRef[T], Opt[T]](optCodec[T], _.toOpt, _.toOptRef)
 
   implicit def eitherCodec[A: GenCodec, B: GenCodec]: GenCodec[Either[A, B]] = nullableObject(
@@ -669,6 +673,7 @@ trait RecursiveAutoCodecs { this: GenCodec.type =>
 //    ${materializeImplicitlyImpl('allow) }
 }
 
-def materializeRecursivelyImpl[T: Type](using Quotes): Expr[GenCodec[T]] = '{???}
+def materializeRecursivelyImpl[T: Type](using Quotes): Expr[GenCodec[T]] = '{ ??? }
 
-def materializeImplicitlyImpl[T: Type](allow: Expr[AllowImplicitMacro[GenCodec[T]]])(using Quotes): Expr[GenCodec[T]] = '{???}
+def materializeImplicitlyImpl[T: Type](allow: Expr[AllowImplicitMacro[GenCodec[T]]])(using Quotes): Expr[GenCodec[T]] =
+  '{ ??? }

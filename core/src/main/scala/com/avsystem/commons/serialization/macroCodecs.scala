@@ -105,6 +105,8 @@ abstract class ApplyUnapplyCodec[T](
 }
 object ApplyUnapplyCodec {
   def materialize[T]: ApplyUnapplyCodec[T] = macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
+  inline def materialize[T]: ApplyUnapplyCodec[T] = ${materializeImpl[T]}
+  def materializeImpl[T](using Quotes): Expr[ApplyUnapplyCodec[T]] = '{???}
 }
 
 abstract class ProductCodec[T <: Product](

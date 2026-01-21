@@ -13,7 +13,7 @@ class OptArgTest extends AnyFunSuite with Matchers {
   }
 
   test("empty") {
-    val str: String = null
+    val str: String| Null = null
     val opt = OptArg(str)
     opt match {
       case OptArg.Empty =>

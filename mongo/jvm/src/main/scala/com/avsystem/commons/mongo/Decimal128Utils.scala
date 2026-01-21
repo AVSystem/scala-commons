@@ -71,7 +71,7 @@ object Decimal128Utils {
   }
 
   private def clampAndRound(initialValue: JBigDecimal): JBigDecimal = {
-    var value: JBigDecimal = null
+    var value: JBigDecimal| Null = null
     if (-initialValue.scale > MaxExponent) {
       val diff = -initialValue.scale - MaxExponent
       if (initialValue.unscaledValue == BigIntZero) {

@@ -5,7 +5,7 @@ import com.avsystem.commons.macros.misc.MiscMacros
 
 import scala.collection.Factory
 
-class InvalidRpcCall(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
+class InvalidRpcCall(msg: String, cause: Throwable|Null = null) extends RuntimeException(msg, cause)
 
 class InvalidRpcArgument(val rpcName: String, val argName: String, cause: Throwable)
   extends InvalidRpcCall(s"Argument $argName of RPC $rpcName is invalid: ${cause.getMessage}", cause)

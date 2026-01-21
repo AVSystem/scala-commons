@@ -4,7 +4,7 @@ package redis.exception
 import com.avsystem.commons.redis.protocol.ErrorMsg
 import com.avsystem.commons.redis.{NodeAddress, RawCommand, Redirection, RedisCommand}
 
-class RedisException(msg: String = null, cause: Throwable = null) extends RuntimeException(msg, cause)
+class RedisException(msg: String| Null = null, cause: Throwable|Null = null) extends RuntimeException(msg, cause)
 
 /** Throw when response sent back by Redis server is corrupt according to Redis protocol.
   */
@@ -17,7 +17,7 @@ class OptimisticLockException extends RedisException("One of the watched keys ha
 
 /** Thrown when Redis server returns a reply unexpected by a decoder of a particular command.
   */
-class UnexpectedReplyException(msg: String = null) extends RedisException(msg)
+class UnexpectedReplyException(msg: String| Null = null) extends RedisException(msg)
 
 /** Thrown when Redis server replies with an error.
   */
@@ -26,7 +26,7 @@ class ErrorReplyException(val reply: ErrorMsg, val command: RedisCommand[_])
   def errorStr: String = reply.errorString.utf8String
 }
 
-class RedisIOException(msg: String = null, cause: Throwable = null) extends RedisException(msg, cause)
+class RedisIOException(msg: String| Null = null, cause: Throwable|Null = null) extends RedisException(msg, cause)
 
 class ConnectionFailedException(val address: NodeAddress)
   extends RedisIOException(s"Failed to connect to Redis instance at $address")

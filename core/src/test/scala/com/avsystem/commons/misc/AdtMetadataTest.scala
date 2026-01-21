@@ -106,8 +106,8 @@ case class Galaxy(name: String, distance: Long) extends MaterialBeing
 
 class Peculiarity extends Being
 object Peculiarity {
-  implicit val codec: GenCodec[Peculiarity] = null
-  implicit val structure: GenStructure[Peculiarity] = null
+  implicit val codec: GenCodec[Peculiarity]| Null = null
+  implicit val structure: GenStructure[Peculiarity]| Null = null
 }
 
 case object God extends Being

@@ -7,7 +7,7 @@ object Opt {
   // because https://github.com/scala/bug/issues/7396
   private object EmptyMarker extends Serializable
 
-  def apply[A](value: A): Opt[A] = if (value != null) new Opt[A](value) else Opt.Empty
+  def apply[A](value: A | Null): Opt[A] = if (value != null) new Opt[A](value) else Opt.Empty
   def unapply[A](opt: Opt[A]): Opt[A] = opt // name-based extractor
 
   def some[A](value: A): Opt[A] =
@@ -70,7 +70,7 @@ final class Opt[+A] private (private val rawValue: Any) extends AnyVal with OptB
   @inline def boxed[B](implicit boxing: Boxing[A, B]): Opt[B] =
     map(boxing.fun)
 
-  @inline def boxedOrNull[B >: Null](implicit boxing: Boxing[A, B]): B =
+  @inline def boxedOrNull[B](implicit boxing: Boxing[A, B]): B | Null =
     if (isEmpty) null else boxing.fun(value)
 
   @inline def unboxed[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
@@ -79,7 +79,7 @@ final class Opt[+A] private (private val rawValue: Any) extends AnyVal with OptB
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
-  @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+  @inline def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
   @inline def toNOpt: NOpt[A] =

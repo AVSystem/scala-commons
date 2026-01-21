@@ -8,7 +8,7 @@ class RedisDataGenCodecRoundtripTest extends GenCodecRoundtripTest {
   type Raw = ByteString
 
   def writeToOutput(write: Output => Unit): ByteString = {
-    var result: ByteString = null
+    var result: ByteString| Null = null
     write(new RedisDataOutput(result = _))
     result
   }

@@ -7,7 +7,7 @@ import org.bson.types.{Decimal128, ObjectId}
 
 object BsonValueOutput {
   def write[T: GenCodec](value: T, legacyOptionEncoding: Boolean = false): BsonValue = {
-    var result: BsonValue = null
+    var result: BsonValue| Null = null
     GenCodec.write(new BsonValueOutput(result = _, legacyOptionEncoding), value)
     result
   }

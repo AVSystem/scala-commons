@@ -8,7 +8,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSON
 
 final class NativeJsonOutput(
-  valueConsumer: js.Any => Unit,
+  valueConsumer: js.Any|Null => Unit,
   options: NativeFormatOptions,
 ) extends OutputAndSimpleOutput {
 
@@ -71,7 +71,7 @@ final class NativeJsonListOutput(
   valueConsumer: js.Any => Unit,
   options: NativeFormatOptions,
 ) extends ListOutput {
-  private val builder = new js.Array[js.Any]()
+  private val builder = new js.Array[js.Any|Null]()
 
   override def writeElement(): Output = new NativeJsonOutput(el => builder.append(el), options)
   override def finish(): Unit = valueConsumer(builder)
@@ -81,7 +81,7 @@ final class NativeJsonObjectOutput(
   valueConsumer: js.Any => Unit,
   options: NativeFormatOptions,
 ) extends ObjectOutput {
-  private val builder = js.Dictionary.empty[js.Any]
+  private val builder = js.Dictionary.empty[js.Any|Null]
 
   override def writeField(key: String): Output = new NativeJsonOutput(el => builder(key) = el, options)
   override def finish(): Unit = valueConsumer(builder)
@@ -89,9 +89,9 @@ final class NativeJsonObjectOutput(
 
 object NativeJsonOutput {
   def write[T: GenCodec](value: T, options: NativeFormatOptions = NativeFormatOptions.RawString): js.Any = {
-    var result: js.Any = null
+    var result: js.Any |Null= null
     GenCodec.write(new NativeJsonOutput(value => result = value, options), value)
-    result
+    result.nn
   }
 
   def writeAsString[T: GenCodec](value: T, options: NativeFormatOptions = NativeFormatOptions.RawString): String =

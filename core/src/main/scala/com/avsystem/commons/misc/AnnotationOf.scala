@@ -1,4 +1,5 @@
-package com.avsystem.commons.misc
+package com.avsystem.commons
+package misc
 
 import com.avsystem.commons.macros
 
@@ -12,6 +13,9 @@ import scala.annotation.implicitNotFound
 case class AnnotationOf[A, T](annot: A) extends AnyVal
 object AnnotationOf {
   implicit def materialize[A, T]: AnnotationOf[A, T] = macro macros.misc.MiscMacros.annotationOf[A, T]
+
+  inline def materialize[A, T]: AnnotationOf[A, T] = ${materializeImpl[A, T]}
+  def materializeImpl[A, T](using Quotes): Expr[AnnotationOf[A, T]] = '{???}
 }
 
 /** A typeclass which captures a possible annotation of type `A` applied on a class/trait/object associated with type
@@ -21,6 +25,8 @@ object AnnotationOf {
 case class OptAnnotationOf[A, T](annotOpt: Opt[A])
 object OptAnnotationOf {
   implicit def materialize[A, T]: OptAnnotationOf[A, T] = macro macros.misc.MiscMacros.optAnnotationOf[A, T]
+  inline def materialize[A, T]: OptAnnotationOf[A, T] = ${materializeImpl[A, T]}
+  def materializeImpl[A, T](using Quotes): Expr[OptAnnotationOf[A, T]] = '{???}
 }
 
 /** A typeclass which captures all annotations of type `A` applied on a class/trait/object associated with type `T`.
@@ -29,6 +35,8 @@ object OptAnnotationOf {
 case class AnnotationsOf[A, T](annots: List[A]) extends AnyVal
 object AnnotationsOf {
   implicit def materialize[A, T]: AnnotationsOf[A, T] = macro macros.misc.MiscMacros.annotationsOf[A, T]
+  inline def materialize[A, T]: AnnotationOf[A, T] = ${materializeImpl[A, T]}
+  def materializeImpl[A, T](using Quotes): Expr[AnnotationOf[A, T]] = '{???}
 }
 
 /** A typeclass which serves as an evidence that an annotation of type `A` is applied on a class/trait/object associated
@@ -43,6 +51,8 @@ object HasAnnotation {
   def create[A, T]: HasAnnotation[A, T] = reusable.asInstanceOf[HasAnnotation[A, T]]
 
   implicit def materialize[A, T]: HasAnnotation[A, T] = macro macros.misc.MiscMacros.hasAnnotation[A, T]
+  inline def materialize[A, T]: HasAnnotation[A, T] = ${materializeImpl[A, T]}
+  def materializeImpl[A, T](using Quotes): Expr[HasAnnotation[A, T]] = '{???}
 }
 
 /** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures an annotation of
@@ -65,6 +75,8 @@ object HasAnnotation {
 case class SelfAnnotation[A](annot: A) extends AnyVal
 object SelfAnnotation {
   implicit def materialize[A]: SelfAnnotation[A] = macro macros.misc.MiscMacros.selfAnnotation[A]
+  inline def materialize[A]: SelfAnnotation[A] = ${materializeImpl[A]}
+  def materializeImpl[A](using Quotes): Expr[SelfAnnotation[A]] = '{???}
 }
 
 /** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures a possible
@@ -87,6 +99,8 @@ object SelfAnnotation {
 case class SelfOptAnnotation[A](annotOpt: Opt[A])
 object SelfOptAnnotation {
   implicit def materialize[A]: SelfOptAnnotation[A] = macro macros.misc.MiscMacros.selfOptAnnotation[A]
+  inline def materialize[A]: SelfOptAnnotation[A]= ${materializeImpl[A]}
+  def materializeImpl[A](using Quotes): Expr[SelfOptAnnotation[A]] = '{???}
 }
 
 /** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures all annotations of
@@ -108,4 +122,6 @@ object SelfOptAnnotation {
 case class SelfAnnotations[A](annots: List[A]) extends AnyVal
 object SelfAnnotations {
   implicit def materialize[A]: SelfAnnotations[A] = macro macros.misc.MiscMacros.selfAnnotations[A]
+  inline def materialize[A]: SelfAnnotations[A] = ${materializeImpl[A]}
+  def materializeImpl[A](using Quotes): Expr[SelfAnnotations[A]] = '{???}
 }

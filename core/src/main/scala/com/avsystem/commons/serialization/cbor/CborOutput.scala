@@ -241,8 +241,8 @@ class CborObjectOutput(
 ) extends CborSequentialOutput(out, sizePolicy)
     with ObjectOutput {
 
-  private var forcedKeyCodec: CborKeyCodec = scala.compiletime.uninitialized
-  private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
+  private var forcedKeyCodec: CborKeyCodec| Null = scala.compiletime.uninitialized
+  private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec.nn else keyCodec
 
   /** Returns a [[CborOutput]] for writing an arbitrary CBOR map key. This method is an extension of standard [[Output]]
     * which only allows string-typed keys. If a key is written using this method then its corresponding value MUST be

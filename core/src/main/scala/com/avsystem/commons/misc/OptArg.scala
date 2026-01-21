@@ -12,7 +12,7 @@ object OptArg {
 
   private object EmptyMarker extends Serializable
 
-  def apply[A](value: A): OptArg[A] = new OptArg[A](if (value != null) value else EmptyMarker)
+  def apply[A](value: A | Null): OptArg[A] = new OptArg[A](if (value != null) value else EmptyMarker)
   def unapply[A](opt: OptArg[A]): OptArg[A] = opt // name-based extractor
 
   def some[A](value: A): OptArg[A] =
@@ -43,7 +43,7 @@ object OptArg {
   * methods).
   */
 final class OptArg[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
-  import OptArg._
+  import OptArg.*
 
   private def value: A = rawValue.asInstanceOf[A]
 
@@ -53,7 +53,7 @@ final class OptArg[+A] private (private val rawValue: Any) extends AnyVal with O
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 
-  @inline def boxedOrNull[B >: Null](implicit boxing: Boxing[A, B]): B =
+  @inline def boxedOrNull[B](implicit boxing: Boxing[A, B]): B|Null =
     if (isEmpty) null else boxing.fun(value)
 
   @inline def toOpt: Opt[A] =
@@ -65,7 +65,7 @@ final class OptArg[+A] private (private val rawValue: Any) extends AnyVal with O
   @inline def toNOpt: NOpt[A] =
     if (isEmpty) NOpt.Empty else NOpt.some(value)
 
-  @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+  @inline def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
   @inline def getOrElse[B >: A](default: => B): B =

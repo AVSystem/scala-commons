@@ -59,7 +59,7 @@ object OptionLike {
   implicit def optOptionLike[A]: BaseOptionLike[Opt[A], A] =
     new OptionLikeImpl(Opt.Empty, Opt.some, _.isDefined, _.get, ignoreNulls = true)
 
-  implicit def optRefOptionLike[A >: Null]: BaseOptionLike[OptRef[A], A] =
+  implicit def optRefOptionLike[A]: BaseOptionLike[OptRef[A], A] =
     new OptionLikeImpl(OptRef.Empty, OptRef.some, _.isDefined, _.get, ignoreNulls = true)
 
   implicit def optArgOptionLike[A]: BaseOptionLike[OptArg[A], A] =
@@ -78,7 +78,7 @@ object OptionLike {
   */
 sealed trait AutoOptionalParam[T]
 object AutoOptionalParam {
-  def apply[T]: AutoOptionalParam[T] = null
+  def apply[T]: AutoOptionalParam[T] = null.asInstanceOf[AutoOptionalParam[T]]
 }
 
 trait AutoOptionalParams {

@@ -50,7 +50,7 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
     if (listener != null) {
       log.debug(s"Responding with final result: $msg")
       listener ! msg
-      listener = null
+      listener| Null = null
       releaseConnection()
       context.stop(self)
     }

@@ -14,7 +14,7 @@ object Boxing extends LowPrioBoxing {
   implicit val DoubleBoxing: Boxing[Double, JDouble] = fromImplicitConv
 }
 trait LowPrioBoxing { this: Boxing.type =>
-  implicit def nullableBoxing[A >: Null]: Boxing[A, A] = Boxing(identity)
+  implicit def nullableBoxing[A]: Boxing[A, A] = Boxing(identity)
 }
 
 case class Unboxing[+A, -B](fun: B => A) extends AnyVal
@@ -30,5 +30,5 @@ object Unboxing extends LowPrioUnboxing {
   implicit val DoubleUnboxing: Unboxing[Double, JDouble] = fromImplicitConv
 }
 trait LowPrioUnboxing { this: Unboxing.type =>
-  implicit def nullableUnboxing[A >: Null]: Unboxing[A, A] = Unboxing(identity)
+  implicit def nullableUnboxing[A]: Unboxing[A, A] = Unboxing(identity)
 }

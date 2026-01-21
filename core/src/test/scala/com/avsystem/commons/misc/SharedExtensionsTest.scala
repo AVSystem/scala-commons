@@ -213,7 +213,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("Try.tapFailure - Failure case") {
-    var capturedThrowable: Throwable = null
+    var capturedThrowable: Throwable|Null = null
     val exception = new RuntimeException("test exception")
     val failureTry = Failure(exception)
 

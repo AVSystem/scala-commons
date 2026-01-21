@@ -440,8 +440,8 @@ class CborListInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
 class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   extends CborSequentialInput(reader, size) with ObjectInput {
 
-  private var forcedKeyCodec: CborKeyCodec = scala.compiletime.uninitialized
-  private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
+  private var forcedKeyCodec: CborKeyCodec | Null= scala.compiletime.uninitialized
+  private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec.nn else keyCodec
 
   /** Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard [[ObjectOutput]]
     * which only allows string-typed keys. If this method is used to read the key then value MUST be read with

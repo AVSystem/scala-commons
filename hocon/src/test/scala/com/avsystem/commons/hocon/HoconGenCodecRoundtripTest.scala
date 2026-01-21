@@ -12,7 +12,7 @@ class HoconGenCodecRoundtripTest extends GenCodecRoundtripTest {
   type Raw = ConfigValue
 
   def writeToOutput(write: Output => Unit): ConfigValue = {
-    var result: ConfigValue = null
+    var result: ConfigValue| Null = null
     write(new HoconOutput(result = _))
     result
   }

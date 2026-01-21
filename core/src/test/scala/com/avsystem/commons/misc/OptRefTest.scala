@@ -12,7 +12,7 @@ class OptRefTest extends AnyFunSuite {
   }
 
   test("empty test") {
-    val str: String = null
+    val str: String| Null = null
     val opt = OptRef(str)
     opt match {
       case OptRef.Empty =>

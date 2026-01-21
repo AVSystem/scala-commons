@@ -2,10 +2,9 @@ package com.avsystem.commons
 package serialization.json
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.misc.CrossUtils
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
-import com.avsystem.commons.serialization.json.JsonStringInput._
+import com.avsystem.commons.serialization.json.JsonStringInput.*
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -21,7 +20,7 @@ object JsonStringInput {
     def afterElement(): Unit = ()
   }
 
-  class ParseException(msg: String, cause: Throwable = null) extends ReadFailure(msg, cause)
+  class ParseException(msg: String, cause: Throwable | Null = null) extends ReadFailure(msg, cause)
 }
 
 class JsonStringInput(
@@ -32,7 +31,7 @@ class JsonStringInput(
     with AfterElement {
 
   private val startIdx: Int = reader.parseValue()
-  private var endIdx: Int = scala.compiletime.uninitialized
+  private var endIdx: Int | Null = scala.compiletime.uninitialized
 
   reader.jsonType match {
     case JsonType.list | JsonType.`object` =>
@@ -158,10 +157,10 @@ class JsonStringInput(
 
   def readRawJson(): String = {
     skip()
-    reader.json.substring(startIdx, endIdx)
+    reader.json.substring(startIdx, endIdx.nn)
   }
 
-  def jsonType: JsonType = reader.jsonType
+  def jsonType: JsonType | Null = reader.jsonType
 
   override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = metadata match {
     case JsonType => Opt(reader.jsonType)
@@ -235,7 +234,8 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
   prepareForNext(first = true)
 
   private var peekIdx = if (end) -1 else reader.index
-  private var peekedFields: CrossUtils.NativeDict[Int] = scala.compiletime.uninitialized
+  //todo: wtf
+//  private var peekedFields: CrossUtils.NativeDict[Int] | Null = scala.compiletime.uninitialized
 
   private def prepareForNext(first: Boolean): Unit = {
     reader.skipWs()
@@ -280,7 +280,8 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
       }
     }
 
-    val alreadyPeeked = peekedFields.opt.flatMap(_.get(name).toOpt.map(idx => peekFieldInput(name, idx)))
+//    val alreadyPeeked = peekedFields.opt.flatMap(_.get(name).toOpt.map(idx => peekFieldInput(name, idx)))
+    val alreadyPeeked = Opt.Empty
     alreadyPeeked orElse {
       val savedIdx = reader.index
       try {
@@ -295,10 +296,10 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
               // situation where peeked field is very likely to be the first field (flat sealed hierarchies)
               Opt(peekFieldInput(foundName, valueIndex))
             } else {
-              if (peekedFields == null) {
-                peekedFields = CrossUtils.newNativeDict[Int]
-              }
-              peekedFields(foundName) = valueIndex
+//              if (peekedFields == null) {
+//                peekedFields = CrossUtils.newNativeDict[Int]
+//              }
+//              peekedFields(foundName) = valueIndex
               peekIdx = skipToNextFieldName()
               peekRemainingFields()
             }
@@ -315,12 +316,12 @@ final class JsonReader(val json: String) {
   json.checkNotNull("null JSON string")
 
   private var i: Int = 0
-  private var value: Any = scala.compiletime.uninitialized
-  private var tpe: JsonType = scala.compiletime.uninitialized
+  private var value: Any | Null = scala.compiletime.uninitialized
+  private var tpe: JsonType | Null = scala.compiletime.uninitialized
 
   def index: Int = i
-  def currentValue: Any = value
-  def jsonType: JsonType = tpe
+  def currentValue: Any | Null = value
+  def jsonType: JsonType | Null = tpe
 
   def reset(idx: Int): Unit = {
     i = idx
@@ -340,7 +341,7 @@ final class JsonReader(val json: String) {
   private def currentCharOrEOF =
     if (i < json.length) json.charAt(i).toString else "EOF"
 
-  private def readFailure(msg: String, cause: Throwable = null): Nothing =
+  private def readFailure(msg: String, cause: Throwable | Null = null): Nothing =
     throw new ParseException(s"$msg ${posInfo(i)}", cause)
 
   @inline private def read(): Char =
@@ -431,7 +432,7 @@ final class JsonReader(val json: String) {
 
   def parseString(): String = {
     pass('"')
-    var sb: JStringBuilder = null
+    var sb: JStringBuilder | Null = null
     var plainStart = i
     var cont = true
     while (cont) {

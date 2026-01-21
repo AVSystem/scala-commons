@@ -298,7 +298,7 @@ final class RedisClusterClient(
           val undecodedResult = packs.computeSize(2) match {
             case 0 => Future.successful(PacksResult.Empty)
             case 1 =>
-              var pack: RawCommandPack = null
+              var pack: RawCommandPack| Null = null
               packs.emitCommandPacks(pack = _)
               executeSinglePack(pack, currentState)
             case _ =>
