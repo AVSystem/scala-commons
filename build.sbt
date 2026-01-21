@@ -131,10 +131,10 @@ def commonSettings: Seq[Def.Setting[_]] = Seq(
           // "-Xprint:postInlining",
           // "-Xprint-suspension",
           // "-Vprint:typer",
-//          "-Wsafe-init",//todo: enable
+          "-Wsafe-init",
           "-Yshow-suppressed-errors",
           "-Yshow-var-bounds",
-//          "-Werror", //todo: enable
+          "-Werror",
           "-experimental",
           "-preview",
           //  "-Yprofile-enabled",
@@ -142,9 +142,6 @@ def commonSettings: Seq[Def.Setting[_]] = Seq(
           "-language:implicitConversions", // todo: disable
           "-Xignore-scala2-macros", // todo: disable
           "-language:experimental.macros",
-          "-rewrite",
-          "-source",
-          "3.4-migration",
         )
     }
   },
