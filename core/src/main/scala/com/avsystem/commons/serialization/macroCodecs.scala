@@ -24,10 +24,10 @@ abstract class ApplyUnapplyCodec[T](
 ) extends ErrorReportingCodec[T]
     with OOOFieldsObjectCodec[T] {
 
-  protected def dependencies: Array[GenCodec[_]]
+  protected def dependencies: Array[GenCodec[?]]
   protected def instantiate(fieldValues: FieldValues): T
 
-  private[this] lazy val deps = dependencies
+  private lazy val deps = dependencies
 
   protected final def writeField[A](output: ObjectOutput, idx: Int, value: A): Unit =
     writeField(fieldNames(idx), output, value, deps(idx).asInstanceOf[GenCodec[A]])
@@ -129,7 +129,7 @@ abstract class SealedHierarchyCodec[T](
   val typeRepr: String,
   val nullable: Boolean,
   val caseNames: Array[String],
-  val cases: Array[Class[_]],
+  val cases: Array[Class[?]],
 ) extends ErrorReportingCodec[T]
     with ObjectCodec[T] {
 
@@ -148,12 +148,12 @@ abstract class NestedSealedHierarchyCodec[T](
   typeRepr: String,
   nullable: Boolean,
   caseNames: Array[String],
-  cases: Array[Class[_]],
+  cases: Array[Class[?]],
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
-  def caseDependencies: Array[GenCodec[_]]
+  def caseDependencies: Array[GenCodec[?]]
 
-  private[this] lazy val caseDeps = caseDependencies
+  private lazy val caseDeps = caseDependencies
 
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     val caseIdx = caseIndexByValue(value)
@@ -176,7 +176,7 @@ abstract class FlatSealedHierarchyCodec[T](
   typeRepr: String,
   nullable: Boolean,
   caseNames: Array[String],
-  cases: Array[Class[_]],
+  cases: Array[Class[?]],
   val oooFieldNames: Array[String],
   val caseDependentFieldNames: Set[String],
   override val caseFieldName: String,
@@ -184,11 +184,11 @@ abstract class FlatSealedHierarchyCodec[T](
   val defaultCaseTransient: Boolean,
 ) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
-  def oooDependencies: Array[GenCodec[_]]
-  def caseDependencies: Array[OOOFieldsObjectCodec[_]]
+  def oooDependencies: Array[GenCodec[?]]
+  def caseDependencies: Array[OOOFieldsObjectCodec[?]]
 
-  private[this] lazy val oooDeps = oooDependencies
-  private[this] lazy val caseDeps = caseDependencies
+  private lazy val oooDeps = oooDependencies
+  private lazy val caseDeps = caseDependencies
 
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     val caseIdx = caseIndexByValue(value)
@@ -385,7 +385,7 @@ abstract class JavaBuilderBasedCodec[T, B](
 ) extends ErrorReportingCodec[T]
     with GenCodec.ObjectCodec[T] {
 
-  protected def dependencies: Array[GenCodec[_]]
+  protected def dependencies: Array[GenCodec[?]]
 
   private lazy val deps = dependencies
 

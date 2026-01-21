@@ -7,6 +7,11 @@ import scala.annotation.{nowarn, tailrec}
 import scala.collection.{mutable, AbstractIterator, BuildFrom, Factory}
 
 trait SharedExtensions {
+  type Quotes = scala.quoted.Quotes
+  type Type[T] = scala.quoted.Type[T]
+  val Type = scala.quoted.Type
+  type Expr[T] = scala.quoted.Expr[T]
+  val Expr = scala.quoted.Expr
 
   import com.avsystem.commons.SharedExtensionsUtils.*
 
@@ -715,10 +720,10 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def collectWhileDefined[B](pf: PartialFunction[A, B]): Iterator[B] =
       new AbstractIterator[B] {
-        private[this] var fetched = false
-        private[this] var value: NOpt[B] = _
+        private var fetched = false
+        private var value: NOpt[B] = scala.compiletime.uninitialized
 
-        private[this] def fetch(): Unit =
+        private def fetch(): Unit =
           if (it.hasNext) {
             value = pf.applyNOpt(it.next())
           } else {
@@ -749,10 +754,11 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def distinctBy[B](f: A => B): Iterator[A] =
       new AbstractIterator[A] {
-        private[this] val seen = new MHashSet[B]
-        private[this] var nextDistinct = NOpt.empty[A]
+        private val seen = new MHashSet[B]
+        private var nextDistinct = NOpt.empty[A]
 
-        @tailrec override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
+//        @tailrec  //todo
+        override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
           nextDistinct = NOpt.some(it.next()).filter(a => seen.add(f(a)))
           hasNext
         }
@@ -771,8 +777,8 @@ object SharedExtensionsUtils extends SharedExtensions {
   object IteratorCompanionOps {
     def untilEmpty[T](elem: => Opt[T]): Iterator[T] =
       new AbstractIterator[T] {
-        private[this] var fetched = false
-        private[this] var value = Opt.empty[T]
+        private var fetched = false
+        private var value = Opt.empty[T]
 
         def hasNext: Boolean = {
           if (!fetched) {
@@ -798,8 +804,8 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def iterateUntilEmpty[T](start: Opt[T])(nextFun: T => Opt[T]): Iterator[T] =
       new AbstractIterator[T] {
-        private[this] var fetched = true
-        private[this] var value = start
+        private var fetched = true
+        private var value = start
 
         def hasNext: Boolean = {
           if (!fetched) {

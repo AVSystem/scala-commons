@@ -105,7 +105,7 @@ trait GadtCodec[C[_]] {
   * provides a [[GenCodec]] for wildcard, i.e. `C[_]`.
   */
 abstract class HasGadtCodec[C[_]](implicit macroCodec: MacroInstances[Unit, GadtCodec[C]]) {
-  implicit lazy val wildcardCodec: GenCodec[C[_]] = macroCodec((), this).codec[Any].asInstanceOf[GenCodec[C[_]]]
+  implicit lazy val wildcardCodec: GenCodec[C[Any]] = macroCodec((), this).codec[Any]
   implicit def codec[T]: GenCodec[C[T]] = wildcardCodec.asInstanceOf[GenCodec[C[T]]]
 }
 

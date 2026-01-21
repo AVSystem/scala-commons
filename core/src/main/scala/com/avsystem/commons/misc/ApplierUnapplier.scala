@@ -11,6 +11,8 @@ trait Applier[T] {
 }
 object Applier {
   implicit def materialize[T]: Applier[T] = macro macros.misc.MiscMacros.applier[T]
+  implicit inline def materialize[T]: Applier[T] = ${materializeImpl[T] }
+  def materializeImpl[T](using Quotes): Expr[Applier[T]] = '{???}
 }
 
 /** Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns untyped sequence of
@@ -22,6 +24,8 @@ trait Unapplier[T] {
 }
 object Unapplier {
   implicit def materialize[T]: Unapplier[T] = macro macros.misc.MiscMacros.unapplier[T]
+   implicit inline def materialize[T]: Unapplier[T] = ${materializeImpl[T] }
+  def materializeImpl[T](using Quotes): Expr[Unapplier[T]] = '{???}
 }
 
 class ProductUnapplier[T <: Product] extends Unapplier[T] {
@@ -33,4 +37,6 @@ abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T]
 trait ApplierUnapplier[T] extends Applier[T] with Unapplier[T]
 object ApplierUnapplier {
   implicit def materialize[T]: ApplierUnapplier[T] = macro macros.misc.MiscMacros.applierUnapplier[T]
+  implicit inline def materialize[T]: ApplierUnapplier[T] = ${materializeImpl[T] }
+  def materializeImpl[T](using Quotes): Expr[ApplierUnapplier[T]] = '{???}
 }

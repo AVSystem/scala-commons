@@ -41,28 +41,28 @@ import com.avsystem.commons.serialization._
   * collection-like behaviour is necessary (e.g. computing the size, iterating over all elements). A [[TypedMap]] is
   * also easier to evolve than a case class (e.g. because of binary compatibility issues).
   */
-class TypedMap[K[_]](val raw: Map[K[_], Any]) extends AnyVal {
+class TypedMap[K[_]](val raw: Map[K[Any], Any]) extends AnyVal {
   def apply[T](key: K[T]): T =
-    raw(key).asInstanceOf[T]
+    raw(key.asInstanceOf[K[Any]]).asInstanceOf[T]
 
   def get[T](key: K[T]): Option[T] =
-    raw.get(key).asInstanceOf[Option[T]]
+    raw.get(key.asInstanceOf[K[Any]]).asInstanceOf[Option[T]]
 
   def getOpt[T](key: K[T]): Opt[T] =
-    raw.getOpt(key).asInstanceOf[Opt[T]]
+    raw.getOpt(key.asInstanceOf[K[Any]]).asInstanceOf[Opt[T]]
 
-  def getOrElse[T](key: K[T], defaultValue: => T): T =
-    get(key).getOrElse(defaultValue)
+  def getOrElse[T](key: K[T], defaultValue: => T): T = ???
+//    get(key.asInstanceOf[K[Any]]).getOrElse(defaultValue)
 
   def updated[T](key: K[T], value: T): TypedMap[K] =
-    new TypedMap[K](raw.updated(key, value))
+    new TypedMap[K](raw.updated(key.asInstanceOf[K[Any]], value))
 
   def ++(other: TypedMap[K]): TypedMap[K] =
     new TypedMap[K](raw ++ other.raw)
 
-  def keys: Iterable[K[_]] = raw.keys
-  def keysIterator: Iterator[K[_]] = raw.keysIterator
-  def keySet: Set[K[_]] = raw.keySet
+  def keys: Iterable[K[Any]] = raw.keys
+  def keysIterator: Iterator[K[Any]] = raw.keysIterator
+  def keySet: Set[K[Any]] = raw.keySet
 
   def size: Int = raw.size
 
@@ -78,8 +78,8 @@ object TypedMap {
   def empty[K[_]]: TypedMap[K] =
     new TypedMap[K](Map.empty)
 
-  def apply[K[_]](entries: Entry[K, _]*): TypedMap[K] = {
-    val raw = Map.newBuilder[K[_], Any]
+  def apply[K[_]](entries: Entry[K, Any]*): TypedMap[K] = {
+    val raw = Map.newBuilder[K[Any], Any]
     entries.foreach(e => raw += e.pair)
     new TypedMap[K](raw.result())
   }
@@ -88,12 +88,12 @@ object TypedMap {
     def valueCodec[T](key: K[T]): GenCodec[T]
   }
 
-  implicit def typedMapCodec[K[_]](implicit keyCodec: GenKeyCodec[K[_]], codecMapping: GenCodecMapping[K])
+  implicit def typedMapCodec[K[_]](implicit keyCodec: GenKeyCodec[K[Any]], codecMapping: GenCodecMapping[K])
     : GenObjectCodec[TypedMap[K]] =
     new GenCodec.ObjectCodec[TypedMap[K]] {
       def nullable = false
       def readObject(input: ObjectInput): TypedMap[K] = {
-        val rawBuilder = Map.newBuilder[K[_], Any]
+        val rawBuilder = Map.newBuilder[K[Any], Any]
         input.knownSize match {
           case -1 =>
           case size => rawBuilder.sizeHint(size)
@@ -101,7 +101,7 @@ object TypedMap {
         while (input.hasNext) {
           val fieldInput = input.nextField()
           val key = keyCodec.read(fieldInput.fieldName)
-          rawBuilder += ((key, codecMapping.valueCodec(key).read(fieldInput)))
+          rawBuilder += ((key, codecMapping.valueCodec(key.asInstanceOf[K[Nothing]]).read(fieldInput)))
         }
         new TypedMap[K](rawBuilder.result())
       }

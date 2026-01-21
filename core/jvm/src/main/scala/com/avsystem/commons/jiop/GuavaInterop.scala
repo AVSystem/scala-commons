@@ -100,7 +100,7 @@ object GuavaInterop extends GuavaInterop {
       p.future
     }
 
-    private[this] def unwrapFailures(expr: => T): T =
+    private def unwrapFailures(expr: => T): T =
       try expr
       catch {
         case ee: ExecutionException => throw ee.getCause
@@ -146,7 +146,7 @@ object GuavaInterop extends GuavaInterop {
     def isCancelled: Boolean =
       false
 
-    private[this] def wrapFailures(expr: => T): T =
+    private def wrapFailures(expr: => T): T =
       try expr
       catch {
         case NonFatal(e) => throw new ExecutionException(e)

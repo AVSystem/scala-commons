@@ -78,6 +78,8 @@ object MacroInstances {
     *   }
     * }}}
     */
-  implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] =
-    macro macros.misc.MiscMacros.macroInstances
+  implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] = macro macros.misc.MiscMacros.macroInstances
+
+  inline implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] = ${ materializeImpl[Implicits, Instances]}
+  def materializeImpl[Implicits: Type, Instances: Type](using Quotes): Expr[MacroInstances[Implicits, Instances]] = '{???}
 }

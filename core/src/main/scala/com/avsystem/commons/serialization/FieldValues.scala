@@ -12,7 +12,7 @@ object FieldValues {
 }
 final class FieldValues(
   private val fieldNames: Array[String],
-  codecs: Array[GenCodec[_]],
+  codecs: Array[GenCodec[?]],
   ofWhat: OptArg[String] = OptArg.Empty,
 ) {
 

@@ -19,7 +19,7 @@ object CrossUtils {
 
   def newNativeDict[A]: NativeDict[A] = js.Dictionary.empty[A]
 
-  def wrappedArray[A](elems: A*): MIndexedSeq[A] = js.Array(elems: _*)
-  def arrayBuffer[A]: MIndexedSeq[A] with MBuffer[A] = js.Array[A]()
-  def dictionary[A](keyValues: (String, A)*): MMap[String, A] = js.Dictionary(keyValues: _*)
+  def wrappedArray[A](elems: A*): MIndexedSeq[A] = js.Array(elems*)
+  def arrayBuffer[A]: MIndexedSeq[A] & MBuffer[A] = js.Array[A]()
+  def dictionary[A](keyValues: (String, A)*): MMap[String, A] = js.Dictionary(keyValues*)
 }

@@ -9,4 +9,6 @@ object Sam {
     * implementation of abstract method (as if the expression was passed as by-name parameter).
     */
   def apply[T](fun: => Any): T = macro com.avsystem.commons.macros.misc.SamMacros.createSam[T]
+  inline def apply[T](inline fun: Any): T = ${ applyImpl[T]('fun)}
+  def applyImpl[T: Type](fun: Expr[Any])(using Quotes): Expr[T] = '{???}
 }

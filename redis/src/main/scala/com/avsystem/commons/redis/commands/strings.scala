@@ -176,7 +176,6 @@ trait StringsApi extends ApiSubset {
     extends RedisSeqCommand[Opt[Long]](nullBulkOr(integerAsLong)) with NodeCommand {
 
     val encoded: Encoded = {
-      import BitFieldOp._
       val enc = encoder("BITFIELD").key(key)
       def loop(it: Iterator[BitFieldOp], curOverflow: Overflow): Unit = if (it.hasNext) {
         def ensureOverflow(overflow: Overflow) =

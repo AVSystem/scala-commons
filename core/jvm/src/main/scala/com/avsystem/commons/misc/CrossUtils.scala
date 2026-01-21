@@ -9,7 +9,7 @@ object CrossUtils {
   def newNativeDict[A]: NativeDict[A] = new MHashMap[String, A]
   def unsetArrayValue: Any = null
 
-  def wrappedArray[A: ClassTag](elems: A*): MIndexedSeq[A] = Array(elems: _*)
-  def arrayBuffer[A]: MIndexedSeq[A] with MBuffer[A] = new MArrayBuffer[A]
-  def dictionary[A](keyValues: (String, A)*): MMap[String, A] = MHashMap[String, A](keyValues: _*)
+  def wrappedArray[A: ClassTag](elems: A*): MIndexedSeq[A] = Array(elems*)
+  def arrayBuffer[A]: MIndexedSeq[A] & MBuffer[A] = new MArrayBuffer[A]
+  def dictionary[A](keyValues: (String, A)*): MMap[String, A] = MHashMap[String, A](keyValues*)
 }

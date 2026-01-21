@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization.cbor
 
 import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion, EnumCtx}
-import com.avsystem.commons.serialization.{InputMetadata, IntWrapperCompanion}
+import com.avsystem.commons.serialization.InputMetadata
 
 /** [[https://tools.ietf.org/html/rfc7049#section-2.1]] */
 final class MajorType(implicit enumCtx: EnumCtx) extends AbstractValueEnum {
@@ -22,7 +22,7 @@ final class InitialByte(val value: Byte) extends AnyVal {
 }
 object InitialByte extends InputMetadata[InitialByte] {
 
-  import MajorType._
+  import MajorType.*
 
   def apply(major: MajorType, info: Int): InitialByte = {
     require(info >= 0 && info < 32)
@@ -69,24 +69,25 @@ object InitialByte extends InputMetadata[InitialByte] {
 
 /** [[https://tools.ietf.org/html/rfc7049#section-2.4]] [[https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml]]
   */
-case class Tag(value: Int) extends AnyVal
-object Tag extends IntWrapperCompanion[Tag] {
-  final val StandardDateTime: Tag = Tag(0)
-  final val EpochDateTime: Tag = Tag(1)
-  final val PositiveBignum: Tag = Tag(2)
-  final val NegativeBignum: Tag = Tag(3)
-  final val DecimalFraction: Tag = Tag(4)
-  final val Bigfloat: Tag = Tag(5)
-  final val ExpectedBase64Url: Tag = Tag(21)
-  final val ExpectedBase64: Tag = Tag(22)
-  final val ExpectedBase16: Tag = Tag(23)
-  final val EncodedDataItem: Tag = Tag(24)
-  final val Uri: Tag = Tag(32)
-  final val Base64Url: Tag = Tag(33)
-  final val Base64: Tag = Tag(34)
-  final val Regexp: Tag = Tag(35)
-  final val MimeMessage: Tag = Tag(36)
-  final val SelfDescribe: Tag = Tag(55799)
-}
-
-object Tags extends InputMetadata[List[Tag]]
+//case class Tag(value: Int) extends AnyVal
+//object Tag extends IntWrapperCompanion[Tag] {
+//  final val StandardDateTime: Tag = Tag(0)
+//  final val EpochDateTime: Tag = Tag(1)
+//  final val PositiveBignum: Tag = Tag(2)
+//  final val NegativeBignum: Tag = Tag(3)
+//  final val DecimalFraction: Tag = Tag(4)
+//  final val Bigfloat: Tag = Tag(5)
+//  final val ExpectedBase64Url: Tag = Tag(21)
+//  final val ExpectedBase64: Tag = Tag(22)
+//  final val ExpectedBase16: Tag = Tag(23)
+//  final val EncodedDataItem: Tag = Tag(24)
+//  final val Uri: Tag = Tag(32)
+//  final val Base64Url: Tag = Tag(33)
+//  final val Base64: Tag = Tag(34)
+//  final val Regexp: Tag = Tag(35)
+//  final val MimeMessage: Tag = Tag(36)
+//  final val SelfDescribe: Tag = Tag(55799)
+//}
+//
+//object Tags extends InputMetadata[List[Tag]]
+//todo: wtf

@@ -24,8 +24,8 @@ object OptRef {
   private val nullFunc: Any => Null = _ => null
 
   final class WithFilter[+A >: Null] private[OptRef] (self: OptRef[A], p: A => Boolean) {
-    def map[B >: Null](f: A => B): OptRef[B] = self.filter(p) map f
-    def flatMap[B >: Null](f: A => OptRef[B]): OptRef[B] = self.filter(p) flatMap f
+    def map[B >: Null](f: A => B): OptRef[B] = self.filter(p) `map` f
+    def flatMap[B >: Null](f: A => OptRef[B]): OptRef[B] = self.filter(p) `flatMap` f
     def foreach[U](f: A => U): Unit = self.filter(p).foreach(f)
     def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }

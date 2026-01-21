@@ -30,8 +30,8 @@ object NOpt {
   private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
   final class WithFilter[+A] private[NOpt] (self: NOpt[A], p: A => Boolean) {
-    def map[B](f: A => B): NOpt[B] = self.filter(p) map f
-    def flatMap[B](f: A => NOpt[B]): NOpt[B] = self.filter(p) flatMap f
+    def map[B](f: A => B): NOpt[B] = self.filter(p) `map` f
+    def flatMap[B](f: A => NOpt[B]): NOpt[B] = self.filter(p) `flatMap` f
     def foreach[U](f: A => U): Unit = self.filter(p).foreach(f)
     def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }

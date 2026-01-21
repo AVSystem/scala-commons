@@ -135,9 +135,9 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
 }
 
 class HLexer(input: SourceFile) {
-  private[this] val chars = input.contents
-  private[this] var tokenIdx = 0
-  private[this] var off = -1
+  private val chars = input.contents
+  private var tokenIdx = 0
+  private var off = -1
 
   def next(): HToken =
     if (off == -1) {

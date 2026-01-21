@@ -8,7 +8,7 @@ final class DefaultCaseObjectInput(firstField: FieldInput, actualInput: ObjectIn
 
   override def knownSize: Int = actualInput.knownSize
 
-  private[this] var atFirstField = true
+  private var atFirstField = true
 
   def hasNext: Boolean = atFirstField || actualInput.hasNext
   def nextField(): FieldInput =

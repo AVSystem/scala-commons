@@ -33,7 +33,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private (
     clientSession.toOpt,
   )
 
-  type ID = E#IDType
+//  type ID = E#IDType
+  type ID = Any
 
   val format: MongoAdtFormat[E] = meta.format
 

@@ -68,7 +68,7 @@ object RetryStrategy {
     once(Duration.Zero)
 
   def times(count: Int, duration: FiniteDuration = Duration.Zero): RetryStrategy =
-    if (count <= 0) never else apply(Opt(duration, times(count - 1, duration)))
+    if (count <= 0) never else apply(Opt((duration, times(count - 1, duration))))
 
   def once(delay: FiniteDuration): RetryStrategy =
     apply(Opt((delay, never)))

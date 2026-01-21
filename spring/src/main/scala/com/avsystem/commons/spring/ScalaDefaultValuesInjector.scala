@@ -16,9 +16,9 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
     new StandardReflectionParameterNameDiscoverer
 
   def classLoader: ClassLoader =
-    Thread.currentThread.getContextClassLoader.opt getOrElse getClass.getClassLoader
+    Thread.currentThread.getContextClassLoader.opt `getOrElse` getClass.getClassLoader
 
-  def loadClass(name: String): Class[_] = Class.forName(name, false, classLoader)
+  def loadClass(name: String): Class[?] = Class.forName(name, false, classLoader)
 
   def postProcessBeanDefinitionRegistry(registry: BeanDefinitionRegistry): Unit = {
     def traverse(value: Any): Unit = value match {
@@ -47,7 +47,7 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
   }
 
   @tailrec
-  private def isScalaClass(cls: Class[_]): Boolean = cls.getEnclosingClass match {
+  private def isScalaClass(cls: Class[?]): Boolean = cls.getEnclosingClass match {
     case null =>
       cls.getAnnotation(classOf[ScalaSignature]) != null || cls.getAnnotation(classOf[ScalaLongSignature]) != null
     case encls => isScalaClass(encls)

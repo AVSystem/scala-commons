@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
 
 final class CborReader(val data: RawCbor) {
-  private[this] var idx = 0
+  private var idx = 0
 
   def index: Int = idx
 
@@ -20,16 +20,16 @@ final class CborReader(val data: RawCbor) {
   def advance(amount: Int): Unit =
     idx += amount
 
-  @tailrec def requireTag(cond: Tag => Boolean, error: String): Tag =
-    InitialByte(data(idx)) match {
-      case InitialByte(MajorType.Tag, info) =>
-        advance(1)
-        val tag = Tag(readUnsigned(info).toInt)
-        if (cond(tag)) tag
-        else requireTag(cond, error)
-      case _ =>
-        throw new ReadFailure(error)
-    }
+//  @tailrec def requireTag(cond: Tag => Boolean, error: String): Tag =
+//    InitialByte(data(idx)) match {
+//      case InitialByte(MajorType.Tag, info) =>
+//        advance(1)
+//        val tag = Tag(readUnsigned(info).toInt)
+//        if (cond(tag)) tag
+//        else requireTag(cond, error)
+//      case _ =>
+//        throw new ReadFailure(error)
+//    }
 
   @tailrec def nextInitial(): InitialByte =
     InitialByte(data(idx)) match {
@@ -87,7 +87,7 @@ final class CborReader(val data: RawCbor) {
     res
   }
 
-  private[this] var openIndefs = 0 // number of currently open values of indefinite length
+  private var openIndefs = 0 // number of currently open values of indefinite length
 
   def openIndefinites: Int =
     openIndefs
@@ -245,21 +245,21 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
       val uns = readUnsigned(info)
       val unsigned = if (uns >= 0) BigInt(uns) else CborInput.Two64 + uns
       if (major == MajorType.Unsigned) unsigned else -(unsigned + 1)
-    case InitialByte(MajorType.ByteString, info) =>
-      val tag = requireTag(
-        t => t == Tag.PositiveBignum || t == Tag.NegativeBignum,
-        "expected value tagged as positive or negative bignum",
-      )
-      nextInitial()
-      val unsigned = BigInt(readSizedBytes(info))
-      if (tag == Tag.PositiveBignum) unsigned else -(unsigned + 1)
+//    case InitialByte(MajorType.ByteString, info) =>
+////      val tag = requireTag(
+////        t => t == Tag.PositiveBignum || t == Tag.NegativeBignum,
+////        "expected value tagged as positive or negative bignum",
+////      )
+//      nextInitial()
+//      val unsigned = BigInt(readSizedBytes(info))
+////      if (tag == Tag.PositiveBignum) unsigned else -(unsigned + 1)
     case ib =>
       nextInitial()
       unexpected(ib, "integer or bignum")
   }
 
   def readBigDecimal(): BigDecimal = {
-    requireTag(_ == Tag.DecimalFraction, "expected value tagged as decimal fraction")
+//    requireTag(_ == Tag.DecimalFraction, "expected value tagged as decimal fraction")
     nextInitial() match {
       case InitialByte(MajorType.Array, 2) =>
         val scale = -readInt()
@@ -294,7 +294,7 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
   }
 
   override def readTimestamp(): Long = {
-    requireTag(_ == Tag.EpochDateTime, "expected value tagged as epoch date time (tag value 1)")
+//    requireTag(_ == Tag.EpochDateTime, "expected value tagged as epoch date time (tag value 1)")
     val ib = peekInitial()
     ib.majorType match {
       case MajorType.Unsigned | MajorType.Negative => readLong() * 1000
@@ -332,20 +332,20 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
   def readInitialByte(): InitialByte =
     peekInitial()
 
-  def readTags(): List[Tag] = {
-    val buf = new MListBuffer[Tag]
-    val startIdx = index
-    @tailrec def loop(): Unit = peekInitial() match {
-      case InitialByte(MajorType.Tag, info) =>
-        nextInitial()
-        buf += Tag(readUnsigned(info).toInt)
-        loop()
-      case _ =>
-        reset(startIdx)
-    }
-    loop()
-    buf.result()
-  }
+//  def readTags(): List[Tag] = {
+//    val buf = new MListBuffer[Tag]
+//    val startIdx = index
+//    @tailrec def loop(): Unit = peekInitial() match {
+//      case InitialByte(MajorType.Tag, info) =>
+//        nextInitial()
+////        buf += Tag(readUnsigned(info).toInt)
+//        loop()
+//      case _ =>
+//        reset(startIdx)
+//    }
+//    loop()
+//    buf.result()
+//  }
 
   override def readCustom[T](typeMarker: TypeMarker[T]): Opt[T] = typeMarker match {
     case RawCbor =>
@@ -356,7 +356,7 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
 
   override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = metadata match {
     case InitialByte => Opt(readInitialByte())
-    case Tags => Opt(readTags())
+//    case Tags => Opt(readTags())
     case _ => super.readMetadata(metadata)
   }
 
@@ -402,7 +402,7 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
 class CborFieldInput(val fieldName: String, reader: CborReader, keyCodec: CborKeyCodec)
   extends CborInput(reader, keyCodec) with FieldInput
 
-abstract class CborSequentialInput(reader: CborReader, private[this] var size: Int) extends SequentialInput {
+abstract class CborSequentialInput(reader: CborReader, private var size: Int) extends SequentialInput {
 
   private val indefDepth = reader.openIndefinites
 
@@ -440,8 +440,8 @@ class CborListInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
 class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   extends CborSequentialInput(reader, size) with ObjectInput {
 
-  private[this] var forcedKeyCodec: CborKeyCodec = _
-  private[this] def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
+  private var forcedKeyCodec: CborKeyCodec = scala.compiletime.uninitialized
+  private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
   /** Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard [[ObjectOutput]]
     * which only allows string-typed keys. If this method is used to read the key then value MUST be read with

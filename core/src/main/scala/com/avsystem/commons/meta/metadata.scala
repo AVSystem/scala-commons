@@ -51,8 +51,8 @@ final case class ParamFlags(rawFlags: Int) extends AnyVal {
 }
 
 object ParamFlags extends HasGenCodec[ParamFlags] {
-  private[this] var currentFlag: Int = 1
-  private[this] def nextFlag(): ParamFlags = {
+  private var currentFlag: Int = 1
+  private def nextFlag(): ParamFlags = {
     val flag = currentFlag
     currentFlag = currentFlag << 1
     new ParamFlags(flag)
@@ -152,8 +152,8 @@ final case class TypeFlags(rawFlags: Int) extends AnyVal {
 }
 
 object TypeFlags extends HasGenCodec[TypeFlags] {
-  private[this] var currentFlag: Int = 1
-  private[this] def nextFlag(): TypeFlags = {
+  private var currentFlag: Int = 1
+  private def nextFlag(): TypeFlags = {
     val flag = currentFlag
     currentFlag = currentFlag << 1
     new TypeFlags(flag)
@@ -212,8 +212,8 @@ final case class MethodFlags(rawFlags: Int) extends AnyVal {
   }
 }
 object MethodFlags extends HasGenCodec[MethodFlags] {
-  private[this] var currentFlag: Int = 1
-  private[this] def nextFlag(): MethodFlags = {
+  private var currentFlag: Int = 1
+  private def nextFlag(): MethodFlags = {
     val flag = currentFlag
     currentFlag = currentFlag << 1
     new MethodFlags(flag)

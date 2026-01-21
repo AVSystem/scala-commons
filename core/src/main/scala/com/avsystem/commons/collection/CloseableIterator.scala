@@ -31,7 +31,7 @@ object CloseableIterator {
   def noop[T](it: JIterator[T]): CloseableIterator[T] =
     apply(it, emptyCloseable)
 
-  def apply[T](it: JIterator[T] with AutoCloseable): CloseableIterator[T] =
+  def apply[T](it: JIterator[T] & AutoCloseable): CloseableIterator[T] =
     apply(it, it)
 
   def apply[T](it: JIterator[T], closeable: AutoCloseable): CloseableIterator[T] =
@@ -41,9 +41,6 @@ object CloseableIterator {
       def hasNext: Boolean = it.hasNext
       def next(): T = it.next()
     }
-
-  def apply[T](it: Iterator[T] with AutoCloseable): CloseableIterator[T] =
-    apply(it, it)
 
   def apply[T](it: Iterator[T], closeable: AutoCloseable): CloseableIterator[T] =
     new CloseableIterator[T] {

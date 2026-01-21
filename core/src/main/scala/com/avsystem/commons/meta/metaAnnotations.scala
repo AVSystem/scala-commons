@@ -194,6 +194,8 @@ object infer {
   /** Can be used as default value of `@infer` annotation parameters.
     */
   def value[T]: T = macro macros.misc.WhiteMiscMacros.inferValue
+  inline def value[T]: T = ${ valueImpl[T] }
+  def valueImpl[T: Type](using Quotes): Expr[T] = '{???}
 }
 
 /** `@adtParamMetadata` applied on metadata parameter of metadata class for case class or object indicates that this

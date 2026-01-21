@@ -1,7 +1,5 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.serialization.IsoInstant
-
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
@@ -10,7 +8,7 @@ import scala.concurrent.duration.FiniteDuration
   * @param millis
   *   milliseconds since UNIX epoch, UTC
   */
-class Timestamp(val millis: Long) extends AnyVal with Comparable[Timestamp] {
+class Timestamp(val millis: Long) extends Comparable[Timestamp] {
   def compareTo(o: Timestamp): Int = java.lang.Long.compare(millis, o.millis)
 
   // I don't want to inherit them from Ordered or something because that would cause boxing
@@ -39,14 +37,14 @@ class Timestamp(val millis: Long) extends AnyVal with Comparable[Timestamp] {
   def -(start: Timestamp): FiniteDuration =
     since(start)
 
-  override def toString: String = IsoInstant.format(millis)
+  override def toString: String = com.avsystem.commons.serialization.IsoInstant.format(millis)
 }
 object Timestamp {
   final val Zero: Timestamp = Timestamp(0)
 
   def apply(millis: Long): Timestamp = new Timestamp(millis)
   def unapply(timestamp: Timestamp): Opt[Long] = Opt(timestamp.millis)
-  def parse(str: String): Timestamp = Timestamp(IsoInstant.parse(str))
+  def parse(str: String): Timestamp = Timestamp(com.avsystem.commons.serialization.IsoInstant.parse(str))
 
   def now(): Timestamp = Timestamp(System.currentTimeMillis())
 

@@ -22,4 +22,7 @@ trait TypedMongoUtils {
     * not take `ClientSession` as its first argument (non-nullable).
     */
   protected def optionalizeFirstArg[T](expr: T): T = macro MiscMacros.optionalizeFirstArg
+  inline def optionalizeFirstArg[T](expr: T): T = ${optionalizeFirstArgImpl('expr) }
 }
+
+def optionalizeFirstArgImpl[T: Type](expr: Expr[T])(using Quotes): Expr[T] = '{???}

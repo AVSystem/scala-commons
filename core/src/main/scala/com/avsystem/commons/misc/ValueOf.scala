@@ -13,4 +13,7 @@ object ValueOf {
   def apply[T](implicit vof: ValueOf[T]): T = vof.value
 
   implicit def mkValueOf[T]: ValueOf[T] = macro MiscMacros.mkValueOf[T]
+
+  inline implicit def mkValueOf[T]: ValueOf[T] = ${mkValueOfImpl[T]}
+  def mkValueOfImpl[T](using Quotes, Type[T]): Expr[ValueOf[T]] = '{???}
 }

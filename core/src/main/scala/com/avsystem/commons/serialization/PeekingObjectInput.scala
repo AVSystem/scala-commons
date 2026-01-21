@@ -4,7 +4,7 @@ package serialization
 /** Wrapper over [[ObjectInput]] that lets you peek next field name without advancing the input.
   */
 final class PeekingObjectInput(original: ObjectInput) extends ObjectInput {
-  private[this] var peekedField: FieldInput = _
+  private var peekedField: FieldInput = scala.compiletime.uninitialized
 
   override def knownSize: Int = original.knownSize
 

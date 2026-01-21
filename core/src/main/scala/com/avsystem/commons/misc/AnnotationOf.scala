@@ -39,7 +39,7 @@ object AnnotationsOf {
 @implicitNotFound("${T} is not annotated with ${A}")
 final class HasAnnotation[A, T] private ()
 object HasAnnotation {
-  private[this] val reusable = new HasAnnotation
+  private val reusable = new HasAnnotation
   def create[A, T]: HasAnnotation[A, T] = reusable.asInstanceOf[HasAnnotation[A, T]]
 
   implicit def materialize[A, T]: HasAnnotation[A, T] = macro macros.misc.MiscMacros.hasAnnotation[A, T]

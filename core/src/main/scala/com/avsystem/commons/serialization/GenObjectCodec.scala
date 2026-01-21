@@ -35,9 +35,14 @@ object GenObjectCodec {
     apply[T].readObject(input)
 
   def materialize[T]: GenObjectCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
+  inline def materialize[T]: GenObjectCodec[T] = ${ materializeImpl[T] }
+  def materializeImpl[T: Type](using Quotes): Expr[GenObjectCodec[T]] = '{???}
 
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenObjectCodec[T] =
-    macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenObjectCodec[T] = macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+
+  inline def fromApplyUnapplyProvider[T](inline applyUnapplyProvider: Any): GenObjectCodec[T] =
+    ${ fromApplyUnapplyProviderImpl[T]('applyUnapplyProvider) }
+  def fromApplyUnapplyProviderImpl[T: Type](applyUnapplyProvider: Expr[Any])(using Quotes): Expr[GenObjectCodec[T]] = '{???}
 
   def create[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
     new GenObjectCodec[T] {

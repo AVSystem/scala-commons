@@ -1,4 +1,4 @@
-logLevel := Level.Warn
+logLevel := Level.Error
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.20.2")
 addSbtPlugin("org.scala-js" % "sbt-jsdependencies" % "1.0.2")
@@ -10,4 +10,3 @@ addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.4")
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.4")
 addSbtPlugin("com.github.sbt" % "sbt-github-actions" % "0.29.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.6")
-addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.7.5")

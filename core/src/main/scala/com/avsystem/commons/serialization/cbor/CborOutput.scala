@@ -36,8 +36,8 @@ sealed abstract class BaseCborOutput(out: DataOutput) {
     if (value >= 0) writeValue(MajorType.Unsigned, value)
     else writeValue(MajorType.Negative, -(value + 1))
 
-  protected final def writeTag(tag: Tag): Unit =
-    writeValue(MajorType.Tag, tag.value)
+//  protected final def writeTag(tag: Tag): Unit =
+//    writeValue(MajorType.Tag, tag.value)
 
   protected final def writeText(str: String): Unit = {
     val bytes = str.getBytes(StandardCharsets.UTF_8)
@@ -128,13 +128,13 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
     if (unsigned.bitLength <= 64) {
       writeValue(if (neg) MajorType.Negative else MajorType.Unsigned, unsigned.longValue)
     } else {
-      writeTag(if (neg) Tag.NegativeBignum else Tag.PositiveBignum)
+//      writeTag(if (neg) Tag.NegativeBignum else Tag.PositiveBignum)
       writeBinary(unsigned.toByteArray)
     }
   }
 
   def writeBigDecimal(bigDecimal: BigDecimal): Unit = {
-    writeTag(Tag.DecimalFraction)
+//    writeTag(Tag.DecimalFraction)
     writeValue(MajorType.Array, 2)
     writeSigned(-bigDecimal.scale)
     writeBigInt(bigDecimal.bigDecimal.unscaledValue)
@@ -147,7 +147,7 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
     new CborChunkedBinaryOutput(out)
 
   override def writeTimestamp(millis: Long): Unit = {
-    writeTag(Tag.EpochDateTime)
+//    writeTag(Tag.EpochDateTime)
     if (millis % 1000 == 0)
       writeLong(millis / 1000)
     else
@@ -172,8 +172,8 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
         super.writeCustom(typeMarker, value)
     }
 
-  override def keepsMetadata(metadata: InputMetadata[_]): Boolean = metadata match {
-    case InitialByte | Tags => true
+  override def keepsMetadata(metadata: InputMetadata[?]): Boolean = metadata match {
+//    case InitialByte | Tags => true
     case _ => super.keepsMetadata(metadata)
   }
 }
@@ -184,8 +184,8 @@ sealed abstract class CborSequentialOutput(
 ) extends BaseCborOutput(out)
     with SequentialOutput {
 
-  protected[this] var size: Int = -1
-  protected[this] var fresh: Boolean = true
+  protected var size: Int = -1
+  protected var fresh: Boolean = true
 
   protected final def ensureInitialWritten(major: MajorType): Unit =
     if (fresh) {
@@ -241,8 +241,8 @@ class CborObjectOutput(
 ) extends CborSequentialOutput(out, sizePolicy)
     with ObjectOutput {
 
-  private[this] var forcedKeyCodec: CborKeyCodec = _
-  private[this] def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
+  private var forcedKeyCodec: CborKeyCodec = scala.compiletime.uninitialized
+  private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
   /** Returns a [[CborOutput]] for writing an arbitrary CBOR map key. This method is an extension of standard [[Output]]
     * which only allows string-typed keys. If a key is written using this method then its corresponding value MUST be
@@ -295,7 +295,7 @@ sealed abstract class CborChunkedOutput(out: DataOutput) extends BaseCborOutput(
   protected def major: MajorType
   protected def doWriteChunk(chunk: Chunk): Unit
 
-  protected[this] var fresh = true
+  protected var fresh = true
 
   private def ensureInitialWritten(): Unit =
     if (fresh) {

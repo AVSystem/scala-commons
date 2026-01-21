@@ -2,8 +2,8 @@ package com.avsystem.commons
 package collection
 
 final class MutableStack[T] {
-  private[this] var ssize: Int = 0
-  private[this] var stack = List.empty[T]
+  private var ssize: Int = 0
+  private var stack = List.empty[T]
 
   def push(elem: T): Unit = {
     stack ::= elem

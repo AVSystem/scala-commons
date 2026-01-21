@@ -19,7 +19,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
   import HTokenType._
   import HTree._
 
-  private[this] var idx = 0
+  private var idx = 0
 
   private def fail(): Nothing =
     if (eof) throw new EOFException
@@ -117,7 +117,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     if (braces) {
       ensure(LBrace)
     }
-    val stats = parseElems(parseStat _, if (braces) Opt(RBrace) else Opt.Empty)
+    val stats = parseElems((() => parseStat()), if (braces) Opt(RBrace) else Opt.Empty)
     if (braces) {
       ensure(RBrace)
     } else {
@@ -132,7 +132,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
   def parseArray(): HArray = {
     val start = skipWs()
     ensure(LBracket)
-    val elems = parseElems(parseValue _, Opt(RBracket))
+    val elems = parseElems((() => parseValue()), Opt(RBracket))
     ensure(RBracket)
     HArray(elems)(rangeFrom(start))
   }

@@ -120,7 +120,7 @@ object RpcMetadata {
 
   def auto[T]: T = macro macros.misc.WhiteMiscMacros.autoAnnotationMetadata
 
-  def nextInstance[T](it: Iterator[_], description: String): T =
+  def nextInstance[T](it: Iterator[?], description: String): T =
     if (it.hasNext) it.next().asInstanceOf[T]
     else throw new NoSuchElementException(s"typeclass instance for $description was not provided")
 }

@@ -137,7 +137,7 @@ class StreamInput(is: DataInputStream) extends InputAndSimpleInput {
 class StreamFieldInput(val fieldName: String, is: DataInputStream) extends StreamInput(is) with FieldInput
 
 private class StreamListInput(is: DataInputStream) extends ListInput {
-  private[this] var currentInput: Opt[StreamInput] = Opt.empty
+  private var currentInput: Opt[StreamInput] = Opt.empty
 
   private def ensureInput(): Unit =
     if (currentInput == Opt.empty) currentInput = Opt.some(new StreamInput(is))
@@ -159,7 +159,7 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
 
   import StreamObjectInput._
 
-  private[this] var currentField: FieldInput = NoneYet
+  private var currentField: FieldInput = NoneYet
 
   private def ensureInput(): Unit = {
     if (currentField eq NoneYet) {
@@ -216,8 +216,8 @@ private object StreamObjectInput {
 
 class StreamOutput(os: DataOutputStream) extends OutputAndSimpleOutput {
 
-  private[this] val streamList = new StreamListOutput(os, this)
-  private[this] val streamObject = new StreamObjectOutput(os, this)
+  private val streamList = new StreamListOutput(os, this)
+  private val streamObject = new StreamObjectOutput(os, this)
 
   def writeNull(): Unit = os.write(NullMarker)
 

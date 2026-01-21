@@ -31,7 +31,17 @@ trait AdtMetadataCompanion[M[_]] extends MetadataCompanion[M] {
 // cannot share code with AdtMetadataCompanion because of binary compatibility problems, must copy
 trait BoundedAdtMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]] extends BoundedMetadataCompanion[Hi, Lo, M] {
   def materialize[T >: Lo <: Hi]: M[T] = macro AdtMetadataMacros.materialize[T]
+  inline def materialize[T >: Lo <: Hi]: M[T] = ${ materializeImpl[T] }
 
-  def fromApplyUnapplyProvider[T >: Lo <: Hi](applyUnapplyProvider: Any): M[T] =
-    macro AdtMetadataMacros.fromApplyUnapplyProvider[T]
+  def fromApplyUnapplyProvider[T >: Lo <: Hi](applyUnapplyProvider: Any): M[T] = macro
+    AdtMetadataMacros.fromApplyUnapplyProvider[T]
+  inline def fromApplyUnapplyProvider[T >: Lo <: Hi](applyUnapplyProvider: Any): M[T] = ${
+    fromApplyUnapplyProviderImpl[T]('applyUnapplyProvider)
+  }
+
+
 }
+def materializeImpl[T](using Quotes, Type[T]): Expr[Nothing]
+ = '{???}
+def fromApplyUnapplyProviderImpl[T](applyUnapplyProvider: Expr[Any])(using Quotes, Type[T]): Expr[Nothing] =
+    '{???}

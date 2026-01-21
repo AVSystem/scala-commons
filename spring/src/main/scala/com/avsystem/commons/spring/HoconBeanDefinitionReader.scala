@@ -226,7 +226,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
     obj.get(DependencyCheckAttr).as[Option[String]].map(dependencyCheckMapping).foreach(bd.setDependencyCheck)
     obj.get(DescriptionAttr).as[Option[String]].foreach(bd.setDescription)
     obj.get(DestroyMethodAttr).as[Option[String]].foreach(bd.setDestroyMethodName)
-    obj.get(DependsOnAttr).as[Option[ju.List[String]]].map(_.asScala.toArray).foreach(bd.setDependsOn(_: _*))
+    obj.get(DependsOnAttr).as[Option[ju.List[String]]].map(_.asScala.toArray).foreach(bd.setDependsOn(_*))
     obj.get(FactoryBeanAttr).as[Option[String]].foreach(bd.setFactoryBeanName)
     obj.get(FactoryMethodAttr).as[Option[String]].foreach(bd.setFactoryMethodName)
     obj.get(InitMethodAttr).as[Option[String]].foreach(bd.setInitMethodName)
@@ -339,7 +339,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
           throw new RuntimeException(s"Could not read definition of bean $key at ${value.origin.description}", e)
       }
     }.toVector
-    beanDefs.foreach((registry.registerBeanDefinition _).tupled)
+    beanDefs.foreach((registry.registerBeanDefinition).tupled)
     beanDefs.size
   }
 

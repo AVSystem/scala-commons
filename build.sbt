@@ -1,3 +1,5 @@
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 // We need to generate slightly different structure for IntelliJ in order to better support ScalaJS cross projects.
@@ -6,7 +8,6 @@ import org.scalajs.jsenv.nodejs.NodeJSEnv
 // option in IntelliJ's SBT settings.
 val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean &&
   System.getProperty("idea.runid") == null
-
 val guavaVersion = "33.5.0-jre"
 val jsr305Version = "3.0.2"
 val scalatestVersion = "3.2.19"
@@ -26,12 +27,8 @@ val slf4jVersion = "2.0.17" // test only
 // for binary compatibility checking
 val previousCompatibleVersions: Set[String] = Set("2.2.4")
 
-inScope(Global)(
-  Seq(
-    cancelable := true,
-    excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject),
-  )
-)
+Global / cancelable := true
+Global / excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject)
 
 inThisBuild(
   Seq(
@@ -137,13 +134,17 @@ def commonSettings: Seq[Def.Setting[_]] = Seq(
 //          "-Wsafe-init",//todo: enable
           "-Yshow-suppressed-errors",
           "-Yshow-var-bounds",
-          "-Werror",
+//          "-Werror", //todo: enable
           "-experimental",
           "-preview",
           //  "-Yprofile-enabled",
           //  s"-Yprofile-trace:$moduleDir/compile-trace.json",
           "-language:implicitConversions", // todo: disable
           "-Xignore-scala2-macros", // todo: disable
+          "-language:experimental.macros",
+          "-rewrite",
+          "-source",
+          "3.4-migration",
         )
     }
   },
@@ -176,11 +177,11 @@ val jvmCommonSettings = Seq(
 ) ++ commonSettings
 
 val jsCommonSettings = Seq(
-  scalacOptions += {
-    val localDir = (ThisBuild / baseDirectory).value.toURI.toString
-    val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
-    s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
-  },
+//  scalacOptions += {
+//    val localDir = (ThisBuild / baseDirectory).value.toURI.toString
+//    val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
+//    s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
+//  },
   jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
   Test / fork := false,
 ) ++ commonSettings
@@ -212,7 +213,7 @@ lazy val root = project
     ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
     ScalaUnidoc / unidoc / scalacOptions += "-Ymacro-expand:none",
     ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(
-      analyzer,
+//      analyzer,
       macros,
       `core-js`,
 //      comprof,
@@ -222,14 +223,14 @@ lazy val root = project
 lazy val jvm = project
   .in(file(".jvm"))
   .aggregate(
-    analyzer,
+//    analyzer,
     macros,
     core,
     jetty,
-    mongo,
+//    mongo,
     hocon,
     spring,
-    redis,
+//    redis,
   )
   .settings(aggregateProjectSettings)
 
@@ -237,19 +238,20 @@ lazy val js = project
   .in(file(".js"))
   .aggregate(
     `core-js`,
-    `mongo-js`,
+//    `mongo-js`,
   )
   .settings(aggregateProjectSettings)
 
-lazy val analyzer = project
-  .dependsOn(core % Test)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "io.monix" %% "monix" % monixVersion % Test,
-    ),
-  )
+//todo: migrate to scala 3 compiler plugin API
+//lazy val analyzer = project
+//  .dependsOn(core % Test)
+//  .settings(
+//    jvmCommonSettings,
+//    libraryDependencies ++= Seq(
+//      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+//      "io.monix" %% "monix" % monixVersion % Test,
+//    ),
+//  )
 
 def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
   base / "src" / conf / "scala",
@@ -298,48 +300,49 @@ lazy val `core-js` = project
     ),
   )
 
-lazy val mongo = project
-  .dependsOn(core % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    sourceDirsSettings(_ / "jvm"),
-    libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
-      "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
-      "io.monix" %% "monix" % monixVersion,
-      "org.mongodb" % "mongodb-driver-core" % mongoVersion,
-      "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
-      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
-      ("org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional).cross(CrossVersion.for3Use2_13),
-    ),
-  )
-
-// only to allow @mongoId & MongoEntity to be usedJS/JVM cross-compiled code
-lazy val `mongo-js` = project
-  .in(mongo.base / "js")
-  .enablePlugins(ScalaJSPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOn(mongo) else p)
-  .dependsOn(`core-js`)
-  .settings(
-    jsCommonSettings,
-    sameNameAs(mongo),
-    sourceDirsSettings(_.getParentFile),
-  )
-
-lazy val redis = project
-  .dependsOn(core % CompileAndTest)
-  .settings(
-    jvmCommonSettings,
-    libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % guavaVersion,
-      "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-      "io.monix" %% "monix" % monixVersion,
-    ),
-    Test / parallelExecution := false,
-    Compile / scalacOptions += "-Wconf:cat=deprecation:is", // only inform about deprecations due to scheduled removal
-    Test / skip := true,
-  )
+//todo
+//lazy val mongo = project
+//  .dependsOn(core % CompileAndTest)
+//  .settings(
+//    jvmCommonSettings,
+//    sourceDirsSettings(_ / "jvm"),
+//    libraryDependencies ++= Seq(
+//      "com.google.guava" % "guava" % guavaVersion,
+//      "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
+//      "io.monix" %% "monix" % monixVersion,
+//      "org.mongodb" % "mongodb-driver-core" % mongoVersion,
+//      "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
+//      "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
+//      ("org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional).cross(CrossVersion.for3Use2_13),
+//    ),
+//  )
+//
+//// only to allow @mongoId & MongoEntity to be usedJS/JVM cross-compiled code
+//lazy val `mongo-js` = project
+//  .in(mongo.base / "js")
+//  .enablePlugins(ScalaJSPlugin)
+//  .configure(p => if (forIdeaImport) p.dependsOn(mongo) else p)
+//  .dependsOn(`core-js`)
+//  .settings(
+//    jsCommonSettings,
+//    sameNameAs(mongo),
+//    sourceDirsSettings(_.getParentFile),
+//  )
+//
+//lazy val redis = project
+//  .dependsOn(core % CompileAndTest)
+//  .settings(
+//    jvmCommonSettings,
+//    libraryDependencies ++= Seq(
+//      "com.google.guava" % "guava" % guavaVersion,
+//      "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
+//      "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+//      "io.monix" %% "monix" % monixVersion,
+//    ),
+//    Test / parallelExecution := false,
+//    Compile / scalacOptions += "-Wconf:cat=deprecation:is", // only inform about deprecations due to scheduled removal
+//    Test / skip := true,
+//  )
 
 lazy val hocon = project
   .dependsOn(core % CompileAndTest)
@@ -371,31 +374,31 @@ lazy val jetty = project
     ),
   )
 
-lazy val benchmark = project
-  .dependsOn(redis, mongo)
-  .enablePlugins(JmhPlugin)
-  .settings(
-    jvmCommonSettings,
-    noPublishSettings,
-    sourceDirsSettings(_ / "jvm"),
-    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
-  )
+//lazy val benchmark = project
+//  .dependsOn(redis, mongo)
+//  .enablePlugins(JmhPlugin)
+//  .settings(
+//    jvmCommonSettings,
+//    noPublishSettings,
+//    sourceDirsSettings(_ / "jvm"),
+//    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
+//  )
 
-lazy val `benchmark-js` = project
-  .in(benchmark.base / "js")
-  .enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
-  .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
-  .dependsOn(`core-js`)
-  .settings(
-    jsCommonSettings,
-    noPublishSettings,
-    sameNameAs(benchmark),
-    sourceDirsSettings(_.getParentFile),
-    libraryDependencies ++= Seq(
-      "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion
-    ),
-    scalaJSUseMainModuleInitializer := true,
-  )
+//lazy val `benchmark-js` = project
+//  .in(benchmark.base / "js")
+//  .enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
+//  .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
+//  .dependsOn(`core-js`)
+//  .settings(
+//    jsCommonSettings,
+//    noPublishSettings,
+//    sameNameAs(benchmark),
+//    sourceDirsSettings(_.getParentFile),
+//    libraryDependencies ++= Seq(
+//      "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion
+//    ),
+//    scalaJSUseMainModuleInitializer := true,
+//  )
 
 //todo: find a replecement
 //lazy val comprof = project

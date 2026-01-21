@@ -13,11 +13,17 @@ object SealedUtils {
   @explicitGenerics
   def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
 
+  inline def caseObjectsFor[T]: List[T] = ${caseObjectsForImpl[T]}
+
   /** Infers a list of instances of given typeclass `TC` for all non-abstract subtypes of a sealed hierarchy root `T`.
     */
   @explicitGenerics
-  def instancesFor[TC[_], T]: List[TC[_ <: T]] = macro macros.misc.SealedMacros.instancesFor[TC[_], T]
+  def instancesFor[TC[_], T]: List[TC[T]] = macro macros.misc.SealedMacros.instancesFor[TC[Any], T]
+  inline def instancesFor[TC[_], T]: List[TC[T]] = ${instancesForImpl[TC, T]}
 }
+
+def caseObjectsForImpl[T](using Quotes) = '{???}
+def instancesForImpl[TC[_], T](using Quotes) = '{???}
 
 /** Base trait for companion objects of sealed traits that serve as enums, i.e. their only values are case objects. For
   * example:
@@ -51,7 +57,7 @@ trait SealedEnumCompanion[T] {
     * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for
     * [[com.avsystem.commons.misc.OrderedEnum OrderedEnum]].
     */
-  val values: ISeq[T]
+  def values: ISeq[T]
 
   /** A macro which reifies a list of all case objects of the sealed trait or class `T`. WARNING: the order of case
     * objects in the resulting list is well defined only for enums that extend [[OrderedEnum]]. In such case, the order
@@ -59,7 +65,9 @@ trait SealedEnumCompanion[T] {
     * be arbitrary.
     */
   protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
+  inline def caseObjects: List[T] = ${caseObjectsImpl}
 }
+def caseObjectsImpl(using Quotes) = '{???}
 
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]
 

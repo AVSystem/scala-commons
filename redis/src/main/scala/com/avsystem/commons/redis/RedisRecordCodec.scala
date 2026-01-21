@@ -14,6 +14,9 @@ import scala.collection.{mutable, Factory}
 )
 case class RedisRecordCodec[T](read: IndexedSeq[BulkStringMsg] => T, write: T => IndexedSeq[BulkStringMsg])
 object RedisRecordCodec extends LowPriorityRedisRecordCodecs {
+  implicit def dummy[T]: RedisRecordCodec[T] = ???
+
+
   def apply[T](implicit codec: RedisRecordCodec[T]): RedisRecordCodec[T] = codec
 
   implicit def forDataMap[M[X, Y] <: BMap[X, Y], F: RedisDataCodec, V: RedisDataCodec](

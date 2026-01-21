@@ -41,6 +41,7 @@ trait RPCFramework {
     * [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
   def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
+  inline def materializeAsRaw[T]: AsRawRPC[T] = ${ materializeAsRawImpl[T] }
 
   type AsRealRPC[RealRPC] = AsReal[RawRPC, RealRPC]
   object AsRealRPC {
@@ -59,11 +60,12 @@ trait RPCFramework {
   }
 
   def materializeAsRawReal[T]: AsRawRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.AsRawRealImpl[T]
+  inline def materializeAsRawReal[T]: AsRawRealRPC[T] = ${ materializeAsRawRealImpl[T] }
 
   trait Signature {
     @reifyName def name: String
     @multi
-    @rpcParamMetadata def paramMetadata: List[ParamMetadata[_]]
+    @rpcParamMetadata def paramMetadata: List[ParamMetadata[?]]
     @reifyAnnot
     @multi def annotations: List[MetadataAnnotation]
   }
@@ -75,6 +77,7 @@ trait RPCFramework {
   ) extends TypedMetadata[T]
 
   def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[RealRPC]
+  inline def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = ${ materializeMetadataImpl[RealRPC] }
 
   /** Base trait for traits or classes "implementing" [[FullRPCInfo]] in various RPC frameworks. Having a separate
     * subtrait/subclass for every framework is beneficial for ScalaJS DCE.
@@ -101,6 +104,7 @@ trait RPCFramework {
   type FullRPCInfo[RealRPC] <: BaseFullRPCInfo[RealRPC]
 
   implicit def materializeFullInfo[T]: FullRPCInfo[T] = macro macros.rpc.RPCFrameworkMacros.fullInfoImpl[T]
+  inline implicit def materializeFullInfo[T]: FullRPCInfo[T] = ${ materializeFullInfoImpl[T] }
 
   /** Convenience abstract class for companion objects of RPC interfaces. Makes sure all three RPC type classes
     * ([[AsRawRPC]], [[AsRealRPC]] and [[RPCMetadata]]) are macro-materialized for that RPC interface and confines macro
@@ -128,7 +132,18 @@ trait RPCFramework {
     // of different RPC frameworks. This is important in cross-compiled code where any of these three typeclasses
     // may be completely unused on the JS side and we want to make sure that DCE gets rid of them.
     implicit def asRealRPC: AsRealRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    inline implicit def asRealRPC: AsRealRPC[RealRPC] = ${asRealRPCImpl}
     implicit def asRawRPC: AsRawRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    inline implicit def asRawRPC: AsRawRPC[RealRPC] = ${asRawRPCImpl}
     implicit def metadata: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    inline implicit def metadata: RPCMetadata[RealRPC] = ${metadataImpl}
   }
 }
+
+def materializeMetadataImpl[RealRPC: Type](using Quotes): Expr[Nothing] = '{???}
+def materializeFullInfoImpl[T: Type](using Quotes): Expr[Nothing] = '{???}
+def asRealRPCImpl(using Quotes): Expr[Nothing] = '{???}
+def asRawRPCImpl(using Quotes): Expr[Nothing]= '{???}
+def metadataImpl(using Quotes):Expr[Nothing] = '{???}
+def materializeAsRawImpl[T: Type](using Quotes): Expr[Nothing] = '{???}
+def materializeAsRawRealImpl[T: Type](using Quotes): Expr[Nothing] = '{???}

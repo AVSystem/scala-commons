@@ -73,7 +73,7 @@ trait JCollectionUtils extends JFactories {
 
   object JIterable {
     def apply[T](values: T*): JIterable[T] =
-      JArrayList(values: _*)
+      JArrayList(values*)
 
     implicit def asJIterableFactory[T](obj: JIterable.type): Factory[T, JIterable[T]] =
       new JCollectionFactory(new JArrayList)
