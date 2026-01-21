@@ -51,7 +51,8 @@ inThisBuild(
     developers := List(
       Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak"))
     ),
-    scalaVersion := "2.13.18",
+    scalaVersion := "3.8.0",
+    crossScalaVersions := Seq("3.8.0", "2.13.18"),
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
@@ -87,32 +88,64 @@ inThisBuild(
 )
 
 def commonSettings: Seq[Def.Setting[_]] = Seq(
-  Compile / scalacOptions ++= Seq(
-    "-encoding",
-    "utf-8",
-    "-Yrangepos",
-    "-explaintypes",
-    "-feature",
-    "-deprecation",
-    "-unchecked",
-    "-language:implicitConversions",
-    "-language:existentials",
-    "-language:dynamics",
-    "-language:experimental.macros",
-    "-language:higherKinds",
-    "-Xfatal-warnings",
-    "-Xsource:3",
-    "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-    "-Ycache-plugin-class-loader:last-modified",
-    "-Ycache-macro-class-loader:last-modified",
-  ),
   Compile / scalacOptions ++= {
-    if (scalaBinaryVersion.value == "2.13")
-      Seq(
-        "-Xnon-strict-patmat-analysis",
-        "-Xlint:-strict-unsealed-patmat",
-      )
-    else Seq.empty
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) =>
+        Seq(
+          "-encoding",
+          "utf-8",
+          "-Yrangepos",
+          "-explaintypes",
+          "-feature",
+          "-deprecation",
+          "-unchecked",
+          "-language:implicitConversions",
+          "-language:existentials",
+          "-language:dynamics",
+          "-language:experimental.macros",
+          "-language:higherKinds",
+          "-Xfatal-warnings",
+          "-Xsource:3",
+          "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+          "-Ycache-plugin-class-loader:last-modified",
+          "-Ycache-macro-class-loader:last-modified",
+          "-Xnon-strict-patmat-analysis",
+          "-Xlint:-strict-unsealed-patmat",
+          "-Ytasty-reader",
+        )
+      case _ =>
+        Seq(
+          "-deprecation",
+          "-feature",
+          // "-explain",
+//          "-new-syntax", //todo: enable
+          "-unchecked",
+          "-language:noAutoTupling",
+          "-Vprofile",
+          "-Xprint-inline",
+          // "-Ycheck:all", // cannot be enabled when scoverage used :///todo: enable
+          "-Ycheck:macros",
+          // "-Ydebug-error",
+          "-Ydebug-flags",
+          "-Ydebug-missing-refs",
+          "-Yexplain-lowlevel",
+//          "-Yexplicit-nulls", //todo: enable
+          // "-Yprint-debug",
+          // "-Xprint:postInlining",
+          // "-Xprint-suspension",
+          // "-Vprint:typer",
+//          "-Wsafe-init",//todo: enable
+          "-Yshow-suppressed-errors",
+          "-Yshow-var-bounds",
+          "-Werror",
+          "-experimental",
+          "-preview",
+          //  "-Yprofile-enabled",
+          //  s"-Yprofile-trace:$moduleDir/compile-trace.json",
+          "-language:implicitConversions", // todo: disable
+          "-Xignore-scala2-macros", // todo: disable
+        )
+    }
   },
   Test / scalacOptions := (Compile / scalacOptions).value,
   Compile / doc / sources := Seq.empty, // relying on unidoc
@@ -236,6 +269,7 @@ def sameNameAs(proj: Project) =
 
 lazy val macros = project.settings(
   jvmCommonSettings,
+  scalaVersion := "2.13.12",
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
 )
 
@@ -276,7 +310,7 @@ lazy val mongo = project
       "org.mongodb" % "mongodb-driver-core" % mongoVersion,
       "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
       "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
-      "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
+      ("org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional).cross(CrossVersion.for3Use2_13),
     ),
   )
 
@@ -363,30 +397,31 @@ lazy val `benchmark-js` = project
     scalaJSUseMainModuleInitializer := true,
   )
 
-lazy val comprof = project
-  .disablePlugins(GenerativePlugin)
-  .dependsOn(core)
-  .settings(
-    jvmCommonSettings,
-    noPublishSettings,
-    ideSkipProject := true,
-    addCompilerPlugin("ch.epfl.scala" %% "scalac-profiling" % "1.0.0"),
-    scalacOptions ++= Seq(
-      s"-P:scalac-profiling:sourceroot:${baseDirectory.value}",
-      "-P:scalac-profiling:generate-macro-flamegraph",
-      "-P:scalac-profiling:no-profiledb",
-      "-Xmacro-settings:statsEnabled",
-      "-Ystatistics:typer",
-    ),
-    Compile / sourceGenerators += Def.task {
-      val originalSrc = (core / sourceDirectory).value / "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
-      val originalContent = IO.read(originalSrc)
-      (0 until 100).map { i =>
-        val pkg = f"oa$i%02d"
-        val newContent = originalContent.replace("package rest", s"package rest\npackage $pkg")
-        val newFile = (Compile / sourceManaged).value / pkg / "RestTestApi.scala"
-        IO.write(newFile, newContent)
-        newFile
-      }
-    }.taskValue,
-  )
+//todo: find a replecement
+//lazy val comprof = project
+//  .disablePlugins(GenerativePlugin)
+//  .dependsOn(core)
+//  .settings(
+//    jvmCommonSettings,
+//    noPublishSettings,
+//    ideSkipProject := true,
+//    addCompilerPlugin("ch.epfl.scala" %% "scalac-profiling" % "1.0.0"),
+//    scalacOptions ++= Seq(
+//      s"-P:scalac-profiling:sourceroot:${baseDirectory.value}",
+//      "-P:scalac-profiling:generate-macro-flamegraph",
+//      "-P:scalac-profiling:no-profiledb",
+//      "-Xmacro-settings:statsEnabled",
+//      "-Ystatistics:typer",
+//    ),
+//    Compile / sourceGenerators += Def.task {
+//      val originalSrc = (core / sourceDirectory).value / "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
+//      val originalContent = IO.read(originalSrc)
+//      (0 until 100).map { i =>
+//        val pkg = f"oa$i%02d"
+//        val newContent = originalContent.replace("package rest", s"package rest\npackage $pkg")
+//        val newFile = (Compile / sourceManaged).value / pkg / "RestTestApi.scala"
+//        IO.write(newFile, newContent)
+//        newFile
+//      }
+//    }.taskValue,
+//  )
