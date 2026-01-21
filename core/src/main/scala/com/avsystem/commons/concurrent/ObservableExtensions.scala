@@ -62,7 +62,7 @@ object ObservableExtensions extends ObservableExtensions {
       * WARNING: this requires unbounded buffering.
       */
     def sortedByL[R](f: T => R)(implicit ord: Ordering[R], ct: ClassTag[T]): Task[ISeq[T]] =
-      sortedL(ord.on(f), ct)
+      sortedL(using ord.on(f), ct)
 
     /** Given a collection factory `factory`, returns a [[monix.eval.Task Task]] that upon evaluation will collect all
       * items from the source in the appropriate representation for the current element type `T`.

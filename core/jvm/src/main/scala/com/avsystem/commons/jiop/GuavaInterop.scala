@@ -140,7 +140,7 @@ object GuavaInterop extends GuavaInterop {
               executor.execute(runnable)
           }
       }
-      fut.onComplete(_ => listener.run())(ec)
+      fut.onComplete(_ => listener.run())(using ec)
     }
 
     def isCancelled: Boolean =
