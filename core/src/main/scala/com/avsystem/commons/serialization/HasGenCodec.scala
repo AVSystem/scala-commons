@@ -12,21 +12,21 @@ import com.avsystem.commons.misc.ValueOf
  * etc.
  */
 abstract class HasGenCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenCodec[T]]) {
-  implicit val codec: GenCodec[T] = macroCodec((), this).apply()
+  implicit lazy val codec: GenCodec[T] = macroCodec((), this).apply()
 }
 
 /**
  * Like [[HasGenCodec]] but materializes an [[ApplyUnapplyCodec]] instead of just [[GenCodec]].
  */
 abstract class HasApplyUnapplyCodec[T](implicit macroCodec: MacroInstances[Unit, () => ApplyUnapplyCodec[T]]) {
-  implicit val codec: ApplyUnapplyCodec[T] = macroCodec((), this).apply()
+  implicit lazy val codec: ApplyUnapplyCodec[T] = macroCodec((), this).apply()
 }
 
 /**
  * Like [[HasGenCodec]] but materializes a [[GenObjectCodec]] instead of just [[GenCodec]].
  */
 abstract class HasGenObjectCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenObjectCodec[T]]) {
-  implicit val codec: GenObjectCodec[T] = macroCodec((), this).apply()
+  implicit lazy val codec: GenObjectCodec[T] = macroCodec((), this).apply()
 }
 
 /**
@@ -34,7 +34,7 @@ abstract class HasGenObjectCodec[T](implicit macroCodec: MacroInstances[Unit, ()
  * from an object specified with type parameter `D`. It must be a singleton object type, i.e. `SomeObject.type`.
  */
 abstract class HasGenCodecWithDeps[D, T](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, () => GenCodec[T]]) {
-  implicit val codec: GenCodec[T] = macroCodec(deps.value, this).apply()
+  implicit lazy val codec: GenCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 /**
@@ -46,7 +46,7 @@ abstract class HasApplyUnapplyCodecWithDeps[D, T](
   implicit deps: ValueOf[D],
   macroCodec: MacroInstances[D, () => ApplyUnapplyCodec[T]],
 ) {
-  implicit val codec: ApplyUnapplyCodec[T] = macroCodec(deps.value, this).apply()
+  implicit lazy val codec: ApplyUnapplyCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 /**
@@ -58,7 +58,7 @@ abstract class HasGenObjectCodecWithDeps[D, T](
   implicit deps: ValueOf[D],
   macroCodec: MacroInstances[D, () => GenObjectCodec[T]],
 ) {
-  implicit val codec: GenObjectCodec[T] = macroCodec(deps.value, this).apply()
+  implicit lazy val codec: GenObjectCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 trait PolyCodec[C[_]] {

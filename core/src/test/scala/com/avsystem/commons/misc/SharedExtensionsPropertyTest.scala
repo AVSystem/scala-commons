@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 class SharedExtensionsPropertyTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks {
-  implicit def shrinkNonEmpty[C[_] <: Iterable[_], T](implicit base: Shrink[C[T]]): Shrink[C[T]] =
+  implicit def shrinkNonEmpty[C[_] <: Iterable[?], T](implicit base: Shrink[C[T]]): Shrink[C[T]] =
     Shrink(base.shrink(_).filter(_.nonEmpty))
 
   private val elementGen = Gen.alphaChar

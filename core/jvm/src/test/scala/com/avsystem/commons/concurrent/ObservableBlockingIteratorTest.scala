@@ -35,7 +35,7 @@ class ObservableBlockingIteratorTest extends AnyFunSuite {
   def slowlyToList[T](it: Iterator[T]): List[T] = {
     val lb = new MListBuffer[T]
     Thread.sleep(2)
-    while it.hasNext do {
+    while (it.hasNext) {
       Thread.sleep(2)
       lb += it.next()
     }

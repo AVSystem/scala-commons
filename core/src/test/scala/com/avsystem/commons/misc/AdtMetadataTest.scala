@@ -33,7 +33,7 @@ case class GenField[T](
 
 @positioned(positioned.here) case class GenUnion[T](
   @composite info: GenUnionInfo[T],
-  @multi @adtCaseMetadata cases: Map[String, GenCase[_]],
+  @multi @adtCaseMetadata cases: Map[String, GenCase[?]],
 ) extends GenStructure[T] {
   def repr: String = cases.iterator
     .map { case (name, gr) =>
@@ -45,7 +45,7 @@ case class GenField[T](
 sealed trait GenCase[T] extends TypedMetadata[T] {
   def repr: String
   def info: GenCaseInfo[T]
-  def sealedParents: List[GenSealedParent[_]]
+  def sealedParents: List[GenSealedParent[?]]
 }
 
 case class GenSealedParent[T](
@@ -54,7 +54,7 @@ case class GenSealedParent[T](
 
 @positioned(positioned.here) case class GenCustomCase[T](
   @composite info: GenCaseInfo[T],
-  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[?]],
   @checked @infer structure: GenStructure.Lazy[T],
 ) extends GenCase[T] {
   def repr: String = structure.value.repr
@@ -62,8 +62,8 @@ case class GenSealedParent[T](
 
 @positioned(positioned.here) case class GenRecord[T](
   @composite info: GenCaseInfo[T],
-  @multi @adtParamMetadata fields: Map[String, GenField[_]],
-  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
+  @multi @adtParamMetadata fields: Map[String, GenField[?]],
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[?]],
 ) extends GenCase[T]
     with GenStructure[T] {
 
@@ -79,7 +79,7 @@ case class GenSealedParent[T](
 @positioned(positioned.here) case class GenSingleton[T](
   @composite info: GenCaseInfo[T],
   @checked @infer valueOf: ValueOf[T],
-  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[?]],
 ) extends GenCase[T]
     with GenStructure[T] {
   def repr: String = valueOf.value.toString
@@ -88,7 +88,7 @@ case class GenSealedParent[T](
 @allowUnorderedSubtypes
 case class GenUnorderedUnion[T](
   @composite info: GenUnionInfo[T],
-  @multi @adtCaseMetadata cases: Map[String, GenCase[_]],
+  @multi @adtCaseMetadata cases: Map[String, GenCase[?]],
 ) extends TypedMetadata[T]
 object GenUnorderedUnion extends AdtMetadataCompanion[GenUnorderedUnion] {
   materialize[Option[String]]

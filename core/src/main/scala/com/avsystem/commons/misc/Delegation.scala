@@ -8,13 +8,7 @@ trait Delegation[A, B] {
   def delegate(a: A): B
 }
 
-object Delegation {
-  implicit def materializeDelegation[A, B]: Delegation[A, B] =
-    macro com.avsystem.commons.macros.misc.DelegationMacros.materializeDelegation[A, B]
-
-  inline implicit def materializeDelegation[A, B]: Delegation[A, B] = ${ materializeDelegationImpl[A, B] }
-  def materializeDelegationImpl[A: Type, B: Type](using Quotes): Expr[Delegation[A, B]] = '{ ??? }
-
+object Delegation extends DelegationMacros {
   /**
    * Provides following syntax:
    *
@@ -22,10 +16,5 @@ object Delegation {
    */
   def apply[B] = new CurriedDelegation[B]
 
-  class CurriedDelegation[B] {
-    def apply[A](source: A): B = macro com.avsystem.commons.macros.misc.DelegationMacros.delegate[A, B]
-    inline def apply[A](source: A): B = ${ delegateImpl[A, B]('source) }
-  }
+  class CurriedDelegation[B] extends DelegationApplyMacros[B]
 }
-
-def delegateImpl[A: Type, B: Type](source: Expr[A])(using Quotes): Expr[B] = '{ ??? }

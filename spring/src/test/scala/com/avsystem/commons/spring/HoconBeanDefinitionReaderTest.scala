@@ -12,13 +12,13 @@ import java.util as ju
 import scala.beans.BeanProperty
 
 class TestBean(val constrInt: Int = 1, val constrString: String = "constrDefault") {
-  @BeanProperty var int: Int = _
-  @BeanProperty var string: String = _
-  @BeanProperty var strIntMap: ju.Map[String, Int] = _
-  @BeanProperty var strList: ju.List[String] = _
-  @BeanProperty var strSet: ju.Set[String] = _
-  @BeanProperty var nestedBean: TestBean = _
-  @BeanProperty var config: Config = _
+  @BeanProperty var int: Int = scala.compiletime.uninitialized
+  @BeanProperty var string: String = scala.compiletime.uninitialized
+  @BeanProperty var strIntMap: ju.Map[String, Int] = scala.compiletime.uninitialized
+  @BeanProperty var strList: ju.List[String] = scala.compiletime.uninitialized
+  @BeanProperty var strSet: ju.Set[String] = scala.compiletime.uninitialized
+  @BeanProperty var nestedBean: TestBean = scala.compiletime.uninitialized
+  @BeanProperty var config: Config = scala.compiletime.uninitialized
 }
 object TestBean {
   def create(theInt: Int = -1, theString: String = "factoryDefault"): TestBean =

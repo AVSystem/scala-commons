@@ -6,7 +6,7 @@ object BuildablePojo {
   def builder(): Builder = new Builder
 
   final class Builder private[BuildablePojo] {
-    private var str: String = _
+    private var str: String = scala.compiletime.uninitialized
     private var num: Int = 0
     private var flags: JList[Boolean] = new JArrayList
     private var cool: Boolean = true

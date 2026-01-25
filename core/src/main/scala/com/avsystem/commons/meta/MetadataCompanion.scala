@@ -22,12 +22,8 @@ trait MetadataCompanion[M[_]] {
   final class Lazy[Real](metadata: => M[Real]) {
     lazy val value: M[Real] = metadata
   }
-  object Lazy {
+  object Lazy extends MetadataCompanionLazyMacros[M, Lazy] {
     def apply[Real](metadata: => M[Real]): Lazy[Real] = new Lazy(metadata)
-
-    // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
-    implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
-    inline implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = ${ lazyMetadataImpl }
 
     @implicitNotFound("#{forNotLazy}")
     implicit def notFound[T](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
@@ -35,7 +31,6 @@ trait MetadataCompanion[M[_]] {
   }
 }
 
-def lazyMetadataImpl(using Quotes) = '{ ??? }
 
 /**
  * Like [[MetadataCompanion]] but allows the metadata class' type parameter to be bounded
@@ -56,12 +51,8 @@ trait BoundedMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]] {
   final class Lazy[Real >: Lo <: Hi](metadata: => M[Real]) {
     lazy val value: M[Real] = metadata
   }
-  object Lazy {
+  object Lazy extends BoundedMetadataCompanionLazyMacros[Hi, Lo, M, Lazy] {
     def apply[Real >: Lo <: Hi](metadata: => M[Real]): Lazy[Real] = new Lazy(metadata)
-
-    // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
-    implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
-    inline implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = ${ lazyMetadataImpl }
 
     @implicitNotFound("#{forNotLazy}")
     implicit def notFound[T >: Lo <: Hi](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =

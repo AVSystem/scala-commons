@@ -4,7 +4,7 @@ package rpc
 import com.avsystem.commons.meta.*
 import com.avsystem.commons.serialization.GenCodec
 
-trait RPCFramework {
+trait RPCFramework extends RPCFrameworkMacros {
   type RawValue
   type Reader[T]
   type Writer[T]
@@ -36,33 +36,15 @@ trait RPCFramework {
     def apply[RealRPC](implicit asRawRPC: AsRawRPC[RealRPC]): AsRawRPC[RealRPC] = asRawRPC
   }
 
-  /**
-   * Materializes a factory of implementations of [[RawRPC]] which translate invocations of its raw methods to
-   * invocations of actual methods on `rpcImpl`. Method arguments and results are serialized and deserialized from/to
-   * [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
-   */
-  def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
-  inline def materializeAsRaw[T]: AsRawRPC[T] = ${ materializeAsRawImpl[T] }
-
   type AsRealRPC[RealRPC] = AsReal[RawRPC, RealRPC]
   object AsRealRPC {
     @inline def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
   }
 
-  /**
-   * Materializes a factory of implementations of `T` which are proxies that implement all abstract methods of `T` by
-   * forwarding them to `rawRpc`. Method arguments and results are serialized and deserialized from/to [[RawValue]]
-   * using [[Reader]] and [[Writer]] typeclasses.
-   */
-  def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
-
   type AsRawRealRPC[RealRPC] = AsRawReal[RawRPC, RealRPC]
   object AsRawRealRPC {
     @inline def apply[RealRPC](implicit AsRawRealRPC: AsRawRealRPC[RealRPC]): AsRawRealRPC[RealRPC] = AsRawRealRPC
   }
-
-  def materializeAsRawReal[T]: AsRawRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.AsRawRealImpl[T]
-  inline def materializeAsRawReal[T]: AsRawRealRPC[T] = ${ materializeAsRawRealImpl[T] }
 
   trait Signature {
     @reifyName def name: String
@@ -77,9 +59,6 @@ trait RPCFramework {
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @infer typeMetadata: ParamTypeMetadata[T],
   ) extends TypedMetadata[T]
-
-  def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[RealRPC]
-  inline def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = ${ materializeMetadataImpl[RealRPC] }
 
   /**
    * Base trait for traits or classes "implementing" [[FullRPCInfo]] in various RPC frameworks. Having a separate
@@ -96,19 +75,8 @@ trait RPCFramework {
    * [[RPCCompanion]]. The fact that every [[RPCFramework]] may define its own trait or class for [[FullRPCInfo]] helps
    * ScalaJS DCE distinguish between instances of [[AsRawRPC]], [[AsRealRPC]] and [[RPCMetadata]] for different
    * frameworks and to get rid of unused instances.
-   *
-   * @example
-   *   {{{
-   * object SomeRPCFramework extends RPCFramework {
-   *   abstract class FullRPCInfo[RealRPC] extends BaseFullRPCInfo[RealRPC]
-   *   ...
-   * }
-   *   }}}
    */
   type FullRPCInfo[RealRPC] <: BaseFullRPCInfo[RealRPC]
-
-  implicit def materializeFullInfo[T]: FullRPCInfo[T] = macro macros.rpc.RPCFrameworkMacros.fullInfoImpl[T]
-  inline implicit def materializeFullInfo[T]: FullRPCInfo[T] = ${ materializeFullInfoImpl[T] }
 
   /**
    * Convenience abstract class for companion objects of RPC interfaces. Makes sure all three RPC type classes
@@ -118,37 +86,8 @@ trait RPCFramework {
    * to use [[RPCCompanion]], the RPC framework must define [[FullRPCInfo]] as a trait or class. Additionally, some
    * special wizardry has been employed to make sure that when an RPC interface is a part of shared (cross-compiled)
    * code of a ScalaJS application then ScalaJS optimizer can remove unused instances of macro generated typeclasses.
-   *
-   * @example
-   *   {{{
-   *   object SomeRPCFramework extends StandardRPCFramework { ... }
-   *   trait SomeRPC {
-   *     def doSomething(str: String): Unit
-   *     def callSomething(int: Int): Future[String]
-   *   }
-   *   object SomeRPC extends SomeRPCFramework.RPCCompanion[SomeRPC]
-   *   }}}
    */
-  abstract class RPCCompanion[RealRPC](implicit fri: FullRPCInfo[RealRPC]) {
+  abstract class RPCCompanion[RealRPC](implicit fri: FullRPCInfo[RealRPC]) extends FullRPCInfoMacros {
     final def fullRpcInfo: FullRPCInfo[RealRPC] = fri
-    // You would think: why the hell are these implicits defined as macros?
-    // Can't we just simply refer to members of `fullRpcInfo` in a regular method?
-    // We can, but this prevents ScalaJS optimizer's DCE from distinguishing between `FullRPCInfo` traits/classes
-    // of different RPC frameworks. This is important in cross-compiled code where any of these three typeclasses
-    // may be completely unused on the JS side and we want to make sure that DCE gets rid of them.
-    implicit def asRealRPC: AsRealRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    inline implicit def asRealRPC: AsRealRPC[RealRPC] = ${ asRealRPCImpl }
-    implicit def asRawRPC: AsRawRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    inline implicit def asRawRPC: AsRawRPC[RealRPC] = ${ asRawRPCImpl }
-    implicit def metadata: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    inline implicit def metadata: RPCMetadata[RealRPC] = ${ metadataImpl }
   }
 }
-
-def materializeMetadataImpl[RealRPC: Type](using Quotes): Expr[Nothing] = '{ ??? }
-def materializeFullInfoImpl[T: Type](using Quotes): Expr[Nothing] = '{ ??? }
-def asRealRPCImpl(using Quotes): Expr[Nothing] = '{ ??? }
-def asRawRPCImpl(using Quotes): Expr[Nothing] = '{ ??? }
-def metadataImpl(using Quotes): Expr[Nothing] = '{ ??? }
-def materializeAsRawImpl[T: Type](using Quotes): Expr[Nothing] = '{ ??? }
-def materializeAsRawRealImpl[T: Type](using Quotes): Expr[Nothing] = '{ ??? }

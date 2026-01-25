@@ -23,10 +23,7 @@ object RawRef {
 
   def create[S]: Creator[S] = new Creator[S] {}
 
-  trait Creator[S] {
-    def ref[T](fun: S => T): RawRef = macro macros.serialization.GenRefMacros.rawRef
-    inline def ref[T](fun: S => T): RawRef = ${ refImpl[S, T]('fun) }
-  }
+  trait Creator[S] extends RawRefCreatorMacros[S]
 }
 
 object SimpleRawRef {
@@ -47,19 +44,10 @@ object GenRef {
   def identity[S]: GenRef[S, S] = GenRef(s => s, RawRef.Identity)
   def create[S]: Creator[S] = new Creator[S] {}
 
-  trait Creator[S] {
+  trait Creator[S] extends GenRefCreatorMacros[S] {
     type Ref[T] = GenRef[S, T]
-
-    def ref[T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
-    inline def ref[T](fun: S => T): GenRef[S, T] = ${ refImpl[S, T]('fun) }
   }
 
-  trait Implicits {
-    implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
-    inline implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = ${ fun2GenRefImpl[S, T]('fun) }
-  }
+  trait Implicits extends GenRefImplicitsMacros
   object Implicits extends Implicits
 }
-
-def refImpl[S, T](fun: Expr[S => T])(using quotes: Quotes): Expr[Nothing] = ???
-def fun2GenRefImpl[S, T](fun: Expr[S => T])(using quotes: Quotes): Expr[Nothing] = ???

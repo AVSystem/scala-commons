@@ -23,8 +23,6 @@ case class SourceInfo(
     (filePath, offset).hashCode
 }
 
-object SourceInfo {
-  def apply()(implicit si: SourceInfo): SourceInfo = si
-
-  implicit def here: SourceInfo = macro macros.misc.MiscMacros.sourceInfo
+object SourceInfo extends SourceInfoMacros {
+  def here()(implicit si: SourceInfo): SourceInfo = si
 }

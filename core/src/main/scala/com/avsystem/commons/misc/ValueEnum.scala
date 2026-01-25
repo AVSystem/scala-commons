@@ -79,7 +79,7 @@ sealed trait EnumCtx extends Any {
  * Base trait for companion objects of value based enums. See [[ValueEnum]] for more information. NOTE: if possible,
  * prefer using [[AbstractValueEnumCompanion]] instead of this trait directly.
  */
-trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { companion =>
+trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with ValueEnumMacros { companion =>
   type Value = T
 
   private val registryBuilder = IIndexedSeq.newBuilder[T]
@@ -126,16 +126,10 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     }
   }
 
-  protected final class ValName(val valName: String)
-
-  protected implicit def valName: ValName = macro macros.misc.MiscMacros.enumValName
-  inline protected implicit def valName: ValName = ${ valNameImpl }
-
   protected implicit def enumCtx(implicit valName: ValName): EnumCtx =
     new Ctx(valName.valName, currentOrdinal)
 }
 
-def valNameImpl(using Quotes): Expr[Nothing] = '{ ??? }
 
 /**
  * Convenience abstract class implementing [[ValueEnumCompanion]]. For less generated code, faster compilation and

@@ -10,11 +10,7 @@ import scala.annotation.implicitNotFound
 trait Applier[T] {
   def apply(rawValues: Seq[Any]): T
 }
-object Applier {
-  implicit def materialize[T]: Applier[T] = macro macros.misc.MiscMacros.applier[T]
-  inline implicit def materialize[T]: Applier[T] = ${ materializeImpl[T] }
-  def materializeImpl[T](using Quotes): Expr[Applier[T]] = '{ ??? }
-}
+object Applier extends ApplierMacros
 
 /**
  * Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns untyped sequence of
@@ -24,11 +20,7 @@ object Applier {
 trait Unapplier[T] {
   def unapply(value: T): Seq[Any]
 }
-object Unapplier {
-  implicit def materialize[T]: Unapplier[T] = macro macros.misc.MiscMacros.unapplier[T]
-  inline implicit def materialize[T]: Unapplier[T] = ${ materializeImpl[T] }
-  def materializeImpl[T](using Quotes): Expr[Unapplier[T]] = '{ ??? }
-}
+object Unapplier extends UnapplierMacros
 
 class ProductUnapplier[T <: Product] extends Unapplier[T] {
   def unapply(value: T): Seq[Any] = IArraySeq.unsafeWrapArray(value.productIterator.toArray)
@@ -37,8 +29,4 @@ abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T]
 
 @implicitNotFound("cannot materialize ApplierUnapplier: ${T} is not a case class or case class like type")
 trait ApplierUnapplier[T] extends Applier[T] with Unapplier[T]
-object ApplierUnapplier {
-  implicit def materialize[T]: ApplierUnapplier[T] = macro macros.misc.MiscMacros.applierUnapplier[T]
-  inline implicit def materialize[T]: ApplierUnapplier[T] = ${ materializeImpl[T] }
-  def materializeImpl[T](using Quotes): Expr[ApplierUnapplier[T]] = '{ ??? }
-}
+object ApplierUnapplier extends ApplierUnapplierMacros

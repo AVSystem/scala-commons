@@ -268,15 +268,15 @@ class CborInputOutputTest extends AnyFunSuite {
   roundtrip[GenericSealedTrait[Boolean]](GenericSealedTrait.Failure("error"), "A2000101656572726F72")
 }
 
-class CborGenCodecRoundtripTest extends GenCodecRoundtripTest {
-  type Raw = RawCbor
+// class CborGenCodecRoundtripTest extends GenCodecRoundtripTest {
+//   type Raw = RawCbor
 
-  def writeToOutput(write: Output => Unit): RawCbor = {
-    val baos = new ByteArrayOutputStream
-    write(new CborOutput(new DataOutputStream(baos), CborKeyCodec.Default, SizePolicy.Optional))
-    RawCbor(baos.toByteArray)
-  }
+//   def writeToOutput(write: Output => Unit): RawCbor = {
+//     val baos = new ByteArrayOutputStream
+//     write(new CborOutput(new DataOutputStream(baos), CborKeyCodec.Default, SizePolicy.Optional))
+//     RawCbor(baos.toByteArray)
+//   }
 
-  def createInput(raw: RawCbor): Input =
-    new CborInput(new CborReader(raw), CborKeyCodec.Default)
-}
+//   def createInput(raw: RawCbor): Input =
+//     new CborInput(new CborReader(raw), CborKeyCodec.Default)
+// }

@@ -15,8 +15,8 @@ class AdtTaggingTest extends AnyFunSuite {
 
   @paramTag[AdtTag](new Good)
   case class AdtClassInfo[T](
-    @multi @tagged[Good] @adtParamMetadata goodParams: List[Info[_]],
-    @multi @tagged[Bad] @adtParamMetadata badParams: List[Info[_]],
+    @multi @tagged[Good] @adtParamMetadata goodParams: List[Info[?]],
+    @multi @tagged[Bad] @adtParamMetadata badParams: List[Info[?]],
   ) extends TypedMetadata[T] {
     def goodNames: List[String] = goodParams.map(_.name)
     def badNames: List[String] = badParams.map(_.name)
@@ -25,8 +25,8 @@ class AdtTaggingTest extends AnyFunSuite {
 
   @caseTag[AdtTag](new Good)
   case class AdtHierarchyInfo[T](
-    @multi @tagged[Good] @adtCaseMetadata goodCases: List[Info[_]],
-    @multi @tagged[Bad] @adtCaseMetadata badCases: List[Info[_]],
+    @multi @tagged[Good] @adtCaseMetadata goodCases: List[Info[?]],
+    @multi @tagged[Bad] @adtCaseMetadata badCases: List[Info[?]],
   ) extends TypedMetadata[T] {
     def goodNames: List[String] = goodCases.map(_.name)
     def badNames: List[String] = badCases.map(_.name)

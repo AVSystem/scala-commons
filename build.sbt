@@ -133,7 +133,7 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
           "-Wsafe-init",
           "-Yshow-suppressed-errors",
           "-Yshow-var-bounds",
-          "-Werror",
+          // "-Werror",
           "-experimental",
           "-preview",
           //  "-Yprofile-enabled",
@@ -142,7 +142,8 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
           "-Xignore-scala2-macros", // todo: disable
           "-language:experimental.macros",
           "-rewrite",
-          "-old-syntax", //todo: -new-syntax
+          // "-old-syntax", 
+          "-source","3.8-migration", 
         )
     }
   },

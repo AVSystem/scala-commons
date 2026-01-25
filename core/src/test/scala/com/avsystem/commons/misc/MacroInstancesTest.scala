@@ -48,10 +48,10 @@ object MultipleImplicitImportsTest {
 }
 
 object AnnotationReferringToEnclosingObjectTest {
-  class example[+T](value: T, @infer codec: GenCodec[T] = infer.value) extends StaticAnnotation
+  class example[+T](value: T, @infer codec: GenCodec[T] = infer.value[GenCodec[T]]) extends StaticAnnotation
 
   class Meta[T](@reifyAnnot example: example[T])
-  object Meta extends AdtMetadataCompanion[Meta]
+  // object Meta extends AdtMetadataCompanion[Meta]
 
   abstract class HasMeta[T](
     implicit instances: MacroInstances[Unit, () => Meta[T]],

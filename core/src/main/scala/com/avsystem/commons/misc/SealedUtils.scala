@@ -4,28 +4,7 @@ package misc
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
-object SealedUtils {
-
-  /**
-   * A macro which reifies a list of all case objects of a sealed trait or class `T`. WARNING: the order of case
-   * objects in the resulting list is guaranteed to be consistent with declaration order ONLY for enums extending
-   * [[OrderedEnum]]. Otherwise, the order may be arbitrary.
-   */
-  @explicitGenerics
-  def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
-
-  inline def caseObjectsFor[T]: List[T] = ${ caseObjectsForImpl[T] }
-
-  /**
-   * Infers a list of instances of given typeclass `TC` for all non-abstract subtypes of a sealed hierarchy root `T`.
-   */
-  @explicitGenerics
-  def instancesFor[TC[_], T]: List[TC[T]] = macro macros.misc.SealedMacros.instancesFor[TC[Any], T]
-  inline def instancesFor[TC[_], T]: List[TC[T]] = ${ instancesForImpl[TC, T] }
-}
-
-def caseObjectsForImpl[T](using Quotes) = '{ ??? }
-def instancesForImpl[TC[_], T](using Quotes) = '{ ??? }
+object SealedUtils extends SealedUtilsMacros
 
 /**
  * Base trait for companion objects of sealed traits that serve as enums, i.e. their only values are case objects. For
@@ -43,7 +22,7 @@ def instancesForImpl[TC[_], T](using Quotes) = '{ ??? }
  *   }
  * }}}
  */
-trait SealedEnumCompanion[T] {
+trait SealedEnumCompanion[T] extends SealedUtilsMacros {
 
   /**
    * Thanks to this implicit, [[SealedEnumCompanion]] and its subtraits can be used as typeclasses.
@@ -70,10 +49,8 @@ trait SealedEnumCompanion[T] {
    * is consistent with declaration order in source file. However, if the enum is not an [[OrderedEnum]], the order may
    * be arbitrary.
    */
-  protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
-  inline def caseObjects: List[T] = ${ caseObjectsImpl }
+  protected def caseObjects: List[T] = caseObjectsFor[T]
 }
-def caseObjectsImpl(using Quotes) = '{ ??? }
 
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]
 

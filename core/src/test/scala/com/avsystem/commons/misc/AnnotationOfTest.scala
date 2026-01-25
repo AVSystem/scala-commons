@@ -13,7 +13,7 @@ case class genagg[T](value: T) extends AnnotationAggregate {
 @genagg(42)
 class Subject
 
-abstract class SelfAnnots(implicit val annots: SelfAnnotations[genann[_]])
+abstract class SelfAnnots(implicit val annots: SelfAnnotations[genann[?]])
 @genagg(42)
 @genann("fuu") class Klass extends SelfAnnots
 @genagg(42)

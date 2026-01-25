@@ -8,7 +8,7 @@ import org.scalatest.funsuite.AnyFunSuite
 class GenericMeta[T](
   @reifyName name: String,
   @multi @rpcTypeParamMetadata typeParams: List[GenericMeta.TypeParam],
-  @multi @rpcMethodMetadata methods: List[GenericMeta.Method[_]],
+  @multi @rpcMethodMetadata methods: List[GenericMeta.Method[?]],
 ) {
   def repr: String = {
     val targs = typeParams.map(_.typeString)
@@ -22,19 +22,19 @@ object GenericMeta extends RpcMetadataCompanion[GenericMeta] {
 
   case class Param[T](
     @reifyName name: String,
-    @infer @forTypeParams tpe: List[TypeString[_]] => TypeString[T],
+    @infer @forTypeParams tpe: List[TypeString[?]] => TypeString[T],
   ) extends TypedMetadata[T] {
-    def repr(targs: List[TypeString[_]]): String =
+    def repr(targs: List[TypeString[?]]): String =
       s"$name: ${tpe(targs)}"
   }
 
   case class Method[T](
     @reifyName name: String,
     @multi @rpcTypeParamMetadata typeParams: List[TypeParam],
-    @multi @rpcParamMetadata params: List[Param[_]],
-    @infer @forTypeParams result: List[TypeString[_]] => TypeString[T],
+    @multi @rpcParamMetadata params: List[Param[?]],
+    @infer @forTypeParams result: List[TypeString[?]] => TypeString[T],
   ) extends TypedMetadata[T] {
-    def repr(targs: List[TypeString[_]]): String = {
+    def repr(targs: List[TypeString[?]]): String = {
       val fullTargs = targs ++ typeParams.map(_.typeString)
       val paramsRepr = params.iterator.map(_.repr(fullTargs)).mkStringOrEmpty("(", ", ", ")")
       s"$name${tparams(typeParams)}$paramsRepr: ${result(fullTargs)}"
@@ -50,7 +50,7 @@ trait GenericTrait[A, B] {
   def genericMethod[C](map: Map[A, C]): Map[B, C]
 }
 object GenericTrait {
-  implicit val meta: GenericMeta[GenericTrait[_, _]] = GenericMeta.materialize
+  implicit val meta: GenericMeta[GenericTrait[?, ?]] = GenericMeta.materialize
 }
 
 class GenericMetadataTest extends AnyFunSuite {

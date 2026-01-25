@@ -9,7 +9,7 @@ import org.scalacheck.Arbitrary.arbitrary
 
 trait SerializationTestUtils {
   private def limitMathContext(bd: BigDecimal) =
-    if bd.mc == MathContext.UNLIMITED then bd(BigDecimal.defaultMathContext) else bd
+    if (bd.mc == MathContext.UNLIMITED) bd(BigDecimal.defaultMathContext) else bd
 
   case class TestCC(i: Int, l: Long, intAsDouble: Double, b: Boolean, s: String, list: List[Char])
   object TestCC extends HasGenCodec[TestCC] {

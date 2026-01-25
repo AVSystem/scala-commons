@@ -25,11 +25,9 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 class TypeString[T](val value: String) extends AnyVal {
   override def toString: String = value
 }
-object TypeString {
+object TypeString extends TypeStringMacros {
   def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
   def of[T: TypeString]: String = TypeString[T].value
-
-  implicit def materialize[T]: TypeString[T] = macro macros.misc.MiscMacros.typeString[T]
 
   implicit val keyCodec: GenKeyCodec[TypeString[?]] =
     GenKeyCodec.create[TypeString[?]](new TypeString(_), _.value)
@@ -48,7 +46,7 @@ object TypeString {
 class JavaClassName[T](val value: String) extends AnyVal {
   override def toString: String = value
 }
-object JavaClassName extends JavaClassNameLowPrio {
+object JavaClassName extends JavaClassNameMacros {
   def apply[T](implicit ts: JavaClassName[T]): JavaClassName[T] = ts
   def of[T: JavaClassName]: String = JavaClassName[T].value
 
@@ -86,7 +84,4 @@ object JavaClassName extends JavaClassNameLowPrio {
 
   implicit val codec: GenCodec[JavaClassName[?]] =
     GenCodec.nonNullSimple[JavaClassName[?]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
-}
-trait JavaClassNameLowPrio { this: JavaClassName.type =>
-  implicit def materialize[T]: JavaClassName[T] = macro macros.misc.MiscMacros.javaClassName[T]
 }

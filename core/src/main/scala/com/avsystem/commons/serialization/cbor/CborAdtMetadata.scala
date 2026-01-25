@@ -34,7 +34,7 @@ abstract class HasCborCodecWithDeps[D, T](
  * CBOR field key used for discriminator field. Note: this annotation automatically applies [[flatten]] annotation on
  * the sealed trait/class.
  */
-class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] = infer.value)
+class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] = infer.value[GenCodec[T]])
   extends AnnotationAggregate {
   val rawKey: RawCbor = CborOutput.writeRawCbor(discriminatorFieldKey)(using codec)
 
@@ -59,7 +59,7 @@ class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] =
  *   object Base extends HasCborCodec[Base]
  *   }}}
  */
-class cborKey[T](key: T, @infer codec: GenCodec[T] = infer.value) extends StaticAnnotation {
+class cborKey[T](key: T, @infer codec: GenCodec[T] = infer.value[GenCodec[T]]) extends StaticAnnotation {
   val rawKey: RawCbor = CborOutput.writeRawCbor(key)(using codec)
 }
 

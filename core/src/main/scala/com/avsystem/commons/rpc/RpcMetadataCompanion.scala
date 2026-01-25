@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.macros.rpc.RpcMacros
 import com.avsystem.commons.meta.MetadataCompanion
 
 /**
@@ -14,14 +13,10 @@ import com.avsystem.commons.meta.MetadataCompanion
  * @tparam M
  *   metadata class type constructor
  */
-trait RpcMetadataCompanion[M[_]] extends MetadataCompanion[M] {
-  def materialize[Real]: M[Real] = macro RpcMacros.rpcMetadata[Real]
-}
+trait RpcMetadataCompanion[M[_]] extends MetadataCompanion[M] with RpcMetadataCompanionMacros[M]
 
 /**
  * Like [[RpcMetadataCompanion]] but reflects over the entire public API of a particular Scala type (unlike RPC traits
  * which only have their abstract methods captured).
  */
-trait ApiMetadataCompanion[M[_]] extends MetadataCompanion[M] {
-  def materialize[Real]: M[Real] = macro macros.rpc.RpcMacros.apiMetadata[Real]
-}
+trait ApiMetadataCompanion[M[_]] extends MetadataCompanion[M] with ApiMetadataCompanionMacros[M]

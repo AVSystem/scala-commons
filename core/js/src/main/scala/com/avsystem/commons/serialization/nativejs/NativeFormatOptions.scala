@@ -7,22 +7,16 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
  * Specifies format used by `NativeJsonOutput.writeLong` / `NativeJsonInput.readLong` to represent [[Long]]. JS does
  * not support 64-bit representation.
  */
-final class NativeLongFormat(implicit ctx: EnumCtx) extends AbstractValueEnum
-object NativeLongFormat extends AbstractValueEnumCompanion[NativeLongFormat] {
-  final val RawString: Value = new NativeLongFormat
-  final val JsNumber: Value = new NativeLongFormat
-  final val JsBigInt: Value = new NativeLongFormat
+enum NativeLongFormat {
+  case RawString, JsNumber, JsBigInt
 }
 
 /**
  * Specifies format used by `NativeJsonOutput.writeTimestamp` / `NativeJsonInput.readTimestamp` to represent
  * timestamps.
  */
-final class NativeDateFormat(implicit ctx: EnumCtx) extends AbstractValueEnum
-object NativeDateFormat extends AbstractValueEnumCompanion[NativeDateFormat] {
-  final val RawString: Value = new NativeDateFormat
-  final val JsNumber: Value = new NativeDateFormat
-  final val JsDate: Value = new NativeDateFormat
+enum NativeDateFormat {
+  case RawString, JsNumber, JsDate
 }
 
 /**
@@ -30,10 +24,8 @@ object NativeDateFormat extends AbstractValueEnumCompanion[NativeDateFormat] {
  *
  * Note that [[scala.scalajs.js.JSON.stringify]] does not know how to serialize a BigInt and throws an error
  */
-final class NativeBigIntFormat(implicit ctx: EnumCtx) extends AbstractValueEnum
-object NativeBigIntFormat extends AbstractValueEnumCompanion[NativeBigIntFormat] {
-  final val RawString: Value = new NativeBigIntFormat
-  final val JsBigInt: Value = new NativeBigIntFormat
+enum NativeBigIntFormat {
+  case RawString, JsBigInt
 }
 
 /**

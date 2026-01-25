@@ -23,16 +23,8 @@ trait GenKeyCodec[T] {
     new GenKeyCodec.Transformed(this, onWrite, onRead)
 }
 
-object GenKeyCodec {
+object GenKeyCodec extends GenKeyCodecMacros {
   def apply[T](implicit gkc: GenKeyCodec[T]): GenKeyCodec[T] = gkc
-
-  /**
-   * Materializes a `GenKeyCodec` for a "sealed enum" (sealed hierarchy with case objects at the bottom). The generated
-   * codec uses object name by default as key value. This can be adjusted with `@name` annotation.
-   */
-  def forSealedEnum[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forSealedEnum[T]
-
-  def forTransparentWrapper[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forTransparentWrapper[T]
 
   @explicitGenerics
   def read[T](key: String)(implicit keyCodec: GenKeyCodec[T]): T = keyCodec.read(key)

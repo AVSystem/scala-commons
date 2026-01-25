@@ -4,13 +4,18 @@ package macros
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.reflect.runtime.universe as ru
 
-object TypeClassDerivationTest {
+trait TC[T] {
+    def tpe: String
 
-  def materialize[T]: TC[T] = macro macros.TestMacros.materialize[T]
+    def matches(pf: PartialFunction[TC[T], Any]): Boolean =
+      pf.isDefinedAt(this)
+  }
 
-  def typeRepr[T: ru.WeakTypeTag]: String = ru.weakTypeOf[T].toString
+import com.avsystem.commons.macros.TypeClassDerivationTest.TC.given
+
+
+object TypeClassDerivationTest extends TypeClassDerivationTestMacros[TC] {
 
   class DefVal(v: => Any) {
     lazy val value = v
@@ -25,15 +30,9 @@ object TypeClassDerivationTest {
     def unapply(ddef: DefVal): Option[Any] = Some(ddef.value)
   }
 
-  trait TC[T] {
-    def tpe: String
-
-    def matches(pf: PartialFunction[TC[T], Any]): Boolean =
-      pf.isDefinedAt(this)
-  }
   case class SingletonTC[T](tpe: String, value: T) extends TC[T]
-  case class ApplyUnapplyTC[T](tpe: String, subs: List[(String, TC[_], Option[DefVal])]) extends TC[T]
-  case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[_])]) extends TC[T]
+  case class ApplyUnapplyTC[T](tpe: String, subs: List[(String, TC[?], Option[DefVal])]) extends TC[T]
+  case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[?])]) extends TC[T]
   case class UnknownTC[T](tpe: String) extends TC[T]
   case class ForList[T](elementTc: TC[T]) extends TC[List[T]] {
     def tpe: String = s"List[${elementTc.tpe}]"
@@ -60,10 +59,7 @@ object TypeClassDerivationTest {
     implicit val forString: TC[String] = UnknownTC(typeRepr[String])
     implicit def forList[T](implicit tct: TC[T]): TC[List[T]] = ForList(tct)
   }
-  trait ImplicitMaterializers { this: TC.type =>
-    implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[TC[T]]): TC[T] =
-      macro macros.TestMacros.materializeImplicitly[T]
-  }
+  trait ImplicitMaterializers extends ImplicitMaterializersMacros[TC]
 }
 
 class TypeClassDerivationTest extends AnyFunSuite {

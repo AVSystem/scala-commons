@@ -19,7 +19,7 @@ class UnknownRpc(val rpcName: String, val rawMethodName: String)
 class MissingOptionalRpc(val rawMethodName: String)
   extends InvalidRpcCall(s"No matching RPC for optional raw method $rawMethodName")
 
-object RpcUtils {
+object RpcUtils extends RpcUtilsMacros {
   def createEmpty[Coll](fac: Factory[Nothing, Coll]): Coll =
     createBuilder[Nothing, Coll](fac, 0).result()
 
@@ -55,5 +55,4 @@ object RpcUtils {
     : AsReal[Raw, Real] =
     raw => asReal.asReal(interceptor.toNewRaw(raw))
 
-  def compilationError(error: String): Nothing = macro MiscMacros.compilationError
 }

@@ -9,8 +9,4 @@ package annotation
  * If macro is invoked in the same file, source position is always available.
  */
 class positioned(val point: Int) extends StaticAnnotation
-object positioned {
-  def here: Int = macro macros.misc.MiscMacros.posPoint
-  inline def here: Int = ${ hereImpl }
-  def hereImpl(using Quotes): Expr[Int] = '{ ??? }
-}
+object positioned extends PositionedMacros

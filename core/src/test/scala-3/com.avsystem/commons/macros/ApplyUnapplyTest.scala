@@ -19,7 +19,7 @@ object ApplyUnapplyTest {
     def unapply[T](whatever: Custom[T]): Option[T] = None
   }
 
-  def applierUnapplier[T, F]: ApplierUnapplier[T, F] = macro TestMacros.applierUnapplier[T, F]
+  def applierUnapplier[T, F]: ApplierUnapplier[T, F] = TestMacros.applierUnapplier[T, F]
 
   applierUnapplier[Empty, Unit]
   applierUnapplier[Single, Int]

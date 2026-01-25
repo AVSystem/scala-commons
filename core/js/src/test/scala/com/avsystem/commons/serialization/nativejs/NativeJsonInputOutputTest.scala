@@ -49,7 +49,7 @@ class NativeJsonInputOutputTest extends AnyFunSuite {
       bilateralTyped(testModel, options)
     }
 
-    if testStringRepr then {
+    if (testStringRepr) {
       test(s"Bilateral serialization to string - $name") {
         bilateralString(testModel, options)
       }

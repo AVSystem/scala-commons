@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.meta.infer.valueImpl
-
 /**
  * An alternative way to provide default value for case class parameter used during deserialization with `GenCodec`
  * when its field is missing in data being deserialized. Normally, Scala-level default parameter values are picked up,
@@ -28,21 +26,4 @@ import com.avsystem.commons.meta.infer.valueImpl
 class whenAbsent[+T](v: => T) extends StaticAnnotation {
   def value: T = v
 }
-object whenAbsent {
-
-  /**
-   * If you want your parameter to have _both_ a `@whenAbsent` annotation and a Scala-level default value, you can use
-   * this macro to avoid writing the default value twice:
-   *
-   * {{{
-   *   case class Record(@whenAbsent(0) i: Int = whenAbsent.value)
-   * }}}
-   *
-   * This is useful when you want the default value to be collectible by macros (e.g. `OpenApiMetadata` for REST).
-   * which is possible only with default value in annotation.
-   */
-  def value[T]: T = macro macros.misc.WhiteMiscMacros.whenAbsentValue
-
-  inline def value[T]: T = ${ valueImpl[T] }
-  def valueImpl[T](using Quotes): Expr[T] = ???
-}
+object whenAbsent extends WhenAbsentMacros

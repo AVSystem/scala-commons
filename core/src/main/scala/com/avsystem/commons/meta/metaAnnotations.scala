@@ -201,15 +201,7 @@ trait DirectMetadataParamStrategy extends MetadataParamStrategy
  * }}}
  */
 final class infer(val clue: String = "") extends DirectMetadataParamStrategy
-object infer {
-
-  /**
-   * Can be used as default value of `@infer` annotation parameters.
-   */
-  def value[T]: T = macro macros.misc.WhiteMiscMacros.inferValue
-  inline def value[T]: T = ${ valueImpl[T] }
-  def valueImpl[T: Type](using Quotes): Expr[T] = '{ ??? }
-}
+object infer extends InferMacros
 
 /**
  * `@adtParamMetadata` applied on metadata parameter of metadata class for case class or object indicates that this
