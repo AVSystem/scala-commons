@@ -90,7 +90,7 @@ object SimpleValueInput {
  *   serialized value yield by [[SimpleValueOutput]]
  */
 class SimpleValueInput(value: Any) extends InputAndSimpleInput {
-  private def doRead[A >: Null <: AnyRef: ClassTag]: A =
+  private def doRead[A <: AnyRef: ClassTag]: A =
     doReadUnboxed[A, A]
 
   private def doReadUnboxed[A, B: ClassTag](implicit unboxing: Unboxing[A, B]): A = value match {

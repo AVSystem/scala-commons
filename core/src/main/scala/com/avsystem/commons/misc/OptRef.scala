@@ -11,7 +11,7 @@ object OptRef {
     else throw new NullPointerException
 
   object Boxed {
-    def unapply[A, B >: Null](optRef: OptRef[B])(implicit unboxing: Unboxing[A, B]): Opt[A] =
+    def unapply[A, B](optRef: OptRef[B])(implicit unboxing: Unboxing[A, B]): Opt[A] =
       if (optRef.isEmpty) Opt.Empty else Opt(unboxing.fun(optRef.get))
   }
 

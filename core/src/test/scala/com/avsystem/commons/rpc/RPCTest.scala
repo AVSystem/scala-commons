@@ -104,7 +104,7 @@ class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
       val realRpc = AsRealRPC[TestRPC].asReal(rawRpc)
 
       realRpc.handleMore()
-      realRpc.doStuff(42, "omgsrsly")(Some(true))
+      realRpc.doStuff(42, "omgsrsly")(using Some(true))
       assert("doStuffBooleanResult" == get(realRpc.doStuff(true)))
       realRpc.doStuff(5)
       realRpc.doStuffNamed(5)

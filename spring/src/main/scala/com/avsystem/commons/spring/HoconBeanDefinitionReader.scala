@@ -139,7 +139,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
     setup(new ManagedList[Any]) { list =>
       list.addAll(obj.get(ListAttr).as[ConfigList].asScala.map(read).asJavaCollection)
       list.setMergeEnabled(obj.get(MergeAttr).as[Option[Boolean]].getOrElse(false))
-      list.setElementTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull)
+      list.setElementTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull[String|Null])
     }
   }
 
@@ -158,7 +158,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
     setup(new ManagedSet[Any]) { set =>
       set.addAll(obj.get(SetAttr).as[ConfigList].asScala.map(read).asJavaCollection)
       set.setMergeEnabled(obj.get(MergeAttr).as[Option[Boolean]].getOrElse(false))
-      set.setElementTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull)
+      set.setElementTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull[String|Null])
     }
   }
 
@@ -171,8 +171,8 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
     validateObj(allowed = Set(MergeAttr, KeyTypeAttr, ValueTypeAttr, EntriesAttr), props = true)(obj)
     setup(new ManagedMap[Any, Any]) { mm =>
       mm.setMergeEnabled(obj.get(MergeAttr).as[Option[Boolean]].getOrElse(false))
-      mm.setKeyTypeName(obj.get(KeyTypeAttr).as[Option[String]].orNull)
-      mm.setValueTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull)
+      mm.setKeyTypeName(obj.get(KeyTypeAttr).as[Option[String]].orNull[String|Null])
+      mm.setValueTypeName(obj.get(ValueTypeAttr).as[Option[String]].orNull[String|Null])
       obj.get(EntriesAttr).as[Option[ConfigList]].getOrElse(ju.Collections.emptyList).asScala.foreach {
         case obj: ConfigObject =>
           validateObj(required = Set(KeyAttr, ValueAttr))(obj)

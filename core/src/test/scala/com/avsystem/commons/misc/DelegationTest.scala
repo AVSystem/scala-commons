@@ -7,7 +7,7 @@ class DelegationTest extends AnyFunSuite {
   trait Destination[T] {
     val te: T
     def simple(omg: Int): String
-    def meth[C[+X] >: Null <: Iterable[X]](map: Map[T, C[String]]): C[(T, String)]
+    def meth[C[+X] <: Iterable[X]](map: Map[T, C[String]]): C[(T, String)]|Null
     def multi(a: String)(b: String): String
     def vararg(values: String*): String
   }
@@ -15,7 +15,7 @@ class DelegationTest extends AnyFunSuite {
   class Source {
     val te: Double = 3.14
     def simple(omg: Int): String = omg.toString
-    def meth[C[+X] >: Null <: Iterable[X]](map: Map[Double, C[String]]): C[(Double, String)] = null
+    def meth[C[+X] <: Iterable[X]](map: Map[Double, C[String]]): C[(Double, String)]|Null = null
     def multi(a: String)(b: String): String = a + b
     def vararg(values: String*): String = values.mkString("")
   }

@@ -4,6 +4,7 @@ package macros
 import com.avsystem.commons.misc.TypeString
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
+import scala.annotation.nowarn
 
 object TypeStringTest {
   val x = "x"
@@ -82,7 +83,7 @@ class TypeStringTest extends AnyFunSuite {
       assert(TypeString.of[T].replace("com.avsystem.commons.macros.", "") == expected)
     }
 
-  TypeStringTest.defineTests[Double](this)
+  (TypeStringTest.defineTests[Double](this): @nowarn("msg=Could not verify that the method argument is transitively initialized"))
 
   type B
   val y = "y"

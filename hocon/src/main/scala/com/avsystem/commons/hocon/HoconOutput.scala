@@ -12,7 +12,7 @@ object HoconOutput {
   def write[T: GenCodec](value: T): ConfigValue = {
     var result: ConfigValue | Null = null
     GenCodec[T].write(new HoconOutput(result = _), value)
-    result
+    result.nn
   }
 }
 

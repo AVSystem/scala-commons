@@ -26,3 +26,7 @@ out
 local.*
 cluster/
 masterSlave/
+
+.metals/
+.vscode/
+metals.sbt

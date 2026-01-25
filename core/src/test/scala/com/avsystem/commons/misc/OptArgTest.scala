@@ -21,7 +21,7 @@ class OptArgTest extends AnyFunSuite with Matchers {
   }
 
   test("null some") {
-    intercept[NullPointerException](OptArg.some[String](null))
+    intercept[NullPointerException](OptArg.some[String](null.asInstanceOf[String]))
   }
 
   def takeMaybeString(str: OptArg[String] = OptArg.Empty): Opt[String] = str.toOpt

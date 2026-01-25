@@ -125,7 +125,7 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
           "-Ydebug-flags",
           "-Ydebug-missing-refs",
           "-Yexplain-lowlevel",
-//          "-Yexplicit-nulls", //todo: enable
+         "-Yexplicit-nulls", 
           // "-Yprint-debug",
           // "-Xprint:postInlining",
           // "-Xprint-suspension",
@@ -133,17 +133,14 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
           "-Wsafe-init",
           "-Yshow-suppressed-errors",
           "-Yshow-var-bounds",
-          // "-Werror",
+          "-Werror",
           "-experimental",
           "-preview",
           //  "-Yprofile-enabled",
           //  s"-Yprofile-trace:$moduleDir/compile-trace.json",
           "-language:implicitConversions", // todo: disable
-          "-Xignore-scala2-macros", // todo: disable
           "-language:experimental.macros",
-          "-rewrite",
-          // "-old-syntax", 
-          "-source","3.8-migration", 
+          "-old-syntax", 
         )
     }
   },

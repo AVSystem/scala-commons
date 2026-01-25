@@ -20,7 +20,7 @@ class OptTest extends AnyFunSuite {
   }
 
   test("null some test") {
-    intercept[NullPointerException](Opt.some[String](null))
+    intercept[NullPointerException](Opt.some[String](null.asInstanceOf[String]))
   }
 
   test("boxing unboxing test") {
