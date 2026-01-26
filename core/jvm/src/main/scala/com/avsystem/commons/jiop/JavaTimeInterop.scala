@@ -3,15 +3,13 @@ package jiop
 
 import java.time.Instant
 
-import com.avsystem.commons.jiop.JavaTimeInterop.InstantOps
 import com.avsystem.commons.misc.Timestamp
 
 trait JavaTimeInterop {
-  implicit def instantOps(instant: Instant): InstantOps = new InstantOps(instant)
-}
-object JavaTimeInterop {
-  class InstantOps(private val instant: Instant) extends AnyVal {
+  extension (instant: Instant) {
     def truncateToTimestamp: Timestamp = Timestamp(instant.toEpochMilli)
     def truncateToJDate: JDate = new JDate(instant.toEpochMilli)
   }
 }
+
+object JavaTimeInterop extends JavaTimeInterop

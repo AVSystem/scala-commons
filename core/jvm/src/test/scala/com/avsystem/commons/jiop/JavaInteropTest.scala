@@ -2,6 +2,8 @@ package com.avsystem.commons
 package jiop
 
 import com.avsystem.commons.jiop.GuavaInterop.*
+import com.avsystem.commons.jiop.JStreamUtils.*
+import com.avsystem.commons.jiop.JOptionalUtils.*
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -10,6 +12,14 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class JavaInteropTest extends AnyFunSuite {
+  final val arrayList = col(new JArrayList[Int])
+  final val linkedList = col(new JLinkedList[Int])
+  final val hashSet = col(new JHashSet[Int])
+  final val linkedHashSet = col(new JLinkedHashSet[Int])
+  final val treeSet = col(new JTreeSet[Int])
+  final val hashMap = map(new JHashMap[Int, String])
+  final val linkedHashMap = map(new JLinkedHashMap[Int, String])
+  final val treeMap = map(new JTreeMap[Int, String])
 
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
     assert(s1.collect(Collectors.toList[A]) == s2.collect(Collectors.toList[A]))
@@ -32,15 +42,6 @@ class JavaInteropTest extends AnyFunSuite {
     map.put(3, "3")
     map
   }
-
-  final val arrayList = col(new JArrayList[Int])
-  final val linkedList = col(new JLinkedList[Int])
-  final val hashSet = col(new JHashSet[Int])
-  final val linkedHashSet = col(new JLinkedHashSet[Int])
-  final val treeSet = col(new JTreeSet[Int])
-  final val hashMap = map(new JHashMap[Int, String])
-  final val linkedHashMap = map(new JLinkedHashMap[Int, String])
-  final val treeMap = map(new JTreeMap[Int, String])
 
   test("adapted java stream api should work") {
     val input = JArrayList("a", "b", "c", "d", "e", "f", "g")
@@ -273,7 +274,6 @@ class JavaInteropTest extends AnyFunSuite {
   test("option to optional converter should work") {
     val string: String = "alamakota"
     val empty: String | Null = null
-
     assert(Option(string).asJava == JOptional(string))
     assert(Option(empty).asJava == JOptional.empty)
 

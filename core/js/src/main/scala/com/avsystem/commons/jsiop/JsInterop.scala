@@ -11,20 +11,12 @@ trait JsInterop {
   implicit def jsDateTimestampConversions(jsDate: js.Date): TimestampConversions =
     new TimestampConversions(jsDate.getTime().toLong)
 
-  implicit def undefOrOps[A](undefOr: UndefOr[A]): UndefOrOps[A] =
-    new UndefOrOps(undefOr)
-
-  implicit def jsOptOps[A](opt: Opt[A]): JsOptOps[A] =
-    new JsOptOps(opt.orNull[Any].asInstanceOf[A])
-}
-object JsInterop extends JsInterop {
-  class UndefOrOps[A](private val value: UndefOr[A]) extends AnyVal {
-    def toOpt: Opt[A] = if (value.isDefined) Opt(value.get) else Opt.Empty
+  extension[A](undefOr: UndefOr[A]) {
+    def toOpt: Opt[A] = if (undefOr.isDefined) Opt(undefOr.get) else Opt.Empty
   }
 
-  class JsOptOps[A](private val raw: A) extends AnyVal {
-    private def value = Opt(raw)
-
-    def orUndefined: UndefOr[A] = if (value.isDefined) js.defined(value.get) else js.undefined
+  extension[A](raw: A) {
+    def orUndefined: UndefOr[A] = if (Opt(raw).isDefined) js.defined(raw) else js.undefined
   }
 }
+object JsInterop extends JsInterop 

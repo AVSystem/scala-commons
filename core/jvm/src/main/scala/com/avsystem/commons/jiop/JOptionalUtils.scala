@@ -1,50 +1,76 @@
 package com.avsystem.commons
 package jiop
 
+import com.avsystem.commons.meta.OptionLike
+
 import java.util as ju
 
 trait JOptionalUtils {
-
-  import JOptionalUtils.*
 
   type JOptional[T] = ju.Optional[T]
   type JOptionalDouble = ju.OptionalDouble
   type JOptionalInt = ju.OptionalInt
   type JOptionalLong = ju.OptionalLong
 
-  implicit def optional2AsScala[T](optional: JOptional[T]): optional2AsScala[T] =
-    new optional2AsScala(optional)
+  extension [T](optional: JOptional[T]) {
+    def toOption: Option[T] =
+      if (optional.isPresent) Some(optional.get) else None
 
-  implicit def optionalDouble2AsScala(optional: JOptionalDouble): optionalDouble2AsScala =
-    new optionalDouble2AsScala(optional)
+    def toOpt: Opt[T] =
+      if (optional.isPresent) Opt(optional.get) else Opt.Empty
 
-  implicit def optionalInt2AsScala(optional: JOptionalInt): optionalInt2AsScala =
-    new optionalInt2AsScala(optional)
+    def asScala: Option[T] = toOption
+  }
 
-  implicit def optionalLong2AsScala(optional: JOptionalLong): optionalLong2AsScala =
-    new optionalLong2AsScala(optional)
+  extension (optional: JOptionalDouble) {
+    def toOption: Option[Double] =
+      if (optional.isPresent) Some(optional.getAsDouble) else None
 
-  implicit def option2AsJava[T](option: Option[T]): option2AsJava[T] =
-    new option2AsJava(option)
+    def toOpt: Opt[Double] =
+      if (optional.isPresent) Opt(optional.getAsDouble) else Opt.Empty
 
-  implicit def opt2AsJava[T](opt: Opt[T]): opt2AsJava[T] =
-    new opt2AsJava((opt: Opt[Any]).orNull)
+    def asScala: Option[Double] = toOption
+  }
 
-  // NOTE: losing information about NOpt(null) vs NOpt.Empty but this is fine because JOptional doesn't distinguish
-  implicit def nopt2AsJava[T](opt: NOpt[T]): nopt2AsJava[T] =
-    new nopt2AsJava((opt: NOpt[Any]).orNull)
+  extension (optional: JOptionalInt) {
+    def toOption: Option[Int] =
+      if (optional.isPresent) Some(optional.getAsInt) else None
 
-  implicit def optArg2AsJava[T](opt: OptArg[T]): optArg2AsJava[T] =
-    new optArg2AsJava((opt: OptArg[Any]).orNull)
+    def toOpt: Opt[Int] =
+      if (optional.isPresent) Opt(optional.getAsInt) else Opt.Empty
 
-  implicit def option2AsJavaDouble(option: Option[Double]): option2AsJavaDouble =
-    new option2AsJavaDouble(option)
+    def asScala: Option[Int] = toOption
+  }
+  extension (optional: JOptionalLong) {
+    def toOption: Option[Long] =
+      if (optional.isPresent) Some(optional.getAsLong) else None
 
-  implicit def option2AsJavaInt(option: Option[Int]): option2AsJavaInt =
-    new option2AsJavaInt(option)
+    def toOpt: Opt[Long] =
+      if (optional.isPresent) Opt(optional.getAsLong) else Opt.Empty
 
-  implicit def option2AsJavaLong(option: Option[Long]): option2AsJavaLong =
-    new option2AsJavaLong(option)
+    def asScala: Option[Long] = toOption
+  }
+
+  extension (option: Option[Double]) {
+    def toJOptionalDouble: JOptionalDouble =
+      if (option.isDefined) ju.OptionalDouble.of(option.get) else ju.OptionalDouble.empty()
+
+    def asJavaDouble: JOptionalDouble = toJOptionalDouble
+  }
+
+  extension (option: Option[Int]) {
+    def toJOptionalInt: JOptionalInt =
+      if (option.isDefined) ju.OptionalInt.of(option.get) else ju.OptionalInt.empty()
+
+    def asJavaInt: JOptionalInt = toJOptionalInt
+  }
+
+  extension (option: Option[Long]) {
+    def toJOptionalLong: JOptionalLong =
+      if (option.isDefined) ju.OptionalLong.of(option.get) else ju.OptionalLong.empty()
+
+    def asJavaLong: JOptionalLong = toJOptionalLong
+  }
 
   object JOptional {
     def apply[T](nullable: T | Null): JOptional[T] = ju.Optional.ofNullable(nullable)
@@ -70,122 +96,12 @@ trait JOptionalUtils {
     def empty: JOptionalLong = ju.OptionalLong.empty()
   }
 
+
+  extension[O[_], T] (opt: O[T])(using optionLike: OptionLike.Aux[O[T], T]) {
+    def toJOptional: JOptional[T] =
+      if (optionLike.isDefined(opt)) ju.Optional.of(optionLike.get(opt)) else ju.Optional.empty()
+    def asJava: JOptional[T] = toJOptional
+  }
 }
 
-object JOptionalUtils {
-
-  final class optional2AsScala[T](private val optional: JOptional[T]) extends AnyVal {
-    def toOption: Option[T] =
-      if (optional.isPresent) Some(optional.get) else None
-
-    def toOpt: Opt[T] =
-      if (optional.isPresent) Opt(optional.get) else Opt.Empty
-
-    def asScala: Option[T] = toOption
-  }
-
-  final class optionalDouble2AsScala(private val optional: JOptionalDouble) extends AnyVal {
-    def toOption: Option[Double] =
-      if (optional.isPresent) Some(optional.getAsDouble) else None
-
-    def toOpt: Opt[Double] =
-      if (optional.isPresent) Opt(optional.getAsDouble) else Opt.Empty
-
-    def asScala: Option[Double] = toOption
-  }
-
-  final class optionalInt2AsScala(private val optional: JOptionalInt) extends AnyVal {
-    def toOption: Option[Int] =
-      if (optional.isPresent) Some(optional.getAsInt) else None
-
-    def toOpt: Opt[Int] =
-      if (optional.isPresent) Opt(optional.getAsInt) else Opt.Empty
-
-    def asScala: Option[Int] = toOption
-  }
-
-  final class optionalLong2AsScala(private val optional: JOptionalLong) extends AnyVal {
-    def toOption: Option[Long] =
-      if (optional.isPresent) Some(optional.getAsLong) else None
-
-    def toOpt: Opt[Long] =
-      if (optional.isPresent) Opt(optional.getAsLong) else Opt.Empty
-
-    def asScala: Option[Long] = toOption
-  }
-
-  final class option2AsJava[T](private val option: Option[T]) extends AnyVal {
-
-    /**
-     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
-     * not able to hold null
-     */
-    def toJOptional: JOptional[T] =
-      if (option.isDefined) ju.Optional.of(option.get) else ju.Optional.empty()
-
-    def asJava: JOptional[T] = toJOptional
-  }
-
-  final class opt2AsJava[T](private val rawOrNull: Any) extends AnyVal {
-    private def opt: Opt[T] = Opt(rawOrNull.asInstanceOf[T])
-
-    /**
-     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
-     * not able to hold null
-     */
-    def toJOptional: JOptional[T] =
-      if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
-
-    def asJava: JOptional[T] = toJOptional
-  }
-
-  // note: we have lost information about NOpt.Empty vs NOpt(null) but it doesn't matter because we only convert
-  // to JOptional which doesn't distinguish between them
-  final class nopt2AsJava[T](private val rawOrNull: Any) extends AnyVal {
-    private def opt: NOpt[T] = NOpt(rawOrNull.asInstanceOf[T])
-
-    /**
-     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
-     * not able to hold null
-     */
-    def toJOptional: JOptional[T] =
-      if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
-
-    def asJava: JOptional[T] = toJOptional
-  }
-
-  final class optArg2AsJava[T](private val rawOrNull: Any) extends AnyVal {
-    private def opt: OptArg[T] = OptArg(rawOrNull.asInstanceOf[T])
-
-    /**
-     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
-     * not able to hold null
-     */
-    def toJOptional: JOptional[T] =
-      if (opt.isDefined) ju.Optional.of(opt.get) else ju.Optional.empty()
-
-    def asJava: JOptional[T] = toJOptional
-  }
-
-  final class option2AsJavaDouble(private val option: Option[Double]) extends AnyVal {
-    def toJOptionalDouble: JOptionalDouble =
-      if (option.isDefined) ju.OptionalDouble.of(option.get) else ju.OptionalDouble.empty()
-
-    def asJavaDouble: JOptionalDouble = toJOptionalDouble
-  }
-
-  final class option2AsJavaInt(private val option: Option[Int]) extends AnyVal {
-    def toJOptionalInt: JOptionalInt =
-      if (option.isDefined) ju.OptionalInt.of(option.get) else ju.OptionalInt.empty()
-
-    def asJavaInt: JOptionalInt = toJOptionalInt
-  }
-
-  final class option2AsJavaLong(private val option: Option[Long]) extends AnyVal {
-    def toJOptionalLong: JOptionalLong =
-      if (option.isDefined) ju.OptionalLong.of(option.get) else ju.OptionalLong.empty()
-
-    def asJavaLong: JOptionalLong = toJOptionalLong
-  }
-
-}
+object JOptionalUtils extends JOptionalUtils

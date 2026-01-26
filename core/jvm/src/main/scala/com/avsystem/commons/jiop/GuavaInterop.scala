@@ -1,13 +1,11 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.concurrent.{Executor, TimeUnit}
-
-import com.avsystem.commons.jiop.GuavaInterop.*
 import com.avsystem.commons.misc.Sam
-import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture, SettableFuture}
 import com.google.common.base as gbase
+import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture, SettableFuture}
 
+import java.util.concurrent.{Executor, TimeUnit}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, CanAwait, ExecutionException, TimeoutException}
@@ -21,18 +19,7 @@ trait GuavaInterop {
   def gSupplier[T](expr: => T): GSupplier[T] = Sam[GSupplier[T]](expr)
   def gPredicate[T](pred: T => Boolean): GPredicate[T] = Sam[GPredicate[T]](pred)
 
-  implicit def toDecorateAsScala[T](gfut: ListenableFuture[T]): DecorateFutureAsScala[T] =
-    new DecorateFutureAsScala(gfut)
-
-  implicit def toDecorateAsScalaPromise[T](gfut: SettableFuture[T]): DecorateSettableFutureAsScala[T] =
-    new DecorateSettableFutureAsScala(gfut)
-
-  implicit def toDecorateAsGuava[T](fut: Future[T]): DecorateFutureAsGuava[T] =
-    new DecorateFutureAsGuava(fut)
-}
-
-object GuavaInterop extends GuavaInterop {
-  class DecorateFutureAsScala[T](private val gfut: ListenableFuture[T]) extends AnyVal {
+  extension [T](gfut: ListenableFuture[T]) {
     def asScala: Future[T] = gfut match {
       case FutureAsListenableFuture(fut) => fut
       case _ => ListenableFutureAsScala(gfut)
@@ -42,11 +29,11 @@ object GuavaInterop extends GuavaInterop {
       asScala.toUnit
   }
 
-  class DecorateSettableFutureAsScala[T](private val gfut: SettableFuture[T]) extends AnyVal {
+  extension [T](gfut: SettableFuture[T]) {
     def asScalaPromise: Promise[T] = new SettableFutureAsPromise(gfut)
   }
 
-  class DecorateFutureAsGuava[T](private val fut: Future[T]) extends AnyVal {
+  extension [T](fut: Future[T]) {
     def asGuava: ListenableFuture[T] = fut match {
       case ListenableFutureAsScala(gfut) => gfut
       case _ => FutureAsListenableFuture(fut)
@@ -99,22 +86,13 @@ object GuavaInterop extends GuavaInterop {
       }
       p.future
     }
-
-    private def unwrapFailures(expr: =>  T @uncheckedVariance): T =
-      try expr
-      catch {
-        case ee: ExecutionException => throw ee.getCause
-      }
-
     def value: Option[Try[T]] =
       if (gfut.isDone) Some(Try(unwrapFailures(gfut.get))) else None
-
     @throws(classOf[Exception])
     def result(atMost: Duration)(implicit permit: CanAwait): T =
       if (atMost.isFinite) unwrapFailures(gfut.get(atMost.length, atMost.unit))
       else
         unwrapFailures(gfut.get())
-
     @throws(classOf[InterruptedException])
     @throws(classOf[TimeoutException])
     def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
@@ -124,6 +102,11 @@ object GuavaInterop extends GuavaInterop {
       }
       this
     }
+    private def unwrapFailures(expr: => T @uncheckedVariance): T =
+      try expr
+      catch {
+        case ee: ExecutionException => throw ee.getCause
+      }
   }
 
   private case class FutureAsListenableFuture[T](fut: Future[T]) extends ListenableFuture[T] {
@@ -144,24 +127,19 @@ object GuavaInterop extends GuavaInterop {
 
     def isCancelled: Boolean =
       false
-
+    def get(): T =
+      wrapFailures(Await.result(fut, Duration.Inf))
+    def get(timeout: Long, unit: TimeUnit): T =
+      wrapFailures(Await.result(fut, Duration(timeout, unit)))
+    def cancel(mayInterruptIfRunning: Boolean): Boolean =
+      throw new UnsupportedOperationException
+    def isDone: Boolean =
+      fut.isCompleted
     private def wrapFailures(expr: => T): T =
       try expr
       catch {
         case NonFatal(e) => throw new ExecutionException(e)
       }
-
-    def get(): T =
-      wrapFailures(Await.result(fut, Duration.Inf))
-
-    def get(timeout: Long, unit: TimeUnit): T =
-      wrapFailures(Await.result(fut, Duration(timeout, unit)))
-
-    def cancel(mayInterruptIfRunning: Boolean): Boolean =
-      throw new UnsupportedOperationException
-
-    def isDone: Boolean =
-      fut.isCompleted
   }
 
   private class SettableFutureAsPromise[T](fut: SettableFuture[T])
@@ -174,3 +152,5 @@ object GuavaInterop extends GuavaInterop {
     }
   }
 }
+
+object GuavaInterop extends GuavaInterop

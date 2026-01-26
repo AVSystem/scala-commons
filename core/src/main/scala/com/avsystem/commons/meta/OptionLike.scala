@@ -3,6 +3,8 @@ package meta
 
 import com.avsystem.commons.annotation.bincompat
 
+import java.util as ju
+
 sealed trait OptionLike[O] {
   type Value
   def none: O
@@ -52,22 +54,17 @@ final class OptionLikeImpl[O, A](
   ) = this(empty, someFun, isDefinedFun, getFun, ignoreNulls = true)
 }
 object OptionLike {
-  type Aux[O, V] = OptionLike[O] { type Value = V }
-
   implicit def optionOptionLike[A]: BaseOptionLike[Option[A], A] =
     new OptionLikeImpl(None, Some(_), _.isDefined, _.get, ignoreNulls = true)
-
   implicit def optOptionLike[A]: BaseOptionLike[Opt[A], A] =
     new OptionLikeImpl(Opt.Empty, Opt.some, _.isDefined, _.get, ignoreNulls = true)
-
   implicit def optRefOptionLike[A]: BaseOptionLike[OptRef[A], A] =
     new OptionLikeImpl(OptRef.Empty, OptRef.some, _.isDefined, _.get, ignoreNulls = true)
-
   implicit def optArgOptionLike[A]: BaseOptionLike[OptArg[A], A] =
     new OptionLikeImpl(OptArg.Empty, OptArg.some, _.isDefined, _.get, ignoreNulls = true)
-
   implicit def nOptOptionLike[A]: BaseOptionLike[NOpt[A], A] =
     new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get, ignoreNulls = false)
+  type Aux[O, V] = OptionLike[O] { type Value = V }
 }
 
 /**

@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package concurrent
 
-import com.avsystem.commons.concurrent.ObservableExtensions.ObservableOps
 import monix.eval.Task
 import monix.reactive.Observable
 
@@ -9,11 +8,7 @@ import scala.collection.Factory
 import scala.util.Sorting
 
 trait ObservableExtensions {
-  implicit final def observableOps[T](obs: Observable[T]): ObservableOps[T] = new ObservableOps(obs)
-}
-
-object ObservableExtensions extends ObservableExtensions {
-  final class ObservableOps[T](private val obs: Observable[T]) extends AnyVal {
+  extension [T]( obs: Observable[T])  {
 
     /**
      * Creates a [[monix.eval.Task Task]] that upon execution will signal the first generated element of the source
@@ -96,3 +91,4 @@ object ObservableExtensions extends ObservableExtensions {
       obs.map(v => (keyFun(v), valueFun(v))).toL(Map)
   }
 }
+object ObservableExtensions extends ObservableExtensions

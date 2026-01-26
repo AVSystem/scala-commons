@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons.misc.SamCompanion.ValidSam
+
 import scala.quoted.*
 
 trait AnnotationOfMacros {
@@ -51,7 +53,7 @@ trait SamCompanionMacros[T, F] {
   inline def apply(fun: F): T = ???
 }
 trait ValidSamMacros {
-  inline implicit def isValidSam[T, F]: Any = ???
+  inline implicit def isValidSam[T, F]: ValidSam[T, F] = ???
 }
 trait DelegationMacros {
   inline implicit def materializeDelegation[A, B]: Delegation[A, B] = ???

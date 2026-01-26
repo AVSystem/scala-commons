@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package concurrent
 
-import com.avsystem.commons.concurrent.TaskExtensions.{TaskCompanionOps, TaskOps}
+import com.avsystem.commons.concurrent.ObservableExtensions.toL
 import com.avsystem.commons.misc.Timestamp
 import monix.eval.Task
 import monix.reactive.Observable
@@ -11,13 +11,7 @@ import scala.concurrent.TimeoutException
 import scala.concurrent.duration.FiniteDuration
 
 trait TaskExtensions {
-  implicit def taskOps[T](task: Task[T]): TaskOps[T] = new TaskOps(task)
-
-  implicit def taskCompanionOps(task: Task.type): TaskCompanionOps.type = TaskCompanionOps
-}
-
-object TaskExtensions extends TaskExtensions {
-  final class TaskOps[T](private val task: Task[T]) extends AnyVal {
+  extension [T](task: Task[T]) {
 
     /**
      * Similar to [[Task.timeoutWith]] but exception instance is created lazily (for performance)
@@ -38,8 +32,7 @@ object TaskExtensions extends TaskExtensions {
       task.tapError(t => Task(f.applyOpt(t)))
   }
 
-  object TaskCompanionOps {
-    import com.avsystem.commons.concurrent.ObservableExtensions.observableOps
+  extension (comp: Task.type) {
 
     /** A [[Task]] of [[Opt.Empty]] */
     def optEmpty[A]: Task[Opt[A]] = Task.pure(Opt.Empty)
@@ -65,3 +58,4 @@ object TaskExtensions extends TaskExtensions {
       currentTimestamp.flatMap(useNow)
   }
 }
+object TaskExtensions extends TaskExtensions
