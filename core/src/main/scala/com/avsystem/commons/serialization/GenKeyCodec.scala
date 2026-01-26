@@ -2,7 +2,6 @@ package com.avsystem.commons
 package serialization
 
 import java.util.UUID
-
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}

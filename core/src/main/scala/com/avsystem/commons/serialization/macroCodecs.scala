@@ -103,8 +103,7 @@ abstract class ApplyUnapplyCodec[T](
     instantiate(fieldValues)
   }
 }
-object ApplyUnapplyCodec extends ApplyUnapplyCodecMacros {
-}
+object ApplyUnapplyCodec extends ApplyUnapplyCodecMacros 
 
 abstract class ProductCodec[T <: Product](
   typeRepr: String,

@@ -26,8 +26,8 @@ class TypeString[T](val value: String) extends AnyVal {
   override def toString: String = value
 }
 object TypeString extends TypeStringMacros {
-  def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
   def of[T: TypeString]: String = TypeString[T].value
+  def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
 
   implicit val keyCodec: GenKeyCodec[TypeString[?]] =
     GenKeyCodec.create[TypeString[?]](new TypeString(_), _.value)

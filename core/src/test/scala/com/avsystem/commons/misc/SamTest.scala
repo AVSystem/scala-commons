@@ -1,3 +1,7 @@
+package com.avsystem.commons.misc
+
+
+
 // package com.avsystem.commons
 // package misc
 

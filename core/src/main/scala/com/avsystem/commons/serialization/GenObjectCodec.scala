@@ -28,32 +28,25 @@ trait GenObjectCodec[T] extends GenCodec[T] {
   }
 }
 object GenObjectCodec extends GenObjectCodecMacros {
+  // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
+  implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R])
+    : GenObjectCodec[T] =
+    new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
   def apply[T](implicit codec: GenObjectCodec[T]): GenObjectCodec[T] = codec
-
   def writeObject[T: GenObjectCodec](output: ObjectOutput, value: T): Unit =
     apply[T].writeObject(output, value)
   def readObject[T: GenObjectCodec](input: ObjectInput): T =
     apply[T].readObject(input)
-
-
-
   def create[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
     new GenObjectCodec[T] {
       def readObject(input: ObjectInput): T = readFun(input)
       def writeObject(output: ObjectOutput, value: T): Unit = writeFun(output, value)
     }
-
   def makeLazy[T](codec: => GenObjectCodec[T]): GenObjectCodec[T] = new GenObjectCodec[T] {
     private lazy val underlying = codec
     def readObject(input: ObjectInput): T = underlying.readObject(input)
     def writeObject(output: ObjectOutput, value: T): Unit = underlying.writeObject(output, value)
   }
-
-  // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R])
-    : GenObjectCodec[T] =
-    new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
-
   def transformed[T, R: GenObjectCodec](toRaw: T => R, fromRaw: R => T): GenObjectCodec[T] =
     new Transformed[T, R](GenObjectCodec[R], toRaw, fromRaw)
 

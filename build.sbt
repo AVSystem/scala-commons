@@ -24,6 +24,9 @@ val monixVersion = "3.4.1"
 val scalajsBenchmarkVersion = "0.10.0"
 val slf4jVersion = "2.0.17" // test only
 
+val scala2Version = "2.13.18"
+val scala3Version = "3.8.1"
+
 // for binary compatibility checking
 val previousCompatibleVersions: Set[String] = Set("2.2.4")
 
@@ -48,8 +51,7 @@ inThisBuild(
     developers := List(
       Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak")),
     ),
-    scalaVersion := "3.8.0",
-    crossScalaVersions := Seq("3.8.0", "2.13.18"),
+    scalaVersion := scala3Version,
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
@@ -86,63 +88,37 @@ inThisBuild(
 
 def commonSettings: Seq[Def.Setting[?]] = Seq(
   Compile / scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13)) =>
-        Seq(
-          "-encoding",
-          "utf-8",
-          "-Yrangepos",
-          "-explaintypes",
-          "-feature",
-          "-deprecation",
-          "-unchecked",
-          "-language:implicitConversions",
-          "-language:existentials",
-          "-language:dynamics",
-          "-language:experimental.macros",
-          "-language:higherKinds",
-          "-Xfatal-warnings",
-          "-Xsource:3",
-          "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-          "-Ycache-plugin-class-loader:last-modified",
-          "-Ycache-macro-class-loader:last-modified",
-          "-Xnon-strict-patmat-analysis",
-          "-Xlint:-strict-unsealed-patmat",
-          "-Ytasty-reader",
-        )
-      case _ =>
-        Seq(
-          "-deprecation",
-          "-feature",
-          // "-explain",
-          "-unchecked",
-          "-language:noAutoTupling",
-          "-Vprofile",
-          "-Xprint-inline",
-          // "-Ycheck:all", // cannot be enabled when scoverage used :///todo: enable
-          "-Ycheck:macros",
-          // "-Ydebug-error",
-          "-Ydebug-flags",
-          "-Ydebug-missing-refs",
-          "-Yexplain-lowlevel",
-         "-Yexplicit-nulls", 
-          // "-Yprint-debug",
-          // "-Xprint:postInlining",
-          // "-Xprint-suspension",
-          // "-Vprint:typer",
-          "-Wsafe-init",
-          "-Yshow-suppressed-errors",
-          "-Yshow-var-bounds",
-          "-Werror",
-          "-experimental",
-          "-preview",
-          //  "-Yprofile-enabled",
-          //  s"-Yprofile-trace:$moduleDir/compile-trace.json",
-          "-language:implicitConversions", // todo: disable
-          "-language:experimental.macros",
-          "-old-syntax", 
-        )
-    }
+    Seq(
+      "-deprecation",
+      "-feature",
+      // "-explain",
+      "-unchecked",
+      "-language:noAutoTupling",
+      "-Vprofile",
+      "-Xprint-inline",
+      // "-Ycheck:all", // cannot be enabled when scoverage used :///todo: enable
+      "-Ycheck:macros",
+      // "-Ydebug-error",
+      "-Ydebug-flags",
+      "-Ydebug-missing-refs",
+      "-Yexplain-lowlevel",
+      "-Yexplicit-nulls",
+      // "-Yprint-debug",
+      // "-Xprint:postInlining",
+      // "-Xprint-suspension",
+      // "-Vprint:typer",
+      "-Wsafe-init",
+      "-Yshow-suppressed-errors",
+      "-Yshow-var-bounds",
+      "-Werror",
+      "-experimental",
+      "-preview",
+      //  "-Yprofile-enabled",
+      //  s"-Yprofile-trace:$moduleDir/compile-trace.json",
+      "-language:implicitConversions", // todo: disable
+      "-language:experimental.macros",
+      "-old-syntax",
+    )
   },
   Test / scalacOptions := (Compile / scalacOptions).value,
   Compile / doc / sources := Seq.empty, // relying on unidoc
@@ -210,7 +186,6 @@ lazy val root = project
     ScalaUnidoc / unidoc / scalacOptions += "-Ymacro-expand:none",
     ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(
 //      analyzer,
-      macros,
       `core-js`,
 //      comprof,
     ),
@@ -220,7 +195,6 @@ lazy val jvm = project
   .in(file(".jvm"))
   .aggregate(
 //    analyzer,
-    macros,
     core,
     jetty,
 //    mongo,
@@ -265,14 +239,7 @@ def sameNameAs(proj: Project) =
   if (forIdeaImport) Seq.empty
   else Seq(name := (proj / name).value)
 
-lazy val macros = project.settings(
-  jvmCommonSettings,
-  scalaVersion := "2.13.18",
-  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-)
-
 lazy val core = project
-  .dependsOn(macros)
   .settings(
     jvmCommonSettings,
     sourceDirsSettings(_ / "jvm"),
@@ -286,7 +253,6 @@ lazy val `core-js` = project
   .in(core.base / "js")
   .enablePlugins(ScalaJSPlugin)
   .configure(p => if (forIdeaImport) p.dependsOn(core) else p)
-  .dependsOn(macros)
   .settings(
     jsCommonSettings,
     sameNameAs(core),

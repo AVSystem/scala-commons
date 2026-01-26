@@ -54,9 +54,10 @@ object HFloat {
             significand += 1
           }
 
-          if (exp >= MinExponent && exp <= MaxExponent) new HFloat(
-            (signBit | ((exp + ExponentBias) << ExponentShift) | significand).toShort,
-          )
+          if (exp >= MinExponent && exp <= MaxExponent)
+            new HFloat(
+              (signBit | ((exp + ExponentBias) << ExponentShift) | significand).toShort,
+            )
           else if (exp > MaxExponent) if (neg) NegativeInfinity else PositiveInfinity
           else if (exp >= MinExponent - ExponentShift) { // subnormal half-precision float
             val sshift = MinExponent - exp

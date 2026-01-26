@@ -1,6 +1,8 @@
-package com.avsystem.commons.misc
+package com.avsystem.commons
+package misc
 
 import com.avsystem.commons
+import com.avsystem.commons.misc.*
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 

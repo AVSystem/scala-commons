@@ -1,3 +1,7 @@
+package com.avsystem.commons.misc
+
+
+
 // package com.avsystem.commons.misc
 
 // import com.avsystem.commons.CommonAliases.*

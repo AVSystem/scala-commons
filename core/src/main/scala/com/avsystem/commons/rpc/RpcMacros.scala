@@ -1,5 +1,4 @@
-package com.avsystem.commons
-package rpc
+package com.avsystem.commons.rpc
 
 trait AsRawMacros { this: AsRaw.type =>
   inline def materialize[Raw, Real]: AsRaw[Raw, Real] = ???

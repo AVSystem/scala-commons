@@ -9,6 +9,7 @@ trait Delegation[A, B] {
 }
 
 object Delegation extends DelegationMacros {
+
   /**
    * Provides following syntax:
    *

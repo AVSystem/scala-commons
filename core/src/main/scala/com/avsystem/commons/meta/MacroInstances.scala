@@ -39,6 +39,7 @@ trait MacroInstances[Implicits, Instances] {
 }
 
 object MacroInstances extends MacroInstancesMacros {
+
   /**
    * Annotation which may be applied on methods of `Implicits` trait in [[MacroInstances]] to instruct
    * [[MacroInstances.materialize]] macro how to implement these methods.

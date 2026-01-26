@@ -8,6 +8,8 @@ import scala.annotation.implicitNotFound
  */
 @implicitNotFound("Cannot derive value of ${T} - is not a singleton type")
 class ValueOf[T](val value: T) extends AnyVal
-object ValueOf extends ValueOfMacros {
+object ValueOf {
+  inline implicit def mkValueOf[T]: ValueOf[T] = ${ mkValueOfImpl[T] }
   def apply[T](implicit vof: ValueOf[T]): T = vof.value
+  def mkValueOfImpl[T: Type](using Quotes): Expr[ValueOf[T]] = '{ ??? }.asInstanceOf[Expr[ValueOf[T]]]
 }

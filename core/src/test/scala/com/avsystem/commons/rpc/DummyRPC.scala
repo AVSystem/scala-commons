@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta.{annotated, checked, composite, infer, multi, reifyAnnot, reifyName, MacroInstances, TypedMetadata}
+import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}

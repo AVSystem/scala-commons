@@ -224,8 +224,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     val start = skipWs()
     val values = new MListBuffer[HValue]
     values += parseNonConcat()
-    while (aheadAny(LBrace, LBracket, Splice, QuotedString, MultilineString) || ahead(unquotedStringPart(inKey = false)))
-    {
+    while (aheadAny(LBrace, LBracket, Splice, QuotedString, MultilineString) || ahead(unquotedStringPart(inKey = false))) {
       values += parseNonConcat()
     }
     values.last match {

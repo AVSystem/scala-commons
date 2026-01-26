@@ -42,7 +42,7 @@ trait ImplicitsMacros {
 trait ValueEnumMacros {
   protected final class ValName(val valName: String)
 
-  protected inline implicit def valName: ValName = ???
+  inline protected implicit def valName: ValName = ???
 }
 trait SelfInstanceMacros {
   inline implicit def materialize[C[_]]: SelfInstance[C] = ???

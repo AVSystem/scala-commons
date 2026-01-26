@@ -3,7 +3,7 @@ package rpc
 
 import com.avsystem.commons.meta.infer
 import com.avsystem.commons.misc.TypeString
-import com.avsystem.commons.serialization.{transientDefault, whenAbsent, GenCodec}
+import com.avsystem.commons.serialization.{GenCodec, transientDefault, whenAbsent}
 import org.scalatest.funsuite.AnyFunSuite
 
 class td extends transientDefault

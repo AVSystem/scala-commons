@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.annotation.explicitGenerics
-import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
+import com.avsystem.commons.derivation.DeferredInstance
 import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.misc.{Bytes, Timestamp}
@@ -44,8 +44,6 @@ trait GenCodec[T] {
 
 object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMacros {
   def apply[T](implicit codec: GenCodec[T]): GenCodec[T] = codec
-
-  def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] = ???
 
   @explicitGenerics
   def read[T: GenCodec](input: Input): T =
@@ -96,7 +94,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
     }
 
   def nullableSimple[T <: AnyRef](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any): GenCodec[T] =
-    createSimple(readFun, writeFun, allowNull = true)
+    createSimple[T](readFun, writeFun, allowNull = true)
 
   def nonNullSimple[T](readFun: SimpleInput => T, writeFun: (SimpleOutput, T) => Any): GenCodec[T] =
     createSimple(readFun, writeFun, allowNull = false)
@@ -138,7 +136,6 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
     input => keyCodec.read(input.readSimple().readString()),
     (output, value) => output.writeSimple().writeString(keyCodec.write(value)),
   )
-
 
   class ReadFailure(msg: String, cause: Throwable | Null) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
@@ -219,7 +216,6 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
     final def readNonNull(input: Input): T =
       readSimple(input.readSimple())
   }
-
   trait ListCodec[T] extends NullSafeCodec[T] {
     def readList(input: ListInput): T
     def writeList(output: ListOutput, value: T): Unit
@@ -322,12 +318,6 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
       wrapped.write(output, wrappedValue)
     }
   }
-
-  def underlyingCodec(codec: GenCodec[?]): GenCodec[?] = codec match {
-    case tc: Transformed[?, ?] => underlyingCodec(tc.wrapped)
-    case _ => codec
-  }
-
   class SubclassCodec[T: ClassTag, S >: T: GenCodec](val nullable: Boolean) extends NullSafeCodec[T] {
     override def readNonNull(input: Input): T = GenCodec.read[S](input) match {
       case sub: T => sub
@@ -597,4 +587,3 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
   implicit def fromFallback[T](implicit fallback: Fallback[GenCodec[T]]): GenCodec[T] =
     fallback.value
 }
-

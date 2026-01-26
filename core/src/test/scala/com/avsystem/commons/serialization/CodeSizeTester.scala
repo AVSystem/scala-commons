@@ -118,12 +118,12 @@ object Person {
   implicit val codec: GenCodec[Person] = GenCodec.materialize
 }
 
-// class CodeSizeTester extends AnyFunSuite {
-//   ignore("fake test to see how much JS is generated") {
-//     println(CodeSizeTester00.codec.write(null, null))
-// //    println(CodeSizeTester01.codec.write(null, null))
+class CodeSizeTester extends AnyFunSuite {
+  ignore("fake test to see how much JS is generated") {
+    println(CodeSizeTester00.codec.write(null.asInstanceOf[Output], null.asInstanceOf[CodeSizeTester00]))
+//    println(CodeSizeTester01.codec.write(null, null))
 
-//     println(CodeSizeTester00.codec.read(null))
-// //    println(CodeSizeTester01.codec.read(null))
-//   }
-// }
+    println(CodeSizeTester00.codec.read(null.asInstanceOf[Input]))
+//    println(CodeSizeTester01.codec.read(null))
+  }
+}

@@ -37,9 +37,10 @@ object HoconGenCodecs {
     input =>
       input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
     (output, value) =>
-      if (!output.writeCustom(DurationMarker, DurationConverters.toJava(value))) output
-        .writeSimple()
-        .writeLong(value.toMillis),
+      if (!output.writeCustom(DurationMarker, DurationConverters.toJava(value)))
+        output
+          .writeSimple()
+          .writeLong(value.toMillis),
   )
 
   implicit final val JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(

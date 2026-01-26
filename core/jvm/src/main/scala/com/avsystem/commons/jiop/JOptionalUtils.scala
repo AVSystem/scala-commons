@@ -47,7 +47,7 @@ trait JOptionalUtils {
     new option2AsJavaLong(option)
 
   object JOptional {
-    def apply[T](nullable: T|Null): JOptional[T] = ju.Optional.ofNullable(nullable)
+    def apply[T](nullable: T | Null): JOptional[T] = ju.Optional.ofNullable(nullable)
 
     def empty[T]: JOptional[T] = ju.Optional.empty[T]()
   }

@@ -1,5 +1,4 @@
-package com.avsystem.commons
-package annotation
+package com.avsystem.commons.annotation
 
 import scala.quoted.*
 

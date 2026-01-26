@@ -5,11 +5,6 @@ import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
 abstract class FileBasedSuite(testdir: String) extends AnyFunSuite {
-  def updateTestFiles: Boolean =
-    System.getProperty("updateTestFiles").opt.map(_.toBoolean).contains(true)
-
-  def separator: String = "-----\n"
-
   def testFile(file: String)(process: String => String)(implicit position: Position): Unit = {
     val path = s"$testdir/$file"
     val contents = IO.readTestResource(path)
@@ -23,7 +18,8 @@ abstract class FileBasedSuite(testdir: String) extends AnyFunSuite {
     }
     assert(output == expectedOutput)
   }
-
+  def updateTestFiles: Boolean = System.getProperty("updateTestFiles").opt.map(_.toBoolean).contains(true)
+  def separator: String = "-----\n"
   def assertContents(actual: String, expectedFile: String): Unit = {
     val filePath = s"$testdir/$expectedFile"
     val expected = IO.readTestResource(filePath)

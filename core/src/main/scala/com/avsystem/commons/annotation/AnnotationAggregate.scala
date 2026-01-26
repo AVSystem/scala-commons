@@ -53,5 +53,3 @@ trait AnnotationAggregate extends StaticAnnotation {
 
   def reifyAggregated: List[StaticAnnotation] = ???
 }
-
-def reifyAggregatedImpl(using Quotes): Expr[List[StaticAnnotation]] = '{ ??? }

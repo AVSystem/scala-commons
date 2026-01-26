@@ -42,20 +42,18 @@ import scala.annotation.implicitNotFound
  *   }}}
  */
 trait ValueEnum extends NamedEnum {
-  protected def enumCtx: EnumCtx
-
-  enumCtx.register(this)
-
   /**
    * Enum value index, starting from 0. Reflects the order in which enum constants are declared in the companion object
    * of the enum class.
    */
   def ordinal: Int = enumCtx.ordinal
 
+  enumCtx.register(this)
   /**
    * Name of the `final val` in enum companion object that this enum value is assigned to.
    */
   def name: String = enumCtx.valName
+  protected def enumCtx: EnumCtx
 }
 
 /**
@@ -81,12 +79,6 @@ sealed trait EnumCtx extends Any {
  */
 trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with ValueEnumMacros { companion =>
   type Value = T
-
-  private val registryBuilder = IIndexedSeq.newBuilder[T]
-  private var currentOrdinal: Int = 0
-  private var finished: Boolean = false
-  private var awaitingRegister: Boolean = false
-
   /**
    * Holds an indexed sequence of all enum values, ordered by their ordinal (`values(i).ordinal` is always equal to
    * `i`).
@@ -100,10 +92,13 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with Valu
     finished = true
     registryBuilder.result()
   }
+  private val registryBuilder = IIndexedSeq.newBuilder[T]
+  private var currentOrdinal: Int = 0
+  private var finished: Boolean = false
+  private var awaitingRegister: Boolean = false
 
   implicit final val ordering: Ordering[T] = Ordering.by(_.ordinal)
   implicit final def ordered(value: T): Ordered[T] = Ordered.orderingToOrdered(value)
-
   private class Ctx(val valName: String, val ordinal: Int) extends EnumCtx {
     if (awaitingRegister) {
       throw new IllegalStateException(s"Cannot create new EnumCtx until the previous one registered a value")
@@ -113,9 +108,10 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with Valu
     private var registered = false
 
     override def register(value: ValueEnum): Unit = companion.synchronized {
-      if (finished) throw new IllegalStateException(
-        s"Enum values have already been collected - too late to register enum $value",
-      )
+      if (finished)
+        throw new IllegalStateException(
+          s"Enum values have already been collected - too late to register enum $value",
+        )
       else if (registered) throw new IllegalStateException("Cannot register using the same EnumCtx more than once")
       else {
         registryBuilder += value.asInstanceOf[T] // `enumValName` macro performs static checks that make this safe
@@ -129,7 +125,6 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with Valu
   protected implicit def enumCtx(implicit valName: ValName): EnumCtx =
     new Ctx(valName.valName, currentOrdinal)
 }
-
 
 /**
  * Convenience abstract class implementing [[ValueEnumCompanion]]. For less generated code, faster compilation and

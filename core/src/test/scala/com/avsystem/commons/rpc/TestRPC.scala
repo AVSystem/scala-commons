@@ -2,7 +2,8 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.rpc.DummyRPC.*
-import com.avsystem.commons.serialization.{optionalParam, transientDefault, whenAbsent, HasGenCodec}
+import com.avsystem.commons.serialization.{HasGenCodec, optionalParam, transientDefault, whenAbsent}
+
 import scala.annotation.nowarn
 
 class prepend(prefix: String) extends EncodingInterceptor[String, String] with DecodingInterceptor[String, String] {

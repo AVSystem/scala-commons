@@ -48,9 +48,11 @@ object InitialByte extends InputMetadata[InitialByte] {
     }
 
     def unapply(byte: InitialByte): Opt[MajorType] =
-      if (byte.additionalInfo == IndefiniteLengthInfo && byte.majorType.ordinal >= MajorType.ByteString.ordinal &&
-      byte.majorType.ordinal <= MajorType.Map.ordinal)
-      Opt(byte.majorType)
+      if (
+        byte.additionalInfo == IndefiniteLengthInfo && byte.majorType.ordinal >= MajorType.ByteString.ordinal &&
+        byte.majorType.ordinal <= MajorType.Map.ordinal
+      )
+        Opt(byte.majorType)
       else Opt.Empty
   }
 

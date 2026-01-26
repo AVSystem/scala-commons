@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.macros
-
 import scala.annotation.implicitNotFound
 
 /**
@@ -12,8 +10,7 @@ import scala.annotation.implicitNotFound
  */
 @implicitNotFound("${T} is not annotated with ${A}")
 case class AnnotationOf[A, T](annot: A) extends AnyVal
-object AnnotationOf extends AnnotationOfMacros {
-}
+object AnnotationOf extends AnnotationOfMacros {}
 
 /**
  * A typeclass which captures a possible annotation of type `A` applied on a class/trait/object associated with type
@@ -21,16 +18,14 @@ object AnnotationOf extends AnnotationOfMacros {
  * apply.
  */
 case class OptAnnotationOf[A, T](annotOpt: Opt[A])
-object OptAnnotationOf extends OptAnnotationOfMacros {
-}
+object OptAnnotationOf extends OptAnnotationOfMacros {}
 
 /**
  * A typeclass which captures all annotations of type `A` applied on a class/trait/object associated with type `T`.
  * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
  */
 case class AnnotationsOf[A, T](annots: List[A]) extends AnyVal
-object AnnotationsOf extends AnnotationsOfMacros {
-}
+object AnnotationsOf extends AnnotationsOfMacros {}
 
 /**
  * A typeclass which serves as an evidence that an annotation of type `A` is applied on a class/trait/object associated
@@ -64,8 +59,7 @@ object HasAnnotation extends HasAnnotationMacros {
  *   }}}
  */
 case class SelfAnnotation[A](annot: A) extends AnyVal
-object SelfAnnotation extends SelfAnnotationMacros {
-}
+object SelfAnnotation extends SelfAnnotationMacros {}
 
 /**
  * A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures a possible
@@ -86,8 +80,7 @@ object SelfAnnotation extends SelfAnnotationMacros {
  *   }}}
  */
 case class SelfOptAnnotation[A](annotOpt: Opt[A])
-object SelfOptAnnotation extends SelfOptAnnotationMacros {
-}
+object SelfOptAnnotation extends SelfOptAnnotationMacros {}
 
 /**
  * A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures all annotations of
@@ -107,5 +100,4 @@ object SelfOptAnnotation extends SelfOptAnnotationMacros {
  *   }}}
  */
 case class SelfAnnotations[A](annots: List[A]) extends AnyVal
-object SelfAnnotations extends SelfAnnotationsMacros {
-}
+object SelfAnnotations extends SelfAnnotationsMacros {}

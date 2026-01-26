@@ -3,7 +3,7 @@ package misc
 
 import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta.*
-import com.avsystem.commons.serialization.{name, GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo}
+import com.avsystem.commons.serialization.*
 
 trait GenCodecStructure[T] {
   def codec: GenCodec[T]

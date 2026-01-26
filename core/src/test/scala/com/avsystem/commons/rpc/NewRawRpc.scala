@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package rpc
 
-import java.util.regex.Matcher
-
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.TypeString
+
+import java.util.regex.Matcher
 
 trait DummyParamTag extends RpcTag with AnnotationAggregate
 

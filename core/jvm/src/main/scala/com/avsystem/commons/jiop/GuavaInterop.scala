@@ -100,7 +100,7 @@ object GuavaInterop extends GuavaInterop {
       p.future
     }
 
-    private def unwrapFailures(expr: => T): T =
+    private def unwrapFailures(expr: =>  T @uncheckedVariance): T =
       try expr
       catch {
         case ee: ExecutionException => throw ee.getCause

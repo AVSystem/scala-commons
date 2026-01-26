@@ -23,7 +23,6 @@ object AsRaw extends FallbackAsRaw with AsRawMacros {
     forWrapped: AsRaw[Raw, Wrapped],
   ): AsRaw[Raw, Real] = real => forWrapped.asRaw(tw.unwrap(real))
 
-
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
     _.map(asRaw.asRaw)
@@ -54,7 +53,6 @@ object AsReal extends FallbackAsReal with AsRealMacros {
     forWrapped: AsReal[Raw, Wrapped],
   ): AsReal[Raw, Real] = raw => tw.wrap(forWrapped.asReal(raw))
 
-
   implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
     _.map(asReal.asReal)
@@ -74,18 +72,16 @@ trait FallbackAsReal { this: AsReal.type =>
 )
 trait AsRawReal[Raw, Real] extends AsReal[Raw, Real] with AsRaw[Raw, Real]
 object AsRawReal extends AsRawRealLowPrio with AsRawRealMacros {
+  private val reusableIdentity = new AsRawReal[Any, Any] {
+    def asReal(raw: Any): Any = raw
+    def asRaw(real: Any): Any = real
+  }
   def apply[Raw, Real](implicit asRawReal: AsRawReal[Raw, Real]): AsRawReal[Raw, Real] = asRawReal
-
   def create[Raw, Real](asRawFun: Real => Raw, asRealFun: Raw => Real): AsRawReal[Raw, Real] =
     new AsRawReal[Raw, Real] {
       def asRaw(real: Real): Raw = asRawFun(real)
       def asReal(raw: Raw): Real = asRealFun(raw)
     }
-
-  private val reusableIdentity = new AsRawReal[Any, Any] {
-    def asReal(raw: Any): Any = raw
-    def asRaw(real: Any): Any = real
-  }
 
   implicit def identity[A]: AsRawReal[A, A] =
     reusableIdentity.asInstanceOf[AsRawReal[A, A]]
