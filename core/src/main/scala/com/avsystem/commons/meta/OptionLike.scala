@@ -45,15 +45,15 @@ final class OptionLikeImpl[O, A](
 object OptionLike {
   type Aux[O, V] = OptionLike[O] { type Value = V }
 
-  given [A] => OptionLike[Option[A]] { type Value = A } =
+  given [A] => OptionLike.Aux[Option[A], A] =
     new OptionLikeImpl(None, Some(_), _.isDefined, _.get, ignoreNulls = true)
-  given [A] => OptionLike[Opt[A]] { type Value = A } =
+  given [A] => OptionLike.Aux[Opt[A], A] =
     new OptionLikeImpl(Opt.Empty, Opt.some, _.isDefined, _.get, ignoreNulls = true)
-  given [A] => OptionLike[OptRef[A]] { type Value = A } =
+  given [A] => OptionLike.Aux[OptRef[A], A] =
     new OptionLikeImpl(OptRef.Empty, OptRef.some, _.isDefined, _.get, ignoreNulls = true)
-  given [A] => OptionLike[OptArg[A]] { type Value = A } =
+  given [A] => OptionLike.Aux[OptArg[A], A] =
     new OptionLikeImpl(OptArg.Empty, OptArg.some, _.isDefined, _.get, ignoreNulls = true)
-  given [A] => OptionLike[NOpt[A]] { type Value = A } =
+  given [A] => OptionLike.Aux[NOpt[A], A] =
     new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get, ignoreNulls = false)
 }
 
