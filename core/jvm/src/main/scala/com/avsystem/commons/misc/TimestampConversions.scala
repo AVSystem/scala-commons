@@ -4,8 +4,15 @@ import java.time.Instant
 
 import com.avsystem.commons.JDate
 
-final class TimestampConversions(private val millis: Long) extends AnyVal {
-  def toTimestamp: Timestamp = Timestamp(millis)
-  def toInstant: Instant = Instant.ofEpochMilli(millis)
-  def toJDate: JDate = new JDate(millis)
+into opaque type TimestampConversions = Long
+
+object TimestampConversions{
+  def apply(millis: Long): TimestampConversions = millis
+
+  extension (millis: TimestampConversions) {
+    def toTimestamp: Timestamp = Timestamp(millis)
+    def toInstant: Instant = Instant.ofEpochMilli(millis)
+    def toJDate: JDate = new JDate(millis)
+  }
+
 }

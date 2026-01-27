@@ -163,7 +163,7 @@ class JsonStringInput(
   def jsonType: JsonType | Null = reader.jsonType
 
   override def readMetadata[T](metadata: InputMetadata[T]): Opt[T] = metadata match {
-    case JsonType => Opt(reader.jsonType)
+    case JsonType => Opt(reader.jsonType.asInstanceOf[T|Null])
     case _ => Opt.Empty
   }
 

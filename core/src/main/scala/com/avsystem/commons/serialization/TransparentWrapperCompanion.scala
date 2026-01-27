@@ -28,7 +28,7 @@ object TransparentWrapping {
  * [[transparent]] annotation where possible.
  */
 abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, T] with (R => T) {
-  implicit def self: TransparentWrapping[R, T] = this
+  given TransparentWrapping[R, T] = this
 
   def apply(r: R): T
   def unapply(t: T): Option[R]
@@ -36,8 +36,7 @@ abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, 
   final def wrap(r: R): T = apply(r)
   final def unwrap(t: T): R = unapply(t).getOrElse(throw new NoSuchElementException(s"unapply for $t failed"))
 
-  implicit def ordering(implicit wrappedOrdering: Ordering[R]): Ordering[T] =
-    Ordering.by(unwrap)
+  given Ordering[R] => Ordering[T] = Ordering.by(unwrap)
 }
 
 abstract class StringWrapperCompanion[T] extends TransparentWrapperCompanion[String, T]

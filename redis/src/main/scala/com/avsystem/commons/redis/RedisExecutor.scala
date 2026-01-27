@@ -8,7 +8,7 @@ import java.io.Closeable
 /** Base trait for Redis clients with ability to execute [[RedisBatch]]es.
   */
 trait RedisExecutor {
-  implicit def executionContext: ExecutionContext
+  given executionContext: ExecutionContext
 
   /** Executes a [[RedisBatch]]. Redis client implementations (e.g. [[RedisNodeClient]]) implement this method by
     * actually sending the batch to Redis server and receving and decoding the response.

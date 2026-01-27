@@ -17,7 +17,7 @@ object RunNowEC extends ExecutionContextExecutor {
   def get: ExecutionContextExecutor = this
 
   object Implicits {
-    implicit val executionContext: ExecutionContext = RunNowEC
+    given executionContext: ExecutionContext = RunNowEC
   }
 
   def execute(runnable: Runnable): Unit =
@@ -31,7 +31,7 @@ object RunInQueueEC extends RunInQueueEC {
   def get: ExecutionContextExecutor = this
 
   object Implicits {
-    implicit val executionContext: ExecutionContext = RunInQueueEC
+    given executionContext: ExecutionContext = RunInQueueEC
   }
 }
 
@@ -69,13 +69,13 @@ class RunInQueueEC extends ExecutionContextExecutor {
 }
 
 trait HasExecutionContext {
-  protected implicit def executionContext: ExecutionContext
+  protected given executionContext: ExecutionContext
 }
 
 trait HasRunNowEC extends HasExecutionContext {
-  protected implicit final def executionContext: ExecutionContext = RunNowEC
+  protected given executionContext: ExecutionContext = RunNowEC
 }
 
 trait HasRunInQueueEC extends HasExecutionContext {
-  protected implicit final def executionContext: ExecutionContext = RunInQueueEC
+  protected given executionContext: ExecutionContext = RunInQueueEC
 }

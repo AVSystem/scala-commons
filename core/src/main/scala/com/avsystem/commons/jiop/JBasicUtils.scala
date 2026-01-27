@@ -12,8 +12,7 @@ trait JBasicUtils {
   def jCallable[T](expr: => T): Callable[T] = Sam[Callable[T]](expr)
   def jComparator[T](cmp: (T, T) => Int): Comparator[T] = Sam[Comparator[T]](cmp)
 
-  implicit def jDateTimestampConversions(date: JDate): TimestampConversions =
-    new TimestampConversions(date.getTime)
+  given Conversion[JDate, TimestampConversions] = date => TimestampConversions(date.getTime)
 
   type JByte = jl.Byte
   type JShort = jl.Short

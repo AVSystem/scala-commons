@@ -14,7 +14,7 @@ import scala.annotation.tailrec
   * indirectly as an embedded value).
   */
 sealed trait MongoFormat[T] {
-  implicit def codec: GenCodec[T]
+  given GenCodec[T] = compiletime.defered
 
   def writeBson(value: T): BsonValue =
     BsonValueOutput.write(value)
@@ -92,35 +92,35 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     wrappedFormat: MongoFormat[R],
   ) extends MongoFormat[T]
 
-  implicit def collectionFormat[C[X] <: Iterable[X], T](
-    implicit collectionCodec: GenCodec[C[T]],
-    elementFormat: MongoFormat[T],
-  ): MongoFormat[C[T]] = CollectionFormat(collectionCodec, elementFormat)
+  given [C[X] <: Iterable[X], T] => 
+    GenCodec[C[T]] =>
+    MongoFormat[T] =>
+    CollectionFormat[C, T] = CollectionFormat(collectionCodec, elementFormat)
 
-  implicit def dictionaryFormat[M[X, Y] <: BMap[X, Y], K, V](
-    implicit mapCodec: GenCodec[M[K, V]],
-    keyCodec: GenKeyCodec[K],
-    valueFormat: MongoFormat[V],
-  ): MongoFormat[M[K, V]] = DictionaryFormat(mapCodec, keyCodec, valueFormat)
+  given [M[X, Y] <: BMap[X, Y], K, V] => 
+    GenCodec[M[K, V]] =>
+    GenKeyCodec[K] =>
+    MongoFormat[V] =>
+    DictionaryFormat[M, K, V] = DictionaryFormat(mapCodec, keyCodec, valueFormat)
 
-  implicit def typedMapFormat[K[_]](
-    implicit keyCodec: GenKeyCodec[K[_]],
-    valueFormats: MongoFormatMapping[K],
-  ): MongoFormat[TypedMap[K]] = TypedMapFormat[K](TypedMap.typedMapCodec, keyCodec, valueFormats)
+  given [K[_]] => 
+    GenKeyCodec[K[_]] =>
+    MongoFormatMapping[K] =>
+    TypedMapFormat[K] = TypedMapFormat[K](TypedMap.typedMapCodec, keyCodec, valueFormats)
 
-  implicit def optionalFormat[O, T](
-    implicit optionLike: OptionLike.Aux[O, T],
-    optionCodec: GenCodec[O],
-    wrappedFormat: MongoFormat[T],
-  ): MongoFormat[O] = OptionalFormat(optionCodec, optionLike, wrappedFormat)
+  given [O, T] => 
+    OptionLike.Aux[O, T] =>
+    GenCodec[O] =>
+    MongoFormat[T] =>
+    OptionalFormat[O, T] = OptionalFormat(optionCodec, optionLike, wrappedFormat)
 
-  implicit def transparentFormat[R, T](
-    implicit codec: GenCodec[T],
-    wrapping: TransparentWrapping[R, T],
-    wrappedFormat: MongoFormat[R],
-  ): MongoFormat[T] = TransparentFormat(codec, wrapping, wrappedFormat)
+  given [R, T] => 
+    GenCodec[T] =>
+    TransparentWrapping[R, T] =>
+    MongoFormat[R] =>
+    TransparentFormat[T, R] = TransparentFormat(codec, wrapping, wrappedFormat)
 
-  implicit class collectionFormatOps[C[X] <: Iterable[X], T](private val format: MongoFormat[C[T]]) extends AnyVal {
+  extension [C[X] <: Iterable[X], T](format: MongoFormat[C[T]]) {
     def assumeCollection: CollectionFormat[C, T] = format match {
       case coll: CollectionFormat[C @unchecked, T @unchecked] => coll
       case _ =>
@@ -131,8 +131,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     }
   }
 
-  implicit class dictionaryFormatOps[M[X, Y] <: BMap[X, Y], K, V](private val format: MongoFormat[M[K, V]])
-    extends AnyVal {
+  extension [M[X, Y] <: BMap[X, Y], K, V](format: MongoFormat[M[K, V]]) {
     def assumeDictionary: DictionaryFormat[M, K, V] = format match {
       case dict: DictionaryFormat[M @unchecked, K @unchecked, V @unchecked] => dict
       case _ =>
@@ -143,7 +142,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     }
   }
 
-  implicit class typedMapFormatOps[K[_]](private val format: MongoFormat[TypedMap[K]]) extends AnyVal {
+  extension [K[_]](format: MongoFormat[TypedMap[K]]) {
     def assumeTypedMap: TypedMapFormat[K] = format match {
       case typedMap: TypedMapFormat[K] => typedMap
       case _ =>
@@ -155,13 +154,13 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
   }
 }
 trait MongoFormatLowPriority { this: MongoFormat.type =>
-  implicit def leafFormat[T: GenCodec]: MongoFormat[T] = Opaque(GenCodec[T])
+  given [T: GenCodec] => MongoFormat[T] = Opaque(GenCodec[T])
 }
 
 sealed trait MongoAdtFormat[T] extends MongoFormat[T] with TypedMetadata[T] {
-  implicit def codec: GenObjectCodec[T]
+  given codec: GenObjectCodec[T] = compiletime.defered
   // this is not named `classTag` in order to avoid naming conflict with `com.avsystem.commons.classTag`
-  implicit def dataClassTag: ClassTag[T]
+  given dataClassTag: ClassTag[T] = compiletime.defered
 
   def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0]
 }

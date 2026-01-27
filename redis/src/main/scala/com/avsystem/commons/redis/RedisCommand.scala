@@ -104,17 +104,17 @@ object CommandEncoder {
     def add[T](ce: CommandEncoder, value: T)(implicit ca: CommandArg[T]): Unit =
       ca.add(ce, value)
 
-    implicit val ByteStringArg: CommandArg[ByteString] = CommandArg((ce, v) => ce.builder += BulkStringMsg(v))
-    implicit val BooleanArg: CommandArg[Boolean] = CommandArg((ce, v) => ce.add(if (v) 1 else 0))
-    implicit val StringArg: CommandArg[String] = CommandArg((ce, v) => ce.add(ByteString(v)))
-    implicit val IntArg: CommandArg[Int] = CommandArg((ce, v) => ce.add(v.toString))
-    implicit val LongArg: CommandArg[Long] = CommandArg((ce, v) => ce.add(v.toString))
-    implicit val DoubleArg: CommandArg[Double] = CommandArg((ce, v) => ce.add(v.toString))
-    implicit val NamedEnumArg: CommandArg[NamedEnum] = CommandArg((ce, v) => ce.add(v.name))
-    implicit def CollArg[T: CommandArg]: CommandArg[IterableOnce[T]] =
+    given CommandArg[ByteString] = CommandArg((ce, v) => ce.builder += BulkStringMsg(v))
+    given CommandArg[Boolean] = CommandArg((ce, v) => ce.add(if (v) 1 else 0))
+    given CommandArg[String] = CommandArg((ce, v) => ce.add(ByteString(v)))
+    given CommandArg[Int] = CommandArg((ce, v) => ce.add(v.toString))
+    given CommandArg[Long] = CommandArg((ce, v) => ce.add(v.toString))
+    given CommandArg[Double] = CommandArg((ce, v) => ce.add(v.toString))
+    given CommandArg[NamedEnum] = CommandArg((ce, v) => ce.add(v.name))
+    given[T: CommandArg] => CommandArg[IterableOnce[T]] =
       CommandArg((ce, v) => v.iterator.foreach(t => ce.add(t)))
 
-    implicit def PairArg[A: CommandArg, B: CommandArg]: CommandArg[(A, B)] =
+    given[A: CommandArg, B: CommandArg] => CommandArg[(A, B)] =
       CommandArg { case (ce, (a, b)) =>
         ce.add(a)
         ce.add(b)

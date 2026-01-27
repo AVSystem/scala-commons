@@ -19,5 +19,5 @@ object BsonEquality extends Equality[Bson] {
         false
     }
 
-  implicit def bsonEquality: BsonEquality.type = this
+  given BsonEquality.type = this
 }

@@ -29,10 +29,10 @@ object TypeString extends TypeStringMacros {
   def of[T: TypeString]: String = TypeString[T].value
   def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
 
-  implicit val keyCodec: GenKeyCodec[TypeString[?]] =
+  given GenKeyCodec[TypeString[?]] =
     GenKeyCodec.create[TypeString[?]](new TypeString(_), _.value)
 
-  implicit val codec: GenCodec[TypeString[?]] =
+  given GenCodec[TypeString[?]] =
     GenCodec.nonNullSimple[TypeString[?]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
 }
 
@@ -50,19 +50,19 @@ object JavaClassName extends JavaClassNameMacros {
   def apply[T](implicit ts: JavaClassName[T]): JavaClassName[T] = ts
   def of[T: JavaClassName]: String = JavaClassName[T].value
 
-  implicit val NothingClassName: JavaClassName[Nothing] = new JavaClassName("scala.runtime.Nothing$")
-  implicit val NothingArrayClassName: JavaClassName[Array[Nothing]] = new JavaClassName("[Lscala.runtime.Nothing$;")
-  implicit val UnitClassName: JavaClassName[Unit] = new JavaClassName("void")
-  implicit val BooleanClassName: JavaClassName[Boolean] = new JavaClassName("boolean")
-  implicit val ByteClassName: JavaClassName[Byte] = new JavaClassName("byte")
-  implicit val ShortClassName: JavaClassName[Short] = new JavaClassName("short")
-  implicit val IntClassName: JavaClassName[Int] = new JavaClassName("int")
-  implicit val LongClassName: JavaClassName[Long] = new JavaClassName("long")
-  implicit val FloatClassName: JavaClassName[Float] = new JavaClassName("float")
-  implicit val DoubleClassName: JavaClassName[Double] = new JavaClassName("double")
-  implicit val CharClassName: JavaClassName[Char] = new JavaClassName("char")
+  given JavaClassName[Nothing] = new JavaClassName("scala.runtime.Nothing$")
+  given JavaClassName[Array[Nothing]] = new JavaClassName("[Lscala.runtime.Nothing$;")
+  given JavaClassName[Unit] = new JavaClassName("void")
+  given JavaClassName[Boolean] = new JavaClassName("boolean")
+  given JavaClassName[Byte] = new JavaClassName("byte")
+  given JavaClassName[Short] = new JavaClassName("short")
+  given JavaClassName[Int] = new JavaClassName("int")
+  given JavaClassName[Long] = new JavaClassName("long")
+  given JavaClassName[Float] = new JavaClassName("float")
+  given JavaClassName[Double] = new JavaClassName("double")
+  given JavaClassName[Char] = new JavaClassName("char")
 
-  implicit def arrayClassName[T: JavaClassName]: JavaClassName[Array[T]] = {
+  given[T: JavaClassName] => JavaClassName[Array[T]] = {
     val elementName = JavaClassName.of[T] match {
       case "void" => "Lscala.runtime.BoxedUnit;"
       case "boolean" => "Z"
@@ -79,9 +79,9 @@ object JavaClassName extends JavaClassNameMacros {
     new JavaClassName("[" + elementName)
   }
 
-  implicit val keyCodec: GenKeyCodec[JavaClassName[?]] =
+  given GenKeyCodec[JavaClassName[?]] =
     GenKeyCodec.create[JavaClassName[?]](new JavaClassName(_), _.value)
 
-  implicit val codec: GenCodec[JavaClassName[?]] =
+  given GenCodec[JavaClassName[?]] =
     GenCodec.nonNullSimple[JavaClassName[?]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
 }

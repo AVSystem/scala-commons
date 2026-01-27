@@ -79,7 +79,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("Future.transformWith") {
-    import com.avsystem.commons.concurrent.RunNowEC.Implicits.*
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.{*, given}
     val ex = new Exception
     assert(Future.successful(42).transformWith(t => Future.successful(t.get - 1)).value.contains(Success(41)))
     assert(Future.successful(42).transformWith(_ => Future.failed(ex)).value.contains(Failure(ex)))

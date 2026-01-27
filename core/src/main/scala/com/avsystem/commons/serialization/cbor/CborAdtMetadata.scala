@@ -16,7 +16,7 @@ import com.avsystem.commons.serialization.*
  * map keys can be of arbitrary type and not just strings</li> </ul>
  */
 abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtInstances[T]]) {
-  implicit lazy val codec: GenObjectCodec[T] = instances(CborOptimizedCodecs, this).cborCodec
+  given GenObjectCodec[T] = instances(CborOptimizedCodecs, this).cborCodec
 }
 
 /**
@@ -26,7 +26,7 @@ abstract class HasCborCodecWithDeps[D, T](
   implicit deps: ValueOf[D],
   instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
 ) {
-  implicit lazy val codec: GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
+  given GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
 }
 
 /**
@@ -262,6 +262,6 @@ abstract class HasPolyCborCodec[C[_]](
 ) {
   private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing].validate())
 
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] =
+  given[T: GenCodec] => GenObjectCodec[C[T]] =
     validatedInstances.metadata[T].adjustCodec(validatedInstances.stdCodec[T])
 }

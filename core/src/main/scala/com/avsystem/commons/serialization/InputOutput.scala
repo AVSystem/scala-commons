@@ -129,14 +129,13 @@ trait OutputAndSimpleOutput extends Any with Output with SimpleOutput {
  * Using `SizePolicy`, a [[SequentialOutput]] ([[ListOutput]] or [[ObjectOutput]]) may hint the codec whether it makes
  * use or requires explicit list or object size to be declared with [[SequentialOutput.declareSize]].
  */
-final class SizePolicy(implicit enumCtx: EnumCtx) extends AbstractValueEnum
-object SizePolicy extends AbstractValueEnumCompanion[SizePolicy] {
+enum SizePolicy {
 
   /**
    * Indicates that the [[SequentialOutput]] implementation does not utilize explicitly declared size in any way. This
    * means that the codec may always omit the `declareSize` invocation.
    */
-  final val Ignored: Value = new SizePolicy
+  case Ignored
 
   /**
    * Indicates that the [[SequentialOutput]] implementation is able to take advantage of explicitly declared size (e.g.
@@ -146,14 +145,14 @@ object SizePolicy extends AbstractValueEnumCompanion[SizePolicy] {
    * it when it could degrade performance, e.g. for a Scala `List` which requires entire list traversal to compute its
    * size.
    */
-  final val Optional: Value = new SizePolicy
+  case Optional
 
   /**
    * Indicates that the [[SequentialOutput]] implementation always requires the codec to declare list or object size
    * explicitly. The codec is then obliged to call [[SequentialOutput.declareSize]] before writing any elements or
    * fields, regardless of the cost of computing that size.
    */
-  final val Required: Value = new SizePolicy
+  case Required
 }
 
 /**

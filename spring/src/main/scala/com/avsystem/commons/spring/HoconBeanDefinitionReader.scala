@@ -20,7 +20,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends Abstra
 
   private implicit class ConfigValueExtensions(value: ConfigValue) {
     def as[T: HoconType]: T =
-      implicitly[HoconType[T]].get(value)
+      summon[HoconType[T]].get(value)
   }
 
   private val autowireMapping = AutowireMapping.withDefault { v =>

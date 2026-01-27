@@ -250,31 +250,28 @@ sealed trait MongoPropertyRef[E, T]
 object MongoPropertyRef {
   final val Separator = "."
 
-  implicit class CollectionRefOps[E, C[X] <: Iterable[X], T](private val ref: MongoPropertyRef[E, C[T]])
-    extends AnyVal {
+  extension [E, C[X] <: Iterable[X], T](ref: MongoPropertyRef[E, C[T]]) {
     def head: MongoPropertyRef[E, T] = apply(0)
 
     def apply(index: Int): MongoPropertyRef[E, T] =
       MongoRef.ArrayIndexRef(ref, index, ref.format.assumeCollection.elementFormat)
   }
 
-  implicit class DictionaryRefOps[E, M[X, Y] <: BMap[X, Y], K, V](private val ref: MongoPropertyRef[E, M[K, V]])
-    extends AnyVal {
+  extension [E, M[X, Y] <: BMap[X, Y], K, V](ref: MongoPropertyRef[E, M[K, V]]) {
     def apply(key: K): MongoPropertyRef[E, V] = {
       val dictFormat = ref.format.assumeDictionary
       MongoRef.FieldRef(ref, dictFormat.keyCodec.write(key), dictFormat.valueFormat, Opt.Empty)
     }
   }
 
-  implicit class TypedMapRefOps[E, K[_]](private val ref: MongoPropertyRef[E, TypedMap[K]]) extends AnyVal {
+  extension [E, K[_]](ref: MongoPropertyRef[E, TypedMap[K]]) {
     def apply[T](key: K[T]): MongoPropertyRef[E, T] = {
       val tmFormat = ref.format.assumeTypedMap
       MongoRef.FieldRef(ref, tmFormat.keyCodec.write(key), tmFormat.valueFormats.valueFormat(key), Opt.Empty)
     }
   }
 
-  implicit def optionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(implicit optionLike: OptionLike.Aux[O, T])
-    : OptionalRefOps[E, O, T] =
+  given [E, O, T] => (optionLike: OptionLike.Aux[O, T]): OptionalRefOps[E, O, T] =
     new OptionalRefOps[E, O, T](ref)
 
   class OptionalRefOps[E, O, T](private val ref: MongoPropertyRef[E, O]) extends AnyVal {
@@ -284,8 +281,7 @@ object MongoPropertyRef {
     }
   }
 
-  implicit def transparentRefOps[E, T, R](ref: MongoPropertyRef[E, T])(implicit wrapping: TransparentWrapping[R, T])
-    : TransparentRefOps[E, T, R] =
+  given [E, T, R] => (wrapping: TransparentWrapping[R, T]): TransparentRefOps[E, T, R] =
     new TransparentRefOps[E, T, R](ref)
 
   class TransparentRefOps[E, T, R](private val ref: MongoPropertyRef[E, T]) extends AnyVal {

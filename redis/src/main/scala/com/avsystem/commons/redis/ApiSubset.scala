@@ -93,10 +93,10 @@ trait ApiSubset { self =>
   type Value = serialization.Value
   type Record = serialization.Record
 
-  protected implicit final def keyCodec: RedisDataCodec[Key] = serialization.keyCodec
-  protected implicit final def fieldCodec: RedisDataCodec[Field] = serialization.fieldCodec
-  protected implicit final def valueCodec: RedisDataCodec[Value] = serialization.valueCodec
-  protected implicit final def recordCodec: RedisRecordCodec[Record] = serialization.recordCodec
+  protected given RedisDataCodec[Key] = serialization.keyCodec
+  protected given RedisDataCodec[Field] = serialization.fieldCodec
+  protected given RedisDataCodec[Value] = serialization.valueCodec
+  protected given RedisRecordCodec[Record] = serialization.recordCodec
 
   /** The type constructor into which a result of each command is wrapped. For example if `Result` is `Future`, then
     * [[commands.StringsApi.incr incr]] returns `Future[Long]`.
@@ -105,19 +105,13 @@ trait ApiSubset { self =>
 
   def execute[A](command: RedisCommand[A]): Result[A]
 
-  protected implicit def iterableTailOps[T](tail: Iterable[T]): IterableTailOps[T] = new IterableTailOps(tail)
-  protected implicit def iteratorTailOps[T](tail: Iterator[T]): IteratorTailOps[T] = new IteratorTailOps(tail)
-  protected implicit def headOps[T](head: T): HeadOps[T] = new HeadOps(head)
-}
-
-object ApiSubset {
-  class HeadOps[A](private val head: A) extends AnyVal {
+  extension [A](head: A) {
     def single: Seq[A] = new SingletonSeq[A](head)
   }
-  class IterableTailOps[A](private val tail: Iterable[A]) extends AnyVal {
+  extension [A](tail: Iterable[A]) {
     def +::(head: A): Iterable[A] = new HeadIterable(head, tail)
   }
-  class IteratorTailOps[A](private val tail: Iterator[A]) extends AnyVal {
+  extension [A](tail: Iterator[A]) {
     def +::(head: A): Iterator[A] = new HeadIterator(head, tail)
   }
 }

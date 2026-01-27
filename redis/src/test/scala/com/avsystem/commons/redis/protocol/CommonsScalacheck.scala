@@ -8,7 +8,7 @@ import org.scalacheck.Shrink
   */
 object CommonsScalacheck {
   @nowarn("msg=deprecated")
-  implicit def shrinkOpt[T: Shrink]: Shrink[Opt[T]] = Shrink {
+  given [T: Shrink] => Shrink[Opt[T]] = Shrink {
     case Opt.Empty => Stream.empty
     case Opt(x) => Stream.cons(Opt.Empty, for (y <- Shrink.shrink(x)) yield Opt(y))
   }

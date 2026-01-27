@@ -43,7 +43,7 @@ abstract class ApplyUnapplyCodec[T](
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean): Unit =
     deps(idx) match {
-      case GenCodec.BooleanCodec => writeField(fieldNames(idx), output, value)
+      case GenCodec.given_GenCodec_Boolean => writeField(fieldNames(idx), output, value)
       case codec: GenCodec[Boolean @unchecked] => writeField(fieldNames(idx), output, value, codec)
     }
 
@@ -54,7 +54,7 @@ abstract class ApplyUnapplyCodec[T](
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Int): Unit =
     deps(idx) match {
-      case GenCodec.IntCodec => writeField(fieldNames(idx), output, value)
+      case GenCodec.given_GenCodec_Int => writeField(fieldNames(idx), output, value)
       case codec: GenCodec[Int @unchecked] => writeField(fieldNames(idx), output, value, codec)
     }
 
@@ -65,7 +65,7 @@ abstract class ApplyUnapplyCodec[T](
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Long): Unit =
     deps(idx) match {
-      case GenCodec.LongCodec => writeField(fieldNames(idx), output, value)
+      case GenCodec.given_GenCodec_Long => writeField(fieldNames(idx), output, value)
       case codec: GenCodec[Long @unchecked] => writeField(fieldNames(idx), output, value, codec)
     }
 
@@ -76,7 +76,7 @@ abstract class ApplyUnapplyCodec[T](
 
   protected final def writeField(output: ObjectOutput, idx: Int, value: Double): Unit =
     deps(idx) match {
-      case GenCodec.DoubleCodec => writeField(fieldNames(idx), output, value)
+      case GenCodec.given_GenCodec_Double => writeField(fieldNames(idx), output, value)
       case codec: GenCodec[Double @unchecked] => writeField(fieldNames(idx), output, value, codec)
     }
 

@@ -52,9 +52,7 @@ object Timestamp {
 
   def now(): Timestamp = Timestamp(System.currentTimeMillis())
 
-  implicit def conversions(tstamp: Timestamp): TimestampConversions =
-    new TimestampConversions(tstamp.millis)
+  given Conversion[Timestamp, TimestampConversions] = timestamp => TimestampConversions(timestamp.millis)
 
-  implicit val ordering: Ordering[Timestamp] =
-    Ordering.by(_.millis)
+  given Ordering[Timestamp] = Ordering.by(_.millis)
 }

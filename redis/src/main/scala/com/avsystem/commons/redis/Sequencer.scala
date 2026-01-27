@@ -41,13 +41,14 @@ object Sequencer extends TupleSequencers {
     def apply(ops: RedisBatch[Any]): RedisBatch[Any] = ops
   }
 
-  implicit def trivialSequencer[A]: Sequencer[RedisBatch[A], A] =
+  given[A] => Sequencer[RedisBatch[A], A] =
     reusableTrivialSequencer.asInstanceOf[Sequencer[RedisBatch[A], A]]
 
-  implicit def collectionSequencer[ElOps, ElRes, M[X] <: IterableOnce[X], That](
-    implicit elSequencer: Sequencer[ElOps, ElRes],
+  given[ElOps, ElRes, M[X] <: IterableOnce[X], That] => (
+    elSequencer: Sequencer[ElOps, ElRes],
+  ) => (
     bf: BuildFrom[M[ElOps], ElRes, That],
-  ): Sequencer[M[ElOps], That] =
+  ) => Sequencer[M[ElOps], That] =
 
     (ops: M[ElOps]) => {
       val batches: Iterable[RedisBatch[ElRes]] =

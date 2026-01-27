@@ -17,7 +17,7 @@ trait SomeBase {
 
 trait Box[T]
 object Box {
-  implicit def codec[T: GenCodec]: GenCodec[Box[T]] = ???
+    given [T: GenCodec] => GenCodec[Box[T]] = ???
 }
 
 class annotTypeString[T](@infer val ts: TypeString[T] = RpcMetadata.auto) extends StaticAnnotation
@@ -41,14 +41,14 @@ trait TestApi extends SomeBase {
 //  def generyk[T](@annotTypeString[Box[T]] lel: Box[T])(implicit @encodingDependency tag: Tag[T]): Future[List[T]]
 }
 object TestApi {
-  implicit def codecFromTag[T: Tag]: GenCodec[T] = Tag[T].codec
-  implicit def asRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
-  implicit def futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
+  given [T: Tag] => GenCodec[T] = Tag[T].codec
+  given [T: GenCodec] => AsRawReal[String, T] = ???
+  given [T: GenCodec] => AsRawReal[Future[String], Future[T]] = ???
 
-  implicit val asRaw: NewRawRpc.AsRawRpc[TestApi] = NewRawRpc.materializeAsRaw[TestApi]
-  implicit val asReal: NewRawRpc.AsRealRpc[TestApi] = NewRawRpc.materializeAsReal[TestApi]
-  implicit val metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materialize[TestApi]
-  implicit val partialMetadata: PartialMetadata[TestApi] = PartialMetadata.materialize[TestApi]
+  given asRaw: NewRawRpc.AsRawRpc[TestApi] = NewRawRpc.materializeAsRaw[TestApi]
+  given asReal: NewRawRpc.AsRealRpc[TestApi] = NewRawRpc.materializeAsReal[TestApi]
+  given metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materialize[TestApi]
+  given partialMetadata: PartialMetadata[TestApi] = PartialMetadata.materialize[TestApi]
 }
 
 class NewRpcMetadataTest extends AnyFunSuite {

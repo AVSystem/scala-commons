@@ -18,24 +18,24 @@ trait FlatMapper[A, B, -L, -R] {
 }
 
 object FlatMapper {
-  implicit def OpOp[A, B]: FlatMapper[A, B, RedisOp[A], RedisOp[B]] =
+  given[A, B] => FlatMapper[A, B, RedisOp[A], RedisOp[B]] =
     new FlatMapper[A, B, RedisOp[A], RedisOp[B]] {
       def flatMap(left: RedisOp[A])(rightFun: A => RedisOp[B]): RedisOp[B] = left match {
         case LeafOp(batch) => FlatMappedOp(batch, rightFun)
         case fmop: FlatMappedOp[pA, A] => FlatMappedOp(fmop.batch, (a: pA) => flatMap(fmop.fun(a))(rightFun))
       }
     }
-  implicit def OpBatch[A, B]: FlatMapper[A, B, RedisOp[A], RedisBatch[B]] =
+  given[A, B] => FlatMapper[A, B, RedisOp[A], RedisBatch[B]] =
     new FlatMapper[A, B, RedisOp[A], RedisBatch[B]] {
       def flatMap(left: RedisOp[A])(rightFun: A => RedisBatch[B]) =
         OpOp.flatMap(left)(a => rightFun(a).operation)
     }
-  implicit def BatchOp[A, B]: FlatMapper[A, B, RedisBatch[A], RedisOp[B]] =
+  given[A, B] => FlatMapper[A, B, RedisBatch[A], RedisOp[B]] =
     new FlatMapper[A, B, RedisBatch[A], RedisOp[B]] {
       def flatMap(left: RedisBatch[A])(rightFun: A => RedisOp[B]) =
         OpOp.flatMap(left.operation)(rightFun)
     }
-  implicit def BatchBatch[A, B]: FlatMapper[A, B, RedisBatch[A], RedisBatch[B]] =
+  given[A, B] => FlatMapper[A, B, RedisBatch[A], RedisBatch[B]] =
     new FlatMapper[A, B, RedisBatch[A], RedisBatch[B]] {
       def flatMap(left: RedisBatch[A])(rightFun: A => RedisBatch[B]) =
         OpOp.flatMap(left.operation)(a => rightFun(a).operation)
@@ -43,10 +43,7 @@ object FlatMapper {
 }
 
 trait HasFlatMap[L[_]] {
-  implicit def flatMapOps[A](left: L[A]): FlatMapOps[L[A], A] = new FlatMapOps(left)
-}
-object HasFlatMap {
-  class FlatMapOps[L, A](private val left: L) extends AnyVal {
+  extension[L, A](left: L) {
     def flatMap[R, B](rightFun: A => R)(implicit fm: FlatMapper[A, B, L, R]): RedisOp[B] =
       fm.flatMap(left)(rightFun)
   }

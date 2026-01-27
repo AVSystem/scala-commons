@@ -4,7 +4,7 @@ package concurrent
 import scala.concurrent.duration.*
 
 trait DurationPostfixConverters {
-  implicit def durationInt(int: Int): DurationInt = new DurationInt(int)
-  implicit def durationLong(long: Long): DurationLong = new DurationLong(long)
-  implicit def durationDouble(double: Double): DurationDouble = new DurationDouble(double)
+  given (int: Int) => DurationInt = new DurationInt(int)
+  given (long: Long) => DurationLong = new DurationLong(long)
+  given (double: Double) => DurationDouble = new DurationDouble(double)
 }

@@ -22,7 +22,7 @@ object NOpt {
   def some[A](value: A): NOpt[A] =
     new NOpt(if (value == null) NullMarker else value)
 
-  implicit def opt2Iterable[A](xo: NOpt[A]): IIterable[A] = xo.toList
+  given [A] => Conversion[NOpt[A], IIterable[A]] = _.toList
 
   final val Empty: NOpt[Nothing] = new NOpt(EmptyMarker)
 

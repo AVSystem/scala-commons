@@ -14,19 +14,19 @@ import scala.collection.{mutable, Factory}
 )
 case class RedisRecordCodec[T](read: IndexedSeq[BulkStringMsg] => T, write: T => IndexedSeq[BulkStringMsg])
 object RedisRecordCodec extends LowPriorityRedisRecordCodecs {
-  implicit def dummy[T]: RedisRecordCodec[T] = ???
+  given dummy[T]: RedisRecordCodec[T] = ???
 
 
   def apply[T](implicit codec: RedisRecordCodec[T]): RedisRecordCodec[T] = codec
 
-  implicit def forDataMap[M[X, Y] <: BMap[X, Y], F: RedisDataCodec, V: RedisDataCodec](
-    implicit fac: Factory[(F, V), M[F, V]]
-  ): RedisRecordCodec[M[F, V] with BMap[F, V]] =
+  given [M[X, Y] <: BMap[X, Y], F: RedisDataCodec, V: RedisDataCodec] => (
+     fac: Factory[(F, V), M[F, V]]
+  ) =>  RedisRecordCodec[M[F, V] with BMap[F, V]] =
     RedisRecordCodec(elems => record[F, V, M[F, V]](elems), map => bulks(map.iterator, map.size))
 
-  implicit def forDataSeq[M[X] <: BSeq[X], F: RedisDataCodec, V: RedisDataCodec](
-    implicit fac: Factory[(F, V), M[(F, V)]]
-  ): RedisRecordCodec[M[(F, V)] with BSeq[(F, V)]] =
+  given [M[X] <: BSeq[X], F: RedisDataCodec, V: RedisDataCodec] => (
+    fac: Factory[(F, V), M[(F, V)]]
+  ) => RedisRecordCodec[M[(F, V)] with BSeq[(F, V)]] =
     RedisRecordCodec(elems => record[F, V, M[(F, V)]](elems), seq => bulks(seq.iterator, seq.size))
 
   private def record[F: RedisDataCodec, V: RedisDataCodec, To](

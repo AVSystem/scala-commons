@@ -24,10 +24,10 @@ trait MongoEntityInstances[E <: BaseMongoEntity] extends MongoAdtInstances[E] {
 sealed trait IsMongoAdtOrSubtype[T]
 
 sealed abstract class BaseMongoCompanion[T] extends DataTypeDsl[T] {
-  implicit def codec: GenObjectCodec[T]
-  implicit def format: MongoAdtFormat[T]
+  given GenObjectCodec[T] = compiletime.defered
+  given MongoAdtFormat[T] = compiletime.defered
 
-  implicit def isMongoAdtOrSubtype[C <: T]: IsMongoAdtOrSubtype[C] = null
+  given [C <: T]=> IsMongoAdtOrSubtype[C] = null
 
   implicit class macroDslExtensions(value: T) {
     @explicitGenerics

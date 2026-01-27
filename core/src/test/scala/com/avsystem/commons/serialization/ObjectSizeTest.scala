@@ -40,19 +40,19 @@ object SingleFieldRecordWithTD extends HasApplyUnapplyCodec[SingleFieldRecordWit
 
 class ObjectSizeTest extends AnyFunSuite {
   test("computing object size") {
-    assert(RecordWithDefaults.codec.size(RecordWithDefaults()) == 2)
-    assert(RecordWithDefaults.codec.size(RecordWithDefaults("fuu")) == 3)
-    assert(RecordWithOpts.codec.size(RecordWithOpts("abc".opt)) == 2)
-    assert(RecordWithOpts.codec.size(RecordWithOpts("abc".opt, true.opt)) == 3)
-    assert(RecordWithOpts.codec.size(RecordWithOpts()) == 1)
-    assert(SingleFieldRecordWithOpts.codec.size(SingleFieldRecordWithOpts()) == 0)
-    assert(SingleFieldRecordWithOpts.codec.size(SingleFieldRecordWithOpts("abc".opt)) == 1)
-    assert(SingleFieldRecordWithTD.codec.size(SingleFieldRecordWithTD()) == 0)
-    assert(SingleFieldRecordWithTD.codec.size(SingleFieldRecordWithTD("haha")) == 1)
-    assert(CustomRecordWithDefaults.codec.size(CustomRecordWithDefaults()) == 1)
-    assert(CustomRecordWithDefaults.codec.size(CustomRecordWithDefaults("fuu")) == 2)
-    assert(CustomWrapper.codec.size(CustomWrapper()) == 0)
-    assert(CustomWrapper.codec.size(CustomWrapper("fuu")) == 1)
+    assert(RecordWithDefaults.given_ApplyUnapplyCodec_T.size(RecordWithDefaults()) == 2)
+    assert(RecordWithDefaults.given_ApplyUnapplyCodec_T.size(RecordWithDefaults("fuu")) == 3)
+    assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts("abc".opt)) == 2)
+    assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts("abc".opt, true.opt)) == 3)
+    assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts()) == 1)
+    assert(SingleFieldRecordWithOpts.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithOpts()) == 0)
+    assert(SingleFieldRecordWithOpts.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithOpts("abc".opt)) == 1)
+    assert(SingleFieldRecordWithTD.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithTD()) == 0)
+    assert(SingleFieldRecordWithTD.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithTD("haha")) == 1)
+    assert(CustomRecordWithDefaults.given_ApplyUnapplyCodec_T.size(CustomRecordWithDefaults()) == 1)
+    assert(CustomRecordWithDefaults.given_ApplyUnapplyCodec_T.size(CustomRecordWithDefaults("fuu")) == 2)
+    assert(CustomWrapper.given_ApplyUnapplyCodec_T.size(CustomWrapper()) == 0)
+    assert(CustomWrapper.given_ApplyUnapplyCodec_T.size(CustomWrapper("fuu")) == 1)
   }
 
   test("computing object size with custom output") {
@@ -64,20 +64,20 @@ class ObjectSizeTest extends AnyFunSuite {
         }
       override def finish(): Unit = ()
     }
-    assert(RecordWithDefaults.codec.size(RecordWithDefaults(), defaultIgnoringOutput.opt) == 3)
-    assert(RecordWithDefaults.codec.size(RecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 3)
-    assert(RecordWithOpts.codec.size(RecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 3)
-    assert(RecordWithOpts.codec.size(RecordWithOpts("abc".opt, true.opt), defaultIgnoringOutput.opt) == 3)
-    assert(RecordWithOpts.codec.size(RecordWithOpts(), defaultIgnoringOutput.opt) == 2)
+    assert(RecordWithDefaults.given_ApplyUnapplyCodec_T.size(RecordWithDefaults(), defaultIgnoringOutput.opt) == 3)
+    assert(RecordWithDefaults.given_ApplyUnapplyCodec_T.size(RecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 3)
+    assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 3)
+    assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts("abc".opt, true.opt), defaultIgnoringOutput.opt) == 3)
+    assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts(), defaultIgnoringOutput.opt) == 2)
     assert(
-      SingleFieldRecordWithOpts.codec.size(SingleFieldRecordWithOpts(), defaultIgnoringOutput.opt) == 0,
+      SingleFieldRecordWithOpts.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithOpts(), defaultIgnoringOutput.opt) == 0,
     ) // @optionalParam field should NOT be counted
-    assert(SingleFieldRecordWithOpts.codec.size(SingleFieldRecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 1)
+    assert(SingleFieldRecordWithOpts.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 1)
     assert(
-      SingleFieldRecordWithTD.codec.size(SingleFieldRecordWithTD(), defaultIgnoringOutput.opt) == 1,
+      SingleFieldRecordWithTD.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithTD(), defaultIgnoringOutput.opt) == 1,
     ) // @transientDefault field should be counted
-    assert(SingleFieldRecordWithTD.codec.size(SingleFieldRecordWithTD("haha"), defaultIgnoringOutput.opt) == 1)
-    assert(CustomRecordWithDefaults.codec.size(CustomRecordWithDefaults(), defaultIgnoringOutput.opt) == 2)
-    assert(CustomRecordWithDefaults.codec.size(CustomRecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 2)
+    assert(SingleFieldRecordWithTD.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithTD("haha"), defaultIgnoringOutput.opt) == 1)
+    assert(CustomRecordWithDefaults.given_ApplyUnapplyCodec_T.size(CustomRecordWithDefaults(), defaultIgnoringOutput.opt) == 2)
+    assert(CustomRecordWithDefaults.given_ApplyUnapplyCodec_T.size(CustomRecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 2)
   }
 }

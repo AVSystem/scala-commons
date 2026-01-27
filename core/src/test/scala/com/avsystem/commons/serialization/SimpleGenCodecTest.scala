@@ -45,7 +45,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   test("NoState") {
     type NoState = Nothing { type Dummy = Nothing }
-    assert(implicitly[GenCodec[NoState]] == GenCodec.NothingCodec)
+    assert(summon[GenCodec[NoState]] == GenCodec.given_GenCodec_Nothing)
   }
 
   test("collections and wrappers") {

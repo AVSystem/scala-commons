@@ -23,16 +23,16 @@ abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](
   implicits: Implicits
 )(implicit instances: MacroInstances[Implicits, MongoPolyAdtInstances[D]]
 ) {
-  implicit def codec[T: GenCodec]: GenObjectCodec[D[T]] = instances(implicits, this).codec[T]
+  given [T: GenCodec] => GenObjectCodec[D[T]] = instances(implicits, this).codec[T]
 
-  implicit def format[T: MongoFormat]: MongoAdtFormat[D[T]] = {
-    implicit def tCodec: GenCodec[T] = MongoFormat[T].codec
+  given [T: MongoFormat] => MongoAdtFormat[D[T]] = {
+    given GenCodec[T] = MongoFormat[T].codec
     instances(implicits, this).format[T]
   }
 
-  implicit def isMongoAdtOrSubtype[C <: D[_]]: IsMongoAdtOrSubtype[C] = null
+  given [C <: D[_]] => IsMongoAdtOrSubtype[C] = null
 
-  implicit class macroDslExtensions[T](value: D[T]) {
+  extension [T](value: D[T]) {
     @explicitGenerics
     @compileTimeOnly("the .as[Subtype] construct can only be used inside lambda passed to .ref(...) macro")
     def as[C <: D[T]]: C = sys.error("stub")

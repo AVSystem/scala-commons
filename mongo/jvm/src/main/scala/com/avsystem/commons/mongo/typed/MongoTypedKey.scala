@@ -15,7 +15,7 @@ trait MongoTypedKey[T] extends TypedKey[T] {
   override def valueCodec: GenCodec[T] = valueFormat.codec
 }
 object MongoTypedKey {
-  implicit def mongoFormatMapping[K[X] <: MongoTypedKey[X]]: MongoFormatMapping[K] =
+  given [K[X] <: MongoTypedKey[X]] => MongoFormatMapping[K] =
     new MongoFormatMapping[K] {
       override def valueFormat[T](key: K[T]): MongoFormat[T] = key.valueFormat
     }

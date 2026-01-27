@@ -14,7 +14,7 @@ object Opt {
     if (value != null) new Opt[A](value)
     else throw new NullPointerException
 
-  implicit def opt2Iterable[A](xo: Opt[A]): IIterable[A] = xo.toList
+  given[A] => Conversion[Opt[A], IIterable[A]] = _.toList
 
   final val Empty: Opt[Nothing] = new Opt(EmptyMarker)
 
@@ -29,13 +29,13 @@ object Opt {
     def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }
 
-  final class LazyOptOps[A](private val opt: () => Opt[A]) extends AnyVal {
+  extension [A](opt: => Opt[A]) {
 
     /**
      * When a given condition is true, evaluates the `opt` argument and returns it. When the condition is false, `opt`
      * is not evaluated and [[Opt.Empty]] is returned.
      */
-    def when(cond: Boolean): Opt[A] = if (cond) opt() else Opt.Empty
+    def when(cond: Boolean): Opt[A] = if (cond) opt else Opt.Empty
 
     /**
      * Unless a given condition is true, this will evaluate the `opt` argument and return it. Otherwise, `opt` is not
@@ -43,8 +43,6 @@ object Opt {
      */
     @inline def unless(cond: Boolean): Opt[A] = when(!cond)
   }
-
-  implicit def lazyOptOps[A](opt: => Opt[A]): LazyOptOps[A] = new LazyOptOps(() => opt)
 }
 
 /**

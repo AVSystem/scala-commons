@@ -97,8 +97,9 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with Valu
   private var finished: Boolean = false
   private var awaitingRegister: Boolean = false
 
-  implicit final val ordering: Ordering[T] = Ordering.by(_.ordinal)
-  implicit final def ordered(value: T): Ordered[T] = Ordered.orderingToOrdered(value)
+  given Ordering[T] = Ordering.by(_.ordinal)
+  given[T:Ordering] => Conversion[T, Ordered[T]] = Ordered.orderingToOrdered(_)
+
   private class Ctx(val valName: String, val ordinal: Int) extends EnumCtx {
     if (awaitingRegister) {
       throw new IllegalStateException(s"Cannot create new EnumCtx until the previous one registered a value")
@@ -122,8 +123,7 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with Valu
     }
   }
 
-  protected implicit def enumCtx(implicit valName: ValName): EnumCtx =
-    new Ctx(valName.valName, currentOrdinal)
+  given ( valName: ValName) => EnumCtx =    new Ctx(valName.valName, currentOrdinal)
 }
 
 /**

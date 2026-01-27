@@ -5,7 +5,7 @@ import com.mongodb.client.model.Updates
 import org.bson.conversions.Bson
 
 object Updating {
-  implicit def bsonUpdating(bson: Bson): BsonUpdating = new BsonUpdating(bson)
+  given Conversion[Bson, BsonUpdating] = new BsonUpdating(_)
 
   def combine(updates: Bson*): Bson = Updates.combine(updates.to(JList))
 }

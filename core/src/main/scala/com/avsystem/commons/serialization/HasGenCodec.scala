@@ -12,21 +12,21 @@ import com.avsystem.commons.misc.ValueOf
  * etc.
  */
 abstract class HasGenCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenCodec[T]]) {
-  implicit lazy val codec: GenCodec[T] = macroCodec((), this).apply()
+  given GenCodec[T] = macroCodec((), this).apply()
 }
 
 /**
  * Like [[HasGenCodec]] but materializes an [[ApplyUnapplyCodec]] instead of just [[GenCodec]].
  */
 abstract class HasApplyUnapplyCodec[T](implicit macroCodec: MacroInstances[Unit, () => ApplyUnapplyCodec[T]]) {
-  implicit lazy val codec: ApplyUnapplyCodec[T] = macroCodec((), this).apply()
+  given ApplyUnapplyCodec[T] = macroCodec((), this).apply()
 }
 
 /**
  * Like [[HasGenCodec]] but materializes a [[GenObjectCodec]] instead of just [[GenCodec]].
  */
 abstract class HasGenObjectCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenObjectCodec[T]]) {
-  implicit lazy val codec: GenObjectCodec[T] = macroCodec((), this).apply()
+  given GenObjectCodec[T] = macroCodec((), this).apply()
 }
 
 /**
@@ -34,7 +34,7 @@ abstract class HasGenObjectCodec[T](implicit macroCodec: MacroInstances[Unit, ()
  * from an object specified with type parameter `D`. It must be a singleton object type, i.e. `SomeObject.type`.
  */
 abstract class HasGenCodecWithDeps[D, T](implicit deps: ValueOf[D], macroCodec: MacroInstances[D, () => GenCodec[T]]) {
-  implicit lazy val codec: GenCodec[T] = macroCodec(deps.value, this).apply()
+  given GenCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 /**
@@ -46,7 +46,7 @@ abstract class HasApplyUnapplyCodecWithDeps[D, T](
   implicit deps: ValueOf[D],
   macroCodec: MacroInstances[D, () => ApplyUnapplyCodec[T]],
 ) {
-  implicit lazy val codec: ApplyUnapplyCodec[T] = macroCodec(deps.value, this).apply()
+  given ApplyUnapplyCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 /**
@@ -58,7 +58,7 @@ abstract class HasGenObjectCodecWithDeps[D, T](
   implicit deps: ValueOf[D],
   macroCodec: MacroInstances[D, () => GenObjectCodec[T]],
 ) {
-  implicit lazy val codec: GenObjectCodec[T] = macroCodec(deps.value, this).apply()
+  given GenObjectCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 trait PolyCodec[C[_]] {
@@ -69,7 +69,7 @@ trait PolyCodec[C[_]] {
  * Like [[HasGenCodec]] but for parameterized (generic) data types.
  */
 abstract class HasPolyGenCodec[C[_]](implicit macroCodec: MacroInstances[Unit, PolyCodec[C]]) {
-  implicit def codec[T: GenCodec]: GenCodec[C[T]] = macroCodec((), this).codec
+  given [T: GenCodec]: GenCodec[C[T]] = macroCodec((), this).codec
 }
 
 /**
@@ -81,7 +81,7 @@ abstract class HasPolyGenCodecWithDeps[D, C[_]](
   implicit deps: ValueOf[D],
   macroCodec: MacroInstances[D, PolyCodec[C]],
 ) {
-  implicit def codec[T: GenCodec]: GenCodec[C[T]] = macroCodec(deps.value, this).codec
+  given [T: GenCodec]: GenCodec[C[T]] = macroCodec(deps.value, this).codec
 }
 
 trait PolyObjectCodec[C[_]] {
@@ -92,7 +92,7 @@ trait PolyObjectCodec[C[_]] {
  * Like [[HasGenObjectCodec]] but for parameterized (generic) data types.
  */
 abstract class HasPolyGenObjectCodec[C[_]](implicit macroCodec: MacroInstances[Unit, PolyObjectCodec[C]]) {
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec((), this).codec
+  given [T: GenCodec]: GenObjectCodec[C[T]] = macroCodec((), this).codec
 }
 
 /**
@@ -104,7 +104,7 @@ abstract class HasPolyGenObjectCodecWithDeps[D, C[_]](
   implicit deps: ValueOf[D],
   macroCodec: MacroInstances[D, PolyObjectCodec[C]],
 ) {
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec(deps.value, this).codec
+  given [T: GenCodec] => GenObjectCodec[C[T]] = macroCodec(deps.value, this).codec
 }
 
 trait GadtCodec[C[_]] {
@@ -116,8 +116,8 @@ trait GadtCodec[C[_]] {
  * provides a [[GenCodec]] for wildcard, i.e. `C[_]`.
  */
 abstract class HasGadtCodec[C[_]](implicit macroCodec: MacroInstances[Unit, GadtCodec[C]]) {
-  implicit lazy val wildcardCodec: GenCodec[C[Any]] = macroCodec((), this).codec[Any]
-  implicit def codec[T]: GenCodec[C[T]] = wildcardCodec.asInstanceOf[GenCodec[C[T]]]
+  given wildcardCodec:GenCodec[C[Any]] = macroCodec((), this).codec[Any]
+  given [T] => GenCodec[C[T]] = wildcardCodec.asInstanceOf[GenCodec[C[T]]]
 }
 
 trait RecursiveCodec[T] {
@@ -129,7 +129,7 @@ trait RecursiveCodec[T] {
  * Like [[HasGenCodec]] but uses [[GenCodec.materializeRecursively]] for materialization.
  */
 abstract class HasRecursiveGenCodec[T](implicit instances: MacroInstances[Unit, RecursiveCodec[T]]) {
-  implicit lazy val codec: GenCodec[T] = instances((), this).codec
+  given GenCodec[T] = instances((), this).codec
 }
 
 trait CodecWithKeyCodec[T] {
@@ -143,8 +143,8 @@ trait CodecWithKeyCodec[T] {
  * that wraps exactly one field for which [[GenKeyCodec]] exists.
  */
 abstract class HasGenAndKeyCodec[T](implicit instances: MacroInstances[Unit, CodecWithKeyCodec[T]]) {
-  implicit lazy val codec: GenCodec[T] = instances((), this).codec
-  implicit lazy val keyCodec: GenKeyCodec[T] = instances((), this).keyCodec
+  given GenCodec[T] = instances((), this).codec
+  given GenKeyCodec[T] = instances((), this).keyCodec
 }
 
 trait AUCodec[AU, T] {
@@ -162,6 +162,5 @@ abstract class HasGenCodecFromAU[AU, T](
   implicit applyUnapplyProvider: ValueOf[AU],
   instances: MacroInstances[Unit, AUCodec[AU, T]],
 ) {
-  implicit final lazy val codec: GenCodec[T] =
-    instances((), this).codec(applyUnapplyProvider.value)
+  given GenCodec[T] = instances((), this).codec(applyUnapplyProvider.value)
 }

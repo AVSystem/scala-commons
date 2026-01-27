@@ -16,7 +16,7 @@ abstract class BlockingUtils {
   /**
    * Default scheduler used to run `Task`s and `Observable`s. This scheduler is not meant for blocking code.
    */
-  implicit def scheduler: Scheduler
+  given scheduler: Scheduler
 
   /**
    * Scheduler used for running blocking code.
@@ -75,6 +75,6 @@ abstract class BlockingUtils {
 }
 
 object DefaultBlocking extends BlockingUtils {
-  implicit def scheduler: Scheduler = Scheduler.global
+  given scheduler: Scheduler = Scheduler.global
   lazy val ioScheduler: Scheduler = Scheduler.io()
 }

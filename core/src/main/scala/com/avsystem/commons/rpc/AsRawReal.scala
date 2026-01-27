@@ -23,12 +23,12 @@ object AsRaw extends FallbackAsRaw with AsRawMacros {
     forWrapped: AsRaw[Raw, Wrapped],
   ): AsRaw[Raw, Real] = real => forWrapped.asRaw(tw.unwrap(real))
 
-  implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
-  implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
+  given [A] => AsRaw[A, A] = AsRawReal.identity[A]
+  given [Raw, Real] => (asRaw: AsRaw[Raw, Real]) =>  AsRaw[Try[Raw], Try[Real]] =
     _.map(asRaw.asRaw)
 
   @implicitNotFound("#{forPlain}")
-  implicit def notFoundForTry[Raw, Real](
+  implicit def  notFoundForTry[Raw, Real](
     implicit forPlain: ImplicitNotFound[AsRaw[Raw, Real]],
   ): ImplicitNotFound[AsRaw[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }

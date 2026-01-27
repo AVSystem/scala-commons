@@ -5,7 +5,7 @@ import com.mongodb.client.model.Filters
 import org.bson.conversions.Bson
 
 object Filtering {
-  implicit def bsonFiltering(bson: Bson): BsonFiltering = new BsonFiltering(bson)
+  given Conversion[Bson, BsonFiltering] = new BsonFiltering(_)
 
   def and(filters: Bson*): Bson = Filters.and(filters.asJava)
   def or(filters: Bson*): Bson = Filters.or(filters.asJava)

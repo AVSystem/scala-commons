@@ -6,6 +6,7 @@ import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
 
 import scala.annotation.meta.getter
+import scala.annotation.targetName
 
 object CodecTestData {
   def col[T <: JCollection[Int]](col: T): T = {
@@ -129,8 +130,8 @@ object CodecTestData {
   case class TransparentWrapperWithDependency(str: String)
   object TransparentWrapperWithDependency {
     // order matters
-    implicit val codec: GenCodec[TransparentWrapperWithDependency] = GenCodec.materialize
-    implicit val stringCodec: GenCodec[String] = GenCodec.StringCodec
+    given GenCodec[TransparentWrapperWithDependency] = GenCodec.materialize
+    given GenCodec[String] = GenCodec.given_GenCodec_String
   }
 
 //  @transparent case class StringId(id: String)
@@ -233,9 +234,12 @@ object CodecTestData {
   case class StringExpr(str: String) extends Expr[String](str)
   case object NullExpr extends Expr[Null](null)
   object BaseExpr {
-    implicit val baseCodec: GenCodec[BaseExpr] = GenCodec.materialize
-    implicit val stringCodec: GenCodec[Expr[String]] = GenCodec.materialize
-    implicit def baseGenericCodec[T]: GenCodec[BaseExpr { type Value = T }] = GenCodec.materialize
+    //todo: may be removed?
+    given GenCodec[BaseExpr] = GenCodec.materialize
+    given GenCodec[Expr[String]] = GenCodec.materialize
+    
+    @targetName("codec_with_value")
+    given [T] => GenCodec[BaseExpr { type Value = T }] = GenCodec.materialize
   }
   object Expr extends HasGadtCodec[Expr]
 
@@ -252,7 +256,7 @@ object CodecTestData {
   case class LazyRecExpr[+T](expr: RecExpr[T]) extends RecExpr[T]
   object RecExpr {
     private def mkCodec[T <: RecBound[T]: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
-    implicit def codec[T: GenCodec]: GenCodec[RecExpr[T]] =
+    given [T: GenCodec] => GenCodec[RecExpr[T]] =
       mkCodec[Nothing](using GenCodec[T].asInstanceOf[GenCodec[Nothing]]).asInstanceOf[GenCodec[RecExpr[T]]]
   }
 
@@ -275,7 +279,7 @@ object CodecTestData {
     case object Second extends Enumz
     case object Third extends Enumz
 
-    implicit val codec: GenCodec[Enumz] = GenCodec.materialize[Enumz]
+    given GenCodec[Enumz] = GenCodec.materialize[Enumz]
   }
 
   sealed trait KeyEnumz
@@ -285,7 +289,7 @@ object CodecTestData {
     case object Second extends KeyEnumz
     case object Third extends KeyEnumz
 
-    implicit val codec: GenCodec[KeyEnumz] = GenCodec.forSealedEnum[KeyEnumz]
+    given GenCodec[KeyEnumz] = GenCodec.forSealedEnum[KeyEnumz]
   }
 
   sealed abstract class SealedKey[T](implicit val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
@@ -346,7 +350,7 @@ object CodecTestData {
     final case class First[Type](foo: Type) extends SealedRefined {
       type X = Type
     }
-    implicit def codec[T: GenCodec]: GenCodec[SealedRefined { type X = T }] = GenCodec.materialize
+    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.materialize
   }
 
   case class StepOne(stepTwo: StepTwo)

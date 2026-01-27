@@ -463,7 +463,7 @@ case object SelfPattern extends SortPattern[Nothing, Nothing]
 case class KeyPattern[+K](pattern: K) extends SortPattern[K, Nothing]
 case class FieldPattern[+K, +F](keyPattern: K, fieldPattern: F) extends SortPattern[K, F]
 object SortPattern {
-  implicit def SortPatternArg[K: RedisDataCodec, F: RedisDataCodec]: CommandArg[SortPattern[K, F]] =
+  given [K: RedisDataCodec, F: RedisDataCodec] => CommandArg[SortPattern[K, F]] =
     CommandArg((ce, sp) =>
       ce.add(sp match {
         case SelfPattern => ByteString("#")

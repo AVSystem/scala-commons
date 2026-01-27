@@ -27,7 +27,7 @@ trait SealedEnumCompanion[T] extends SealedUtilsMacros {
   /**
    * Thanks to this implicit, [[SealedEnumCompanion]] and its subtraits can be used as typeclasses.
    */
-  implicit def evidence: this.type = this
+  given evidence: this.type = this
 
   /**
    * Holds a list of all case objects of a sealed trait or class `T`. This must be implemented separately for every
@@ -128,8 +128,8 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
       ),
     )
 
-  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
-  implicit lazy val codec: GenCodec[T] = GenCodec.nullableSimple[T](
+  given GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
+  given GenCodec[T] = GenCodec.nullableSimple[T](
     input => decode(input.readString()),
     (output, value) => output.writeString(value.name),
   )
@@ -159,8 +159,8 @@ object OrderedEnum {
   private object reusableOrdering extends Ordering[OrderedEnum] {
     def compare(x: OrderedEnum, y: OrderedEnum): Int = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
   }
-  implicit def ordering[T <: OrderedEnum]: Ordering[T] =
-    reusableOrdering.asInstanceOf[Ordering[T]]
+
+  given[T <: OrderedEnum] => Ordering[T] = reusableOrdering.asInstanceOf[Ordering[T]]
 }
 
 abstract class AbstractNamedEnumCompanion[T <: NamedEnum]

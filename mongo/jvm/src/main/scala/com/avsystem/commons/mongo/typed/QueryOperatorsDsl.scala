@@ -92,7 +92,7 @@ trait QueryOperatorsDsl[T, R] extends VanillaQueryOperatorsDsl[T, R] {
     regex(SRegex.quote(infix), if (caseInsensitive) OptArg("i") else OptArg.Empty)
 }
 object QueryOperatorsDsl {
-  implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: QueryOperatorsDsl[C[T], R]) extends AnyVal {
+  extension [C[X] <: Iterable[X], T, R](dsl: QueryOperatorsDsl[C[T], R]) {
     def isEmpty: R = dsl.size(0)
     def contains(value: T): R = dsl.elemMatch(_.is(value))
     def containsAny(values: T*): R = containsAny(values)
@@ -101,8 +101,7 @@ object QueryOperatorsDsl {
     def containsAll(values: Iterable[T]): R = dsl.all(values)
   }
 
-  implicit def forOptional[O, T, R](dsl: QueryOperatorsDsl[O, R])(implicit optionLike: OptionLike.Aux[O, T])
-    : ForOptional[O, T, R] =
+  given [O, T, R] => (optionLike: OptionLike.Aux[O, T]): ForOptional[O, T, R] =
     new ForOptional(dsl)
 
   class ForOptional[O, T, R](private val dsl: QueryOperatorsDsl[O, R]) extends AnyVal {

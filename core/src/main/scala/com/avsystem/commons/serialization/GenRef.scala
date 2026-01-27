@@ -15,7 +15,7 @@ sealed trait RawRef {
 sealed trait SimpleRawRef extends RawRef
 
 object RawRef {
-  implicit val codec: GenCodec[RawRef] = GenCodec.materialize[RawRef]
+  given  GenCodec[RawRef] = GenCodec.materialize[RawRef]
   def create[S]: Creator[S] = new Creator[S] {}
   trait Creator[S] extends RawRefCreatorMacros[S]
   case class Field(name: String) extends SimpleRawRef
@@ -24,7 +24,7 @@ object RawRef {
 }
 
 object SimpleRawRef {
-  implicit val codec: GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
+  given GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
 }
 
 case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) {

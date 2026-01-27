@@ -29,8 +29,7 @@ trait GenObjectCodec[T] extends GenCodec[T] {
 }
 object GenObjectCodec extends GenObjectCodecMacros {
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R])
-    : GenObjectCodec[T] =
+  given [R, T] => ( tw: TransparentWrapping[R, T]) => (wrappedCodec: GenObjectCodec[R]) => GenObjectCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
   def apply[T](implicit codec: GenObjectCodec[T]): GenObjectCodec[T] = codec
   def writeObject[T: GenObjectCodec](output: ObjectOutput, value: T): Unit =

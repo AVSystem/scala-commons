@@ -75,7 +75,7 @@ trait CommandsSuite
     // TODO: Scala 2.13.x regression, diverging implicit expansion
     val sequencer: Sequencer[Seq[RedisBatch[Any]], Seq[Any]] =
       Sequencer
-        .collectionSequencer(Sequencer.trivialSequencer[Any], implicitly[BuildFrom[Seq[RedisBatch[Any]], Any, Seq[Any]]])
+        .collectionSequencer(Sequencer.trivialSequencer[Any], summon[BuildFrom[Seq[RedisBatch[Any]], Any, Seq[Any]]])
     Await.result(executor.executeBatch(batches.sequence(sequencer), executionConfig), Duration.Inf)
     listener.clear()
   }

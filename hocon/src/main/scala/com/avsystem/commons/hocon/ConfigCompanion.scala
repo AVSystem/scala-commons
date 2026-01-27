@@ -11,16 +11,16 @@ import scala.concurrent.duration.*
 import scala.jdk.javaapi.DurationConverters
 
 trait HoconGenCodecs {
-  implicit def configCodec: GenCodec[Config] = HoconGenCodecs.ConfigCodec
-  implicit def finiteDurationCodec: GenCodec[FiniteDuration] = HoconGenCodecs.FiniteDurationCodec
-  implicit def jDurationCodec: GenCodec[JDuration] = HoconGenCodecs.JavaDurationCodec
-  implicit def periodCodec: GenCodec[Period] = HoconGenCodecs.PeriodCodec
-  implicit def sizeInBytesCodec: GenCodec[SizeInBytes] = HoconGenCodecs.SizeInBytesCodec
-  implicit def classKeyCodec: GenKeyCodec[Class[?]] = HoconGenCodecs.ClassKeyCodec
-  implicit def classCodec: GenCodec[Class[?]] = HoconGenCodecs.ClassCodec
+  given GenCodec[Config] = HoconGenCodecs.ConfigCodec
+  given GenCodec[FiniteDuration] = HoconGenCodecs.FiniteDurationCodec
+  given GenCodec[JDuration] = HoconGenCodecs.JavaDurationCodec
+  given GenCodec[Period] = HoconGenCodecs.PeriodCodec
+  given GenCodec[SizeInBytes] = HoconGenCodecs.SizeInBytesCodec
+  given GenKeyCodec[Class[?]] = HoconGenCodecs.ClassKeyCodec
+  given GenCodec[Class[?]] = HoconGenCodecs.ClassCodec
 }
 object HoconGenCodecs {
-  implicit final val ConfigCodec: GenCodec[Config] = GenCodec.nullable(
+    given GenCodec[Config] = GenCodec.nullable(
     input =>
       input.readCustom(ConfigValueMarker).fold(ConfigFactory.parseString(input.readSimple().readString())) {
         case obj: ConfigObject => obj.toConfig
@@ -33,7 +33,7 @@ object HoconGenCodecs {
       },
   )
 
-  implicit final val FiniteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
+  given GenCodec[FiniteDuration] = GenCodec.nullable(
     input =>
       input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
     (output, value) =>
@@ -43,26 +43,26 @@ object HoconGenCodecs {
           .writeLong(value.toMillis),
   )
 
-  implicit final val JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(
+  given GenCodec[JDuration] = GenCodec.nullable(
     input => input.readCustom(DurationMarker).getOrElse(JDuration.ofMillis(input.readSimple().readLong())),
     (output, value) => if (!output.writeCustom(DurationMarker, value)) output.writeSimple().writeLong(value.toMillis),
   )
 
-  implicit final val PeriodCodec: GenCodec[Period] = GenCodec.nullable(
+  given GenCodec[Period] = GenCodec.nullable(
     input => input.readCustom(PeriodMarker).getOrElse(Period.parse(input.readSimple().readString())),
     (output, value) => if (!output.writeCustom(PeriodMarker, value)) output.writeSimple().writeString(value.toString),
   )
 
-  implicit final val SizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(
+  given GenCodec[SizeInBytes] = GenCodec.nonNull(
     input => SizeInBytes(input.readCustom(SizeInBytesMarker).getOrElse(input.readSimple().readLong())),
     (output, value) =>
       if (!output.writeCustom(SizeInBytesMarker, value.bytes)) output.writeSimple().writeLong(value.bytes),
   )
 
-  implicit final val ClassKeyCodec: GenKeyCodec[Class[?]] =
+  given GenKeyCodec[Class[?]] =
     GenKeyCodec.create(Class.forName, _.getName)
 
-  implicit final val ClassCodec: GenCodec[Class[?]] =
+  given GenCodec[Class[?]] =
     GenCodec.nullableString(Class.forName, _.getName)
 }
 
@@ -76,7 +76,7 @@ abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
   implicits: Implicits,
 )(implicit instances: MacroInstances[Implicits, ConfigObjectCodec[T]],
 ) {
-  implicit lazy val codec: GenCodec[T] = instances(implicits, this).objectCodec
+  given GenCodec[T] = instances(implicits, this).objectCodec
 
   final def read(config: Config): T = HoconInput.read[T](config)
 }

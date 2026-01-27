@@ -54,45 +54,45 @@ trait JCollectionFac extends JIterableFac
 
 trait JIterableFac extends JSetFac with JLinkedListFac {
   // for JIterable, JCollection, JList and JArrayList
-  implicit def jArrayListFac[A]: JCollectionFactory[A, JArrayList[A]] =
+  given[A] => JCollectionFactory[A, JArrayList[A]] =
     new JCollectionFactory(new JArrayList)
 }
 
 trait JSetFac extends JSortedSetFac with JLinkedHashSetFac {
   // for JSet and JHashSet
-  implicit def jHashSetFac[A]: JCollectionFactory[A, JHashSet[A]] =
+  given[A] => JCollectionFactory[A, JHashSet[A]] =
     new JCollectionFactory(new JHashSet)
 }
 
 trait JLinkedHashSetFac {
-  implicit def jLinkedHashSetFac[A]: JCollectionFactory[A, JLinkedHashSet[A]] =
+  given[A] => JCollectionFactory[A, JLinkedHashSet[A]] =
     new JCollectionFactory(new JLinkedHashSet)
 }
 
 trait JSortedSetFac {
   // for JSortedSet, JNavigableSet and JTreeSet
-  implicit def jTreeSetFac[A: Ordering]: JCollectionFactory[A, JTreeSet[A]] =
+  given[A: Ordering] => JCollectionFactory[A, JTreeSet[A]] =
     new JCollectionFactory(new JTreeSet(Ordering[A]))
 }
 
 trait JLinkedListFac {
-  implicit def jLinkedListFac[A]: JCollectionFactory[A, JLinkedList[A]] =
+  given[A] => JCollectionFactory[A, JLinkedList[A]] =
     new JCollectionFactory(new JLinkedList)
 }
 
 trait JMapFac extends JSortedMapFac with JLinkedHashMapFac {
   // for JMap and JHashMap
-  implicit def jHashMapFac[K, V]: JMapFactory[K, V, JHashMap[K, V]] =
+  given[K, V] => JMapFactory[K, V, JHashMap[K, V]] =
     new JMapFactory(new JHashMap)
 }
 
 trait JLinkedHashMapFac {
-  implicit def jLinkedHashMapFac[K, V]: JMapFactory[K, V, JLinkedHashMap[K, V]] =
+  given[K, V] => JMapFactory[K, V, JLinkedHashMap[K, V]] =
     new JMapFactory(new JLinkedHashMap)
 }
 
 trait JSortedMapFac {
   // for JSortedMap, JNavigableMap and JTreeMap
-  implicit def jTreeMapFac[K: Ordering, V]: JMapFactory[K, V, JTreeMap[K, V]] =
+  given[K: Ordering, V] => JMapFactory[K, V, JTreeMap[K, V]] =
     new JMapFactory(new JTreeMap(Ordering[K]))
 }

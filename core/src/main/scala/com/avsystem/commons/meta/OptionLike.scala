@@ -54,15 +54,15 @@ final class OptionLikeImpl[O, A](
   ) = this(empty, someFun, isDefinedFun, getFun, ignoreNulls = true)
 }
 object OptionLike {
-  implicit def optionOptionLike[A]: BaseOptionLike[Option[A], A] =
+  given[A] => BaseOptionLike[Option[A], A] =
     new OptionLikeImpl(None, Some(_), _.isDefined, _.get, ignoreNulls = true)
-  implicit def optOptionLike[A]: BaseOptionLike[Opt[A], A] =
+  given[A] => BaseOptionLike[Opt[A], A] =
     new OptionLikeImpl(Opt.Empty, Opt.some, _.isDefined, _.get, ignoreNulls = true)
-  implicit def optRefOptionLike[A]: BaseOptionLike[OptRef[A], A] =
+  given[A] => BaseOptionLike[OptRef[A], A] =
     new OptionLikeImpl(OptRef.Empty, OptRef.some, _.isDefined, _.get, ignoreNulls = true)
-  implicit def optArgOptionLike[A]: BaseOptionLike[OptArg[A], A] =
+  given[A] => BaseOptionLike[OptArg[A], A] =
     new OptionLikeImpl(OptArg.Empty, OptArg.some, _.isDefined, _.get, ignoreNulls = true)
-  implicit def nOptOptionLike[A]: BaseOptionLike[NOpt[A], A] =
+  given[A] => BaseOptionLike[NOpt[A], A] =
     new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get, ignoreNulls = false)
   type Aux[O, V] = OptionLike[O] { type Value = V }
 }
@@ -81,8 +81,6 @@ object AutoOptionalParam {
 }
 
 trait AutoOptionalParams {
-  implicit def allAutoOptionalParams[T](
-    implicit optionLike: OptionLike[T],
-  ): AutoOptionalParam[T] = AutoOptionalParam[T]
+  given[T] => AutoOptionalParam[T] = AutoOptionalParam[T]
 }
 object AutoOptionalParams extends AutoOptionalParams
