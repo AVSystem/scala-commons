@@ -118,7 +118,7 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def toArray: Array[Long] =
     jStream.toArray
 
-  def to[C](implicit fac: Factory[Long, C]): C = {
+  def to[C](using fac: Factory[Long, C]): C = {
     val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()

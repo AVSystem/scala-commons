@@ -11,7 +11,7 @@ object OptRef {
     else throw new NullPointerException
 
   object Boxed {
-    def unapply[A, B](optRef: OptRef[B])(implicit unboxing: Unboxing[A, B]): Opt[A] =
+    def unapply[A, B](optRef: OptRef[B])(using unboxing: Unboxing[A, B]): Opt[A] =
       if (optRef.isEmpty) Opt.Empty else Opt(unboxing.fun(optRef.get))
   }
 
@@ -68,7 +68,7 @@ final class OptRef[+A] private (private val value: A | Null) extends AnyVal with
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value.nn
 
-  @inline def orNull[B >: A](implicit ev: Null <:< B): B =
+  @inline def orNull[B >: A](using ev: Null <:< B): B =
     value.asInstanceOf[B]
 
   @inline def map[B](f: A => B | Null): OptRef[B] =

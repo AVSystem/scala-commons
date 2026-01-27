@@ -15,7 +15,7 @@ import com.avsystem.commons.serialization.*
  * hierarchies with annotations: [[cborKey]] and [[cborDiscriminator]], again taking advantage of the fact that CBOR
  * map keys can be of arbitrary type and not just strings</li> </ul>
  */
-abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtInstances[T]]) {
+abstract class HasCborCodec[T](using instances: MacroInstances[CborOptimizedCodecs, CborAdtInstances[T]]) {
   given GenObjectCodec[T] = instances(CborOptimizedCodecs, this).cborCodec
 }
 
@@ -23,7 +23,7 @@ abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedC
  * Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
  */
 abstract class HasCborCodecWithDeps[D, T](
-  implicit deps: ValueOf[D],
+  using deps: ValueOf[D],
   instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
 ) {
   given GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
@@ -258,7 +258,7 @@ trait CborAdtPolyInstances[C[_]] {
  * Like [[HasCborCodec]] but for parameterized (generic) data types.
  */
 abstract class HasPolyCborCodec[C[_]](
-  implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]],
+  using instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]],
 ) {
   private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing].validate())
 

@@ -68,19 +68,19 @@ final class Opt[+A] private (private val rawValue: Any) extends AnyVal with OptB
   @inline def get: A =
     if (isEmpty) throw new NoSuchElementException("empty Opt") else value
 
-  @inline def boxed[B](implicit boxing: Boxing[A, B]): Opt[B] =
+  @inline def boxed[B](using boxing: Boxing[A, B]): Opt[B] =
     map(boxing.fun)
 
-  @inline def boxedOrNull[B](implicit boxing: Boxing[A, B]): B | Null =
+  @inline def boxedOrNull[B](using boxing: Boxing[A, B]): B | Null =
     if (isEmpty) null else boxing.fun(value)
 
-  @inline def unboxed[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
+  @inline def unboxed[B](using unboxing: Unboxing[B, A]): Opt[B] =
     map(unboxing.fun)
 
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
-  @inline def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
+  @inline def toOptRef[B](using boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
   @inline def toNOpt: NOpt[A] =
@@ -92,7 +92,7 @@ final class Opt[+A] private (private val rawValue: Any) extends AnyVal with OptB
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value
 
-  @inline def orNull[B >: A](implicit ev: Null <:< B): B =
+  @inline def orNull[B >: A](using ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
 
   /**
@@ -113,7 +113,7 @@ final class Opt[+A] private (private val rawValue: Any) extends AnyVal with OptB
   @inline def flatMap[B](f: A => Opt[B]): Opt[B] =
     if (isEmpty) Opt.Empty else f(value)
 
-  @inline def flatten[B](implicit ev: A <:< Opt[B]): Opt[B] =
+  @inline def flatten[B](using ev: A <:< Opt[B]): Opt[B] =
     if (isEmpty) Opt.Empty else ev(value)
 
   @inline def filter(p: A => Boolean): Opt[A] =

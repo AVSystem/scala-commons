@@ -40,7 +40,7 @@ trait SharedExtensions {
      * Converts a boxed primitive type into an `Opt` of its corresponding primitive type, converting `null` into
      * `Opt.Empty`. For example, calling `.unboxedOpt` on a `java.lang.Integer` will convert it to `Opt[Int]`.
      */
-    def unboxedOpt[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
+    def unboxedOpt[B](using unboxing: Unboxing[B, A]): Opt[B] =
       opt.map(unboxing.fun)
     def opt: Opt[A] = Opt(a)
     def checkNotNull(msg: String): A =
@@ -267,7 +267,7 @@ trait SharedExtensions {
      * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `Some(null)` is translated to
      * `OptRef.Empty`.
      */
-    def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
+    def toOptRef[B](using boxing: Boxing[A, B]): OptRef[B] =
       if (option.isEmpty) OptRef.Empty else OptRef(boxing.fun(option.get))
 
     def toNOpt: NOpt[A] =
@@ -314,7 +314,7 @@ trait SharedExtensions {
      * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `Success(null)` is translated to
      * `OptRef.Empty`.
      */
-    def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
+    def toOptRef[B](using boxing: Boxing[A, B]): OptRef[B] =
       if (tr.isFailure) OptRef.Empty else OptRef(boxing.fun(tr.get))
 
     def toNOpt: NOpt[A] =
@@ -400,7 +400,7 @@ trait SharedExtensions {
       }
       res.result()
     }
-    def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(implicit bf: BuildFrom[C[A], V, To]): Map[K, To] = {
+    def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(using bf: BuildFrom[C[A], V, To]): Map[K, To] = {
       val builders = mutable.Map[K, mutable.Builder[V, To]]()
       it.foreach { a =>
         builders.getOrElseUpdate(keyFun(a), bf.newBuilder(coll)) += valueFun(a)
@@ -408,15 +408,15 @@ trait SharedExtensions {
       builders.iterator.map { case (k, v) => (k, v.result()) }.toMap
     }
     def findOpt(p: A => Boolean): Opt[A] = it.find(p).toOpt
-    def flatCollect[B](f: PartialFunction[A, IterableOnce[B]])(implicit fac: Factory[B, C[B]]): C[B] =
+    def flatCollect[B](f: PartialFunction[A, IterableOnce[B]])(using fac: Factory[B, C[B]]): C[B] =
       coll.iterator.collect(f).flatten.to(fac)
     def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = it.collectFirst(pf).toOpt
     def reduceOpt[A1 >: A](op: (A1, A1) => A1): Opt[A1] = if (it.isEmpty) Opt.Empty else it.reduce(op).opt
     def reduceLeftOpt[B >: A](op: (B, A) => B): Opt[B] = if (it.isEmpty) Opt.Empty else it.reduceLeft(op).opt
     def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = if (it.isEmpty) Opt.Empty else it.reduceRight(op).opt
-    def maxOpt(implicit ord: Ordering[A]): Opt[A] = if (it.isEmpty) Opt.Empty else it.max.opt
+    def maxOpt(using Ordering[A]): Opt[A] = if (it.isEmpty) Opt.Empty else it.max.opt
     def maxOptBy[B: Ordering](f: A => B): Opt[A] = if (it.isEmpty) Opt.Empty else it.maxBy(f).opt
-    def minOpt(implicit ord: Ordering[A]): Opt[A] = if (it.isEmpty) Opt.Empty else it.min.opt
+    def minOpt(using Ordering[A]): Opt[A] = if (it.isEmpty) Opt.Empty else it.min.opt
     def minOptBy[B: Ordering](f: A => B): Opt[A] = if (it.isEmpty) Opt.Empty else it.minBy(f).opt
     def indexOfOpt(elem: A): Opt[Int] = coll.iterator.indexOf(elem).opt.filter(_ != -1)
     def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.iterator.indexWhere(p).opt.filter(_ != -1)
@@ -426,15 +426,15 @@ trait SharedExtensions {
       mkStringOr(start, sep, end, "")
     def mkStringOr(start: String, sep: String, end: String, default: String): String =
       if (it.nonEmpty) it.mkString(start, sep, end) else default
-    def asyncFoldLeft[B](zero: Future[B])(fun: (B, A) => Future[B])(implicit ec: ExecutionContext): Future[B] =
+    def asyncFoldLeft[B](zero: Future[B])(fun: (B, A) => Future[B])(using ExecutionContext): Future[B] =
       it.foldLeft(zero)((fb, a) => fb.flatMap(b => fun(b, a)))
-    def asyncFoldRight[B](zero: Future[B])(fun: (A, B) => Future[B])(implicit ec: ExecutionContext): Future[B] =
+    def asyncFoldRight[B](zero: Future[B])(fun: (A, B) => Future[B])(using ExecutionContext): Future[B] =
       it.foldRight(zero)((a, fb) => fb.flatMap(b => fun(a, b)))
-    def asyncForeach(fun: A => Future[Unit])(implicit ec: ExecutionContext): Future[Unit] =
+    def asyncForeach(fun: A => Future[Unit])(using ExecutionContext): Future[Unit] =
       it.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
     def partitionEither[L, R](
       fun: A => Either[L, R],
-    )(implicit
+    )(using
       facL: Factory[L, C[L]],
       facR: Factory[R, C[R]],
     ): (C[L], C[R]) = {
@@ -449,7 +449,7 @@ trait SharedExtensions {
     private def it: Iterator[A] = coll.iterator
   }
   extension [C[X] <: IterableOnce[X], K, V](coll: C[(K, V)]) {
-    def intoMap[M[X, Y] <: BMap[X, Y]](implicit fac: Factory[(K, V), M[K, V]]): M[K, V] = {
+    def intoMap[M[X, Y] <: BMap[X, Y]](using fac: Factory[(K, V), M[K, V]]): M[K, V] = {
       val builder = fac.newBuilder
       coll.iterator.foreach(builder += _)
       builder.result()
@@ -494,7 +494,7 @@ trait SharedExtensions {
     def nextOpt: Opt[A] =
       if (it.hasNext) it.next().opt else Opt.Empty
 
-    def drainTo[C[_]](n: Int)(implicit fac: Factory[A, C[A]]): C[A] = {
+    def drainTo[C[_]](n: Int)(using fac: Factory[A, C[A]]): C[A] = {
       val builder = fac.newBuilder
       var i = 0
       while (it.hasNext && i < n) {
@@ -594,7 +594,7 @@ trait SharedExtensions {
      */
     def sequenceCompleted[A, M[X] <: IterableOnce[X]](
       in: M[Future[A]],
-    )(implicit bf: BuildFrom[M[Future[A]], A, M[A]],
+    )(using BuildFrom[M[Future[A]], A, M[A]],
     ): Future[M[A]] =
       traverseCompleted(in)(identity)
 
@@ -620,7 +620,7 @@ trait SharedExtensions {
       in: M[A],
     )(
       fn: A => Future[B],
-    )(implicit bf: BuildFrom[M[A], B, M[B]],
+    )(using bf: BuildFrom[M[A], B, M[B]],
     ): Future[M[B]] = {
       val (barrier, i) = in.iterator.foldLeft((Future.unit, Future.successful(bf.newBuilder(in)))) {
         case ((priorFinished, fr), a) =>
@@ -636,7 +636,7 @@ trait SharedExtensions {
      * Simple version of `TryOps.traverse`. Transforms a `IterableOnce[Try[A]]` into a `Try[IterableOnce[A]]`. Useful
      * for reducing many `Try`s into a single `Try`.
      */
-    def sequence[A, M[X] <: IterableOnce[X]](in: M[Try[A]])(implicit bf: BuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] =
+    def sequence[A, M[X] <: IterableOnce[X]](in: M[Try[A]])(using bf: BuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] =
       in.iterator
         .foldLeft(Try(bf.newBuilder(in))) {
           case (f @ Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
@@ -656,7 +656,7 @@ trait SharedExtensions {
      *    val myTryList = TryOps.traverse(myList)(x => Try(myFunc(x)))
      * }}}
      */
-    def traverse[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Try[B])(implicit bf: BuildFrom[M[A], B, M[B]])
+    def traverse[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Try[B])(using bf: BuildFrom[M[A], B, M[B]])
       : Try[M[B]] =
       in.iterator
         .map(fn)

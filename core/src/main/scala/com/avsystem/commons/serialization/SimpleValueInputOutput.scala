@@ -93,7 +93,7 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
   private def doRead[A <: AnyRef: ClassTag]: A =
     doReadUnboxed[A, A]
 
-  private def doReadUnboxed[A, B: ClassTag](implicit unboxing: Unboxing[A, B]): A = value match {
+  private def doReadUnboxed[A, B: ClassTag](using unboxing: Unboxing[A, B]): A = value match {
     case b: B => unboxing.fun(b)
     case _ => throw new ReadFailure(s"Expected ${classTag[B].runtimeClass} but got ${value.getClass}")
   }

@@ -29,13 +29,13 @@ final class ScalaJStream[+A](private val jStream: JStream[A @uV]) extends AnyVal
   def iterator: Iterator[A] =
     jStream.iterator().asScala
 
-  def asDoubleStream(implicit ev: A <:< Double): ScalaJDoubleStream =
+  def asDoubleStream(using ev: A <:< Double): ScalaJDoubleStream =
     mapToDouble(ev)
 
-  def asIntStream(implicit ev: A <:< Int): ScalaJIntStream =
+  def asIntStream(using ev: A <:< Int): ScalaJIntStream =
     mapToInt(ev)
 
-  def asLongStream(implicit ev: A <:< Long): ScalaJLongStream =
+  def asLongStream(using ev: A <:< Long): ScalaJLongStream =
     mapToLong(ev)
 
   def allMatch(predicate: A => Boolean): Boolean =

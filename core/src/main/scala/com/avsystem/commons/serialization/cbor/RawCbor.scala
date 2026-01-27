@@ -64,7 +64,7 @@ object RawCbor extends TypeMarker[RawCbor] {
   ): RawCbor =
     RawCbor(CborOutput.write(value, keyCodec, sizePolicy))
 
-  implicit val codec: GenCodec[RawCbor] =
+  given GenCodec[RawCbor] =
     GenCodec.nonNull(
       input => input.readCustom(RawCbor).getOrElse(RawCbor(input.readSimple().readBinary())),
       (output, cbor) =>

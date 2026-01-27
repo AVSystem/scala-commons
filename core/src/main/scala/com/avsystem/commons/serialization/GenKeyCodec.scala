@@ -23,11 +23,11 @@ trait GenKeyCodec[T] {
 }
 
 object GenKeyCodec extends GenKeyCodecMacros {
-  def apply[T](implicit gkc: GenKeyCodec[T]): GenKeyCodec[T] = gkc
+  def apply[T](using gkc: GenKeyCodec[T]): GenKeyCodec[T] = gkc
 
   @explicitGenerics
-  def read[T](key: String)(implicit keyCodec: GenKeyCodec[T]): T = keyCodec.read(key)
-  def write[T](value: T)(implicit keyCodec: GenKeyCodec[T]): String = keyCodec.write(value)
+  def read[T](key: String)(using keyCodec: GenKeyCodec[T]): T = keyCodec.read(key)
+  def write[T](value: T)(using keyCodec: GenKeyCodec[T]): String = keyCodec.write(value)
 
   def create[T](readFun: String => T, writeFun: T => String): GenKeyCodec[T] =
     new GenKeyCodec[T] {

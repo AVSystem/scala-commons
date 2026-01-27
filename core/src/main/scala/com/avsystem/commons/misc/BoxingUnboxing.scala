@@ -3,7 +3,7 @@ package misc
 
 case class Boxing[-A, +B](fun: A => B) extends AnyVal
 object Boxing extends LowPrioBoxing {
-  def fromImplicitConv[A, B](implicit conv: A => B): Boxing[A, B] = Boxing(conv)
+  def fromImplicitConv[A, B](using conv: A => B): Boxing[A, B] = Boxing(conv)
 
   given Boxing[Boolean, JBoolean] = fromImplicitConv
   given Boxing[Byte, JByte] = fromImplicitConv
@@ -19,7 +19,7 @@ trait LowPrioBoxing { this: Boxing.type =>
 
 case class Unboxing[+A, -B](fun: B => A) extends AnyVal
 object Unboxing extends LowPrioUnboxing {
-  def fromImplicitConv[A, B](implicit conv: B => A): Unboxing[A, B] = Unboxing(conv)
+  def fromImplicitConv[A, B](using conv: B => A): Unboxing[A, B] = Unboxing(conv)
 
   given Unboxing[Boolean, JBoolean] = fromImplicitConv
   given Unboxing[Byte, JByte] = fromImplicitConv

@@ -49,7 +49,7 @@ trait ObservableExtensions {
      *
      * WARNING: this requires unbounded buffering.
      */
-    def sortedL(implicit ord: Ordering[T], ct: ClassTag[T]): Task[ISeq[T]] =
+    def sortedL(using Ordering[T], ClassTag[T]): Task[ISeq[T]] =
       obs.toL(Array).map { arr =>
         Sorting.stableSort(arr)
         IArraySeq.unsafeWrapArray(arr)
@@ -62,7 +62,7 @@ trait ObservableExtensions {
      *
      * WARNING: this requires unbounded buffering.
      */
-    def sortedByL[R](f: T => R)(implicit ord: Ordering[R], ct: ClassTag[T]): Task[ISeq[T]] =
+    def sortedByL[R](f: T => R)(using ord: Ordering[R], ct: ClassTag[T]): Task[ISeq[T]] =
       sortedL(using ord.on(f), ct)
 
     /**

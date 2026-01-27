@@ -27,7 +27,7 @@ class TypeString[T](val value: String) extends AnyVal {
 }
 object TypeString extends TypeStringMacros {
   def of[T: TypeString]: String = TypeString[T].value
-  def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
+  def apply[T](using ts: TypeString[T]): TypeString[T] = ts
 
   given GenKeyCodec[TypeString[?]] =
     GenKeyCodec.create[TypeString[?]](new TypeString(_), _.value)
@@ -47,7 +47,7 @@ class JavaClassName[T](val value: String) extends AnyVal {
   override def toString: String = value
 }
 object JavaClassName extends JavaClassNameMacros {
-  def apply[T](implicit ts: JavaClassName[T]): JavaClassName[T] = ts
+  def apply[T](using ts: JavaClassName[T]): JavaClassName[T] = ts
   def of[T: JavaClassName]: String = JavaClassName[T].value
 
   given JavaClassName[Nothing] = new JavaClassName("scala.runtime.Nothing$")

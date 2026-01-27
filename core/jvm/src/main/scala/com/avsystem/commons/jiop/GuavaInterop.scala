@@ -47,7 +47,7 @@ trait GuavaInterop {
     def isCompleted: Boolean =
       gfut.isDone
 
-    def onComplete[U](f: Try[T] => U)(implicit ec: ExecutionContext): Unit = {
+    def onComplete[U](f: Try[T] => U)(using ec: ExecutionContext): Unit = {
       val callback = new FutureCallback[T] {
         def onFailure(t: Throwable): Unit = f(Failure(t))
         def onSuccess(result: T): Unit = f(Success(result))
@@ -63,7 +63,7 @@ trait GuavaInterop {
       Futures.addCallback(gfut, callback, executor)
     }
 
-    def transform[S](f: Try[T] => Try[S])(implicit executor: ExecutionContext): Future[S] = {
+    def transform[S](f: Try[T] => Try[S])(using executor: ExecutionContext): Future[S] = {
       val p = Promise[S]()
       onComplete { r =>
         p.complete(
@@ -76,7 +76,7 @@ trait GuavaInterop {
       p.future
     }
 
-    def transformWith[S](f: Try[T] => Future[S])(implicit executor: ExecutionContext): Future[S] = {
+    def transformWith[S](f: Try[T] => Future[S])(using executor: ExecutionContext): Future[S] = {
       val p = Promise[S]()
       onComplete { r =>
         try p.completeWith(f(r))
@@ -89,13 +89,13 @@ trait GuavaInterop {
     def value: Option[Try[T]] =
       if (gfut.isDone) Some(Try(unwrapFailures(gfut.get))) else None
     @throws(classOf[Exception])
-    def result(atMost: Duration)(implicit permit: CanAwait): T =
+    def result(atMost: Duration)(using CanAwait): T =
       if (atMost.isFinite) unwrapFailures(gfut.get(atMost.length, atMost.unit))
       else
         unwrapFailures(gfut.get())
     @throws(classOf[InterruptedException])
     @throws(classOf[TimeoutException])
-    def ready(atMost: Duration)(implicit permit: CanAwait): this.type = {
+    def ready(atMost: Duration)(using CanAwait): this.type = {
       try result(atMost)
       catch {
         case NonFatal(_) =>

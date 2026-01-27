@@ -12,14 +12,14 @@ trait AsRaw[Raw, Real] {
   def asRaw(real: Real): Raw
 }
 object AsRaw extends FallbackAsRaw with AsRawMacros {
-  def apply[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Raw, Real] = asRaw
+  def apply[Raw, Real](using asRaw: AsRaw[Raw, Real]): AsRaw[Raw, Real] = asRaw
 
   @deprecated("use SAM syntax (lambda)", "2.0.0")
   def create[Raw, Real](asRawFun: Real => Raw): AsRaw[Raw, Real] = asRawFun(_)
 
   // deliberately not implicit so that each raw type can turn it into an implicit with appropriate priority if desired
   def fromTransparentWrapping[Wrapped, Raw, Real](
-    implicit tw: TransparentWrapping[Wrapped, Real],
+    using tw: TransparentWrapping[Wrapped, Real],
     forWrapped: AsRaw[Raw, Wrapped],
   ): AsRaw[Raw, Real] = real => forWrapped.asRaw(tw.unwrap(real))
 
@@ -42,14 +42,14 @@ trait AsReal[Raw, Real] {
   def asReal(raw: Raw): Real
 }
 object AsReal extends FallbackAsReal with AsRealMacros {
-  def apply[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Raw, Real] = asReal
+  def apply[Raw, Real](using asReal: AsReal[Raw, Real]): AsReal[Raw, Real] = asReal
 
   @deprecated("use SAM syntax (lambda)", "2.0.0")
   def create[Raw, Real](asRealFun: Raw => Real): AsReal[Raw, Real] = asRealFun(_)
 
   // deliberately not implicit so that each raw type can turn it into an implicit with appropriate priority if desired
   def fromTransparentWrapping[Wrapped, Raw, Real](
-    implicit tw: TransparentWrapping[Wrapped, Real],
+    using tw: TransparentWrapping[Wrapped, Real],
     forWrapped: AsReal[Raw, Wrapped],
   ): AsReal[Raw, Real] = raw => tw.wrap(forWrapped.asReal(raw))
 

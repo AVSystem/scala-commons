@@ -10,6 +10,6 @@ import scala.annotation.implicitNotFound
 class ValueOf[T](val value: T) extends AnyVal
 object ValueOf {
   inline given[T] =>  ValueOf[T] = ${ mkValueOfImpl[T] }
-  def apply[T](implicit vof: ValueOf[T]): T = vof.value
+  def apply[T](using vof: ValueOf[T]): T = vof.value
   def mkValueOfImpl[T: Type](using Quotes): Expr[ValueOf[T]] = '{ ??? }.asInstanceOf[Expr[ValueOf[T]]]
 }

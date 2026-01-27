@@ -21,15 +21,15 @@ trait CborOptimizedCodecs {
    */
   given [M[X, Y] <: BMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec] => (
      fac: Factory[(K, V), M[K, V]],
-  ) => GenObjectCodec[M[K, V]] = mkMapCodec(implicit keyCodec => GenCodec.given_GenObjectCodec_M)
+  ) => GenObjectCodec[M[K, V]] = mkMapCodec(GenCodec.given_GenObjectCodec_M)
 
   given [M[X, Y] <: JMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec] => (
     fac: JFactory[(K, V), M[K, V]],
-  ) => GenObjectCodec[M[K, V]] = mkMapCodec(implicit keyCodec => GenCodec.given_GenObjectCodec_M)
+  ) => GenObjectCodec[M[K, V]] = mkMapCodec(GenCodec.given_GenObjectCodec_M)
 
   private def mkMapCodec[M[X, Y] <: AnyRef, K: GenCodec: OptGenKeyCodec, V: GenCodec](
-    mkStdCodec: GenKeyCodec[K] => GenObjectCodec[M[K, V]],
-  )(implicit fac: Factory[(K, V), M[K, V]],
+    mkStdCodec: GenKeyCodec[K] ?=> GenObjectCodec[M[K, V]],
+  )(using fac: Factory[(K, V), M[K, V]],
   ): GenObjectCodec[M[K, V]] = {
     val hexKeysStdCodec = mkStdCodec(new GenKeyCodec[K] {
       def read(key: String): K = CborInput.readRawCbor[K](RawCbor.fromHex(key))
@@ -97,7 +97,7 @@ class OOOFieldCborRawKeysCodec[T](stdObjectCodec: OOOFieldsObjectCodec[T], keyCo
  */
 case class OptGenKeyCodec[K](keyCodec: Opt[GenKeyCodec[K]])
 object OptGenKeyCodec extends OptGenKeyCodecLowPriority {
-  def apply[K](implicit optGenKeyCodec: OptGenKeyCodec[K]): OptGenKeyCodec[K] = optGenKeyCodec
+  def apply[K](using optGenKeyCodec: OptGenKeyCodec[K]): OptGenKeyCodec[K] = optGenKeyCodec
 
   given [K: GenKeyCodec] => OptGenKeyCodec[K] = OptGenKeyCodec(Opt(GenKeyCodec[K]))
 }

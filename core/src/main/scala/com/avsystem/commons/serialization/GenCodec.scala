@@ -43,7 +43,7 @@ trait GenCodec[T] {
 }
 
 object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMacros {
-  def apply[T](implicit codec: GenCodec[T]): GenCodec[T] = codec
+  def apply[T](using codec: GenCodec[T]): GenCodec[T] = codec
 
   @explicitGenerics
   def read[T: GenCodec](input: Input): T =
@@ -132,7 +132,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
   def nonNullObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
     createObject(readFun, writeFun, allowNull = false)
 
-  def fromKeyCodec[T](implicit keyCodec: GenKeyCodec[T]): GenCodec[T] = create(
+  def fromKeyCodec[T](using keyCodec: GenKeyCodec[T]): GenCodec[T] = create(
     input => keyCodec.read(input.readSimple().readString()),
     (output, value) => output.writeSimple().writeString(keyCodec.write(value)),
   )
@@ -380,7 +380,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
     GenCodec.nullableSimple(i => Bytes(i.readBinary()), (o, b) => o.writeBinary(b.bytes))
 
   extension [A](coll: BIterable[A]) {
-    def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit = {
+    def writeToList(lo: ListOutput)(using writer: GenCodec[A]): Unit = {
       lo.declareSizeOf(coll)
       coll.foreach(new (A => Unit) {
         private var idx = 0
@@ -396,7 +396,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
   }
 
   extension [A, B](coll: BIterable[(A, B)]) {
-    def writeToObject(oo: ObjectOutput)(implicit keyWriter: GenKeyCodec[A], writer: GenCodec[B]): Unit = {
+    def writeToObject(oo: ObjectOutput)(using keyWriter: GenKeyCodec[A], writer: GenCodec[B]): Unit = {
       oo.declareSizeOf(coll)
       coll.foreach { case (key, value) =>
         val fieldName = keyWriter.write(key)
@@ -409,7 +409,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
   }
 
   extension (li: ListInput) {
-    def collectTo[A: GenCodec, C](implicit fac: Factory[A, C]): C = {
+    def collectTo[A: GenCodec, C](using fac: Factory[A, C]): C = {
       val b = fac.newBuilder
       li.knownSize match {
         case -1 =>
@@ -430,7 +430,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
   }
 
   extension (oi: ObjectInput) {
-    def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit fac: Factory[(K, V), C]): C = {
+    def collectTo[K: GenKeyCodec, V: GenCodec, C](using fac: Factory[(K, V), C]): C = {
       val b = fac.newBuilder
       oi.knownSize match {
         case -1 =>

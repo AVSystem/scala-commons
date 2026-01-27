@@ -60,7 +60,7 @@ final class OptArg[+A] private (private val rawValue: Any) extends AnyVal with O
   @inline def isDefined: Boolean = !isEmpty
   @inline def nonEmpty: Boolean = isDefined
 
-  @inline def boxedOrNull[B](implicit boxing: Boxing[A, B]): B | Null =
+  @inline def boxedOrNull[B](using boxing: Boxing[A, B]): B | Null =
     if (isEmpty) null else boxing.fun(value)
 
   @inline def toOpt: Opt[A] =
@@ -72,13 +72,13 @@ final class OptArg[+A] private (private val rawValue: Any) extends AnyVal with O
   @inline def toNOpt: NOpt[A] =
     if (isEmpty) NOpt.Empty else NOpt.some(value)
 
-  @inline def toOptRef[B](implicit boxing: Boxing[A, B]): OptRef[B] =
+  @inline def toOptRef[B](using boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
   @inline def getOrElse[B >: A](default: => B): B =
     if (isEmpty) default else value
 
-  @inline def orNull[B >: A](implicit ev: Null <:< B): B =
+  @inline def orNull[B >: A](using ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
 
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =

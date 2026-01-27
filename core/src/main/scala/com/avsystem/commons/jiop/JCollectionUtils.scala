@@ -212,7 +212,7 @@ given [C[X] <: JSortedSet[X], T: Ordering] => Conversion[JSortedSetCreator[C], F
   }
 
  extension [A, B](coll: IterableOnce[(A, B)]) {
-    def toJMap[M[K, V] <: JMap[K, V]](implicit fac: Factory[(A, B), M[A, B]]): M[A, B] = {
+    def toJMap[M[K, V] <: JMap[K, V]](using fac: Factory[(A, B), M[A, B]]): M[A, B] = {
       val b = fac.newBuilder
       coll.iterator.foreach(b += _)
       b.result()

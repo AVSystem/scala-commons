@@ -121,7 +121,7 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def toArray: Array[Int] =
     jStream.toArray
 
-  def to[C](implicit fac: Factory[Int, C]): C = {
+  def to[C](using fac: Factory[Int, C]): C = {
     val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()

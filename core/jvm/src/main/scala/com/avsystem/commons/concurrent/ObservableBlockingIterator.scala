@@ -20,7 +20,7 @@ class ObservableBlockingIterator[T](
   timeout: Long,
   unit: TimeUnit,
   bufferSize: Int,
-)(implicit val scheduler: Scheduler,
+)(using val scheduler: Scheduler,
 ) extends CloseableIterator[T]
     with Subscriber[T] {
 

@@ -115,7 +115,7 @@ final class ScalaJDoubleStream(private val jStream: JDoubleStream) extends AnyVa
   def toArray: Array[Double] =
     jStream.toArray
 
-  def to[C](implicit fac: Factory[Double, C]): C = {
+  def to[C](using fac: Factory[Double, C]): C = {
     val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()

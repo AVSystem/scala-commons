@@ -24,5 +24,5 @@ case class SourceInfo(
 }
 
 object SourceInfo extends SourceInfoMacros {
-  def here()(implicit si: SourceInfo): SourceInfo = si
+  def here()(using si: SourceInfo): SourceInfo = si
 }
