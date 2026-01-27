@@ -8,7 +8,7 @@ import com.avsystem.commons.misc.*
 import scala.annotation.nowarn
 import scala.collection.{mutable, AbstractIterator, BuildFrom, Factory}
 
-trait SharedExtensions {
+trait SharedExtensions extends TupleOps {
   private val RemovableLineBreak = "\\n+".r
 
   extension [A](a: A) {
