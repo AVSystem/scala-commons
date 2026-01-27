@@ -18,7 +18,7 @@ object JavaClassNameTest {
 }
 
 class JavaClassNameTest extends AnyFunSuite {
-  def test[T: {ClassTag, JavaClassName, TypeString}](implicit pos: Position): Unit =
+  def test[T: {ClassTag, JavaClassName, TypeString}](using Position): Unit =
     test(TypeString.of[T])(assert(JavaClassName.of[T] == classTag[T].runtimeClass.getName))
 
   test[Any]

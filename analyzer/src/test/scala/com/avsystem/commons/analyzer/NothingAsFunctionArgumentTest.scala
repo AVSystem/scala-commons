@@ -29,7 +29,7 @@ final class NothingAsFunctionArgumentTest extends AnyWordSpec with AnalyzerTest 
         ("Option[_]", "flatMap"),
         ("List[_]", "map"),
         ("Seq[_]", "map"),
-        ("Set[_]", "map"),
+        ("Set[?]", "map"),
         ("Map[_, _]", "map"),
         ("scala.concurrent.Future[_]", "map"),
         ("scala.concurrent.Future[_]", "flatMap"),

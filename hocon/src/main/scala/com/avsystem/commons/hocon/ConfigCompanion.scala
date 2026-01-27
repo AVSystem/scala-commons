@@ -6,7 +6,7 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, GenObjectCodec}
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigRenderOptions}
 
-import java.time.{Period, Duration as JDuration}
+import java.time.{Duration as JDuration, Period}
 import scala.concurrent.duration.*
 import scala.jdk.javaapi.DurationConverters
 

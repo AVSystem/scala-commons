@@ -67,7 +67,7 @@ class JsonStringInputOutputTest
     assert(resBuilder.result() == jsons)
   }
 
-  def roundtrip[T: GenCodec](name: String)(values: T*)(implicit pos: Position): Unit = {
+  def roundtrip[T: GenCodec](name: String)(values: T*)(using Position): Unit = {
     test(name) {
       val serialized = values.map(write[T](_))
       val deserialized = serialized.map(read[T](_))

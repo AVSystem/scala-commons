@@ -13,7 +13,7 @@ import scala.collection.Factory
 
 class ObservableExtensionsTest
   extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ObservableExtensions with ScalaFutures {
-  private implicit val scheduler: Scheduler = Scheduler(RunNowEC)
+  private given Scheduler = Scheduler(RunNowEC)
 
   test("headOptL") {
     forAll { (ints: List[Int]) =>
@@ -76,7 +76,7 @@ class ObservableExtensionsTest
 
   test("toL") {
     forAll { (ints: List[(Int, Int)]) =>
-      def testFactory[T](factory: Factory[(Int, Int), T])(implicit position: Position) =
+      def testFactory[T](factory: Factory[(Int, Int), T])(using Position) =
         Observable.fromIterable(ints).toL(factory).runToFuture.futureValue shouldBe factory.fromSpecific(ints)
 
       testFactory(List)

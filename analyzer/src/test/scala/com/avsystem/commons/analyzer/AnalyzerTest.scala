@@ -26,12 +26,12 @@ trait AnalyzerTest { this: Assertions =>
     run.compileSources(List(new BatchSourceFile("test.scala", source)))
   }
 
-  def assertErrors(errors: Int, source: String)(implicit pos: Position): Unit = {
+  def assertErrors(errors: Int, source: String)(using Position): Unit = {
     compile(source)
     assert(compiler.reporter.errorCount == errors)
   }
 
-  def assertNoErrors(source: String)(implicit pos: Position): Unit = {
+  def assertNoErrors(source: String)(using Position): Unit = {
     compile(source)
     assert(!compiler.reporter.hasErrors)
   }

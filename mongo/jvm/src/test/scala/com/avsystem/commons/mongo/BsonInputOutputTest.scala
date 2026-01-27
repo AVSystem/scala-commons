@@ -154,7 +154,7 @@ class BsonInputOutputTest extends AnyFunSuite with ScalaCheckPropertyChecks {
   private case class Wrap[+T](v: T)
   private object Wrap extends HasPolyGenCodec[Wrap]
 
-  def testRoundtripAndRepr[T: GenCodec](value: T, expectedRepr: BsonValue)(implicit pos: Position): Unit = {
+  def testRoundtripAndRepr[T: GenCodec](value: T, expectedRepr: BsonValue)(using Position): Unit = {
     val repr = BsonValueOutput.write(value)
     assert(repr == expectedRepr)
     assert(BsonValueInput.read[T](repr) == value)

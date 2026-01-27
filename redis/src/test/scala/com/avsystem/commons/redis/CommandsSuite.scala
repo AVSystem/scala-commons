@@ -83,9 +83,9 @@ trait CommandsSuite
   protected implicit class BatchOps[T](batch: RedisBatch[T]) {
     def get: T = Await.result(exec, patienceConfig.timeout.totalNanos.nanos)
     def exec: Future[T] = executor.executeBatch(batch, executionConfig)
-    def assert(pred: T => Boolean)(implicit pos: Position): Unit = CommandsSuite.this.assert(pred(get))
-    def assertEquals(t: T)(implicit pos: Position): Unit = assertResult(t)(get)
-    def intercept[E <: Throwable: ClassTag](implicit pos: Position): E = CommandsSuite.this.intercept[E](get)
+    def assert(pred: T => Boolean)(using Position): Unit = CommandsSuite.this.assert(pred(get))
+    def assertEquals(t: T)(using Position): Unit = assertResult(t)(get)
+    def intercept[E <: Throwable: ClassTag](using Position): E = CommandsSuite.this.intercept[E](get)
   }
 
   protected def cleanupBatch: RedisBatch[Any] =

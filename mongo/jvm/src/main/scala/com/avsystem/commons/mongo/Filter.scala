@@ -46,9 +46,9 @@ object Filter {
 
   def notExists(key: DocKey[_, _]): Bson = F.exists(key.key, false)
 
-  def elemMatch(key: DocKey[_, _ <: BsonArray], filter: Bson): Bson = F.elemMatch(key.key, filter)
+  def elemMatch(key: DocKey[_, ? <: BsonArray], filter: Bson): Bson = F.elemMatch(key.key, filter)
 
-  def contains[A, COL <: Iterable[A]](key: DocKey[COL, _ <: BsonArray], value: A)(implicit fac: Factory[A, COL]): Bson =
+  def contains[A, COL <: Iterable[A]](key: DocKey[COL, ? <: BsonArray], value: A)(implicit fac: Factory[A, COL]): Bson =
     F.eq(key.key, key.codec.toBson((fac.newBuilder += value).result()).asScala.head)
 
   object Limitations {

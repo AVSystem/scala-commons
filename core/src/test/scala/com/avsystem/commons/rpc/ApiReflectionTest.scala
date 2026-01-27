@@ -203,7 +203,7 @@ class ApiReflectionTest extends AnyFunSuite {
           |  def indent(x$1: Int): String
           |  def stripIndent(): String
           |  def translateEscapes(): String
-          |  def transform[R](x$1: java.util.function.Function[_ >: String, _ <: R]): R
+          |  def transform[R](x$1: java.util.function.Function[_ >: String, ? <: R]): R
           |  def chars(): java.util.stream.IntStream
           |  def codePoints(): java.util.stream.IntStream
           |  def toCharArray(): Array[Char]

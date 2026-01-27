@@ -91,7 +91,7 @@ class BsonValueCodecsTest extends AnyFunSuite with BsonGenCodecs {
     assert(array === new BsonArray(JList(new BsonDocument("key", BsonNull.VALUE))))
   }
 
-  def testJsonRoundtrip[T: GenCodec](value: T)(implicit pos: Position): Unit = {
+  def testJsonRoundtrip[T: GenCodec](value: T)(using Position): Unit = {
     val json = JsonStringOutput.write(value)
     val readValue = JsonStringInput.read[T](json)
     assert(value == readValue)
