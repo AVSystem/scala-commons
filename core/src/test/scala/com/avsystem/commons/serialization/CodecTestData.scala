@@ -71,7 +71,7 @@ object CodecTestData {
       case class InnerCaseClass(str: String = "kek") extends InnerBase
     }
 
-    implicit val codec: GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
+    given GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
   }
 
   class mongoId extends AnnotationAggregate {
@@ -113,14 +113,12 @@ object CodecTestData {
 
   object SomeObject {
     @generated def random: Int = 42
-    implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
+    given GenCodec[SomeObject.type] = GenCodec.derived
   }
 
-  case class NoArgCaseClass()
-  object NoArgCaseClass extends HasGenCodec[NoArgCaseClass]
+  case class NoArgCaseClass() derives GenCodec
 
-  case class SingleArgCaseClass(str: String)
-  object SingleArgCaseClass extends HasGenCodec[SingleArgCaseClass]
+  case class SingleArgCaseClass(str: String) derives GenCodec
 
   @transparent
   case class TransparentWrapper(str: String)
@@ -141,25 +139,21 @@ object CodecTestData {
     @name("some.str") def str: String
     @generated def someStrLen: Int = str.length
   }
-  case class SomeCaseClass(str: String, intList: List[Int]) extends HasSomeStr
-  object SomeCaseClass extends HasGenCodec[SomeCaseClass]
-
+  case class SomeCaseClass(str: String, intList: List[Int]) extends HasSomeStr derives GenCodec
   case class Stuff[T](name: String)
   object Stuff {
-    implicit val codec: GenCodec[Stuff[?]] = GenCodec.create(
+    given GenCodec[Stuff[?]] = GenCodec.create(
       in => new Stuff[Any](in.readSimple().readString()),
       (out, value) => out.writeSimple().writeString(value.name),
     )
   }
-  case class CaseClassWithWildcard(stuff: Stuff[?])
-  object CaseClassWithWildcard extends HasGenCodec[CaseClassWithWildcard]
+  case class CaseClassWithWildcard(stuff: Stuff[?]) derives GenCodec
 
   case class CaseClassWithOptionalFields(
     str: String,
     @optionalParam int: Opt[Int],
     @optionalParam bul: Option[Boolean],
-  )
-  object CaseClassWithOptionalFields extends HasGenCodec[CaseClassWithOptionalFields]
+  ) derives GenCodec
 
   case class CaseClassWithAutoOptionalFields(
     str: String,
