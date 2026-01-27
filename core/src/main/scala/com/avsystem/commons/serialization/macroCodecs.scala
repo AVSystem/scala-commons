@@ -6,8 +6,7 @@ import com.avsystem.commons.serialization.GenCodec.*
 
 import scala.annotation.tailrec
 
-class SingletonCodec[T <: Singleton](
-  protected val typeRepr: String,
+class SingletonCodec[T <: Singleton: TypeRepr](
   singletonValue: => T,
 ) extends ErrorReportingCodec[T]
     with OOOFieldsObjectCodec[T] {
@@ -17,83 +16,13 @@ class SingletonCodec[T <: Singleton](
   def writeFields(output: ObjectOutput, value: T): Unit = ()
 }
 
-abstract class ApplyUnapplyCodec[T](
-  protected val typeRepr: String,
+abstract class ApplyUnapplyCodec[T: TypeRepr as typeRepr](
   val nullable: Boolean,
   fieldNames: Array[String],
 ) extends ErrorReportingCodec[T]
     with OOOFieldsObjectCodec[T] {
 
-  protected def dependencies: Array[GenCodec[?]]
-  protected def instantiate(fieldValues: FieldValues): T
-
   private lazy val deps = dependencies
-
-  protected final def writeField[A](output: ObjectOutput, idx: Int, value: A): Unit =
-    writeField(fieldNames(idx), output, value, deps(idx).asInstanceOf[GenCodec[A]])
-
-  protected final def writeField[A](output: ObjectOutput, idx: Int, value: A, transient: A): Unit =
-    if (value != transient) {
-      writeField(output, idx, value)
-    }
-
-  protected final def writeOptField[A, O](output: ObjectOutput, idx: Int, value: O, optionLike: OptionLike.Aux[O, A])
-    : Unit =
-    optionLike.foreach(value, writeField(output, idx, _))
-
-  protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean): Unit =
-    deps(idx) match {
-      case GenCodec.given_GenCodec_Boolean => writeField(fieldNames(idx), output, value)
-      case codec: GenCodec[Boolean @unchecked] => writeField(fieldNames(idx), output, value, codec)
-    }
-
-  protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean, transient: Boolean): Unit =
-    if (value != transient) {
-      writeField(output, idx, value)
-    }
-
-  protected final def writeField(output: ObjectOutput, idx: Int, value: Int): Unit =
-    deps(idx) match {
-      case GenCodec.given_GenCodec_Int => writeField(fieldNames(idx), output, value)
-      case codec: GenCodec[Int @unchecked] => writeField(fieldNames(idx), output, value, codec)
-    }
-
-  protected final def writeField(output: ObjectOutput, idx: Int, value: Int, transient: Int): Unit =
-    if (value != transient) {
-      writeField(output, idx, value)
-    }
-
-  protected final def writeField(output: ObjectOutput, idx: Int, value: Long): Unit =
-    deps(idx) match {
-      case GenCodec.given_GenCodec_Long => writeField(fieldNames(idx), output, value)
-      case codec: GenCodec[Long @unchecked] => writeField(fieldNames(idx), output, value, codec)
-    }
-
-  protected final def writeField(output: ObjectOutput, idx: Int, value: Long, transient: Long): Unit =
-    if (value != transient) {
-      writeField(output, idx, value)
-    }
-
-  protected final def writeField(output: ObjectOutput, idx: Int, value: Double): Unit =
-    deps(idx) match {
-      case GenCodec.given_GenCodec_Double => writeField(fieldNames(idx), output, value)
-      case codec: GenCodec[Double @unchecked] => writeField(fieldNames(idx), output, value, codec)
-    }
-
-  protected final def writeField(output: ObjectOutput, idx: Int, value: Double, transient: Double): Unit =
-    if (value != transient) {
-      writeField(output, idx, value)
-    }
-
-  protected final def getField[A](fieldValues: FieldValues, idx: Int, default: => A): A =
-    fieldValues.getOrElse[A](idx, default)
-
-  protected final def getField[A](fieldValues: FieldValues, idx: Int): A =
-    fieldValues.getOrElse[A](idx, fieldMissing(fieldNames(idx)))
-
-  protected final def getOptField[O, A](fieldValues: FieldValues, idx: Int, optionLike: OptionLike.Aux[O, A]): O =
-    fieldValues.getOpt(idx, optionLike)
-
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = {
     val fieldValues = new FieldValues(fieldNames, deps, typeRepr)
     fieldValues.rewriteFrom(outOfOrderFields)
@@ -102,14 +31,66 @@ abstract class ApplyUnapplyCodec[T](
     }
     instantiate(fieldValues)
   }
+  protected def dependencies: Array[GenCodec[?]]
+  protected def instantiate(fieldValues: FieldValues): T
+  protected final def writeField[A](output: ObjectOutput, idx: Int, value: A): Unit =
+    writeField(fieldNames(idx), output, value, deps(idx).asInstanceOf[GenCodec[A]])
+  protected final def writeField[A](output: ObjectOutput, idx: Int, value: A, transient: A): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+  protected final def writeOptField[A, O](output: ObjectOutput, idx: Int, value: O, optionLike: OptionLike.Aux[O, A])
+    : Unit =
+    optionLike.foreach(value, writeField(output, idx, _))
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean): Unit =
+    deps(idx) match {
+      case GenCodec.given_GenCodec_Boolean => writeField(fieldNames(idx), output, value)
+      case codec: GenCodec[Boolean @unchecked] => writeField(fieldNames(idx), output, value, codec)
+    }
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Boolean, transient: Boolean): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Int): Unit =
+    deps(idx) match {
+      case GenCodec.given_GenCodec_Int => writeField(fieldNames(idx), output, value)
+      case codec: GenCodec[Int @unchecked] => writeField(fieldNames(idx), output, value, codec)
+    }
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Int, transient: Int): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Long): Unit =
+    deps(idx) match {
+      case GenCodec.given_GenCodec_Long => writeField(fieldNames(idx), output, value)
+      case codec: GenCodec[Long @unchecked] => writeField(fieldNames(idx), output, value, codec)
+    }
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Long, transient: Long): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Double): Unit =
+    deps(idx) match {
+      case GenCodec.given_GenCodec_Double => writeField(fieldNames(idx), output, value)
+      case codec: GenCodec[Double @unchecked] => writeField(fieldNames(idx), output, value, codec)
+    }
+  protected final def writeField(output: ObjectOutput, idx: Int, value: Double, transient: Double): Unit =
+    if (value != transient) {
+      writeField(output, idx, value)
+    }
+  protected final def getField[A](fieldValues: FieldValues, idx: Int, default: => A): A =
+    fieldValues.getOrElse[A](idx, default)
+  protected final def getField[A](fieldValues: FieldValues, idx: Int): A =
+    fieldValues.getOrElse[A](idx, fieldMissing(fieldNames(idx)))
+  protected final def getOptField[O, A](fieldValues: FieldValues, idx: Int, optionLike: OptionLike.Aux[O, A]): O =
+    fieldValues.getOpt(idx, optionLike)
 }
 object ApplyUnapplyCodec extends ApplyUnapplyCodecMacros
 
-abstract class ProductCodec[T <: Product](
-  typeRepr: String,
+abstract class ProductCodec[T <: Product: TypeRepr](
   nullable: Boolean,
   fieldNames: Array[String],
-) extends ApplyUnapplyCodec[T](typeRepr, nullable, fieldNames) {
+) extends ApplyUnapplyCodec[T](nullable, fieldNames) {
   def size(value: T, output: Opt[SequentialOutput]): Int = value.productArity
 
   final def writeFields(output: ObjectOutput, value: T): Unit = {
@@ -123,8 +104,7 @@ abstract class ProductCodec[T <: Product](
   }
 }
 
-abstract class SealedHierarchyCodec[T](
-  val typeRepr: String,
+abstract class SealedHierarchyCodec[T: TypeRepr](
   val nullable: Boolean,
   val caseNames: Array[String],
   val cases: Array[Class[?]],
@@ -142,17 +122,14 @@ abstract class SealedHierarchyCodec[T](
     else caseIndexByName(caseName, idx + 1)
 }
 
-abstract class NestedSealedHierarchyCodec[T](
-  typeRepr: String,
+abstract class NestedSealedHierarchyCodec[T: TypeRepr](
   nullable: Boolean,
   caseNames: Array[String],
   cases: Array[Class[?]],
-) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
-
-  def caseDependencies: Array[GenCodec[?]]
+) extends SealedHierarchyCodec[T](nullable, caseNames, cases) {
 
   private lazy val caseDeps = caseDependencies
-
+  def caseDependencies: Array[GenCodec[?]]
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     val caseIdx = caseIndexByValue(value)
     output.declareSize(1)
@@ -170,8 +147,7 @@ abstract class NestedSealedHierarchyCodec[T](
     } else notSingleField(empty = true)
 }
 
-abstract class FlatSealedHierarchyCodec[T](
-  typeRepr: String,
+abstract class FlatSealedHierarchyCodec[T: TypeRepr as typeRepr](
   nullable: Boolean,
   caseNames: Array[String],
   cases: Array[Class[?]],
@@ -180,14 +156,12 @@ abstract class FlatSealedHierarchyCodec[T](
   override val caseFieldName: String,
   val defaultCaseIdx: Int,
   val defaultCaseTransient: Boolean,
-) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
-
-  def oooDependencies: Array[GenCodec[?]]
-  def caseDependencies: Array[OOOFieldsObjectCodec[?]]
+) extends SealedHierarchyCodec[T](nullable, caseNames, cases) {
 
   private lazy val oooDeps = oooDependencies
   private lazy val caseDeps = caseDependencies
-
+  def oooDependencies: Array[GenCodec[?]]
+  def caseDependencies: Array[OOOFieldsObjectCodec[?]]
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     val caseIdx = caseIndexByValue(value)
     val transient = defaultCaseTransient && defaultCaseIdx == caseIdx
@@ -252,8 +226,7 @@ abstract class FlatSealedHierarchyCodec[T](
   }
 }
 
-abstract class ErrorReportingCodec[T] extends GenCodec[T] {
-  protected def typeRepr: String
+abstract class ErrorReportingCodec[T](using val typeRepr: TypeRepr[T]) extends GenCodec[T] {
   protected def caseFieldName: String = DefaultCaseField
 
   // overridable by codecs that want to encode case name as non-string, e.g. in CBOR
@@ -372,8 +345,7 @@ abstract class ErrorReportingCodec[T] extends GenCodec[T] {
     throw UnapplyFailed(typeRepr)
 }
 
-abstract class JavaBuilderBasedCodec[T, B](
-  protected val typeRepr: String,
+abstract class JavaBuilderBasedCodec[T: TypeRepr, B](
   val nullable: Boolean,
   newBuilder: => B,
   build: B => T,
@@ -383,20 +355,11 @@ abstract class JavaBuilderBasedCodec[T, B](
 ) extends ErrorReportingCodec[T]
     with GenCodec.ObjectCodec[T] {
 
-  protected def dependencies: Array[GenCodec[?]]
-
   private lazy val deps = dependencies
-
   private lazy val defaults: Array[Any] = {
     val defaultObj = build(newBuilder)
     fieldGetters.map(getter => getter(defaultObj))
   }
-
-  @tailrec private def fieldIndex(fieldName: String, idx: Int = 0): Int =
-    if (idx >= fieldNames.length) -1
-    else if (fieldNames(idx) == fieldName) idx
-    else fieldIndex(fieldName, idx + 1)
-
   def readObject(input: ObjectInput): T = {
     var builder = newBuilder
     while (input.hasNext) {
@@ -409,7 +372,6 @@ abstract class JavaBuilderBasedCodec[T, B](
     }
     build(builder)
   }
-
   def writeObject(output: ObjectOutput, value: T): Unit = {
     var i = 0
     while (i < fieldNames.length) {
@@ -420,4 +382,9 @@ abstract class JavaBuilderBasedCodec[T, B](
       i += 1
     }
   }
+  protected def dependencies: Array[GenCodec[?]]
+  @tailrec private def fieldIndex(fieldName: String, idx: Int = 0): Int =
+    if (idx >= fieldNames.length) -1
+    else if (fieldNames(idx) == fieldName) idx
+    else fieldIndex(fieldName, idx + 1)
 }

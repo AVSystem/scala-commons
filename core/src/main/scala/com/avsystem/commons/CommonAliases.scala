@@ -18,5 +18,6 @@ trait CommonAliases {
   export scala.annotation.StaticAnnotation
 
   export scala.quoted.{Expr, Quotes, Type}
+  export scala.deriving.Mirror
 }
 object CommonAliases extends CommonAliases
