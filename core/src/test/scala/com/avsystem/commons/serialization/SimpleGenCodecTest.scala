@@ -26,22 +26,22 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   import CodecTestData.*
 
-//  test("java collections") {
-//    testWrite[JCollection[Int]](jArrayList, List(1, 2, 3))
-//    testWrite[JList[Int]](jArrayList, List(1, 2, 3))
-//    testWrite[JArrayList[Int]](jArrayList, List(1, 2, 3))
-//    testWrite[JLinkedList[Int]](jLinkedList, List(1, 2, 3))
-//    testWrite[JSet[Int]](jHashSet, List(1, 2, 3))
-//    testWrite[JHashSet[Int]](jHashSet, List(1, 2, 3))
-//    testWrite[JLinkedHashSet[Int]](jLinkedHashSet, List(1, 2, 3))
-//    testWrite[JSortedSet[Int]](jTreeSet, List(1, 2, 3))
-//    testWrite[JNavigableSet[Int]](jTreeSet, List(1, 2, 3))
-//    testWrite[JTreeSet[Int]](jTreeSet, List(1, 2, 3))
-//    testWrite[JMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-//    testWrite[JHashMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-//    testWrite[JLinkedHashMap[String, Int]](jLinkedHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-//    testWrite[JHashMap[Int, Int]](jIntHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
-//  }
+  test("java collections") {
+    testWrite[JCollection[Int]](jArrayList, List(1, 2, 3))
+    testWrite[JList[Int]](jArrayList, List(1, 2, 3))
+    testWrite[JArrayList[Int]](jArrayList, List(1, 2, 3))
+    testWrite[JLinkedList[Int]](jLinkedList, List(1, 2, 3))
+    testWrite[JSet[Int]](jHashSet, List(1, 2, 3))
+    testWrite[JHashSet[Int]](jHashSet, List(1, 2, 3))
+    testWrite[JLinkedHashSet[Int]](jLinkedHashSet, List(1, 2, 3))
+    testWrite[JSortedSet[Int]](jTreeSet, List(1, 2, 3))
+    testWrite[JNavigableSet[Int]](jTreeSet, List(1, 2, 3))
+    testWrite[JTreeSet[Int]](jTreeSet, List(1, 2, 3))
+    testWrite[JMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWrite[JHashMap[String, Int]](jHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWrite[JLinkedHashMap[String, Int]](jLinkedHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+    testWrite[JHashMap[Int, Int]](jIntHashMap, Map("1" -> 1, "2" -> 2, "3" -> 3))
+  }
 
   test("NoState") {
     type NoState = Nothing { type Dummy = Nothing }
@@ -313,9 +313,9 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   // test type dealiasing during materialization
   type IntTree = Tree[Int]
-  GenCodec.materialize[IntTree]
+//  GenCodec.materialize[IntTree]
   type IntBranch = Branch[Int]
-  GenCodec.materialize[IntBranch]
+//  GenCodec.materialize[IntBranch]
 
   test("recursive generic ADT") {
     testWrite[Tree[Int]](
@@ -424,7 +424,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
       implCodec
     }
   }
-//
+
 //  test("auto materialized key codec") {
 //    testWrite[Map[ThingId, ThingId]](Map(ThingId("a") -> ThingId("b")), Map("a" -> "b"))
 //  }
