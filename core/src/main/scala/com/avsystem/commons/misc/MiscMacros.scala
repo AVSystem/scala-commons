@@ -74,9 +74,6 @@ trait SealedUtilsMacros {
   inline def caseObjectsFor[T]: List[T] = ???
   inline def instancesFor[TC[_], T]: List[TC[T]] = ???
 }
-trait ApplierMacros {
-  inline implicit def materialize[T]: Applier[T] = ???
-}
 trait UnapplierMacros {
   inline implicit def materialize[T]: Unapplier[T] = ???
 }

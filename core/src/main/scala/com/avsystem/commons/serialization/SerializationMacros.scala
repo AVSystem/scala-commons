@@ -5,7 +5,6 @@ import com.avsystem.commons.derivation.AllowImplicitMacro
 import scala.quoted.*
 
 trait GenCodecMacros {
-  inline def materialize[T]: GenCodec[T] = ${ SerializationMacros.materializeImpl[T, GenCodec] }
   inline def fromApplyUnapplyProvider[T](inline applyUnapplyProvider: Any): GenCodec[T] =
     ${ SerializationMacros.fromApplyUnapplyProviderImpl[T, GenCodec]('applyUnapplyProvider) }
   inline def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = ${ SerializationMacros.applyUnapplyCodecImpl[T] }
