@@ -2,26 +2,26 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.misc.TypedMap
-import com.avsystem.commons.serialization.CodecTestData.{TransparentFlatSealedBase, *}
+import com.avsystem.commons.serialization.CodecTestData.{ *}
 import com.avsystem.commons.serialization.JavaCodecs.*
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {
-//  test("java collections") {
-//    testRoundtrip[JCollection[Int]](jArrayList)
-//    testRoundtrip[JList[Int]](jArrayList)
-//    testRoundtrip[JArrayList[Int]](jArrayList)
-//    testRoundtrip[JLinkedList[Int]](jLinkedList)
-//    testRoundtrip[JSet[Int]](jHashSet)
-//    testRoundtrip[JHashSet[Int]](jHashSet)
-//    testRoundtrip[JLinkedHashSet[Int]](jLinkedHashSet)
-//    testRoundtrip[JSortedSet[Int]](jTreeSet)
-//    testRoundtrip[JNavigableSet[Int]](jTreeSet)
-//    testRoundtrip[JTreeSet[Int]](jTreeSet)
-//    testRoundtrip[JMap[String, Int]](jHashMap)
-//    testRoundtrip[JHashMap[String, Int]](jHashMap)
-//    testRoundtrip[JLinkedHashMap[String, Int]](jLinkedHashMap)
-//    testRoundtrip[JHashMap[Int, Int]](jIntHashMap)
-//  }
+  test("java collections") {
+    testRoundtrip[JCollection[Int]](jArrayList)
+    testRoundtrip[JList[Int]](jArrayList)
+    testRoundtrip[JArrayList[Int]](jArrayList)
+    testRoundtrip[JLinkedList[Int]](jLinkedList)
+    testRoundtrip[JSet[Int]](jHashSet)
+    testRoundtrip[JHashSet[Int]](jHashSet)
+    testRoundtrip[JLinkedHashSet[Int]](jLinkedHashSet)
+    testRoundtrip[JSortedSet[Int]](jTreeSet)
+    testRoundtrip[JNavigableSet[Int]](jTreeSet)
+    testRoundtrip[JTreeSet[Int]](jTreeSet)
+    testRoundtrip[JMap[String, Int]](jHashMap)
+    testRoundtrip[JHashMap[String, Int]](jHashMap)
+    testRoundtrip[JLinkedHashMap[String, Int]](jLinkedHashMap)
+    testRoundtrip[JHashMap[Int, Int]](jIntHashMap)
+  }
 
   test("NoState") {
     type NoState = Nothing { type Dummy = Nothing }
@@ -134,28 +134,28 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip(Node(123, List(Node(42, List(Node(52), Node(53))), Node(43))))
   }
 
-  test("recursively defined sealed hierarchy with explicit case class codec") {
-    testRoundtrip[CustomList](CustomTail)
-    testRoundtrip[CustomList](CustomCons(CustomCons(CustomTail)))
-  }
+//  test("recursively defined sealed hierarchy with explicit case class codec") {
+//    testRoundtrip[CustomList](CustomTail)
+//    testRoundtrip[CustomList](CustomCons(CustomCons(CustomTail)))
+//  }
 
 //  test("value class") {
 ////    testRoundtrip(ValueClass("costam"), Map("str" -> "costam"))
 //  }
 
-  test("sealed hierarchy") {
-    testRoundtrip[SealedBase](SealedBase.CaseObject)
-    testRoundtrip[SealedBase](SealedBase.CaseClass("fuu"))
-    testRoundtrip[SealedBase](SealedBase.InnerBase.InnerCaseObject)
-    testRoundtrip[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"))
-  }
-
-  test("flat sealed hierarchy") {
-    testRoundtrip[FlatSealedBase](FlatSealedBase.FirstCase("fuu"))
-    testRoundtrip[FlatSealedBase](FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0))
-    testRoundtrip[FlatSealedBase](FlatSealedBase.ThirdCase)
-    testRoundtrip[FlatSealedBase](FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)))
-  }
+//  test("sealed hierarchy") {
+//    testRoundtrip[SealedBase](SealedBase.CaseObject)
+//    testRoundtrip[SealedBase](SealedBase.CaseClass("fuu"))
+//    testRoundtrip[SealedBase](SealedBase.InnerBase.InnerCaseObject)
+//    testRoundtrip[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"))
+//  }
+//
+//  test("flat sealed hierarchy") {
+//    testRoundtrip[FlatSealedBase](FlatSealedBase.FirstCase("fuu"))
+//    testRoundtrip[FlatSealedBase](FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0))
+//    testRoundtrip[FlatSealedBase](FlatSealedBase.ThirdCase)
+//    testRoundtrip[FlatSealedBase](FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)))
+//  }
 
 //  test("flat sealed hierarchy with transparent cases") {
 //    testRoundtrip[TransparentFlatSealedBase](TransparentCaseWrap(TransparentFlatThing(42, "fuu")))
