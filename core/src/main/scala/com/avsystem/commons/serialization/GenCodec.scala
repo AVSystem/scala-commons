@@ -45,12 +45,45 @@ trait GenCodec[T] {
 object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   final val DefaultCaseField = "_case"
   def apply[T](using codec: GenCodec[T]): GenCodec[T] = codec
-  def derived[T <: Singleton: {ValueOf, TypeRepr}]: GenCodec[T] = new SingletonCodec[T](valueOf[T])
-  inline given derived[A <: Product: {Mirror.ProductOf as m, TypeRepr}]: GenCodec[A] =
-    deriveProduct[A](
-      compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, GenCodec]],
-      compiletime.constValueTuple[m.MirroredElemLabels],
-    )
+  inline def derived[T: TypeRepr]: GenCodec[T] = compiletime.summonFrom {
+    case v: ValueOf[T] => deriveSingleton(v.asInstanceOf[ValueOf[T & Singleton]]).asInstanceOf[GenCodec[T]]
+    case m: Mirror.ProductOf[T & Product] =>
+      deriveProduct(m)(
+        summonInstances[T, m.MirroredElemTypes],
+        compiletime.constValueTuple[m.MirroredElemLabels],
+      ).asInstanceOf[GenCodec[T]]
+    case m: Mirror.SumOf[T] =>
+      deriveSum(m)(
+        summonInstances[T, m.MirroredElemTypes],
+        compiletime.constValueTuple[m.MirroredElemLabels],
+      )
+  }
+
+  inline def summonInstances[T, Elems <: Tuple]: Tuple.Map[Elems, GenCodec] =
+    inline compiletime.erasedValue[Elems] match {
+      case _: (elem *: elems) =>
+        val elemCodec = deriveOrSummon[T, elem]
+        locally{
+          given GenCodec[elem] = elemCodec
+          (elemCodec *: summonInstances[T, elems]).asInstanceOf[Tuple.Map[Elems, GenCodec]]
+        }
+      case _: EmptyTuple => EmptyTuple.asInstanceOf[Tuple.Map[Elems, GenCodec]]
+    }
+
+  inline def deriveOrSummon[T, Elem]: GenCodec[Elem] = inline compiletime.erasedValue[Elem] match {
+    case _: T => deriveRec[T, Elem]
+    case _ => compiletime.summonInline[GenCodec[Elem]]
+  }
+
+  inline def deriveRec[T, Elem]: GenCodec[Elem] = inline compiletime.erasedValue[T] match {
+    case _: Elem =>
+      ???
+//      val deferred = new Deferred[Elem]
+//      val underlying = derived[Elem]
+//      deferred.underlying = underlying
+//      underlying
+    case _ => derived[Elem] // recursive derivation
+  }
 
   inline given [Tup <: Tuple] => GenCodec[Tup] = mkTupleCodec(
     compiletime.summonAll[Tuple.Map[Tup, GenCodec]],
@@ -268,6 +301,8 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
   given [T] => (fallback: Fallback[GenCodec[T]]) => GenCodec[T] =
     fallback.value
+  private def deriveSingleton[T <: Singleton](valueOf: ValueOf[T]): GenCodec[T] =
+    new SingletonCodec[T](valueOf.value)
   private def mkTupleCodec[Tup <: Tuple](elementCodecs: Tuple.Map[Tup, GenCodec]): GenCodec[Tup] = new ListCodec[Tup] {
     override val nullable = true
     override def readList(input: ListInput): Tup =
@@ -288,7 +323,16 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
 
     }
   }
-  private def deriveProduct[T <: Product: {Mirror.ProductOf as m, TypeRepr}](
+  private def deriveSum[T: {TypeRepr}](
+    m: Mirror.SumOf[T],
+  )(
+    instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
+    fieldNames: m.MirroredElemLabels,
+  ): GenCodec[T] = ???
+
+  private def deriveProduct[T <: Product: {TypeRepr}](
+    m: Mirror.ProductOf[T],
+  )(
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
     fieldNames: m.MirroredElemLabels,
   ): GenCodec[T] =
