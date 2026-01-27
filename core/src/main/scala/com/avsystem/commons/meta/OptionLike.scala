@@ -29,42 +29,32 @@ sealed trait OptionLike[O] {
     if (ignoreNulls && (value.asInstanceOf[AnyRef] eq null)) none else some(value)
 }
 
-@bincompat
-sealed trait BaseOptionLike[O, A] extends OptionLike[O] {
-  type Value = A
-}
-
 final class OptionLikeImpl[O, A](
   empty: O,
   someFun: A => O,
   isDefinedFun: O => Boolean,
   getFun: O => A,
   val ignoreNulls: Boolean,
-) extends BaseOptionLike[O, A] {
+) extends OptionLike[O] {
+  type Value = A
   def none: O = empty
   def some(value: A): O = someFun(value)
   def isDefined(opt: O): Boolean = isDefinedFun(opt)
   def get(opt: O): A = getFun(opt)
-
-  @bincompat private[meta] def this(
-    empty: O,
-    someFun: A => O,
-    isDefinedFun: O => Boolean,
-    getFun: O => A,
-  ) = this(empty, someFun, isDefinedFun, getFun, ignoreNulls = true)
 }
 object OptionLike {
-  given[A] => BaseOptionLike[Option[A], A] =
-    new OptionLikeImpl(None, Some(_), _.isDefined, _.get, ignoreNulls = true)
-  given[A] => BaseOptionLike[Opt[A], A] =
-    new OptionLikeImpl(Opt.Empty, Opt.some, _.isDefined, _.get, ignoreNulls = true)
-  given[A] => BaseOptionLike[OptRef[A], A] =
-    new OptionLikeImpl(OptRef.Empty, OptRef.some, _.isDefined, _.get, ignoreNulls = true)
-  given[A] => BaseOptionLike[OptArg[A], A] =
-    new OptionLikeImpl(OptArg.Empty, OptArg.some, _.isDefined, _.get, ignoreNulls = true)
-  given[A] => BaseOptionLike[NOpt[A], A] =
-    new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get, ignoreNulls = false)
   type Aux[O, V] = OptionLike[O] { type Value = V }
+  
+  given[A] => (OptionLike[Option[A]]{type Value = A}) =
+    new OptionLikeImpl(None, Some(_), _.isDefined, _.get, ignoreNulls = true)
+  given[A] => (OptionLike[Opt[A]]{ type Value= A }) =
+    new OptionLikeImpl(Opt.Empty, Opt.some, _.isDefined, _.get, ignoreNulls = true)
+  given[A] => (OptionLike[OptRef[A]]{ type Value= A }) =
+    new OptionLikeImpl(OptRef.Empty, OptRef.some, _.isDefined, _.get, ignoreNulls = true)
+  given[A] => (OptionLike[OptArg[A]]{ type Value= A }) =
+    new OptionLikeImpl(OptArg.Empty, OptArg.some, _.isDefined, _.get, ignoreNulls = true)
+  given[A] => (OptionLike[NOpt[A]]{ type Value= A }) =
+    new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get, ignoreNulls = false)
 }
 
 /**

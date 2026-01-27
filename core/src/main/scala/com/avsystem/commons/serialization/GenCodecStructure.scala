@@ -18,17 +18,7 @@ case class GenParamInfo[T](
   @isAnnotated[transientDefault] transientDefault: Boolean,
   @isAnnotated[outOfOrder] outOfOrder: Boolean,
   @reifyFlags flags: ParamFlags,
-) extends GenInfo[T] {
-
-  @bincompat private[commons] def this(
-    sourceName: String,
-    annotName: Opt[name],
-    hasWhenAbsent: Boolean,
-    transientDefault: Boolean,
-    outOfOrder: Boolean,
-    flags: ParamFlags,
-  ) = this(sourceName, annotName, optional = false, hasWhenAbsent, transientDefault, outOfOrder, flags)
-}
+) extends GenInfo[T]
 
 sealed trait GenCodecStructure[T] extends GenInfo[T] {
   def flags: TypeFlags

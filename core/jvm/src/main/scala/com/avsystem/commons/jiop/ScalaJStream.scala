@@ -44,7 +44,7 @@ final class ScalaJStream[+A](private val jStream: JStream[A @uV]) extends AnyVal
   def anyMatch(predicate: A => Boolean): Boolean =
     jStream.anyMatch(jPredicate(predicate))
 
-  def collect[R, B](collector: JCollector[? >: A, B, R]): R =
+  def collect[R, B](collector: JCollector[? >: A @uV, B, R]): R =
     jStream.collect(collector)
 
   def collect[R](supplier: => R)(accumulator: (R, A) => Any, combiner: (R, R) => Any): R =
