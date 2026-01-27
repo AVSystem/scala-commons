@@ -6,20 +6,11 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, GenObjectCodec}
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigRenderOptions}
 
-import java.time.{Duration as JDuration, Period}
+import java.time.{Period, Duration as JDuration}
 import scala.concurrent.duration.*
 import scala.jdk.javaapi.DurationConverters
 
 trait HoconGenCodecs {
-  given GenCodec[Config] = HoconGenCodecs.ConfigCodec
-  given GenCodec[FiniteDuration] = HoconGenCodecs.FiniteDurationCodec
-  given GenCodec[JDuration] = HoconGenCodecs.JavaDurationCodec
-  given GenCodec[Period] = HoconGenCodecs.PeriodCodec
-  given GenCodec[SizeInBytes] = HoconGenCodecs.SizeInBytesCodec
-  given GenKeyCodec[Class[?]] = HoconGenCodecs.ClassKeyCodec
-  given GenCodec[Class[?]] = HoconGenCodecs.ClassCodec
-}
-object HoconGenCodecs {
   given GenCodec[Config] = GenCodec.nullable(
     input =>
       input.readCustom(ConfigValueMarker).fold(ConfigFactory.parseString(input.readSimple().readString())) {
@@ -65,6 +56,7 @@ object HoconGenCodecs {
   given GenCodec[Class[?]] =
     GenCodec.nullableString(Class.forName, _.getName)
 }
+object HoconGenCodecs extends HoconGenCodecs
 
 object DefaultHoconGenCodecs extends HoconGenCodecs
 
@@ -74,7 +66,7 @@ trait ConfigObjectCodec[T] {
 
 abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
   implicits: Implicits,
-)(implicit instances: MacroInstances[Implicits, ConfigObjectCodec[T]],
+)(using instances: MacroInstances[Implicits, ConfigObjectCodec[T]],
 ) {
   given GenCodec[T] = instances(implicits, this).objectCodec
 
@@ -89,5 +81,5 @@ abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
  * that it automatically imports codecs from [[HoconGenCodecs]] - codecs for third party types often used in
  * configuration.
  */
-abstract class DefaultConfigCompanion[T](implicit macroCodec: MacroInstances[HoconGenCodecs, ConfigObjectCodec[T]])
+abstract class DefaultConfigCompanion[T](using macroCodec: MacroInstances[HoconGenCodecs, ConfigObjectCodec[T]])
   extends AbstractConfigCompanion[HoconGenCodecs, T](DefaultHoconGenCodecs)

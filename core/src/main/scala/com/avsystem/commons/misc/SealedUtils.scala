@@ -4,6 +4,8 @@ package misc
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
+import scala.reflect.Enum
+
 object SealedUtils extends SealedUtilsMacros
 
 /**
