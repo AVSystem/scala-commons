@@ -160,7 +160,7 @@ object OrderedEnum {
     def compare(x: OrderedEnum, y: OrderedEnum): Int = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
   }
 
-  given[T <: OrderedEnum] => Ordering[T] = reusableOrdering.asInstanceOf[Ordering[T]]
+  given [T <: OrderedEnum] => Ordering[T] = reusableOrdering.asInstanceOf[Ordering[T]]
 }
 
 abstract class AbstractNamedEnumCompanion[T <: NamedEnum]

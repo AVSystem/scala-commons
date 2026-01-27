@@ -234,10 +234,10 @@ object CodecTestData {
   case class StringExpr(str: String) extends Expr[String](str)
   case object NullExpr extends Expr[Null](null)
   object BaseExpr {
-    //todo: may be removed?
+    // todo: may be removed?
     given GenCodec[BaseExpr] = GenCodec.materialize
     given GenCodec[Expr[String]] = GenCodec.materialize
-    
+
     @targetName("codec_with_value")
     given [T] => GenCodec[BaseExpr { type Value = T }] = GenCodec.materialize
   }

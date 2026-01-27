@@ -6,7 +6,7 @@ import com.avsystem.commons.JDate
 
 into opaque type TimestampConversions = Long
 
-object TimestampConversions{
+object TimestampConversions {
   def apply(millis: Long): TimestampConversions = millis
 
   extension (millis: TimestampConversions) {

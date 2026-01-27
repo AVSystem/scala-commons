@@ -7,7 +7,7 @@ object OptArg {
   /**
    * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
    */
-  //todo: make it conversion
+  // todo: make it conversion
   implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
 
   // additional implicits to cover most common, safe numeric promotions

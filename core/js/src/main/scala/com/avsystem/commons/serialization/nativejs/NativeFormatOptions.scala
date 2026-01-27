@@ -7,23 +7,26 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
  * Specifies format used by `NativeJsonOutput.writeLong` / `NativeJsonInput.readLong` to represent [[Long]]. JS does
  * not support 64-bit representation.
  */
-enum NativeLongFormat{
-  case RawString, JsNumber, JsBigInt}
+enum NativeLongFormat {
+  case RawString, JsNumber, JsBigInt
+}
 
 /**
  * Specifies format used by `NativeJsonOutput.writeTimestamp` / `NativeJsonInput.readTimestamp` to represent
  * timestamps.
  */
-enum NativeDateFormat{
-  case RawString, JsNumber, JsDate}
+enum NativeDateFormat {
+  case RawString, JsNumber, JsDate
+}
 
 /**
  * Specifies format used by `NativeJsonOutput.writeBigInt` / `NativeJsonInput.readBigInt` to represent [[BigInt]].
  *
  * Note that [[scala.scalajs.js.JSON.stringify]] does not know how to serialize a BigInt and throws an error
  */
-enum NativeBigIntFormat{
-  case RawString, JsBigInt}
+enum NativeBigIntFormat {
+  case RawString, JsBigInt
+}
 
 /**
  * Adjusts format produced by [[NativeJsonOutput]].

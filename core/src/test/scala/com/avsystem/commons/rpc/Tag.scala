@@ -8,7 +8,7 @@ sealed abstract class Tag[T](implicit val codec: GenCodec[T]) extends NamedEnum 
   def name: String = productPrefix
 }
 object Tag extends NamedEnumCompanion[Tag[?]] {
-  //todo: use given
+  // todo: use given
   implicit case object String extends Tag[String]
   implicit case object Int extends Tag[Int]
   val values: ISeq[Tag[?]] = caseObjects

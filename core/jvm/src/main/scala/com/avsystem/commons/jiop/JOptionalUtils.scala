@@ -96,8 +96,7 @@ trait JOptionalUtils {
     def empty: JOptionalLong = ju.OptionalLong.empty()
   }
 
-
-  extension[O[_], T] (opt: O[T])(using optionLike: OptionLike.Aux[O[T], T]) {
+  extension [O[_], T](opt: O[T])(using optionLike: OptionLike.Aux[O[T], T]) {
     def toJOptional: JOptional[T] =
       if (optionLike.isDefined(opt)) ju.Optional.of(optionLike.get(opt)) else ju.Optional.empty()
     def asJava: JOptional[T] = toJOptional

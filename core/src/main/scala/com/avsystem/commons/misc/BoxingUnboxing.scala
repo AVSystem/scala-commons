@@ -14,7 +14,7 @@ object Boxing extends LowPrioBoxing {
   given Boxing[Double, JDouble] = fromImplicitConv
 }
 trait LowPrioBoxing { this: Boxing.type =>
-  given[A] => Boxing[A, A] = Boxing(identity)
+  given [A] => Boxing[A, A] = Boxing(identity)
 }
 
 case class Unboxing[+A, -B](fun: B => A) extends AnyVal
@@ -30,5 +30,5 @@ object Unboxing extends LowPrioUnboxing {
   given Unboxing[Double, JDouble] = fromImplicitConv
 }
 trait LowPrioUnboxing { this: Unboxing.type =>
-  given[A] => Unboxing[A, A] = Unboxing(identity)
+  given [A] => Unboxing[A, A] = Unboxing(identity)
 }

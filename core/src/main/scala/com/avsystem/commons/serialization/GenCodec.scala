@@ -295,7 +295,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
       def nullable: Boolean = wrapped.nullable
     }
 
-    given [R, T] => ( tw: TransparentWrapping[R, T]) => (wrapped: OOOFieldsObjectCodec[R]) => OOOFieldsObjectCodec[T] =
+    given [R, T] => (tw: TransparentWrapping[R, T]) => (wrapped: OOOFieldsObjectCodec[R]) => OOOFieldsObjectCodec[T] =
       new Transformed(wrapped, tw.unwrap, tw.wrap)
   }
 
@@ -492,13 +492,13 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
   given [C[X] <: JCollection[X], T: GenCodec] => (JFactory[T, C[T]]) => GenCodec[C[T] & JCollection[T]] =
     nullableList[C[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
-  given [M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec] =>Factory[(K, V), M[K, V]]=> GenObjectCodec[M[K, V]] =
+  given [M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec] => Factory[(K, V), M[K, V]] => GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.writeToObject(oo),
     )
 
-  given [M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec] =>  JFactory[(K, V), M[K, V]] => GenObjectCodec[M[K, V]] =
+  given [M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec] => JFactory[(K, V), M[K, V]] => GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.asScala.writeToObject(oo),
@@ -568,9 +568,9 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs with GenCodecMac
   )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  given [R, T] => ( tw: TransparentWrapping[R, T]) => (wrappedCodec: GenCodec[R]) => GenCodec[T] =
+  given [R, T] => (tw: TransparentWrapping[R, T]) => (wrappedCodec: GenCodec[R]) => GenCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 
-  given [T] => ( fallback: Fallback[GenCodec[T]]) => GenCodec[T] =
+  given [T] => (fallback: Fallback[GenCodec[T]]) => GenCodec[T] =
     fallback.value
 }

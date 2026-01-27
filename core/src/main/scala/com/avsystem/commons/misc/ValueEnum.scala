@@ -42,6 +42,7 @@ import scala.annotation.implicitNotFound
  *   }}}
  */
 trait ValueEnum extends NamedEnum {
+
   /**
    * Enum value index, starting from 0. Reflects the order in which enum constants are declared in the companion object
    * of the enum class.
@@ -49,6 +50,7 @@ trait ValueEnum extends NamedEnum {
   def ordinal: Int = enumCtx.ordinal
 
   enumCtx.register(this)
+
   /**
    * Name of the `final val` in enum companion object that this enum value is assigned to.
    */
@@ -79,6 +81,7 @@ sealed trait EnumCtx extends Any {
  */
 trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with ValueEnumMacros { companion =>
   type Value = T
+
   /**
    * Holds an indexed sequence of all enum values, ordered by their ordinal (`values(i).ordinal` is always equal to
    * `i`).
@@ -98,7 +101,7 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with Valu
   private var awaitingRegister: Boolean = false
 
   given Ordering[T] = Ordering.by(_.ordinal)
-  given[T:Ordering] => Conversion[T, Ordered[T]] = Ordered.orderingToOrdered(_)
+  given [T: Ordering] => Conversion[T, Ordered[T]] = Ordered.orderingToOrdered(_)
 
   private class Ctx(val valName: String, val ordinal: Int) extends EnumCtx {
     if (awaitingRegister) {
@@ -123,7 +126,7 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with Valu
     }
   }
 
-  given ( valName: ValName) => EnumCtx =    new Ctx(valName.valName, currentOrdinal)
+  given (valName: ValName) => EnumCtx = new Ctx(valName.valName, currentOrdinal)
 }
 
 /**

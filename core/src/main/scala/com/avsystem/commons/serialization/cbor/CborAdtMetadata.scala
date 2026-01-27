@@ -262,6 +262,6 @@ abstract class HasPolyCborCodec[C[_]](
 ) {
   private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing].validate())
 
-  given[T: GenCodec] => GenObjectCodec[C[T]] =
+  given [T: GenCodec] => GenObjectCodec[C[T]] =
     validatedInstances.metadata[T].adjustCodec(validatedInstances.stdCodec[T])
 }

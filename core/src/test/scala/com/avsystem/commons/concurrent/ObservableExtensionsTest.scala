@@ -34,8 +34,11 @@ class ObservableExtensionsTest
   test("findOptL - null handling") {
     Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.some("abc")
     Observable.fromIterable(Seq(null, null)).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.Empty
-    Observable.fromIterable(Seq(null.asInstanceOf[String], "abc", "xyz")).findOptL(_.startsWith("x")).runToFuture.futureValue shouldBe
-      Opt.some("xyz")
+    Observable
+      .fromIterable(Seq(null.asInstanceOf[String], "abc", "xyz"))
+      .findOptL(_.startsWith("x"))
+      .runToFuture
+      .futureValue shouldBe Opt.some("xyz")
   }
 
   test("distinct") {

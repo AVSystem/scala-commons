@@ -15,7 +15,7 @@ sealed trait RawRef {
 sealed trait SimpleRawRef extends RawRef
 
 object RawRef {
-  given  GenCodec[RawRef] = GenCodec.materialize[RawRef]
+  given GenCodec[RawRef] = GenCodec.materialize[RawRef]
   def create[S]: Creator[S] = new Creator[S] {}
   trait Creator[S] extends RawRefCreatorMacros[S]
   case class Field(name: String) extends SimpleRawRef

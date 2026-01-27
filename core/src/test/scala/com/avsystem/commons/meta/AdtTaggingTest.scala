@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.rpc.{RpcTag, caseTag, paramTag, tagged}
+import com.avsystem.commons.rpc.{caseTag, paramTag, tagged, RpcTag}
 import org.scalatest.funsuite.AnyFunSuite
 
 class AdtTaggingTest extends AnyFunSuite {

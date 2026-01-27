@@ -20,7 +20,7 @@ trait HoconGenCodecs {
   given GenCodec[Class[?]] = HoconGenCodecs.ClassCodec
 }
 object HoconGenCodecs {
-    given GenCodec[Config] = GenCodec.nullable(
+  given GenCodec[Config] = GenCodec.nullable(
     input =>
       input.readCustom(ConfigValueMarker).fold(ConfigFactory.parseString(input.readSimple().readString())) {
         case obj: ConfigObject => obj.toConfig

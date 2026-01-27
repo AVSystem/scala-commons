@@ -3,7 +3,7 @@ package rpc
 
 import com.avsystem.commons.meta.infer
 import com.avsystem.commons.misc.TypeString
-import com.avsystem.commons.serialization.{GenCodec, transientDefault, whenAbsent}
+import com.avsystem.commons.serialization.{transientDefault, whenAbsent, GenCodec}
 import org.scalatest.funsuite.AnyFunSuite
 
 class td extends transientDefault
@@ -17,7 +17,7 @@ trait SomeBase {
 
 trait Box[T]
 object Box {
-    given [T: GenCodec] => GenCodec[Box[T]] = ???
+  given [T: GenCodec] => GenCodec[Box[T]] = ???
 }
 
 class annotTypeString[T](@infer val ts: TypeString[T] = RpcMetadata.auto) extends StaticAnnotation

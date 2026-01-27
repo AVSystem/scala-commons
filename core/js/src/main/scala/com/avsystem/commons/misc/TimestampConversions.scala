@@ -7,7 +7,7 @@ into opaque type TimestampConversions = Long
 
 object TimestampConversions {
   def apply(millis: Long): TimestampConversions = millis
-  
+
   extension (millis: TimestampConversions) {
     def toTimestamp: Timestamp = Timestamp(millis)
     def toJsDate: js.Date = new js.Date(millis.toDouble)

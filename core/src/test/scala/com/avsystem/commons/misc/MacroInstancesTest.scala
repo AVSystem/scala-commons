@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.meta.{AdtMetadataCompanion, MacroInstances, infer, reifyAnnot}
+import com.avsystem.commons.meta.{infer, reifyAnnot, AdtMetadataCompanion, MacroInstances}
 import com.avsystem.commons.serialization.GenCodec
 
 object ComplexInstancesTest {

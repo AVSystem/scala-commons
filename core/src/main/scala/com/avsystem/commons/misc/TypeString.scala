@@ -62,7 +62,7 @@ object JavaClassName extends JavaClassNameMacros {
   given JavaClassName[Double] = new JavaClassName("double")
   given JavaClassName[Char] = new JavaClassName("char")
 
-  given[T: JavaClassName] => JavaClassName[Array[T]] = {
+  given [T: JavaClassName] => JavaClassName[Array[T]] = {
     val elementName = JavaClassName.of[T] match {
       case "void" => "Lscala.runtime.BoxedUnit;"
       case "boolean" => "Z"

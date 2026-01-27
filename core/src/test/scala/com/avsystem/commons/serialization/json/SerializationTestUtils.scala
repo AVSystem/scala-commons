@@ -25,7 +25,7 @@ trait SerializationTestUtils {
   case class NestedTestCC(i: Int, t: TestCC, t2: TestCC)
   object NestedTestCC extends HasGenCodec[NestedTestCC]
 
-  case class DeepNestedTestCC(n: TestCC, l: DeepNestedTestCC|Null)
+  case class DeepNestedTestCC(n: TestCC, l: DeepNestedTestCC | Null)
   object DeepNestedTestCC extends HasGenCodec[DeepNestedTestCC]
 
   case class CompleteItem(

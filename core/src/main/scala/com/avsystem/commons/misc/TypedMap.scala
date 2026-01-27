@@ -73,7 +73,7 @@ class TypedMap[K[_]](val raw: Map[K[Any], Any]) extends AnyVal {
 object TypedMap {
   case class Entry[K[_], T](pair: (K[T], T))
   object Entry {
-    given[K[_], T] => Conversion[(K[T], T), Entry[K, T]] = Entry(_)
+    given [K[_], T] => Conversion[(K[T], T), Entry[K, T]] = Entry(_)
   }
 
   def empty[K[_]]: TypedMap[K] =
@@ -89,7 +89,7 @@ object TypedMap {
     def valueCodec[T](key: K[T]): GenCodec[T]
   }
 
-  given[K[_]] => ( keyCodec: GenKeyCodec[K[Any]], codecMapping: GenCodecMapping[K])
+  given [K[_]] => (keyCodec: GenKeyCodec[K[Any]], codecMapping: GenCodecMapping[K])
     => GenObjectCodec[TypedMap[K]] =
     new GenCodec.ObjectCodec[TypedMap[K]] {
       def nullable = false
@@ -124,7 +124,7 @@ trait TypedKey[T] {
   def valueCodec: GenCodec[T]
 }
 object TypedKey {
-  given[K[X] <: TypedKey[X]] => GenCodecMapping[K] =
+  given [K[X] <: TypedKey[X]] => GenCodecMapping[K] =
     new GenCodecMapping[K] {
       def valueCodec[T](key: K[T]): GenCodec[T] = key.valueCodec
     }

@@ -8,7 +8,7 @@ import scala.collection.Factory
 import scala.util.Sorting
 
 trait ObservableExtensions {
-  extension [T]( obs: Observable[T])  {
+  extension [T](obs: Observable[T]) {
 
     /**
      * Creates a [[monix.eval.Task Task]] that upon execution will signal the first generated element of the source

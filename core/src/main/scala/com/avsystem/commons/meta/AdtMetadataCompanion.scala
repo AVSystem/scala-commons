@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package meta
 
-
 /**
  * Base trait for companion objects of ADT metadata classes. ADT means "algebraic data type" which is, in practice, a
  * case class or sealed hierarchy.

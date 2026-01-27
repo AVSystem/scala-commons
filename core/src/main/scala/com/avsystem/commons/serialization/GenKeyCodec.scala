@@ -77,13 +77,13 @@ object GenKeyCodec extends GenKeyCodecMacros {
   given GenKeyCodec[Timestamp] = GenKeyCodec.create(Timestamp.parse, _.toString)
   given GenKeyCodec[Bytes] = GenKeyCodec.create(Bytes.fromBase64(_), _.base64)
 
-  given [E <: Enum[E]] => ( ct: ClassTag[E])=> GenKeyCodec[E] =
+  given [E <: Enum[E]] => (ct: ClassTag[E]) => GenKeyCodec[E] =
     GenKeyCodec.create(
       string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
       e => e.name(),
     )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  given [R, T] => ( tw: TransparentWrapping[R, T]) => (wrappedCodec: GenKeyCodec[R]) => GenKeyCodec[T] =
+  given [R, T] => (tw: TransparentWrapping[R, T]) => (wrappedCodec: GenKeyCodec[R]) => GenKeyCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 }

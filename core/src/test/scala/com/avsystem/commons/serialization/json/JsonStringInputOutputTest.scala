@@ -60,7 +60,7 @@ class JsonStringInputOutputTest
     val input = new JsonStringInput(new JsonReader(jsonList))
     val oi = input.readObject()
     val resBuilder = IListMap.newBuilder[String, String]
-    while (oi.hasNext)  {
+    while (oi.hasNext) {
       val fi = oi.nextField()
       resBuilder += ((fi.fieldName, fi.readRawJson()))
     }
@@ -369,7 +369,7 @@ class JsonStringInputOutputTest
     implicit val arbTree: Arbitrary[DeepNestedTestCC] =
       Arbitrary {
         def sized(sz: Int): Gen[DeepNestedTestCC] =
-          if (sz == 0 ) for (t <- arbitrary[TestCC] )yield DeepNestedTestCC(t, null)
+          if (sz == 0) for (t <- arbitrary[TestCC]) yield DeepNestedTestCC(t, null)
           else
             for {
               t <- arbitrary[TestCC]

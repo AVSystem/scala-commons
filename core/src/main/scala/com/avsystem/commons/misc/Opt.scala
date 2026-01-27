@@ -14,7 +14,7 @@ object Opt {
     if (value != null) new Opt[A](value)
     else throw new NullPointerException
 
-  given[A] => Conversion[Opt[A], IIterable[A]] = _.toList
+  given [A] => Conversion[Opt[A], IIterable[A]] = _.toList
 
   final val Empty: Opt[Nothing] = new Opt(EmptyMarker)
 

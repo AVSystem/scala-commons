@@ -2,17 +2,17 @@ package com.avsystem.commons
 package jiop
 
 trait Java8CollectionUtils {
-  extension [A] (it: JIterator[A]) {
+  extension [A](it: JIterator[A]) {
     def forEachRemaining(code: A => Any): Unit =
       it.forEachRemaining(jConsumer(code))
   }
 
-  extension [A] (it: JIterable[A]) {
+  extension [A](it: JIterable[A]) {
     def forEach(code: A => Any): Unit =
       it.forEach(jConsumer(code))
   }
 
-  extension [A] (coll: JCollection[A]) {
+  extension [A](coll: JCollection[A]) {
     def removeIf(pred: A => Boolean): Unit =
       coll.removeIf(jPredicate(pred))
 
@@ -20,22 +20,22 @@ trait Java8CollectionUtils {
       coll.stream.asScala
   }
 
-  extension [A] (coll: JCollection[Int]) {
+  extension [A](coll: JCollection[Int]) {
     def scalaIntStream: ScalaJIntStream =
       coll.stream.asScalaIntStream
   }
 
-  extension [A] (coll: JCollection[Long]) {
+  extension [A](coll: JCollection[Long]) {
     def scalaLongStream: ScalaJLongStream =
       coll.stream.asScalaLongStream
   }
 
-  extension [A] (coll: JCollection[Double]) {
+  extension [A](coll: JCollection[Double]) {
     def scalaDoubleStream: ScalaJDoubleStream =
       coll.stream.asScalaDoubleStream
   }
 
-  extension [K, V] (map: JMap[K, V]) {
+  extension [K, V](map: JMap[K, V]) {
     def compute(key: K, remappingFunction: (K, V) => V): V =
       map.compute(key, jBiFunction(remappingFunction))
 
@@ -53,6 +53,7 @@ trait Java8CollectionUtils {
 
     def replaceAll(function: (K, V) => V): Unit =
       map.replaceAll(jBiFunction(function))
-  }}
+  }
+}
 
 object Java8CollectionUtils extends Java8CollectionUtils

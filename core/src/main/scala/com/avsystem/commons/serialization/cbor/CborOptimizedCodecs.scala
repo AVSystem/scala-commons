@@ -19,12 +19,22 @@ trait CborOptimizedCodecs {
    * serialization. If the key type has a `GenKeyCodec` then this `GenCodec` behaves exactly the same as the standard
    * one for non-CBOR inputs/outputs.
    */
-  given [M[X, Y] <: BMap[X, Y], K: {GenCodec, OptGenKeyCodec}, V: GenCodec] => (
-     fac: Factory[(K, V), M[K, V]],
+  given [
+    M[X, Y] <: BMap[X, Y],
+    K: {GenCodec, OptGenKeyCodec},
+    V: GenCodec,
+  ]
+    => (
+      fac: Factory[(K, V), M[K, V]],
   ) => GenObjectCodec[M[K, V]] = mkMapCodec(GenCodec.given_GenObjectCodec_M)
 
-  given [M[X, Y] <: JMap[X, Y], K: {GenCodec, OptGenKeyCodec}, V: GenCodec] =>(
-    fac: JFactory[(K, V), M[K, V]],
+  given [
+    M[X, Y] <: JMap[X, Y],
+    K: {GenCodec, OptGenKeyCodec},
+    V: GenCodec,
+  ]
+    => (
+      fac: JFactory[(K, V), M[K, V]],
   ) => GenObjectCodec[M[K, V]] = mkMapCodec(GenCodec.given_GenObjectCodec_M)
 
   private def mkMapCodec[M[X, Y] <: AnyRef, K: {GenCodec, OptGenKeyCodec}, V: GenCodec](
@@ -32,9 +42,9 @@ trait CborOptimizedCodecs {
   )(using fac: Factory[(K, V), M[K, V]],
   ): GenObjectCodec[M[K, V]] = {
     val hexKeysStdCodec = mkStdCodec(using new GenKeyCodec[K] {
-      def read(key: String): K = CborInput.readRawCbor[K](RawCbor.fromHex(key))
-      def write(value: K): String = CborOutput.writeRawCbor[K](value).toString
-    })
+        def read(key: String): K = CborInput.readRawCbor[K](RawCbor.fromHex(key))
+        def write(value: K): String = CborOutput.writeRawCbor[K](value).toString
+      })
 
     val regularStdCodec =
       OptGenKeyCodec[K].keyCodec.map(mkStdCodec(using _)).getOrElse(hexKeysStdCodec)

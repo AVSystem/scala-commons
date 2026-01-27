@@ -11,31 +11,31 @@ trait JStreamUtils {
   type JLongStream = ju.stream.LongStream
   type JCollector[T, A, R] = ju.stream.Collector[T, A, R]
 
-  extension[T](jStream: JStream[T]) {
+  extension [T](jStream: JStream[T]) {
     def asScala: ScalaJStream[T] = new ScalaJStream(jStream)
   }
 
-  extension(jStream: JStream[Int]) {
+  extension (jStream: JStream[Int]) {
     def asScalaIntStream: ScalaJIntStream = jStream.asScala.asIntStream
   }
 
-  extension(jStream: JStream[Long]) {
+  extension (jStream: JStream[Long]) {
     def asScalaLongStream: ScalaJLongStream = jStream.asScala.asLongStream
   }
 
-  extension(jStream: JStream[Double]) {
+  extension (jStream: JStream[Double]) {
     def asScalaDoubleStream: ScalaJDoubleStream = jStream.asScala.asDoubleStream
   }
 
-  extension(jStream: JDoubleStream) {
+  extension (jStream: JDoubleStream) {
     def asScala: ScalaJDoubleStream = new ScalaJDoubleStream(jStream)
   }
 
-  extension(jStream: JIntStream) {
+  extension (jStream: JIntStream) {
     def asScala: ScalaJIntStream = new ScalaJIntStream(jStream)
   }
 
-  extension(jStream: JLongStream) {
+  extension (jStream: JLongStream) {
     def asScala: ScalaJLongStream = new ScalaJLongStream(jStream)
   }
 }

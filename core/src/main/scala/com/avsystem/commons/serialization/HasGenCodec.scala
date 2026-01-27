@@ -116,7 +116,7 @@ trait GadtCodec[C[_]] {
  * provides a [[GenCodec]] for wildcard, i.e. `C[_]`.
  */
 abstract class HasGadtCodec[C[_]](using macroCodec: MacroInstances[Unit, GadtCodec[C]]) {
-  given wildcardCodec:GenCodec[C[Any]] = macroCodec((), this).codec[Any]
+  given wildcardCodec: GenCodec[C[Any]] = macroCodec((), this).codec[Any]
   given [T] => GenCodec[C[T]] = wildcardCodec.asInstanceOf[GenCodec[C[T]]]
 }
 

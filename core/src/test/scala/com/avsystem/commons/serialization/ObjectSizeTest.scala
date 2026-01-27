@@ -67,17 +67,32 @@ class ObjectSizeTest extends AnyFunSuite {
     assert(RecordWithDefaults.given_ApplyUnapplyCodec_T.size(RecordWithDefaults(), defaultIgnoringOutput.opt) == 3)
     assert(RecordWithDefaults.given_ApplyUnapplyCodec_T.size(RecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 3)
     assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 3)
-    assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts("abc".opt, true.opt), defaultIgnoringOutput.opt) == 3)
+    assert(
+      RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts("abc".opt, true.opt), defaultIgnoringOutput.opt) == 3,
+    )
     assert(RecordWithOpts.given_ApplyUnapplyCodec_T.size(RecordWithOpts(), defaultIgnoringOutput.opt) == 2)
     assert(
-      SingleFieldRecordWithOpts.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithOpts(), defaultIgnoringOutput.opt) == 0,
+      SingleFieldRecordWithOpts.given_ApplyUnapplyCodec_T
+        .size(SingleFieldRecordWithOpts(), defaultIgnoringOutput.opt) == 0,
     ) // @optionalParam field should NOT be counted
-    assert(SingleFieldRecordWithOpts.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 1)
+    assert(
+      SingleFieldRecordWithOpts.given_ApplyUnapplyCodec_T
+        .size(SingleFieldRecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 1,
+    )
     assert(
       SingleFieldRecordWithTD.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithTD(), defaultIgnoringOutput.opt) == 1,
     ) // @transientDefault field should be counted
-    assert(SingleFieldRecordWithTD.given_ApplyUnapplyCodec_T.size(SingleFieldRecordWithTD("haha"), defaultIgnoringOutput.opt) == 1)
-    assert(CustomRecordWithDefaults.given_ApplyUnapplyCodec_T.size(CustomRecordWithDefaults(), defaultIgnoringOutput.opt) == 2)
-    assert(CustomRecordWithDefaults.given_ApplyUnapplyCodec_T.size(CustomRecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 2)
+    assert(
+      SingleFieldRecordWithTD.given_ApplyUnapplyCodec_T
+        .size(SingleFieldRecordWithTD("haha"), defaultIgnoringOutput.opt) == 1,
+    )
+    assert(
+      CustomRecordWithDefaults.given_ApplyUnapplyCodec_T.size(CustomRecordWithDefaults(), defaultIgnoringOutput.opt) ==
+        2,
+    )
+    assert(
+      CustomRecordWithDefaults.given_ApplyUnapplyCodec_T
+        .size(CustomRecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 2,
+    )
   }
 }
