@@ -4,8 +4,8 @@ package serialization.cbor
 import com.avsystem.commons.annotation.{positioned, AnnotationAggregate}
 import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.ValueOf
-import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 import com.avsystem.commons.serialization.*
+import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 
 /**
  * Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
@@ -69,6 +69,10 @@ sealed trait CborAdtMetadata[T] extends TypedMetadata[T] {
 }
 
 object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
+  sealed trait Case[T] extends CborAdtMetadata[T] {
+    def keyInfo: CborKeyInfo[T]
+    def ensureUniqueKeys(discriminatorKey: Opt[RawCbor]): Unit
+  }
   final class CborKeyInfo[T](
     @reifyName val sourceName: String,
     @optional @reifyAnnot val nameAnnot: Opt[name],
@@ -77,7 +81,6 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
     val stringKey: String = nameAnnot.fold(sourceName)(_.name)
     val rawKey: RawCbor = cborKey.fold(CborOutput.writeRawCbor(stringKey))(_.rawKey)
   }
-
   @positioned(positioned.here)
   final class Union[T](
     @reifyName val sourceName: String,
@@ -96,11 +99,10 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
       case nestedCodec: NestedSealedHierarchyCodec[T] =>
         val codecWithAdjustedCaseCodecs =
           new NestedSealedHierarchyCodec[T](
-            nestedCodec.typeRepr,
             nestedCodec.nullable,
             nestedCodec.caseNames,
             nestedCodec.cases,
-          ) {
+          )(using nestedCodec.typeRepr) {
             def caseDependencies: Array[GenCodec[?]] =
               (nestedCodec.caseDependencies.iterator zip union.cases.iterator).map {
                 case (caseCodec: ApplyUnapplyCodec[Any @unchecked], theCase: CborAdtMetadata.Record[Any @unchecked]) =>
@@ -114,7 +116,6 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
       case flatCodec: FlatSealedHierarchyCodec[T] =>
         val codecWithAdjustedCaseCodecs =
           new FlatSealedHierarchyCodec[T](
-            flatCodec.typeRepr,
             flatCodec.nullable,
             flatCodec.caseNames,
             flatCodec.cases,
@@ -123,7 +124,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
             flatCodec.caseFieldName,
             flatCodec.defaultCaseIdx,
             flatCodec.defaultCaseTransient,
-          ) {
+          )(using flatCodec.typeRepr) {
             override protected def doWriteCaseName(output: Output, caseName: String): Unit =
               if (!output.writeCustom(RawCbor, caseNamesKeyCodec.rawKeys(caseName))) {
                 super.doWriteCaseName(output, caseName)
@@ -161,12 +162,6 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
       cases.foreach(_.ensureUniqueKeys(discriminator.map(_.rawKey)))
     }
   }
-
-  sealed trait Case[T] extends CborAdtMetadata[T] {
-    def keyInfo: CborKeyInfo[T]
-    def ensureUniqueKeys(discriminatorKey: Opt[RawCbor]): Unit
-  }
-
   @positioned(positioned.here)
   final class Record[T](
     @composite val keyInfo: CborKeyInfo[T],
