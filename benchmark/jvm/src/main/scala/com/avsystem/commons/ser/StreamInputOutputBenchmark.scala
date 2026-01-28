@@ -7,7 +7,6 @@ import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, State, Warmup}
 import org.openjdk.jmh.infra.Blackhole
 
-
 case class Toplevel(int: Int, nested: Nested, str: String)
 case class Nested(list: List[Int], int: Int)
 
@@ -83,7 +82,7 @@ class StreamInputOutputBenchmark {
       listInput.nextElement().readSimple().readInt(),
       listInput.nextElement().readSimple().readInt(),
       listInput.nextElement().readSimple().readInt(),
-      listInput.nextElement().readSimple().readInt()
+      listInput.nextElement().readSimple().readInt(),
     )
     listInput.hasNext
     val intNested = nestedInput.nextField().readSimple().readInt()
