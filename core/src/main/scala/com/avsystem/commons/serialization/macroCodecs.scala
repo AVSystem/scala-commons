@@ -85,7 +85,9 @@ abstract class ApplyUnapplyCodec[T: TypeRepr as typeRepr](
   protected final def getOptField[O, A](fieldValues: FieldValues, idx: Int, optionLike: OptionLike.Aux[O, A]): O =
     fieldValues.getOpt(idx, optionLike)
 }
-object ApplyUnapplyCodec extends ApplyUnapplyCodecMacros
+object ApplyUnapplyCodec {
+  def derived[T]: ApplyUnapplyCodec[T] = ???
+}
 
 abstract class ProductCodec[T <: Product: TypeRepr](
   nullable: Boolean,

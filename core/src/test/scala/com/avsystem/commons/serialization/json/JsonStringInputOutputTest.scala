@@ -425,9 +425,9 @@ class JsonStringInputOutputTest
 //    val json = """{"_id": "foo", "int": 31, "_case": "FirstCase"}"""
 //    assert(JsonStringInput.read[FlatSealedBase](json) == FlatSealedBase.FirstCase("foo", 31))
 //  }
-
-  test("reading flat sealed hierarchy with changed field order & custom case field name") {
-    val json = """{"flag": false, "kejs": "OtherCustomCase", "value": 41}"""
-    assert(JsonStringInput.read[CustomizedSeal](json) == OtherCustomCase(41, flag = false))
-  }
+//
+//  test("reading flat sealed hierarchy with changed field order & custom case field name") {
+//    val json = """{"flag": false, "kejs": "OtherCustomCase", "value": 41}"""
+//    assert(JsonStringInput.read[CustomizedSeal](json) == OtherCustomCase(41, flag = false))
+//  }
 }

@@ -51,13 +51,13 @@ object CodecTestData {
     map
   }
   sealed trait SealedBase
-  @flatten sealed trait FlatSealedBase{
+  @flatten sealed trait FlatSealedBase {
     @mongoId def id: String
     @generated
     @name("upper_id") def upperId: String = id.toUpperCase
   }
   @flatten sealed trait TransparentFlatSealedBase
-  sealed trait CustomList 
+  sealed trait CustomList derives GenCodec
   sealed trait BaseExpr {
     type Value
     def value: Value
@@ -65,7 +65,7 @@ object CodecTestData {
   @flatten sealed trait RecExpr[+T]
   @flatten sealed trait PureGadtExpr[T]
   sealed trait Tree[T]
-  sealed trait Enumz
+  sealed trait Enumz derives GenCodec
   sealed trait KeyEnumz
   @flatten("kejs") sealed trait CustomizedSeal
   @flatten
@@ -141,7 +141,7 @@ object CodecTestData {
   class OnlyVarargsCaseClassLike(val strings: Seq[String]) extends Wrapper[OnlyVarargsCaseClassLike](strings)
   case class HasDefaults(@transientDefault int: Int = 42, @transientDefault @whenAbsent("dafuq") str: String = "kek")
     derives GenCodec
-  @transparent case class CustomCons(tail: CustomList) extends CustomList 
+  @transparent case class CustomCons(tail: CustomList) extends CustomList
   case class IntExpr(int: Int) extends Expr[Int](int)
   case class StringExpr(str: String) extends Expr[String](str)
   case class RecBounded(int: Int) extends RecBound[RecBounded]
@@ -181,14 +181,14 @@ object CodecTestData {
     a21: String,
     a22: String,
     a23: String,
-  )
+  )derives GenCodec
   case class DepCase(str: String) extends Dep
   case class HasCollCase(coll: Seq[Dep]) extends HasColl
   case class StepOne(stepTwo: StepTwo)
   case class StepTwo(stepOne: Opt[StepOne])
   case class OuterThing(inner: InnerThing)
   case class InnerThing(recursiveThing: Opt[OuterThing])
-  case class Generator(value: String) extends GeneratorBase {
+  case class Generator(value: String) extends GeneratorBase derives GenCodec{
     @generated val valUpper: String = value.toUpperCase
     @(generated @getter)
     val getterUpper: String = value.toUpperCase
@@ -275,10 +275,7 @@ object CodecTestData {
     private def mkCodec[T <: RecBound[T]: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
   }
   case object NullLiteral extends PureGadtExpr[Null]
-  object PureGadtExpr extends HasGadtCodec[PureGadtExpr]
-  object Tree extends HasPolyGenCodec[Tree]
   object Enumz {
-    given GenCodec[Enumz] = GenCodec.materialize[Enumz]
     @name("Primary")
     case object First extends Enumz
     case object Second extends Enumz
@@ -298,9 +295,6 @@ object CodecTestData {
     case object BooleanKey extends SealedKey[Boolean]
   }
   case object CustomizedObjekt extends CustomizedSeal
-  object CustomizedSeal extends HasGenCodec[CustomizedSeal]
-  object ItsOverTwentyTwo extends HasGenCodec[ItsOverTwentyTwo]
-  object HasColl extends HasRecursiveGenCodec[HasColl]
 
 //  @transparent
 //  case class ThingId(value: String)
@@ -308,7 +302,6 @@ object CodecTestData {
 
   locally {
     case class LocalStuff()
-    object LocalStuff extends HasGenCodec[LocalStuff]()(using MacroInstances.materialize)
   }
   object SealedRefined {
     given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.materialize
@@ -316,6 +309,4 @@ object CodecTestData {
       type X = Type
     }
   }
-  object OuterThing extends HasRecursiveGenCodec[OuterThing]
-  object Generator extends HasGenCodec[Generator]
 }

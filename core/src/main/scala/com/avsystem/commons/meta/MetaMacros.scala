@@ -40,12 +40,6 @@ trait BoundedMetadataCompanionLazyMacros[Hi, Lo <: Hi, M[_ >: Lo <: Hi], Lazy[_ 
   }
 }
 
-trait MacroInstancesMacros {
-  inline implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] = ${
-    MetaMacros.macroInstancesImpl[Implicits, Instances]
-  }
-}
-
 object MetaMacros {
   def valueImpl[T: Type](using Quotes): Expr[T] = '{ ??? }.asInstanceOf[Expr[T]]
   def lazyMetadataImpl(using Quotes): Expr[Nothing] = '{ ??? }

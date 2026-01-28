@@ -78,21 +78,12 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
 
   inline def deriveRec[T, Elem]: GenCodec[Elem] = inline compiletime.erasedValue[T] match {
     case _: Elem =>
-      ???
-//      val deferred = new Deferred[Elem]
-//      val underlying = derived[Elem]
-//      deferred.underlying = underlying
-//      underlying
+      val deferred = new Deferred[Elem]
+      val underlying = derived[Elem]
+      deferred.underlying = underlying
+      underlying
     case _ => derived[Elem] // recursive derivation
   }
-
-  private inline def deriveTransparentWrapper[T]: GenCodec[T] = ${ deriveTransparentWrapperImpl[T]}
-  private def deriveTransparentWrapperImpl[T: Type](using quotes: Quotes): Expr[GenCodec[T]] = {
-
-
-    '{ ??? }
-  }
-
   inline given [Tup <: Tuple] => GenCodec[Tup] = mkTupleCodec(
     compiletime.summonAll[Tuple.Map[Tup, GenCodec]],
   )
@@ -309,6 +300,35 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
   given [T] => (fallback: Fallback[GenCodec[T]]) => GenCodec[T] =
     fallback.value
+  inline private def deriveTransparentWrapper[T]: GenCodec[T] = ${ deriveTransparentWrapperImpl[T] }
+  private def deriveTransparentWrapperImpl[T: Type](using quotes: Quotes): Expr[GenCodec[T]] = {
+    import quotes.reflect.*
+    TypeRepr.of[T].typeSymbol.caseFields match {
+      case field :: Nil =>
+        field.typeRef.asType match {
+          case '[fieldType] =>
+            val unwrapExpr = Lambda(
+              Symbol.spliceOwner,
+              MethodType(List("x"))(_ => List(TypeRepr.of[T]), _ => TypeRepr.of[fieldType]),
+              (sym, args) => args.head.asInstanceOf[Term].select(field),
+            ).asExprOf[T => fieldType]
+
+            val wrapExpr = Lambda(
+              Symbol.spliceOwner,
+              MethodType(List("x"))(_ => List(TypeRepr.of[fieldType]), _ => TypeRepr.of[T]),
+              (sym, args) =>
+                New(TypeTree.of[T])
+                  .select(TypeRepr.of[T].typeSymbol.primaryConstructor)
+                  .appliedTo(args.head.asInstanceOf[Term]),
+            ).asExprOf[fieldType => T]
+
+            '{ new Transformed[T, fieldType](compiletime.summonInline[GenCodec[fieldType]], $unwrapExpr, $wrapExpr) }
+        }
+
+      case _ =>
+        report.errorAndAbort(s"Transparent wrapper ${TypeRepr.of[T]} must have exactly one field")
+    }
+  }
   private def deriveSingleton[T <: Singleton](valueOf: ValueOf[T]): GenCodec[T] =
     new SingletonCodec[T](valueOf.value)
   private def mkTupleCodec[Tup <: Tuple](elementCodecs: Tuple.Map[Tup, GenCodec]): GenCodec[Tup] = new ListCodec[Tup] {

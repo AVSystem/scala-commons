@@ -38,7 +38,94 @@ trait MacroInstances[Implicits, Instances] {
   def apply(implicits: Implicits, companion: Any): Instances
 }
 
-object MacroInstances extends MacroInstancesMacros {
+object MacroInstances {
+  inline given materialize[I, S]: MacroInstances[I, S] = ???
+
+//  macroInstances: Tree = {
+  //    val resultTpe = c.macroApplication.tpe
+  //    val applySig = resultTpe.member(TermName("apply")).typeSignatureIn(resultTpe)
+  //    val implicitsTpe = applySig.paramLists.head.head.typeSignature
+  //    val instancesTpe = applySig.finalResultType
+  //
+  //    val instTs = instancesTpe.typeSymbol
+  //    if (!(instTs.isClass && instTs.isAbstract)) {
+  //      abort(s"Expected trait or abstract class type, got $instancesTpe")
+  //    }
+  //
+  //    val instancesMethods = instancesTpe.members.iterator
+  //      .filter(m => m.isAbstract && m.isMethod && !m.asTerm.isSetter)
+  //      .map(_.asMethod)
+  //      .toList
+  //      .reverse
+  //
+  //    val CompanionParamName = c.freshName(TermName("companion"))
+  //
+  //    def impl(singleMethod: Option[Symbol]): Tree = {
+  //      val impls = instancesMethods.map { m =>
+  //        val sig = m.typeSignatureIn(instancesTpe)
+  //        val resultTpe = sig.finalResultType.dealias
+  //
+  //        val materializer =
+  //          if (singleMethod.exists(_ != m))
+  //            q"$PredefObj.???"
+  //          else
+  //            findAnnotation(m, MaterializeWithAT) match {
+  //              case Some(annot) =>
+  //                val errorPos = annot.errorPos.getOrElse(c.enclosingPosition)
+  //                annot.tree match {
+  //                  case Apply(_, List(prefix, macroNameTree)) =>
+  //                    val macroName = macroNameTree match {
+  //                      case StringLiteral(name) => name
+  //                      case t if t.symbol.isSynthetic && t.symbol.name.decodedName == TermName("<init>$default$2") =>
+  //                        "materialize"
+  //                      case _ => abortAt("expected string literal as second argument of @materializeWith", errorPos)
+  //                    }
+  //                    q"$prefix.${TermName(macroName)}"
+  //                  case _ =>
+  //                    abortAt("bad @materializeWith annotation", errorPos)
+  //                }
+  //              case None =>
+  //                val resultCompanion = typedCompanionOf(resultTpe).getOrElse(
+  //                  abort(s"$resultTpe has no companion object with `materialize` macro")
+  //                )
+  //                q"$resultCompanion.materialize"
+  //            }
+  //
+  //        val instTpeTree = treeForType(sig.finalResultType)
+  //        if (!m.isGetter) {
+  //          val tparamDefs = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
+  //          val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
+  //          val argss = sig.paramLists match {
+  //            case List(Nil) => Nil
+  //            case paramss => paramss.filterNot(_.exists(_.isImplicit)).map(_.map(s => q"${s.name.toTermName}"))
+  //          }
+  //          q"def ${m.name}[..$tparamDefs](...$paramDefs): $instTpeTree = $materializer(...$argss)"
+  //        } else if (m.isVar || m.setter != NoSymbol)
+  //          q"var ${m.name}: $instTpeTree = $materializer"
+  //        else
+  //          q"val ${m.name}: $instTpeTree = $materializer"
+  //      }
+  //
+  //      val implicitsName = c.freshName(TermName("implicits"))
+  //      def implicitImports(tpe: Type, expr: Tree): List[Tree] = {
+  //        val dtpe = tpe.dealias
+  //        if (dtpe =:= typeOf[Unit]) Nil
+  //        else if (definitions.TupleClass.seq.contains(dtpe.typeSymbol))
+  //          dtpe.typeArgs.zipWithIndex.flatMap { case (ctpe, idx) =>
+  //            implicitImports(ctpe, q"$expr.${TermName(s"_${idx + 1}")}")
+  //          }
+  //        else List(q"import $expr._")
+  //      }
+  //
+  //      q"""
+  //        new $resultTpe {
+  //          def apply($implicitsName: $implicitsTpe, $CompanionParamName: Any): $instancesTpe = {
+  //            ..${implicitImports(implicitsTpe, Ident(implicitsName))}
+  //            new $instancesTpe { ..$impls; () }
+  //          }
+  //        }
+  //       """
+  //    }
 
   /**
    * Annotation which may be applied on methods of `Implicits` trait in [[MacroInstances]] to instruct

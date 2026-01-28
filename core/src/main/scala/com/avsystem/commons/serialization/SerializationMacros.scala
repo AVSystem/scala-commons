@@ -24,15 +24,6 @@ trait WhenAbsentMacros {
   def value[T]: T = ???
 }
 
-trait GenObjectCodecMacros {
-  inline def materialize[T]: GenObjectCodec[T] = ${ SerializationMacros.materializeImpl[T, GenObjectCodec] }
-  inline def fromApplyUnapplyProvider[T](inline applyUnapplyProvider: Any): GenObjectCodec[T] =
-    ${ SerializationMacros.fromApplyUnapplyProviderImpl[T, GenObjectCodec]('applyUnapplyProvider) }
-}
-
-trait ApplyUnapplyCodecMacros {
-  inline def materialize[T]: ApplyUnapplyCodec[T] = ${ SerializationMacros.materializeImpl[T, ApplyUnapplyCodec] }
-}
 
 trait GenKeyCodecMacros {
   def forSealedEnum[T]: GenKeyCodec[T] = ???

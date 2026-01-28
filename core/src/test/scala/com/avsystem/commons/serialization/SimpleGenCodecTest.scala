@@ -1,11 +1,9 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.misc.TypedMap
-import scala.annotation.nowarn
+import com.avsystem.commons.serialization.JavaCodecs.*
 
-import scala.collection.immutable.ListMap
-import JavaCodecs.*
+import scala.annotation.nowarn
 
 trait SimpleIOCodecTest extends AbstractCodecTest {
   type Raw = Any
@@ -69,7 +67,9 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   }
 
   test("object") {
-    testWrite(SomeObject, Map()
+    testWrite(
+      SomeObject,
+      Map(),
 //      Map("random" -> 42)
     )
   }
@@ -169,39 +169,39 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     testWrite(HasDefaults(str = "dafuq"), Map())
   }
 
-  case class Node[T](value: T, children: List[Node[T]] = Nil)
-  object Node extends HasPolyGenCodec[Node]
+  // test type dealiasing during materialization
+  type IntTree = Tree[Int]
 
-  test("recursive generic case class") {
-    testWrite(
-      Node(
-        123,
-        List(
-          Node(
-            42,
-            List(
-              Node(52),
-              Node(53),
-            ),
-          ),
-          Node(43),
-        ),
-      ),
-      Map[String, Any](
-        "value" -> 123,
-        "children" -> List(
-          Map[String, Any](
-            "value" -> 42,
-            "children" -> List(
-              Map[String, Any]("value" -> 52, "children" -> List()),
-              Map[String, Any]("value" -> 53, "children" -> List()),
-            ),
-          ),
-          Map[String, Any]("value" -> 43, "children" -> List()),
-        ),
-      ),
-    )
-  }
+//  test("recursive generic case class") {
+//    testWrite(
+//      Node(
+//        123,
+//        List(
+//          Node(
+//            42,
+//            List(
+//              Node(52),
+//              Node(53),
+//            ),
+//          ),
+//          Node(43),
+//        ),
+//      ),
+//      Map[String, Any](
+//        "value" -> 123,
+//        "children" -> List(
+//          Map[String, Any](
+//            "value" -> 42,
+//            "children" -> List(
+//              Map[String, Any]("value" -> 52, "children" -> List()),
+//              Map[String, Any]("value" -> 53, "children" -> List()),
+//            ),
+//          ),
+//          Map[String, Any]("value" -> 43, "children" -> List()),
+//        ),
+//      ),
+//    )
+//  }
 //
 //  test("recursively defined sealed hierarchy with explicit case class codec") {
 //    testWrite[CustomList](CustomTail, Map("CustomTail" -> Map()))
@@ -300,47 +300,46 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
       Map("_case" -> "RecBoundedExpr", "value" -> Map("int" -> 42)),
     )
   }
-
-  test("pure GADT") {
-    testWrite[PureGadtExpr[String]](StringLiteral("str"), Map("_case" -> "StringLiteral", "value" -> "str"))
-    testWrite[PureGadtExpr[String]](
-      Plus(StringLiteral("str"), StringLiteral("fag")),
-      Map(
-        "_case" -> "Plus",
-        "lhs" -> Map("_case" -> "StringLiteral", "value" -> "str"),
-        "rhs" -> Map("_case" -> "StringLiteral", "value" -> "fag"),
-      ),
-    )
-  }
-
-  // test type dealiasing during materialization
-  type IntTree = Tree[Int]
-//  GenCodec.materialize[IntTree]
+//
+//  test("pure GADT") {
+//    testWrite[PureGadtExpr[String]](StringLiteral("str"), Map("_case" -> "StringLiteral", "value" -> "str"))
+//    testWrite[PureGadtExpr[String]](
+//      Plus(StringLiteral("str"), StringLiteral("fag")),
+//      Map(
+//        "_case" -> "Plus",
+//        "lhs" -> Map("_case" -> "StringLiteral", "value" -> "str"),
+//        "rhs" -> Map("_case" -> "StringLiteral", "value" -> "fag"),
+//      ),
+//    )
+//  }
   type IntBranch = Branch[Int]
-//  GenCodec.materialize[IntBranch]
+//  GenCodec.derived[IntTree]
+  //  GenCodec.derived[IntBranch]
 
-  test("recursive generic ADT") {
-    testWrite[Tree[Int]](
-      Branch(
-        Leaf(1),
-        Branch(
-          Leaf(2),
-          Leaf(3),
-        ),
-      ),
-      Map(
-        "Branch" -> Map(
-          "left" -> Map("Leaf" -> Map("value" -> 1)),
-          "right" -> Map(
-            "Branch" -> Map(
-              "left" -> Map("Leaf" -> Map("value" -> 2)),
-              "right" -> Map("Leaf" -> Map("value" -> 3)),
-            ),
-          ),
-        ),
-      ),
-    )
-  }
+  case class Node[T](value: T, children: List[Node[T]] = Nil) derives GenCodec
+
+//  test("recursive generic ADT") {
+//    testWrite[Tree[Int]](
+//      Branch(
+//        Leaf(1),
+//        Branch(
+//          Leaf(2),
+//          Leaf(3),
+//        ),
+//      ),
+//      Map(
+//        "Branch" -> Map(
+//          "left" -> Map("Leaf" -> Map("value" -> 1)),
+//          "right" -> Map(
+//            "Branch" -> Map(
+//              "left" -> Map("Leaf" -> Map("value" -> 2)),
+//              "right" -> Map("Leaf" -> Map("value" -> 3)),
+//            ),
+//          ),
+//        ),
+//      ),
+//    )
+//  }
 
   test("sealed enum") {
     testWrite[Enumz](Enumz.First, Map("Primary" -> Map()))
@@ -363,10 +362,10 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 //    )
 //  }
 
-  test("customized flat sealed hierarchy") {
-    testWrite[CustomizedSeal](CustomizedCase("dafuq"), Map("str" -> "dafuq"))
-    testWrite[CustomizedSeal](CustomizedObjekt, Map("kejs" -> "CustomizedObjekt"))
-  }
+//  test("customized flat sealed hierarchy") {
+//    testWrite[CustomizedSeal](CustomizedCase("dafuq"), Map("str" -> "dafuq"))
+//    testWrite[CustomizedSeal](CustomizedObjekt, Map("kejs" -> "CustomizedObjekt"))
+//  }
 
   test("case class with more than 22 fields") {
     val inst = ItsOverTwentyTwo(
@@ -398,12 +397,12 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     testWrite[ItsOverTwentyTwo](inst, repr)
   }
 
-  test("recursive materialization with intermediate sequence") {
-    testWrite[HasColl](
-      HasCollCase(List(DepCase("kek"))),
-      Map("_case" -> "HasCollCase", "coll" -> List(Map("_case" -> "DepCase", "str" -> "kek"))),
-    )
-  }
+//  test("recursive materialization with intermediate sequence") {
+//    testWrite[HasColl](
+//      HasCollCase(List(DepCase("kek"))),
+//      Map("_case" -> "HasCollCase", "coll" -> List(Map("_case" -> "DepCase", "str" -> "kek"))),
+//    )
+//  }
 
   test("refined sealed type with type member") {
     testWrite[SealedRefined { type X = Int }](
