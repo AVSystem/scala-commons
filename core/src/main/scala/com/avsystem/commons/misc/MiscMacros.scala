@@ -14,9 +14,6 @@ trait OptAnnotationOfMacros {
 trait AnnotationsOfMacros {
   inline implicit def materialize[A, T]: AnnotationsOf[A, T] = ${ MiscMacros.materializeAnnotationsOf[A, T] }
 }
-trait HasAnnotationMacros {
-  inline implicit def materialize[A, T]: HasAnnotation[A, T] = ${ MiscMacros.materializeHasAnnotation[A, T] }
-}
 trait SelfAnnotationMacros {
   inline implicit def materialize[A]: SelfAnnotation[A] = ${ MiscMacros.materializeSelfAnnotation[A] }
 }
@@ -85,7 +82,6 @@ object MiscMacros {
   def materializeAnnotationOf[A: Type, T: Type](using Quotes): Expr[AnnotationOf[A, T]] = '{ ??? }
   def materializeOptAnnotationOf[A: Type, T: Type](using Quotes): Expr[OptAnnotationOf[A, T]] = '{ ??? }
   def materializeAnnotationsOf[A: Type, T: Type](using Quotes): Expr[AnnotationsOf[A, T]] = '{ ??? }
-  def materializeHasAnnotation[A: Type, T: Type](using Quotes): Expr[HasAnnotation[A, T]] = '{ ??? }
   def materializeSelfAnnotation[A: Type](using Quotes): Expr[SelfAnnotation[A]] = '{ ??? }
   def materializeSelfOptAnnotation[A: Type](using Quotes): Expr[SelfOptAnnotation[A]] = '{ ??? }
   def materializeSelfAnnotations[A: Type](using Quotes): Expr[SelfAnnotations[A]] = '{ ??? }

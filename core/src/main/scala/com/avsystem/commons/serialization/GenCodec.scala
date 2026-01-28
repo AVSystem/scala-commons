@@ -5,7 +5,7 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.derivation.DeferredInstance
 import com.avsystem.commons.jiop.JFactory
 import com.avsystem.commons.meta.Fallback
-import com.avsystem.commons.misc.{Bytes, Timestamp}
+import com.avsystem.commons.misc.{Bytes, HasAnnotation, Timestamp}
 
 import java.util.UUID
 import scala.annotation.{implicitNotFound, tailrec, targetName}
@@ -46,6 +46,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   final val DefaultCaseField = "_case"
   def apply[T](using codec: GenCodec[T]): GenCodec[T] = codec
   inline def derived[T: TypeRepr]: GenCodec[T] = compiletime.summonFrom {
+    case _: HasAnnotation[transparent, T] => deriveTransparentWrapper[T]
     case v: ValueOf[T] => deriveSingleton(v.asInstanceOf[ValueOf[T & Singleton]]).asInstanceOf[GenCodec[T]]
     case m: Mirror.ProductOf[T & Product] =>
       deriveProduct(m)(
@@ -63,7 +64,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     inline compiletime.erasedValue[Elems] match {
       case _: (elem *: elems) =>
         val elemCodec = deriveOrSummon[T, elem]
-        locally{
+        locally {
           given GenCodec[elem] = elemCodec
           (elemCodec *: summonInstances[T, elems]).asInstanceOf[Tuple.Map[Elems, GenCodec]]
         }
@@ -83,6 +84,13 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
 //      deferred.underlying = underlying
 //      underlying
     case _ => derived[Elem] // recursive derivation
+  }
+
+  private inline def deriveTransparentWrapper[T]: GenCodec[T] = ${ deriveTransparentWrapperImpl[T]}
+  private def deriveTransparentWrapperImpl[T: Type](using quotes: Quotes): Expr[GenCodec[T]] = {
+
+
+    '{ ??? }
   }
 
   inline given [Tup <: Tuple] => GenCodec[Tup] = mkTupleCodec(
