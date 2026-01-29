@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.serialization.TypeRepr
-
 import scala.NamedTuple.{AnyNamedTuple, DropNames, withNames}
 
 /**
@@ -61,7 +59,7 @@ object MacroInstances {
         case _: Function0[r] => (() => compiletime.summonInline[r]).asInstanceOf[T]
         case _: Poly[tc] => ([X] => () => compiletime.summonInline[tc[X]]).asInstanceOf[T]
         case _: PolyWithEv[tc, ev] => ([X:ev] => () => compiletime.summonInline[tc[X]]).asInstanceOf[T]
-        case _ => throw new IllegalArgumentException("Unsupported type for MacroInstances: " + compiletime.summonInline[TypeRepr[T]])
+        case _ => throw new IllegalArgumentException("Unsupported type for MacroInstances")
       }
   }
 

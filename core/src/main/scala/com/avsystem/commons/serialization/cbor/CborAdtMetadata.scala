@@ -105,10 +105,11 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
       case nestedCodec: NestedSealedHierarchyCodec[T] =>
         val codecWithAdjustedCaseCodecs =
           new NestedSealedHierarchyCodec[T](
+            nestedCodec.typeRepr,
             nestedCodec.nullable,
             nestedCodec.caseNames,
             nestedCodec.cases,
-          )(using nestedCodec.typeRepr) {
+          ) {
             def caseDependencies: Array[GenCodec[?]] =
               (nestedCodec.caseDependencies.iterator zip union.cases.iterator).map {
                 case (caseCodec: ApplyUnapplyCodec[Any @unchecked], theCase: CborAdtMetadata.Record[Any @unchecked]) =>
@@ -122,6 +123,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
       case flatCodec: FlatSealedHierarchyCodec[T] =>
         val codecWithAdjustedCaseCodecs =
           new FlatSealedHierarchyCodec[T](
+            flatCodec.typeRepr,
             flatCodec.nullable,
             flatCodec.caseNames,
             flatCodec.cases,
@@ -130,7 +132,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
             flatCodec.caseFieldName,
             flatCodec.defaultCaseIdx,
             flatCodec.defaultCaseTransient,
-          )(using flatCodec.typeRepr) {
+          ){
             override protected def doWriteCaseName(output: Output, caseName: String): Unit =
               if (!output.writeCustom(RawCbor, caseNamesKeyCodec.rawKeys(caseName))) {
                 super.doWriteCaseName(output, caseName)

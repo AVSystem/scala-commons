@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import scala.annotation.implicitNotFound
-import scala.annotation.RefiningAnnotation
+import scala.annotation.{implicitNotFound, publicInBinary, RefiningAnnotation}
 
 /**
  * A typeclass which captures an annotation of type `A` applied on a class/trait/object associated with type `T`. If
@@ -35,17 +34,14 @@ object AnnotationsOf extends AnnotationsOfMacros {}
  * Similar to [[AnnotationOf]] but does not reify the annotation itself into runtime.
  */
 @implicitNotFound("${T} is not annotated with ${A}")
-final class HasAnnotation[A <: RefiningAnnotation, T] private ()
+final class HasAnnotation[A <: RefiningAnnotation, T](val annotation: A)
 object HasAnnotation {
-  private val reusable = new HasAnnotation
-
   transparent inline given [A <: RefiningAnnotation, T] => HasAnnotation[A, T] = ${ materializeImpl[A, T] }
   private def materializeImpl[A <: RefiningAnnotation: Type, T: Type](using quotes: Quotes): Expr[HasAnnotation[A, T]] = {
     import quotes.reflect._
-    if (TypeRepr.of[T].typeSymbol.hasAnnotation(TypeRepr.of[A].typeSymbol)) {
-      '{ reusable.asInstanceOf[HasAnnotation[A, T]] }
-    } else {
-      report.errorAndAbort(s"${Type.show[T]} is not annotated with ${Type.show[A]}")
+    TypeRepr.of[T].typeSymbol.getAnnotation(TypeRepr.of[A].typeSymbol) match {
+      case Some(annot) => '{ new HasAnnotation(${ annot.asExprOf[A] }) }
+      case _ => report.errorAndAbort(s"${Type.show[T]} is not annotated with ${Type.show[A]}")
     }
   }
 

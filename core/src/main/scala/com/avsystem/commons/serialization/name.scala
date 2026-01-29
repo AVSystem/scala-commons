@@ -3,6 +3,8 @@ package serialization
 
 import com.avsystem.commons.annotation.NotInheritedFromSealedTypes
 
+import scala.annotation.RefiningAnnotation
+
 /**
  * Can be used on case class fields and classes in sealed hierarchy to instruct automatically derived `GenCodec` to use
  * particular name instead of just using parameter or class name.
@@ -24,4 +26,4 @@ import com.avsystem.commons.annotation.NotInheritedFromSealedTypes
  * overrides a method of some base trait, the `@name` annotation may be used on that method and will affect the case
  * class field.
  */
-class name(val name: String) extends StaticAnnotation with NotInheritedFromSealedTypes
+class name(val name: String) extends RefiningAnnotation with NotInheritedFromSealedTypes

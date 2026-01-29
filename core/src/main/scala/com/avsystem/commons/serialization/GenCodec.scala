@@ -46,7 +46,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   final val DefaultCaseField = "_case"
   def apply[T](using codec: GenCodec[T]): GenCodec[T] = codec
 
-  inline def derived[T: TypeRepr]: GenCodec[T] = {
+  inline def derived[T]: GenCodec[T] = {
     given deferred: Deferred[T] = new Deferred[T]
     val underlying = unsafeDerived[T]
     deferred.underlying = underlying
@@ -269,13 +269,14 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
   given [T] => (fallback: Fallback[GenCodec[T]]) => GenCodec[T] =
     fallback.value
-  inline private def unsafeDerived[T: TypeRepr]: GenCodec[T] = compiletime.summonFrom {
+  inline private def unsafeDerived[T]: GenCodec[T] = compiletime.summonFrom {
     case _: HasAnnotation[`transparent`, T] =>
       deriveTransparentWrapper[T]
     case v: ValueOf[T] =>
-      deriveSingleton(v.asInstanceOf[ValueOf[T & Singleton]]).asInstanceOf[GenCodec[T]]
+      deriveSingleton(constName[T],v.asInstanceOf[ValueOf[T & Singleton]]).asInstanceOf[GenCodec[T]]
     case m: Mirror.ProductOf[T & Product] =>
       deriveProduct(m)(
+        constName[T],
         summonInstances[T, m.MirroredElemTypes](summonAllowed = true, deriveAllowed = false),
         compiletime.constValueTuple[m.MirroredElemLabels],
       ).asInstanceOf[GenCodec[T]]
@@ -283,6 +284,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       compiletime.summonFrom {
         case _: HasAnnotation[`flatten`, T] =>
           deriveFlattenSum(m)(
+            constName[T],
             summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
             compiletime.constValueTuple[m.MirroredElemLabels],
             compiletime
@@ -292,6 +294,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
           )
         case _ =>
           deriveNestedSum(m)(
+            constName[T],
             summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
             compiletime.constValueTuple[m.MirroredElemLabels],
             compiletime
@@ -301,6 +304,17 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
           )
       }
   }
+
+  inline def constName[T]: String = compiletime.summonFrom {
+    case h: HasAnnotation[`name`, T] => h.annotation.name
+    case _ => compiletime.summonInline[TypeRepr[T]]
+  }
+
+  inline def constNames[Tup <: Tuple]: Tup = inline compiletime.erasedValue[Tup] match {
+    case _: (head *: tail) => (constName[head] *: constNames[tail]).asInstanceOf[Tup]
+    case _: EmptyTuple => EmptyTuple.asInstanceOf[Tup]
+  }
+
   inline private def summonInstances[T, Elems <: Tuple](
     summonAllowed: Boolean,
     deriveAllowed: Boolean,
@@ -350,8 +364,8 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     }
   }
 
-  private def deriveSingleton[T <: Singleton](valueOf: ValueOf[T]): GenCodec[T] =
-    new SingletonCodec[T](valueOf.value)
+  private def deriveSingleton[T <: Singleton](typeRepr: String, valueOf: ValueOf[T]): GenCodec[T] =
+    new SingletonCodec[T](typeRepr, valueOf.value)
   private def mkTupleCodec[Tup <: Tuple](elementCodecs: Tuple.Map[Tup, GenCodec]): GenCodec[Tup] = new ListCodec[Tup] {
     override val nullable = true
     override def readList(input: ListInput): Tup =
@@ -372,14 +386,16 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
 
     }
   }
-  private def deriveFlattenSum[T: TypeRepr](
+  private def deriveFlattenSum[T](
     m: Mirror.SumOf[T],
   )(
+    typeRepr: String,
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
     fieldNames: m.MirroredElemLabels,
     classes: Tuple.Map[m.MirroredElemTypes, Class],
   ): GenCodec[T] =
     new FlatSealedHierarchyCodec[T](
+      typeRepr,
       false,
       fieldNames.toArray.map(_.asInstanceOf[String]),
       classes.toArray.map(_.asInstanceOf[Class[?]]),
@@ -393,26 +409,29 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       override def caseDependencies: Array[OOOFieldsObjectCodec[?]] =
         instances.toArray.map(_.asInstanceOf[OOOFieldsObjectCodec[?]])
     }
-  private def deriveNestedSum[T: TypeRepr](
+  private def deriveNestedSum[T](
     m: Mirror.SumOf[T],
   )(
+    typeRepr: String,
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
     fieldNames: m.MirroredElemLabels,
     classes: Tuple.Map[m.MirroredElemTypes, Class],
   ): GenCodec[T] = new NestedSealedHierarchyCodec[T](
+    typeRepr,
     false,
     fieldNames.toArray.map(_.asInstanceOf[String]),
     classes.toArray.map(_.asInstanceOf[Class[?]]),
   ) {
     override def caseDependencies: Array[GenCodec[?]] = instances.toArray.map(_.asInstanceOf[GenCodec[?]])
   }
-  private def deriveProduct[T <: Product: TypeRepr](
+  private def deriveProduct[T <: Product](
     m: Mirror.ProductOf[T],
   )(
+    typeRepr: String,
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
     fieldNames: m.MirroredElemLabels,
   ): GenCodec[T] =
-    new ProductCodec[T](false, fieldNames.toArray.map(_.asInstanceOf[String])) {
+    new ProductCodec[T](typeRepr, false, fieldNames.toArray.map(_.asInstanceOf[String])) {
       override protected val dependencies: Array[GenCodec[?]] = instances.toArray.map(_.asInstanceOf[GenCodec[?]])
       override protected def instantiate(fieldValues: FieldValues): T =
         m.fromProduct(

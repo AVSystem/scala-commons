@@ -6,9 +6,10 @@ import com.avsystem.commons.serialization.GenCodec.*
 
 import scala.annotation.tailrec
 
-class SingletonCodec[T <: Singleton: TypeRepr](
+class SingletonCodec[T <: Singleton](
+  typeRepr: String,
   singletonValue: => T,
-) extends ErrorReportingCodec[T]
+) extends ErrorReportingCodec[T](typeRepr)
     with OOOFieldsObjectCodec[T] {
   final def nullable = true
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = singletonValue
@@ -16,10 +17,11 @@ class SingletonCodec[T <: Singleton: TypeRepr](
   def writeFields(output: ObjectOutput, value: T): Unit = ()
 }
 
-abstract class ApplyUnapplyCodec[T: TypeRepr as typeRepr](
+abstract class ApplyUnapplyCodec[T](
+  typeRepr: String,
   val nullable: Boolean,
   fieldNames: Array[String],
-) extends ErrorReportingCodec[T]
+) extends ErrorReportingCodec[T](typeRepr)
     with OOOFieldsObjectCodec[T] {
 
   private lazy val deps = dependencies
@@ -89,10 +91,11 @@ object ApplyUnapplyCodec {
   def derived[T]: ApplyUnapplyCodec[T] = ???
 }
 
-abstract class ProductCodec[T <: Product: TypeRepr](
+abstract class ProductCodec[T <: Product](
+  typeRepr: String,
   nullable: Boolean,
   fieldNames: Array[String],
-) extends ApplyUnapplyCodec[T](nullable, fieldNames) {
+) extends ApplyUnapplyCodec[T](typeRepr, nullable, fieldNames) {
   def size(value: T, output: Opt[SequentialOutput]): Int = value.productArity
 
   final def writeFields(output: ObjectOutput, value: T): Unit = {
@@ -106,11 +109,12 @@ abstract class ProductCodec[T <: Product: TypeRepr](
   }
 }
 
-abstract class SealedHierarchyCodec[T: TypeRepr](
+abstract class SealedHierarchyCodec[T](
+  val typeRepr: String,
   val nullable: Boolean,
   val caseNames: Array[String],
   val cases: Array[Class[?]],
-) extends ErrorReportingCodec[T]
+) extends ErrorReportingCodec[T](typeRepr)
     with ObjectCodec[T] {
 
   @tailrec protected final def caseIndexByValue(value: T, idx: Int = 0): Int =
@@ -124,11 +128,12 @@ abstract class SealedHierarchyCodec[T: TypeRepr](
     else caseIndexByName(caseName, idx + 1)
 }
 
-abstract class NestedSealedHierarchyCodec[T: TypeRepr](
+abstract class NestedSealedHierarchyCodec[T](
+  typeRepr: String,
   nullable: Boolean,
   caseNames: Array[String],
   cases: Array[Class[?]],
-) extends SealedHierarchyCodec[T](nullable, caseNames, cases) {
+) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
   private lazy val caseDeps = caseDependencies
   def caseDependencies: Array[GenCodec[?]]
@@ -149,7 +154,8 @@ abstract class NestedSealedHierarchyCodec[T: TypeRepr](
     } else notSingleField(empty = true)
 }
 
-abstract class FlatSealedHierarchyCodec[T: TypeRepr as typeRepr](
+abstract class FlatSealedHierarchyCodec[T](
+  typeRepr: String,
   nullable: Boolean,
   caseNames: Array[String],
   cases: Array[Class[?]],
@@ -158,7 +164,7 @@ abstract class FlatSealedHierarchyCodec[T: TypeRepr as typeRepr](
   override val caseFieldName: String,
   val defaultCaseIdx: Int,
   val defaultCaseTransient: Boolean,
-) extends SealedHierarchyCodec[T](nullable, caseNames, cases) {
+) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
 
   private lazy val oooDeps = oooDependencies
   private lazy val caseDeps = caseDependencies
@@ -228,7 +234,7 @@ abstract class FlatSealedHierarchyCodec[T: TypeRepr as typeRepr](
   }
 }
 
-abstract class ErrorReportingCodec[T](using val typeRepr: TypeRepr[T]) extends GenCodec[T] {
+abstract class ErrorReportingCodec[T](typeRepr: String) extends GenCodec[T] {
   protected def caseFieldName: String = DefaultCaseField
 
   // overridable by codecs that want to encode case name as non-string, e.g. in CBOR
@@ -347,14 +353,15 @@ abstract class ErrorReportingCodec[T](using val typeRepr: TypeRepr[T]) extends G
     throw UnapplyFailed(typeRepr)
 }
 
-abstract class JavaBuilderBasedCodec[T: TypeRepr, B](
+abstract class JavaBuilderBasedCodec[T, B](
+  val typeRepr: String,
   val nullable: Boolean,
   newBuilder: => B,
   build: B => T,
   fieldNames: Array[String],
   fieldGetters: Array[T => Any],
   fieldSetters: Array[(B, Any) => B],
-) extends ErrorReportingCodec[T]
+) extends ErrorReportingCodec[T](typeRepr)
     with GenCodec.ObjectCodec[T] {
 
   private lazy val deps = dependencies
