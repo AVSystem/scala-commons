@@ -62,10 +62,10 @@ object CodecTestData {
     def value: Value
   }
   @flatten sealed trait RecExpr[+T]
-  @flatten sealed trait PureGadtExpr[T]
-  sealed trait Tree[T]
+  @flatten sealed trait PureGadtExpr[T] derives GenCodec
+  sealed trait Tree[T] derives GenCodec
   sealed trait Enumz derives GenCodec
-  sealed trait KeyEnumz
+  sealed trait KeyEnumz derives GenCodec
   @flatten("kejs") sealed trait CustomizedSeal
   @flatten
   sealed trait Dep
@@ -224,7 +224,7 @@ object CodecTestData {
   }
   object TransparentWrapperWithDependency {
     // order matters
-    given GenCodec[TransparentWrapperWithDependency] = GenCodec.materialize
+    given GenCodec[TransparentWrapperWithDependency] = GenCodec.derived
     given GenCodec[String] = GenCodec.given_GenCodec_String
   }
   object Stuff {
@@ -235,6 +235,7 @@ object CodecTestData {
   }
   object CaseClassWithAutoOptionalFields
     extends HasGenCodecWithDeps[AutoOptionalParams.type, CaseClassWithAutoOptionalFields]
+
   object CaseClassLike extends HasGenCodec[CaseClassLike] {
     def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
     def unapply(ccl: CaseClassLike): Opt[(String, List[Int])] = (ccl.str, ccl.intList).opt
@@ -260,11 +261,11 @@ object CodecTestData {
   case object NullExpr extends Expr[Null](null)
   object BaseExpr {
     // todo: may be removed?
-    given GenCodec[BaseExpr] = GenCodec.materialize
-    given GenCodec[Expr[String]] = GenCodec.materialize
+    given GenCodec[BaseExpr] = GenCodec.derived
+    given GenCodec[Expr[String]] = GenCodec.derived
 
     @targetName("codec_with_value")
-    given [T] => GenCodec[BaseExpr { type Value = T }] = GenCodec.materialize
+    given [T] => GenCodec[BaseExpr { type Value = T }] = GenCodec.derived
   }
   object Expr extends HasGadtCodec[Expr]
   object RecBounded extends HasGenCodec[RecBounded]
@@ -272,7 +273,7 @@ object CodecTestData {
   object RecExpr {
     given [T: GenCodec] => GenCodec[RecExpr[T]] =
       mkCodec[Nothing](using GenCodec[T].asInstanceOf[GenCodec[Nothing]]).asInstanceOf[GenCodec[RecExpr[T]]]
-    private def mkCodec[T <: RecBound[T]: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
+    private def mkCodec[T <: RecBound[T]: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.derived
   }
   case object NullLiteral extends PureGadtExpr[Null]
   object Enumz {
@@ -282,7 +283,6 @@ object CodecTestData {
     case object Third extends Enumz
   }
   object KeyEnumz {
-    given GenCodec[KeyEnumz] = GenCodec.forSealedEnum[KeyEnumz]
     @name("Primary")
     case object First extends KeyEnumz
     case object Second extends KeyEnumz
@@ -304,7 +304,7 @@ object CodecTestData {
     case class LocalStuff()
   }
   object SealedRefined {
-    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.materialize
+    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.derived
     final case class First[Type](foo: Type) extends SealedRefined {
       type X = Type
     }

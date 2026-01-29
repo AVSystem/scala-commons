@@ -45,16 +45,14 @@ trait GenCodec[T] {
 object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   final val DefaultCaseField = "_case"
   def apply[T](using codec: GenCodec[T]): GenCodec[T] = codec
-  inline def derived[T: TypeRepr]: GenCodec[T] = compiletime.summonFrom {
-    case _: RecursiveMarker[T] =>
-      given deferred: Deferred[T] = new Deferred[T]
-      val underlying = unsafeDerived[T]
-      deferred.underlying = underlying
-      underlying
-    case _ =>
-      given RecursiveMarker[T] = RecursiveMarker.create
-      unsafeDerived[T]
+
+  inline def derived[T: TypeRepr]: GenCodec[T] = {
+    given deferred: Deferred[T] = new Deferred[T]
+    val underlying = unsafeDerived[T]
+    deferred.underlying = underlying
+    underlying
   }
+
   inline given [Tup <: Tuple] => GenCodec[Tup] = mkTupleCodec(
     compiletime.summonAll[Tuple.Map[Tup, GenCodec]],
   )
@@ -347,7 +345,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
         report.errorAndAbort(s"Transparent wrapper ${TypeRepr.of[T]} must have exactly one field")
     }
   }
-  
+
   private def deriveSingleton[T <: Singleton](valueOf: ValueOf[T]): GenCodec[T] =
     new SingletonCodec[T](valueOf.value)
   private def mkTupleCodec[Tup <: Tuple](elementCodecs: Tuple.Map[Tup, GenCodec]): GenCodec[Tup] = new ListCodec[Tup] {
@@ -387,7 +385,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     fieldNames.toArray.map(_.asInstanceOf[String]),
     classes.toArray.map(_.asInstanceOf[Class[?]]),
   ) {
-    override def caseDependencies: Array[GenCodec[?]] = ???
+    override def caseDependencies: Array[GenCodec[?]] = instances.toArray.map(_.asInstanceOf[GenCodec[?]])
   }
   private def deriveProduct[T <: Product: TypeRepr](
     m: Mirror.ProductOf[T],
@@ -514,7 +512,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       writeFields(output, value)
     }
   }
-  private trait RecursiveMarker[T]
   class ReadFailure(msg: String, cause: Throwable | Null) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
 
@@ -677,9 +674,5 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
 
       def nullable: Boolean = wrapped.nullable
     }
-  }
-  private object RecursiveMarker {
-    private val reusable: RecursiveMarker[Any] = new RecursiveMarker[Any] {}
-    def create[T]: RecursiveMarker[T] = reusable.asInstanceOf[RecursiveMarker[T]]
   }
 }

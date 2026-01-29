@@ -369,7 +369,7 @@ class JsonStringInputOutputTest
     given Arbitrary[DeepNestedTestCC] =
       Arbitrary {
         def sized(sz: Int): Gen[DeepNestedTestCC] =
-          if (sz == 0) for (t <- arbitrary[TestCC]) yield DeepNestedTestCC(t, null)
+          if (sz == 0) for (t <- arbitrary[TestCC]) yield DeepNestedTestCC(t, null.asInstanceOf[DeepNestedTestCC])
           else
             for {
               t <- arbitrary[TestCC]
