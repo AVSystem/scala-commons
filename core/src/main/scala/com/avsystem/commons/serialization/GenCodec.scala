@@ -281,11 +281,15 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       ).asInstanceOf[GenCodec[T]]
     case m: Mirror.SumOf[T] =>
       compiletime.summonFrom {
-        //        case _: HasAnnotation[`flatten`, T] =>
-        //          deriveFlattenSum(m)(
-        //            summonInstances[T, m.MirroredElemTypes],
-        //            compiletime.summonAll[m.MirroredElemLabels],
-        //          )
+        case _: HasAnnotation[`flatten`, T] =>
+          deriveFlattenSum(m)(
+            summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
+            compiletime.constValueTuple[m.MirroredElemLabels],
+            compiletime
+              .summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]]
+              .map[[X] =>> Class[?]]([CT] => (ct: CT) => ct.asInstanceOf[ClassTag[?]].runtimeClass)
+              .asInstanceOf[Tuple.Map[m.MirroredElemTypes, Class]],
+          )
         case _ =>
           deriveNestedSum(m)(
             summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
@@ -373,7 +377,22 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   )(
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
     fieldNames: m.MirroredElemLabels,
-  ): GenCodec[T] = ???
+    classes: Tuple.Map[m.MirroredElemTypes, Class],
+  ): GenCodec[T] =
+    new FlatSealedHierarchyCodec[T](
+      false,
+      fieldNames.toArray.map(_.asInstanceOf[String]),
+      classes.toArray.map(_.asInstanceOf[Class[?]]),
+      fieldNames.toArray.map(_.asInstanceOf[String]),
+      fieldNames.toArray.map(_.asInstanceOf[String]).toSet,
+      "dupa",
+      0,
+      false,
+    ) {
+      override def oooDependencies: Array[GenCodec[?]] = instances.toArray.map(_.asInstanceOf[GenCodec[?]])
+      override def caseDependencies: Array[OOOFieldsObjectCodec[?]] =
+        instances.toArray.map(_.asInstanceOf[OOOFieldsObjectCodec[?]])
+    }
   private def deriveNestedSum[T: TypeRepr](
     m: Mirror.SumOf[T],
   )(
@@ -402,17 +421,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
             .asInstanceOf[m.MirroredElemTypes],
         )
     }
-//    new FlatSealedHierarchyCodec[T](
-//    false,
-//    fieldNames.toArray.map(_.asInstanceOf[String]),
-//    compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, Class]].toArray.map(_.asInstanceOf[Class[?]]),
-//
-//    fieldNames.toArray.map(_.asInstanceOf[String]),
-//
-//  ) {
-//    override def oooDependencies: Array[GenCodec[?]] = ???
-//    override def caseDependencies: Array[OOOFieldsObjectCodec[?]] = ???
-//  }
+
 //  q"""
   //      new $SerializationPkg.FlatSealedHierarchyCodec[$tpe](
   //        ${tpe.toString},
