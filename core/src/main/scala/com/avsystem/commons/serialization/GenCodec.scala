@@ -135,6 +135,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     case tc: Transformed[_, _] => underlyingCodec(tc.wrapped)
     case _ => codec
   }
+  
   given GenCodec[Nothing] =
     create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))
   given GenCodec[Null] =

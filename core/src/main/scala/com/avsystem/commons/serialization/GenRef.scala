@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-sealed trait RawRef {
+sealed trait RawRef derives GenCodec {
 
   import RawRef.*
 
@@ -15,7 +15,6 @@ sealed trait RawRef {
 sealed trait SimpleRawRef extends RawRef
 
 object RawRef {
-  given GenCodec[RawRef] = GenCodec.materialize[RawRef]
   def create[S]: Creator[S] = new Creator[S] {}
   trait Creator[S] extends RawRefCreatorMacros[S]
   case class Field(name: String) extends SimpleRawRef
@@ -24,7 +23,7 @@ object RawRef {
 }
 
 object SimpleRawRef {
-  given GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
+  given GenCodec[SimpleRawRef] = GenCodec.derived
 }
 
 case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) {

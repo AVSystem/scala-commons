@@ -2,7 +2,6 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.serialization.CodecTestData.*
-import com.avsystem.commons.serialization.JavaCodecs.*
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   test("java collections") {
@@ -126,34 +125,34 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip(HasDefaults(str = "dafuq"))
   }
 
-  case class Node[T](value: T, children: List[Node[T]] = Nil)
+  case class Node[T](value: T, children: List[Node[T]] = Nil) derives GenCodec
 
-//  test("recursive generic case class") {
-//    testRoundtrip(Node(123, List(Node(42, List(Node(52), Node(53))), Node(43))))
-//  }
+  test("recursive generic case class") {
+    testRoundtrip(Node(123, List(Node(42, List(Node(52), Node(53))), Node(43))))
+  }
 
-//  test("recursively defined sealed hierarchy with explicit case class codec") {
-//    testRoundtrip[CustomList](CustomTail)
-//    testRoundtrip[CustomList](CustomCons(CustomCons(CustomTail)))
-//  }
+  test("recursively defined sealed hierarchy with explicit case class codec") {
+    testRoundtrip[CustomList](CustomTail)
+    testRoundtrip[CustomList](CustomCons(CustomCons(CustomTail)))
+  }
 
 //  test("value class") {
 ////    testRoundtrip(ValueClass("costam"), Map("str" -> "costam"))
 //  }
 
-//  test("sealed hierarchy") {
-//    testRoundtrip[SealedBase](SealedBase.CaseObject)
-//    testRoundtrip[SealedBase](SealedBase.CaseClass("fuu"))
-//    testRoundtrip[SealedBase](SealedBase.InnerBase.InnerCaseObject)
-//    testRoundtrip[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"))
-//  }
-//
-//  test("flat sealed hierarchy") {
-//    testRoundtrip[FlatSealedBase](FlatSealedBase.FirstCase("fuu"))
-//    testRoundtrip[FlatSealedBase](FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0))
-//    testRoundtrip[FlatSealedBase](FlatSealedBase.ThirdCase)
-//    testRoundtrip[FlatSealedBase](FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)))
-//  }
+  test("sealed hierarchy") {
+    testRoundtrip[SealedBase](SealedBase.CaseObject)
+    testRoundtrip[SealedBase](SealedBase.CaseClass("fuu"))
+    testRoundtrip[SealedBase](SealedBase.InnerBase.InnerCaseObject)
+    testRoundtrip[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"))
+  }
+
+  test("flat sealed hierarchy") {
+    testRoundtrip[FlatSealedBase](FlatSealedBase.FirstCase("fuu"))
+    testRoundtrip[FlatSealedBase](FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0))
+    testRoundtrip[FlatSealedBase](FlatSealedBase.ThirdCase)
+    testRoundtrip[FlatSealedBase](FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)))
+  }
 
 //  test("flat sealed hierarchy with transparent cases") {
 //    testRoundtrip[TransparentFlatSealedBase](TransparentCaseWrap(TransparentFlatThing(42, "fuu")))
@@ -187,9 +186,9 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   type IntBranch = Branch[Int]
   GenCodec.materialize[IntBranch]
 
-//  test("recursive generic ADT") {
-//    testRoundtrip[Tree[Int]](Branch(Leaf(1), Branch(Leaf(2), Leaf(3))))
-//  }
+  test("recursive generic ADT") {
+    testRoundtrip[Tree[Int]](Branch(Leaf(1), Branch(Leaf(2), Leaf(3))))
+  }
 
   test("sealed enum") {
     testRoundtrip[Enumz](Enumz.First)
@@ -208,11 +207,11 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
 //    testRoundtrip(TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true))
 //  }
 
-//  test("customized flat sealed hierarchy") {
-//    testRoundtrip[CustomizedSeal](CustomizedCase("dafuq"))
-//    testRoundtrip[CustomizedSeal](CustomizedObjekt)
-//  }
-//
+  test("customized flat sealed hierarchy") {
+    testRoundtrip[CustomizedSeal](CustomizedCase("dafuq"))
+    testRoundtrip[CustomizedSeal](CustomizedObjekt)
+  }
+
   test("case class with more than 22 fields") {
     val inst = ItsOverTwentyTwo(
       "v1",
@@ -242,22 +241,22 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip[ItsOverTwentyTwo](inst)
   }
 
-//  test("recursive materialization with intermediate sequence") {
-//    testRoundtrip[HasColl](HasCollCase(List(DepCase("kek"))))
-//  }
+  test("recursive materialization with intermediate sequence") {
+    testRoundtrip[HasColl](HasCollCase(List(DepCase("kek"))))
+  }
 
   test("refined sealed type with type member") {
     testRoundtrip[SealedRefined { type X = Int }](SealedRefined.First(42))
   }
 
   test("recursive materialization of indirectly recursive type") {
-    def testWithCodec(implicit codec: GenCodec[StepOne]): Unit = {
+    def testWithCodec(using GenCodec[StepOne]): Unit = {
       testRoundtrip[StepOne](StepOne(StepTwo(Opt.Empty)))
       testRoundtrip[StepOne](StepOne(StepTwo(Opt(StepOne(StepTwo(Opt.Empty))))))
     }
     testWithCodec(using GenCodec.materializeRecursively)
 
-    implicit val implCodec: GenCodec[StepOne] = GenCodec.materializeRecursively
+    given implCodec: GenCodec[StepOne] = GenCodec.materializeRecursively
     testWithCodec(using implCodec)
   }
 

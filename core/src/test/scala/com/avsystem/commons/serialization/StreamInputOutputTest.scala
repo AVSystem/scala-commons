@@ -5,9 +5,9 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, Da
 
 import org.scalatest.funsuite.AnyFunSuite
 
-case class Wrap(x: Int)
+case class Wrap(x: Int) derives GenCodec
 
-case class Obj(k1: Int, k2: String)
+case class Obj(k1: Int, k2: String) derives GenCodec
 
 case class FieldTypes(
   a: String,
@@ -27,7 +27,7 @@ case class FieldTypes(
   n: Array[Byte],
   o: Obj,
   p: List[List[Obj]],
-)
+) derives GenCodec
 
 class StreamInputOutputTest extends AnyFunSuite {
 
@@ -54,10 +54,6 @@ class StreamInputOutputTest extends AnyFunSuite {
     ),
   )
 
-  implicit val wrapCodec: GenCodec[Wrap] = GenCodec.materialize[Wrap]
-  implicit val objCodec: GenCodec[Obj] = GenCodec.materialize[Obj]
-  implicit val fieldTypesCodec: GenCodec[FieldTypes] = GenCodec.materialize[FieldTypes]
-
   def outputs(): (ByteArrayOutputStream, StreamOutput) = {
     val os = new ByteArrayOutputStream()
     val output = new StreamOutput(new DataOutputStream(os))
@@ -70,7 +66,7 @@ class StreamInputOutputTest extends AnyFunSuite {
     (is, input)
   }
 
-  def encDec[A](a: A)(implicit c: GenCodec[A]): A = {
+  def encDec[A: GenCodec](a: A): A = {
     val (os, output) = outputs()
     GenCodec.write(output, a)
     val (is, input) = inputs(os)
@@ -79,7 +75,7 @@ class StreamInputOutputTest extends AnyFunSuite {
     result
   }
 
-  def assertEncDec[A](a: A)(implicit c: GenCodec[A]): Unit = assert(a == encDec(a))
+  def assertEncDec[A: GenCodec](a: A): Unit = assert(a == encDec(a))
 
   test("simple encode/decode") {
     assertEncDec(1)

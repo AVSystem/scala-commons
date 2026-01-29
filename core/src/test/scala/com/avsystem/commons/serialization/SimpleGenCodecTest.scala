@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.serialization.JavaCodecs.*
 
 import scala.annotation.nowarn
 import scala.collection.immutable.ListMap
@@ -123,7 +122,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 //    )
 //    testWrite(CaseClassWithAutoOptionalFields("foo", Opt.Empty, None, NOpt.empty), Map("str" -> "foo"))
 //  }
-
+//
 //  test("reading nulls in case class with auto optional fields") {
 //    testRead(
 //      Map("str" -> "foo", "int" -> null, "bul" -> true, "nint" -> null),

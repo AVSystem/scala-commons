@@ -6,21 +6,19 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.immutable.ListMap
 
-case class Inner(int: Int)
-object Inner extends HasGenCodec[Inner]
+case class Inner(int: Int) derives GenCodec
 
 class Unwritable
 object Unwritable {
-  implicit val codec: GenCodec[Unwritable] = GenCodec.create(
+  given GenCodec[Unwritable] = GenCodec.create(
     _ => throw new ReadFailure("cannot"),
     (_, _) => throw new WriteFailure("cannot"),
   )
 }
 
-sealed trait Base
+sealed trait Base derives GenCodec
 case class Outer(inner: Inner) extends Base
 case class Other(unwritable: Unwritable) extends Base
-object Base extends HasGenCodec[Base]
 
 class GenCodecErrorsTest extends AnyFunSuite {
   def causeChain(t: Throwable): List[Throwable] =

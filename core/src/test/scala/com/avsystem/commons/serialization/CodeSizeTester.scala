@@ -11,7 +11,7 @@ case class CodeSizeTester00(
   people: Set[Person],
 )
 object CodeSizeTester00 {
-  implicit val codec: GenCodec[CodeSizeTester00] = GenCodec.materialize[CodeSizeTester00]
+  given GenCodec[CodeSizeTester00] = GenCodec.materialize[CodeSizeTester00]
 }
 
 case class CodeSizeTester01(
@@ -22,7 +22,7 @@ case class CodeSizeTester01(
   people: Set[Person],
 )
 object CodeSizeTester01 {
-  implicit val codec: GenCodec[CodeSizeTester01] = GenCodec.materialize
+  given GenCodec[CodeSizeTester01] = GenCodec.materialize
 }
 
 case class CodeSizeTester02(
@@ -33,7 +33,7 @@ case class CodeSizeTester02(
   people: Set[Person],
 )
 object CodeSizeTester02 {
-  implicit val codec: GenCodec[CodeSizeTester02] = GenCodec.materialize
+  given GenCodec[CodeSizeTester02] = GenCodec.materialize
 }
 
 case class CodeSizeTester03(
@@ -44,7 +44,7 @@ case class CodeSizeTester03(
   people: Set[Person],
 )
 object CodeSizeTester03 {
-  implicit val codec: GenCodec[CodeSizeTester03] = GenCodec.materialize
+  given GenCodec[CodeSizeTester03] = GenCodec.materialize
 }
 
 case class CodeSizeTester04(
@@ -55,7 +55,7 @@ case class CodeSizeTester04(
   people: Set[Person],
 )
 object CodeSizeTester04 {
-  implicit val codec: GenCodec[CodeSizeTester04] = GenCodec.materialize
+  given GenCodec[CodeSizeTester04] = GenCodec.materialize
 }
 
 case class CodeSizeTester05(
@@ -66,7 +66,7 @@ case class CodeSizeTester05(
   people: Set[Person],
 )
 object CodeSizeTester05 {
-  implicit val codec: GenCodec[CodeSizeTester05] = GenCodec.materialize
+  given GenCodec[CodeSizeTester05] = GenCodec.materialize
 }
 
 case class CodeSizeTester06(
@@ -77,7 +77,7 @@ case class CodeSizeTester06(
   people: Set[Person],
 )
 object CodeSizeTester06 {
-  implicit val codec: GenCodec[CodeSizeTester06] = GenCodec.materialize
+  given GenCodec[CodeSizeTester06] = GenCodec.materialize
 }
 
 case class CodeSizeTester07(
@@ -88,7 +88,7 @@ case class CodeSizeTester07(
   people: Set[Person],
 )
 object CodeSizeTester07 {
-  implicit val codec: GenCodec[CodeSizeTester07] = GenCodec.materialize
+  given GenCodec[CodeSizeTester07] = GenCodec.materialize
 }
 
 case class CodeSizeTester08(
@@ -99,7 +99,7 @@ case class CodeSizeTester08(
   people: Set[Person],
 )
 object CodeSizeTester08 {
-  implicit val codec: GenCodec[CodeSizeTester08] = GenCodec.materialize
+  given GenCodec[CodeSizeTester08] = GenCodec.materialize
 }
 
 case class CodeSizeTester09(
@@ -110,20 +110,20 @@ case class CodeSizeTester09(
   people: Set[Person],
 )
 object CodeSizeTester09 {
-  implicit val codec: GenCodec[CodeSizeTester09] = GenCodec.materialize
+  given GenCodec[CodeSizeTester09] = GenCodec.materialize
 }
 
 case class Person(name: String, birthYear: Int, planet: String = "Earth")
 object Person {
-  implicit val codec: GenCodec[Person] = GenCodec.materialize
+  given GenCodec[Person] = GenCodec.materialize
 }
 
 class CodeSizeTester extends AnyFunSuite {
   ignore("fake test to see how much JS is generated") {
-    println(CodeSizeTester00.codec.write(null.asInstanceOf[Output], null.asInstanceOf[CodeSizeTester00]))
+    println(GenCodec[CodeSizeTester00].write(null.asInstanceOf[Output], null.asInstanceOf[CodeSizeTester00]))
 //    println(CodeSizeTester01.codec.write(null, null))
 
-    println(CodeSizeTester00.codec.read(null.asInstanceOf[Input]))
+    println(GenCodec[CodeSizeTester00].read(null.asInstanceOf[Input]))
 //    println(CodeSizeTester01.codec.read(null))
   }
 }

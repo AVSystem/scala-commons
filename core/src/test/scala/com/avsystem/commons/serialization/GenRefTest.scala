@@ -12,22 +12,22 @@ case object Objekt extends Seal {
   @name("_id") def id: String = "O"
 }
 
-//case class Bottom(mapa: Map[String, Int], wrappy: Wrappy)
-//case class Middle(@name("bot") bottom: Bottom)
-//case class Toplevel(middle: Opt[Middle], seal: Seal = Objekt)
-//@transparent case class TransparentToplevel(toplevel: Toplevel)
+case class Bottom(mapa: Map[String, Int], wrappy: Wrappy)
+case class Middle(@name("bot") bottom: Bottom)
+case class Toplevel(middle: Opt[Middle], seal: Seal = Objekt)
+@transparent case class TransparentToplevel(toplevel: Toplevel)
 
-//case class Wrappy(value: String) extends AnyVal
+case class Wrappy(value: String) extends AnyVal
 //object Wrappy extends StringWrapperCompanion[Wrappy]
 
-case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
+case class CodecRef[S, T](ref: GenRef[S, T])(using targetCodec: GenCodec[T])
 
 @flatten sealed trait GenericUnion[T] {
   def thing: T
 }
 case class GenericCase[T](thing: T) extends GenericUnion[T]
 
-//class GenRefTest extends AnyFunSuite {
+class GenRefTest extends AnyFunSuite {
 //  test("simple raw ref") {
 //    val path = RawRef.create[TransparentToplevel].ref(_.toplevel.middle.get.bottom.mapa("str")).normalize.toList
 //    assert(path == List("middle", "bot", "mapa", "str").map(RawRef.Field.apply))
@@ -74,4 +74,4 @@ case class GenericCase[T](thing: T) extends GenericUnion[T]
 //    val ref = GenRef.create[GenericUnion[Int]].ref(_.thing)
 //    assert(ref.rawRef.normalize.toList == List(RawRef.Field("thing")))
 //  }
-//}
+}

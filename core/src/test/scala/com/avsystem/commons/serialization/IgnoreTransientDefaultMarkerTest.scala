@@ -11,14 +11,12 @@ object IgnoreTransientDefaultMarkerTest {
     obj: HasDefaults,
     list: Seq[HasDefaults],
     @transientDefault defaultObj: HasDefaults = HasDefaults(),
-  )
-  object NestedHasDefaults extends HasGenCodec[NestedHasDefaults]
+  ) derives GenCodec
 
   final case class HasOptParam(
     @transientDefault flag: Boolean = false,
     @optionalParam str: Opt[String] = Opt.Empty,
-  )
-  object HasOptParam extends HasGenCodec[HasOptParam]
+  ) derives GenCodec
 }
 
 @nowarn("msg=a type was inferred to be `Any`")

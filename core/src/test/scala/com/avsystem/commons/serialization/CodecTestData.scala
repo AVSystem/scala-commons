@@ -96,7 +96,7 @@ object CodecTestData {
   }
 //  @transparent case class StringId(id: String)
 //  object StringId extends TransparentWrapperCompanion[String, StringId]
-  sealed abstract class SealedKey[T](implicit val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
+  sealed abstract class SealedKey[T](using val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
   abstract class Wrapper[Self <: Wrapper[Self]: ClassTag](private val args: Any*) { this: Self =>
     override def equals(obj: Any): Boolean = obj match {
       case other: Self => args == other.args
