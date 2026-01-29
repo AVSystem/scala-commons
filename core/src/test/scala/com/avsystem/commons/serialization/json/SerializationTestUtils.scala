@@ -13,7 +13,7 @@ trait SerializationTestUtils {
 
   case class TestCC(i: Int, l: Long, intAsDouble: Double, b: Boolean, s: String, list: List[Char]) derives GenCodec
   case class NestedTestCC(i: Int, t: TestCC, t2: TestCC) derives GenCodec
-  case class DeepNestedTestCC(n: TestCC, l: DeepNestedTestCC) derives GenCodec
+  case class DeepNestedTestCC(n: TestCC, l: DeepNestedTestCC | Null) derives GenCodec
   case class CompleteItem(
     unit: Unit,
     string: String,
@@ -42,7 +42,7 @@ trait SerializationTestUtils {
       list <- arbitrary[List[Char]]
     } yield TestCC(i, l, i.toDouble, b, s, list))
   }
-  object CompleteItem  {
+  object CompleteItem {
     given Arbitrary[CompleteItem] = Arbitrary(for {
       u <- arbitrary[Unit]
       str <- arbitrary[String]

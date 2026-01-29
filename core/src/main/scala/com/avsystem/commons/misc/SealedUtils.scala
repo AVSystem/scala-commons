@@ -131,7 +131,7 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
     )
 
   given GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
-  given GenCodec[T] = GenCodec.nullableSimple[T](
+  given GenCodec[T] = GenCodec.createSimple[T](
     input => decode(input.readString()),
     (output, value) => output.writeString(value.name),
   )

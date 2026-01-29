@@ -8,6 +8,12 @@ import scala.annotation.tailrec
 final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
   require(offset >= 0 && length >= 0 && offset + length <= bytes.length)
 
+  override lazy val hashCode: Int = {
+    @tailrec def loop(i: Int, acc: Int): Int =
+      if (i >= offset + length) acc
+      else loop(i + 1, acc * 31 + bytes(i))
+    loop(offset, 1)
+  }
   override def equals(other: Any): Boolean = other match {
     case RawCbor(otherBytes, otherOffset, otherLength) =>
       @tailrec def loop(i: Int): Boolean =
@@ -15,14 +21,6 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
       length == otherLength && loop(0)
     case _ => false
   }
-
-  override lazy val hashCode: Int = {
-    @tailrec def loop(i: Int, acc: Int): Int =
-      if (i >= offset + length) acc
-      else loop(i + 1, acc * 31 + bytes(i))
-    loop(offset, 1)
-  }
-
   def hex: String =
     Iterator.range(offset, offset + length).map(i => f"${bytes(i) & 0xff}%02X").mkString
 
@@ -64,12 +62,11 @@ object RawCbor extends TypeMarker[RawCbor] {
   ): RawCbor =
     RawCbor(CborOutput.write(value, keyCodec, sizePolicy))
 
-  given GenCodec[RawCbor] =
-    GenCodec.nonNull(
-      input => input.readCustom(RawCbor).getOrElse(RawCbor(input.readSimple().readBinary())),
-      (output, cbor) =>
-        if (!output.writeCustom(RawCbor, cbor)) {
-          output.writeSimple().writeBinary(cbor.compact.bytes)
-        },
-    )
+  given GenCodec[RawCbor] = GenCodec.create(
+    input => input.readCustom(RawCbor).getOrElse(RawCbor(input.readSimple().readBinary())),
+    (output, cbor) =>
+      if (!output.writeCustom(RawCbor, cbor)) {
+        output.writeSimple().writeBinary(cbor.compact.bytes)
+      },
+  )
 }

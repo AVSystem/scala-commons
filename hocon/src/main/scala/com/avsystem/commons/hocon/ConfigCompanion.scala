@@ -11,7 +11,7 @@ import scala.concurrent.duration.*
 import scala.jdk.javaapi.DurationConverters
 
 trait HoconGenCodecs {
-  given GenCodec[Config] = GenCodec.nullable(
+  given GenCodec[Config] = GenCodec.createNullable(
     input =>
       input.readCustom(ConfigValueMarker).fold(ConfigFactory.parseString(input.readSimple().readString())) {
         case obj: ConfigObject => obj.toConfig
@@ -24,7 +24,7 @@ trait HoconGenCodecs {
       },
   )
 
-  given GenCodec[FiniteDuration] = GenCodec.nullable(
+  given GenCodec[FiniteDuration] = GenCodec.createNullable(
     input =>
       input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
     (output, value) =>
@@ -34,12 +34,12 @@ trait HoconGenCodecs {
           .writeLong(value.toMillis),
   )
 
-  given GenCodec[JDuration] = GenCodec.nullable(
+  given GenCodec[JDuration] = GenCodec.createNullable(
     input => input.readCustom(DurationMarker).getOrElse(JDuration.ofMillis(input.readSimple().readLong())),
     (output, value) => if (!output.writeCustom(DurationMarker, value)) output.writeSimple().writeLong(value.toMillis),
   )
 
-  given GenCodec[Period] = GenCodec.nullable(
+  given GenCodec[Period] = GenCodec.createNullable(
     input => input.readCustom(PeriodMarker).getOrElse(Period.parse(input.readSimple().readString())),
     (output, value) => if (!output.writeCustom(PeriodMarker, value)) output.writeSimple().writeString(value.toString),
   )

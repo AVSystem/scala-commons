@@ -33,7 +33,7 @@ object TypeString extends TypeStringMacros {
     GenKeyCodec.create[TypeString[?]](new TypeString(_), _.value)
 
   given GenCodec[TypeString[?]] =
-    GenCodec.nonNullSimple[TypeString[?]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
+    GenCodec.createSimple[TypeString[?]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
 }
 
 /**
@@ -83,5 +83,5 @@ object JavaClassName extends JavaClassNameMacros {
     GenKeyCodec.create[JavaClassName[?]](new JavaClassName(_), _.value)
 
   given GenCodec[JavaClassName[?]] =
-    GenCodec.nonNullSimple[JavaClassName[?]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
+    GenCodec.createSimple[JavaClassName[?]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
 }
