@@ -3,15 +3,24 @@ package rpc
 
 import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.TypeString
+import com.avsystem.commons.rpc.DummyRPC.{*, given}
 import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
+
+import scala.annotation.nowarn
 
 class namedArgs extends StaticAnnotation
 
 object DummyRPC {
-  case class RawInvocation(@methodName rpcName: String, @multi args: List[String])
-  case class RawNamedInvocation(@methodName rpcName: String, @multi args: IListMap[String, String])
-
+  type AsRawRPC[T] = RawRPC.AsRawRpc[T]
+  type AsRealRPC[T] = RawRPC.AsRealRpc[T]
+  type AsRawRealRPC[T] = RawRPC.AsRawRealRpc[T]
+  def read[T: GenCodec](raw: String): T = JsonStringInput.read[T](raw)
+  def write[T: GenCodec](value: T): String = JsonStringOutput.write[T](value)
+  given [T: GenCodec] => AsRawReal[String, T] = AsRawReal.create(write[T], read[T])
+  given [T: GenCodec] => AsReal[Future[String], Future[T]] = _.mapNow(read[T])
+  given [T: GenCodec] => AsRaw[Future[String], Future[T]] = _.mapNow(write[T])
+  given [T: Tag] => (tag: Tag[T]) => GenCodec[T] = tag.codec
   trait RawRPC {
     @multi
     @verbatim
@@ -33,23 +42,6 @@ object DummyRPC {
     def resolveGetterChain(getters: Seq[RawInvocation]): RawRPC =
       getters.foldRight(this)((inv, rpc) => rpc.get(inv))
   }
-  object RawRPC extends RawRpcCompanion[RawRPC]
-
-  type AsRawRPC[T] = RawRPC.AsRawRpc[T]
-  object AsRawRPC {
-    def apply[T](implicit asRawRPC: AsRawRPC[T]): AsRawRPC[T] = asRawRPC
-  }
-
-  type AsRealRPC[T] = RawRPC.AsRealRpc[T]
-  object AsRealRPC {
-    def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
-  }
-
-  type AsRawRealRPC[T] = RawRPC.AsRawRealRpc[T]
-  object AsRawRealRPC {
-    def apply[T](implicit asRawRealRPC: AsRawRealRPC[T]): AsRawRealRPC[T] = asRawRealRPC
-  }
-
   trait Signature {
     def name: String
     def annotations: List[MetadataAnnotation]
@@ -60,32 +52,39 @@ object DummyRPC {
     def name: String
     def annotations: List[MetadataAnnotation]
   }
-
+  abstract class RPCCompanion[T](
+//    using instances: MacroInstances[DummyRPC.type, (asRaw: AsRawRPC[T], asReal: AsRealRPC[T], metadata: RPCMetadata[T])],
+  ) {
+    given asRawRPC: AsRawRPC[T] = ???
+//      instances(DummyRPC, this).asRaw
+    given asRealRPC: AsRealRPC[T] = ???
+//    nstances(DummyRPC, this).asReal
+    given metadata: RPCMetadata[T] = ???
+//    instances(DummyRPC, this).metadata
+  }
+  case class RawInvocation(@methodName rpcName: String, @multi args: List[String])
+  case class RawNamedInvocation(@methodName rpcName: String, @multi args: IListMap[String, String])
   case class ParamMetadata[T](
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @infer typeMetadata: TypeString[T],
   ) extends ParamSignature
       with TypedMetadata[T]
-
   case class GenericParamMetadata[T](
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @forTypeParams @infer typeMetadata: List[TypeString[?]] => TypeString[T],
   ) extends ParamSignature
       with TypedMetadata[T]
-
   case class TypeParamMetadata(
     @reifyName name: String,
   )
-
   case class ProcedureSignature(
     @reifyName name: String,
     @multi @rpcParamMetadata paramMetadata: List[ParamMetadata[?]],
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
   ) extends Signature
       with TypedMetadata[Unit]
-
   case class FunctionSignature[T](
     @reifyName name: String,
     @multi @rpcTypeParamMetadata typeParamMetadata: List[TypeParamMetadata],
@@ -94,7 +93,6 @@ object DummyRPC {
     @forTypeParams @infer resultTypeMetadata: List[ClassTag[?]] => ClassTag[T],
   ) extends Signature
       with TypedMetadata[Future[T]]
-
   case class GetterSignature[T](
     @reifyName name: String,
     @multi @rpcParamMetadata paramMetadata: List[ParamMetadata[?]],
@@ -102,7 +100,6 @@ object DummyRPC {
     @infer @checked resultMetadata: RPCMetadata.Lazy[T],
   ) extends Signature
       with TypedMetadata[T]
-
   case class RPCMetadata[T](
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
@@ -110,28 +107,16 @@ object DummyRPC {
     @multi @rpcMethodMetadata functionSignatures: Map[String, FunctionSignature[?]],
     @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[?]],
   )
+  object RawRPC extends RawRpcCompanion[RawRPC]
+  object AsRawRPC {
+    def apply[T](using asRawRPC: AsRawRPC[T]): AsRawRPC[T] = asRawRPC
+  }
+  object AsRealRPC {
+    def apply[T](using asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
+  }
+  object AsRawRealRPC {
+    def apply[T](using asRawRealRPC: AsRawRealRPC[T]): AsRawRealRPC[T] = asRawRealRPC
+  }
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 
-  def read[T: GenCodec](raw: String): T = JsonStringInput.read[T](raw)
-  def write[T: GenCodec](value: T): String = JsonStringOutput.write[T](value)
-
-  implicit def anyAsRawReal[T: GenCodec]: AsRawReal[String, T] =
-    AsRawReal.create(write[T], read[T])
-
-  implicit def readerBasedFutureAsReal[T: GenCodec]: AsReal[Future[String], Future[T]] = _.mapNow(read[T])
-  implicit def writerBasedFutureAsRaw[T: GenCodec]: AsRaw[Future[String], Future[T]] = _.mapNow(write[T])
-
-  implicit def codecFromTag[T](implicit tag: Tag[T]): GenCodec[T] = tag.codec
-
-  trait Instances[T] {
-    def asRaw: AsRawRPC[T]
-    def asReal: AsRealRPC[T]
-    def metadata: RPCMetadata[T]
-  }
-
-  abstract class RPCCompanion[T](implicit instances: MacroInstances[DummyRPC.type, Instances[T]]) {
-    implicit lazy val asRawRPC: AsRawRPC[T] = instances(DummyRPC, this).asRaw
-    implicit lazy val asRealRPC: AsRealRPC[T] = instances(DummyRPC, this).asReal
-    implicit lazy val metadata: RPCMetadata[T] = instances(DummyRPC, this).metadata
-  }
 }

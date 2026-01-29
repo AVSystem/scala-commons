@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import scala.annotation.RefiningAnnotation
+
 /**
  * Changes the serialization format used by `GenCodec`s automatically derived for sealed hierarchies. The format is
  * changed from "nested" to "flat".
@@ -28,6 +30,6 @@ package serialization
  *
  * The "_case" field name can be customized with annotation parameter
  */
-class flatten(val caseFieldName: String) extends StaticAnnotation {
+class flatten(val caseFieldName: String) extends RefiningAnnotation {
   def this() = this("_case")
 }

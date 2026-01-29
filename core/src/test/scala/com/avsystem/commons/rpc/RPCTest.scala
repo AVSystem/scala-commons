@@ -11,16 +11,15 @@ import scala.collection.mutable.ArrayBuffer
 
 class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
 
-  trait RunNowFutureCallbacks extends HasExecutionContext {
-    protected implicit final def executionContext: ExecutionContext = RunNowEC
-  }
-
-  implicit class jsInterpolation(sc: StringContext) {
-    def js(): String = write(sc.parts.mkString)
-  }
-
   def get[T](f: Future[T]): T =
     f.value.get.get
+
+  extension (sc: StringContext) {
+    def js(): String = write(sc.parts.mkString)
+  }
+  trait RunNowFutureCallbacks extends HasExecutionContext {
+    protected final given executionContext: ExecutionContext = RunNowEC
+  }
 
   "rpc caller" should {
     "should properly deserialize RPC calls" in {
@@ -140,14 +139,12 @@ class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
       )
     }
   }
-
   trait BaseRPC[T] {
     def accept(t: T): Unit
   }
 
   trait ConcreteRPC extends BaseRPC[String]
-  object ConcreteRPC extends RPCCompanion[ConcreteRPC]
-
   trait EmptyRPC
+  object ConcreteRPC extends RPCCompanion[ConcreteRPC]
   object EmptyRPC extends RPCCompanion[EmptyRPC]
 }

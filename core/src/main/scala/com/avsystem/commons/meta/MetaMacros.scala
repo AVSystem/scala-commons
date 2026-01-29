@@ -43,9 +43,6 @@ trait BoundedMetadataCompanionLazyMacros[Hi, Lo <: Hi, M[_ >: Lo <: Hi], Lazy[_ 
 object MetaMacros {
   def valueImpl[T: Type](using Quotes): Expr[T] = '{ ??? }.asInstanceOf[Expr[T]]
   def lazyMetadataImpl(using Quotes): Expr[Nothing] = '{ ??? }
-  def macroInstancesImpl[Implicits: Type, Instances: Type](using Quotes): Expr[MacroInstances[Implicits, Instances]] = '{
-    ???
-  }
 
   def dummy(using Quotes): Expr[Nothing] = '{ ??? }
 }

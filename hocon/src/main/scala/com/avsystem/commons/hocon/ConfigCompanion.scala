@@ -59,14 +59,9 @@ trait HoconGenCodecs {
 object HoconGenCodecs extends HoconGenCodecs
 
 object DefaultHoconGenCodecs extends HoconGenCodecs
-
-trait ConfigObjectCodec[T] {
-  def objectCodec: GenObjectCodec[T]
-}
-
 abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
   implicits: Implicits,
-)(using instances: MacroInstances[Implicits, ConfigObjectCodec[T]],
+)(using instances: MacroInstances[Implicits, (objectCodec: GenObjectCodec[T])],
 ) {
   given GenCodec[T] = instances(implicits, this).objectCodec
 
@@ -81,5 +76,5 @@ abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
  * that it automatically imports codecs from [[HoconGenCodecs]] - codecs for third party types often used in
  * configuration.
  */
-abstract class DefaultConfigCompanion[T](using macroCodec: MacroInstances[HoconGenCodecs, ConfigObjectCodec[T]])
+abstract class DefaultConfigCompanion[T](using macroCodec: MacroInstances[HoconGenCodecs, (objectCodec: GenObjectCodec[T])])
   extends AbstractConfigCompanion[HoconGenCodecs, T](DefaultHoconGenCodecs)

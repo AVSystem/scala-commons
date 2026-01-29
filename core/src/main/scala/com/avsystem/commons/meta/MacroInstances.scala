@@ -1,6 +1,10 @@
 package com.avsystem.commons
 package meta
 
+import com.avsystem.commons.serialization.TypeRepr
+
+import scala.NamedTuple.{AnyNamedTuple, DropNames, withNames}
+
 /**
  * Intermediate factory that creates an `Instances` trait based on provided `Implicits`. Normally, this factory is used
  * as implicit constructor parameter of base classes for companion objects of RPC traits (e.g.
@@ -34,14 +38,53 @@ package meta
  * extracted into `implicit lazy val` definitions in the companion base class. See e.g.
  * `com.avsystem.commons.rest.RestDataCompanion` for an example of how it's done.
  */
-trait MacroInstances[Implicits, Instances] {
-  def apply(implicits: Implicits, companion: Any): Instances
+sealed class MacroInstances[Implicits, Instances <: AnyNamedTuple](applyImpl: (Implicits, Any) => Instances) {
+  def apply(implicits: Implicits, companion: Any): Instances = applyImpl(implicits, companion)
 }
 
 object MacroInstances {
-  inline given materialize[I, S]: MacroInstances[I, S] = ???
+  inline given materialize[I, S <: AnyNamedTuple]: MacroInstances[I, S] =
+    MacroInstances[I, S] { (implicits, companion) =>
+      import implicits.given
+      summonAll[DropNames[S]].asInstanceOf[S]
+    }
 
-//  macroInstances: Tree = {
+  inline def summonAll[T <: Tuple]: T = inline compiletime.erasedValue[T] match {
+    case _: EmptyTuple => EmptyTuple.asInstanceOf[T]
+    case _: (h *: t) => (summonOrPoly[h] *: summonAll[t]).asInstanceOf[T]
+  }
+
+  inline def summonOrPoly[T]: T = compiletime.summonFrom {
+    case t: T => t
+    case _ =>
+      inline compiletime.erasedValue[T] match {
+        case _: Function0[r] => (() => compiletime.summonInline[r]).asInstanceOf[T]
+        case _: Poly[tc] => ([X] => () => compiletime.summonInline[tc[X]]).asInstanceOf[T]
+        case _: PolyWithEv[tc, ev] => ([X:ev] => () => compiletime.summonInline[tc[X]]).asInstanceOf[T]
+        case _ => throw new IllegalArgumentException("Unsupported type for MacroInstances: " + compiletime.summonInline[TypeRepr[T]])
+      }
+  }
+
+  type Poly[TC[_]] = [X] => () => TC[X]
+  type PolyWithEv[TC[_], Ev[_]] = [X:Ev] => () => TC[X]
+
+//  inline def summonOrPoly[T]: T = ${summonOrPolyImpl[T]}
+
+//  def summonOrPolyImpl[T: Type](using quotes: Quotes):Expr[T] = {
+//    import quotes.reflect.*
+//    Expr.summon[T].getOrElse{
+//      typeReprInfo(TypeRepr.of[T]).dbg
+//
+//      TypeRepr.of[T] match {
+//        case MethodType(_, params, result) =>
+//        case PolyType(_, _, _ ) =>
+//        case lambda: LambdaType =>
+//      }
+//      '{ ??? }
+//    }
+//  }
+
+  //  macroInstances: Tree = {
   //    val resultTpe = c.macroApplication.tpe
   //    val applySig = resultTpe.member(TermName("apply")).typeSignatureIn(resultTpe)
   //    val implicitsTpe = applySig.paramLists.head.head.typeSignature

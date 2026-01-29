@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.misc.TypedMap
-import com.avsystem.commons.serialization.CodecTestData.{ *}
+import com.avsystem.commons.serialization.CodecTestData.*
 import com.avsystem.commons.serialization.JavaCodecs.*
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {

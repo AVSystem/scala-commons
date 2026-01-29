@@ -4,7 +4,7 @@ package rpc
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.serialization.GenCodec
 
-sealed abstract class Tag[T](implicit val codec: GenCodec[T]) extends NamedEnum with Product {
+sealed abstract class Tag[T](using val codec: GenCodec[T]) extends NamedEnum with Product {
   def name: String = productPrefix
 }
 object Tag extends NamedEnumCompanion[Tag[?]] {
@@ -12,6 +12,6 @@ object Tag extends NamedEnumCompanion[Tag[?]] {
   implicit case object String extends Tag[String]
   implicit case object Int extends Tag[Int]
   val values: ISeq[Tag[?]] = caseObjects
-  def apply[T](implicit tag: Tag[T]): Tag[T] = tag
+  def apply[T](using tag: Tag[T]): Tag[T] = tag
   given [T] => GenCodec[Tag[T]] = given_GenCodec_T.asInstanceOf[GenCodec[Tag[T]]]
 }

@@ -1,9 +1,8 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import com.avsystem.commons.annotation.{positioned, AnnotationAggregate}
+import com.avsystem.commons.annotation.{AnnotationAggregate, positioned}
 import com.avsystem.commons.meta.*
-import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 
@@ -15,18 +14,25 @@ import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
  * hierarchies with annotations: [[cborKey]] and [[cborDiscriminator]], again taking advantage of the fact that CBOR
  * map keys can be of arbitrary type and not just strings</li> </ul>
  */
-abstract class HasCborCodec[T](using instances: MacroInstances[CborOptimizedCodecs, CborAdtInstances[T]]) {
-  given GenObjectCodec[T] = instances(CborOptimizedCodecs, this).cborCodec
+abstract class HasCborCodec[T](
+  using instances: MacroInstances[CborOptimizedCodecs, (stdCodec: GenObjectCodec[T], metadata: CborAdtMetadata[T])],
+) {
+  given GenObjectCodec[T] = {
+    val inst = instances(CborOptimizedCodecs, this)
+    inst.metadata.setup(_.validate()).adjustCodec(inst.stdCodec)
+  }
 }
 
 /**
  * Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
  */
-abstract class HasCborCodecWithDeps[D, T](
-  using deps: ValueOf[D],
-  instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
+abstract class HasCborCodecWithDeps[D: ValueOf, T](
+  using instances: MacroInstances[(CborOptimizedCodecs, D), (stdCodec: GenObjectCodec[T], metadata: CborAdtMetadata[T])],
 ) {
-  given GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
+  given GenObjectCodec[T] = {
+    val inst = instances((CborOptimizedCodecs, valueOf[D]), this)
+    inst.metadata.setup(_.validate()).adjustCodec(inst.stdCodec)
+  }
 }
 
 /**
@@ -236,14 +242,6 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
   }
 }
 
-trait CborAdtInstances[T] {
-  def stdCodec: GenObjectCodec[T]
-  def metadata: CborAdtMetadata[T]
-
-  def cborCodec: GenObjectCodec[T] =
-    metadata.setup(_.validate()).adjustCodec(stdCodec)
-}
-
 trait CborAdtPolyInstances[C[_]] {
   def stdCodec[T: GenCodec]: GenObjectCodec[C[T]]
   def metadata[T]: CborAdtMetadata[C[T]]
@@ -253,10 +251,17 @@ trait CborAdtPolyInstances[C[_]] {
  * Like [[HasCborCodec]] but for parameterized (generic) data types.
  */
 abstract class HasPolyCborCodec[C[_]](
-  using instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]],
+  using instances: MacroInstances[
+    CborOptimizedCodecs,
+    (stdCodec: [T: GenCodec] => () => GenObjectCodec[C[T]], metadata: [T] => () => CborAdtMetadata[C[T]]),
+  ],
 ) {
-  private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing].validate())
+  private lazy val validatedInstances = {
+    val dupa = instances(CborOptimizedCodecs, this)
+    dupa.metadata[Nothing]().validate()
+    dupa
+  }
 
   given [T: GenCodec] => GenObjectCodec[C[T]] =
-    validatedInstances.metadata[T].adjustCodec(validatedInstances.stdCodec[T])
+    validatedInstances.metadata[T]().adjustCodec(validatedInstances.stdCodec[T]())
 }

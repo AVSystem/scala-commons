@@ -11,4 +11,4 @@ import scala.annotation.RefiningAnnotation
  * [[TransparentWrapperCompanion]] will give you more typeclass instances for free (e.g. `GenKeyCodec` in addition to
  * just `GenCodec`) while this annotation requires special macro support from every typeclass.
  */
-class transparent extends RefiningAnnotation with StaticAnnotation
+class transparent extends RefiningAnnotation

@@ -17,12 +17,12 @@ class RPCMetadataTest extends AnyFunSuite {
     def proc(@Annot("on base param") p: String): Unit
 
     @rpcName("function")
-    def func[A](a: A)(implicit @encodingDependency tag: Tag[A]): Future[A]
+    def func[A](a: A)(using @encodingDependency tag: Tag[A]): Future[A]
   }
   object Base {
-    implicit def codecFromTag[T: Tag]: GenCodec[T] = Tag[T].codec
-    implicit def asRawReal[T: GenCodec]: AsRawRealRPC[Base[T]] = RawRPC.materializeAsRawReal
-    implicit def metadata[T: TypeString]: RPCMetadata[Base[T]] = RPCMetadata.materialize
+    given [T: Tag] => GenCodec[T] = Tag[T].codec
+    given [T: GenCodec] => AsRawRealRPC[Base[T]] = RawRPC.materializeAsRawReal
+    given [T: TypeString] => RPCMetadata[Base[T]] = RPCMetadata.materialize
   }
 
   @Annot("on subclass")

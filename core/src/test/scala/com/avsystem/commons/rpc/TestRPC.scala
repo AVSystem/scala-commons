@@ -1,8 +1,9 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.rpc.DummyRPC.*
-import com.avsystem.commons.serialization.{optionalParam, transientDefault, whenAbsent, HasGenCodec}
+import com.avsystem.commons.rpc.DummyRPC.{*, given}
+import com.avsystem.commons.rpc.Tag.given
+import com.avsystem.commons.serialization.*
 
 import scala.annotation.nowarn
 
@@ -119,10 +120,11 @@ object TestRPC extends RPCCompanion[TestRPC] {
 
           def indirectRecursion(): TestRPC =
             outer
+
         },
       )
 
-    def generallyDoStuff[T](list: List[T])(implicit tag: Tag[T]): Future[Option[T]] =
+    def generallyDoStuff[T](list: List[T])(using tag: Tag[T]): Future[Option[T]] =
       onCall("generallyDoStuff", List(write(tag), write(list)), list.headOption)
   }
 }

@@ -323,7 +323,7 @@ class JsonStringInputOutputTest
 
   test("work with skipping") {
     case class TwoItems(i1: CompleteItem | Null, i2: CompleteItem)
-    implicit val skippingCodec: GenCodec[TwoItems] = new GenCodec[TwoItems] {
+    given GenCodec[TwoItems] = new GenCodec[TwoItems] {
       override def read(input: Input): TwoItems = {
         val obj = input.readObject()
         obj.nextField().skip()
@@ -366,7 +366,7 @@ class JsonStringInputOutputTest
   }
 
   test("serialize and deserialize huge case classes") {
-    implicit val arbTree: Arbitrary[DeepNestedTestCC] =
+    given Arbitrary[DeepNestedTestCC] =
       Arbitrary {
         def sized(sz: Int): Gen[DeepNestedTestCC] =
           if (sz == 0) for (t <- arbitrary[TestCC]) yield DeepNestedTestCC(t, null)
@@ -387,10 +387,8 @@ class JsonStringInputOutputTest
     }
   }
 
-  case class NestedOne(@transientDefault n: Option[NestedOne] = None)
-  case class NestedTwo(@transientDefault @whenAbsent(None) n: Option[NestedTwo])
-  object NestedOne extends HasGenCodec[NestedOne]
-  object NestedTwo extends HasGenCodec[NestedTwo]
+  case class NestedOne(@transientDefault n: Option[NestedOne] = None) derives GenCodec
+  case class NestedTwo(@transientDefault @whenAbsent(None) n: Option[NestedTwo]) derives GenCodec
 
   test("serializing recursively defined case classes with optional field") {
     assert(JsonStringOutput.write(NestedOne()) == "{}")

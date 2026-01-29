@@ -91,14 +91,14 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
     Seq(
       "-deprecation",
       "-feature",
-      // "-explain",
+//       "-explain",
       "-unchecked",
       "-language:noAutoTupling",
       "-Vprofile",
       "-Xprint-inline",
       // "-Ycheck:all", // cannot be enabled when scoverage used :///todo: enable
       "-Ycheck:macros",
-      // "-Ydebug-error",
+//       "-Ydebug-error",
       "-Ydebug-flags",
       "-Ydebug-missing-refs",
       "-Yexplain-lowlevel",

@@ -57,7 +57,6 @@ object CodecTestData {
     @name("upper_id") def upperId: String = id.toUpperCase
   }
   @flatten sealed trait TransparentFlatSealedBase
-  sealed trait CustomList derives GenCodec
   sealed trait BaseExpr {
     type Value
     def value: Value
@@ -75,6 +74,7 @@ object CodecTestData {
   sealed trait SealedRefined {
     type X
   }
+  sealed trait CustomList derives GenCodec
   trait HasSomeStr {
     @name("some.str") def str: String
     @generated def someStrLen: Int = str.length
@@ -94,7 +94,6 @@ object CodecTestData {
   sealed abstract class Expr[T](val value: T) extends BaseExpr {
     type Value = T
   }
-
 //  @transparent case class StringId(id: String)
 //  object StringId extends TransparentWrapperCompanion[String, StringId]
   sealed abstract class SealedKey[T](implicit val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
@@ -141,7 +140,8 @@ object CodecTestData {
   class OnlyVarargsCaseClassLike(val strings: Seq[String]) extends Wrapper[OnlyVarargsCaseClassLike](strings)
   case class HasDefaults(@transientDefault int: Int = 42, @transientDefault @whenAbsent("dafuq") str: String = "kek")
     derives GenCodec
-  @transparent case class CustomCons(tail: CustomList) extends CustomList
+  @transparent
+  case class CustomCons(tail: CustomList) extends CustomList
   case class IntExpr(int: Int) extends Expr[Int](int)
   case class StringExpr(str: String) extends Expr[String](str)
   case class RecBounded(int: Int) extends RecBound[RecBounded]
@@ -181,14 +181,14 @@ object CodecTestData {
     a21: String,
     a22: String,
     a23: String,
-  )derives GenCodec
+  ) derives GenCodec
   case class DepCase(str: String) extends Dep
   case class HasCollCase(coll: Seq[Dep]) extends HasColl
   case class StepOne(stepTwo: StepTwo)
   case class StepTwo(stepOne: Opt[StepOne])
   case class OuterThing(inner: InnerThing)
   case class InnerThing(recursiveThing: Opt[OuterThing])
-  case class Generator(value: String) extends GeneratorBase derives GenCodec{
+  case class Generator(value: String) extends GeneratorBase derives GenCodec {
     @generated val valUpper: String = value.toUpperCase
     @(generated @getter)
     val getterUpper: String = value.toUpperCase
