@@ -4,6 +4,7 @@ package serialization
 import com.avsystem.commons.serialization.JavaCodecs.*
 
 import scala.annotation.nowarn
+import scala.collection.immutable.ListMap
 
 trait SimpleIOCodecTest extends AbstractCodecTest {
   type Raw = Any
@@ -172,79 +173,79 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   // test type dealiasing during materialization
   type IntTree = Tree[Int]
 
-//  test("recursive generic case class") {
-//    testWrite(
-//      Node(
-//        123,
-//        List(
-//          Node(
-//            42,
-//            List(
-//              Node(52),
-//              Node(53),
-//            ),
-//          ),
-//          Node(43),
-//        ),
-//      ),
-//      Map[String, Any](
-//        "value" -> 123,
-//        "children" -> List(
-//          Map[String, Any](
-//            "value" -> 42,
-//            "children" -> List(
-//              Map[String, Any]("value" -> 52, "children" -> List()),
-//              Map[String, Any]("value" -> 53, "children" -> List()),
-//            ),
-//          ),
-//          Map[String, Any]("value" -> 43, "children" -> List()),
-//        ),
-//      ),
-//    )
-//  }
-//
-//  test("recursively defined sealed hierarchy with explicit case class codec") {
-//    testWrite[CustomList](CustomTail, Map("CustomTail" -> Map()))
-//    testWrite[CustomList](
-//      CustomCons(CustomCons(CustomTail)),
-//      Map("CustomCons" -> Map("CustomCons" -> Map("CustomTail" -> Map()))),
-//    )
-//  }
+  test("recursive generic case class") {
+    testWrite(
+      Node(
+        123,
+        List(
+          Node(
+            42,
+            List(
+              Node(52),
+              Node(53),
+            ),
+          ),
+          Node(43),
+        ),
+      ),
+      Map[String, Any](
+        "value" -> 123,
+        "children" -> List(
+          Map[String, Any](
+            "value" -> 42,
+            "children" -> List(
+              Map[String, Any]("value" -> 52, "children" -> List()),
+              Map[String, Any]("value" -> 53, "children" -> List()),
+            ),
+          ),
+          Map[String, Any]("value" -> 43, "children" -> List()),
+        ),
+      ),
+    )
+  }
+
+  test("recursively defined sealed hierarchy with explicit case class codec") {
+    testWrite[CustomList](CustomTail, Map("CustomTail" -> Map()))
+    testWrite[CustomList](
+      CustomCons(CustomCons(CustomTail)),
+      Map("CustomCons" -> Map("CustomCons" -> Map("CustomTail" -> Map()))),
+    )
+  }
 
 //  test("value class") {
 //    testWrite(ValueClass("costam"), Map("str" -> "costam"))
 //  }
 
-//  test("sealed hierarchy") {
-//    testWrite[SealedBase](SealedBase.CaseObject, Map("CaseObject" -> Map()))
-//    testWrite[SealedBase](SealedBase.CaseClass("fuu"), Map("CaseClass" -> Map("str" -> "fuu")))
-//    testWrite[SealedBase](SealedBase.InnerBase.InnerCaseObject, Map("InnerCaseObject" -> Map()))
-//    testWrite[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"), Map("InnerCaseClass" -> Map("str" -> "fuu")))
-//  }
+  test("sealed hierarchy") {
+    testWrite[SealedBase](SealedBase.CaseObject, Map("CaseObject" -> Map()))
+    testWrite[SealedBase](SealedBase.CaseClass("fuu"), Map("CaseClass" -> Map("str" -> "fuu")))
+    testWrite[SealedBase](SealedBase.InnerBase.InnerCaseObject, Map("InnerCaseObject" -> Map()))
+    testWrite[SealedBase](SealedBase.InnerBase.InnerCaseClass("fuu"), Map("InnerCaseClass" -> Map("str" -> "fuu")))
+  }
 
-//  test("flat sealed hierarchy") {
-//    testWrite[FlatSealedBase](
-//      FlatSealedBase.FirstCase("fuu", 42),
-//      Map("_case" -> "FirstCase", "_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU"),
-//    )
-//    testWrite[FlatSealedBase](
-//      FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
-//      Map("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0), "upper_id" -> "BAR"),
-//    )
-//    testWrite[FlatSealedBase](
-//      FlatSealedBase.ThirdCase,
-//      Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"),
-//    )
-//    testWrite[FlatSealedBase](
-//      FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)),
-//      Map(
-//        "_case" -> "RecursiveCase",
-//        "_id" -> "rec",
-//        "upper_id" -> "REC",
-//        "sub" -> Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"),
-//      ),
-//    )
-//  }
+  test("flat sealed hierarchy") {
+    testWrite[FlatSealedBase](
+      FlatSealedBase.FirstCase("fuu", 42),
+      Map("_case" -> "FirstCase", "_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU"),
+    )
+    testWrite[FlatSealedBase](
+      FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
+      Map("_case" -> "SecondCase", "_id" -> "bar", "dbl" -> 3.14, "moar" -> List(1.0, 2.0), "upper_id" -> "BAR"),
+    )
+    testWrite[FlatSealedBase](
+      FlatSealedBase.ThirdCase,
+      Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"),
+    )
+    testWrite[FlatSealedBase](
+      FlatSealedBase.RecursiveCase("rec", Opt(FlatSealedBase.ThirdCase)),
+      Map(
+        "_case" -> "RecursiveCase",
+        "_id" -> "rec",
+        "upper_id" -> "REC",
+        "sub" -> Map("_case" -> "ThirdCase", "_id" -> "third", "upper_id" -> "THIRD"),
+      ),
+    )
+  }
 
 //  test("flat sealed hierarchy with transparent case") {
 //    testWrite[TransparentFlatSealedBase](
@@ -253,30 +254,30 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 //    )
 //  }
 
-//  test("random field access dependent flat sealed hierarchy reading") {
-//    testRead[FlatSealedBase](
-//      ListMap("_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU", "_case" -> "FirstCase"),
-//      FlatSealedBase.FirstCase("fuu", 42),
-//    )
-//  }
+  test("random field access dependent flat sealed hierarchy reading") {
+    testRead[FlatSealedBase](
+      ListMap("_id" -> "fuu", "int" -> 42, "upper_id" -> "FUU", "_case" -> "FirstCase"),
+      FlatSealedBase.FirstCase("fuu", 42),
+    )
+  }
 
-//  test("out of order field in flat sealed hierarchy") {
-//    testRead[FlatSealedBase](
-//      Map("_id" -> "fuu", "upper_id" -> "FUU", "random" -> 13, "_case" -> "FirstCase", "int" -> 42),
-//      FlatSealedBase.FirstCase("fuu", 42),
-//    )
-//    testRead[FlatSealedBase](
-//      Map(
-//        "_id" -> "bar",
-//        "upper_id" -> "FUU",
-//        "random" -> 13,
-//        "_case" -> "SecondCase",
-//        "dbl" -> 3.14,
-//        "moar" -> List(1.0, 2.0),
-//      ),
-//      FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
-//    )
-//  }
+  test("out of order field in flat sealed hierarchy") {
+    testRead[FlatSealedBase](
+      Map("_id" -> "fuu", "upper_id" -> "FUU", "random" -> 13, "_case" -> "FirstCase", "int" -> 42),
+      FlatSealedBase.FirstCase("fuu", 42),
+    )
+    testRead[FlatSealedBase](
+      Map(
+        "_id" -> "bar",
+        "upper_id" -> "FUU",
+        "random" -> 13,
+        "_case" -> "SecondCase",
+        "dbl" -> 3.14,
+        "moar" -> List(1.0, 2.0),
+      ),
+      FlatSealedBase.SecondCase("bar", 3.14, 1.0, 2.0),
+    )
+  }
 
 //  test("GADT") {
 //    testWrite[Expr[_]](NullExpr, Map("NullExpr" -> Map()))
@@ -362,10 +363,10 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 //    )
 //  }
 
-//  test("customized flat sealed hierarchy") {
-//    testWrite[CustomizedSeal](CustomizedCase("dafuq"), Map("str" -> "dafuq"))
-//    testWrite[CustomizedSeal](CustomizedObjekt, Map("kejs" -> "CustomizedObjekt"))
-//  }
+  test("customized flat sealed hierarchy") {
+    testWrite[CustomizedSeal](CustomizedCase("dafuq"), Map("str" -> "dafuq"))
+    testWrite[CustomizedSeal](CustomizedObjekt, Map("kejs" -> "CustomizedObjekt"))
+  }
 
   test("case class with more than 22 fields") {
     val inst = ItsOverTwentyTwo(
@@ -397,12 +398,12 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     testWrite[ItsOverTwentyTwo](inst, repr)
   }
 
-//  test("recursive materialization with intermediate sequence") {
-//    testWrite[HasColl](
-//      HasCollCase(List(DepCase("kek"))),
-//      Map("_case" -> "HasCollCase", "coll" -> List(Map("_case" -> "DepCase", "str" -> "kek"))),
-//    )
-//  }
+  test("recursive materialization with intermediate sequence") {
+    testWrite[HasColl](
+      HasCollCase(List(DepCase("kek"))),
+      Map("_case" -> "HasCollCase", "coll" -> List(Map("_case" -> "DepCase", "str" -> "kek"))),
+    )
+  }
 
   test("refined sealed type with type member") {
     testWrite[SealedRefined { type X = Int }](

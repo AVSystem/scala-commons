@@ -50,13 +50,13 @@ object CodecTestData {
     map.put(3.0, 3)
     map
   }
-  sealed trait SealedBase
-  @flatten sealed trait FlatSealedBase {
+  sealed trait SealedBase derives GenCodec
+  @flatten sealed trait FlatSealedBase derives GenCodec {
     @mongoId def id: String
     @generated
     @name("upper_id") def upperId: String = id.toUpperCase
   }
-  @flatten sealed trait TransparentFlatSealedBase
+//  @flatten sealed trait TransparentFlatSealedBase derives GenCodec
   sealed trait BaseExpr {
     type Value
     def value: Value
@@ -66,11 +66,11 @@ object CodecTestData {
   sealed trait Tree[T] derives GenCodec
   sealed trait Enumz derives GenCodec
   sealed trait KeyEnumz derives GenCodec
-  @flatten("kejs") sealed trait CustomizedSeal
+  @flatten("kejs") sealed trait CustomizedSeal derives GenCodec
   @flatten
-  sealed trait Dep
+  sealed trait Dep derives GenCodec
   @flatten
-  sealed trait HasColl
+  sealed trait HasColl derives GenCodec
   sealed trait SealedRefined {
     type X
   }
@@ -197,7 +197,6 @@ object CodecTestData {
     def abstractUpper: String = value.toUpperCase
   }
 //  case class TransparentCaseWrap(thing: TransparentFlatThing) extends TransparentFlatSealedBase
-  object ValueClass extends HasGenCodec[ValueClass]
   object SealedBase {
     sealed trait InnerBase extends SealedBase
     case class CaseClass(str: String) extends SealedBase
