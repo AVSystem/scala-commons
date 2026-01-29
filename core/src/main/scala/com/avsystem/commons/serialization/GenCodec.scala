@@ -8,6 +8,7 @@ import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.misc.{Bytes, HasAnnotation, Timestamp}
 
 import java.util.UUID
+import scala.NamedTuple.NamedTuple
 import scala.annotation.{implicitNotFound, tailrec, targetName}
 import scala.collection.Factory
 
@@ -273,20 +274,32 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     case _: HasAnnotation[`transparent`, T] =>
       deriveTransparentWrapper[T]
     case v: ValueOf[T] =>
-      deriveSingleton(constName[T],v.asInstanceOf[ValueOf[T & Singleton]]).asInstanceOf[GenCodec[T]]
+      deriveSingleton(
+        compiletime.summonFrom {
+          case hasAnnotation: HasAnnotation[`name`, T] => hasAnnotation.annotation.name
+          case _ => compiletime.summonInline[TypeRepr[T]]
+        },
+        v.asInstanceOf[ValueOf[T & Singleton]],
+      ).asInstanceOf[GenCodec[T]]
     case m: Mirror.ProductOf[T & Product] =>
       deriveProduct(m)(
-        constName[T],
+        compiletime.summonFrom {
+          case hasAnnotation: HasAnnotation[`name`, T] => hasAnnotation.annotation.name
+          case _ => compiletime.summonInline[TypeRepr[T]]
+        },
         summonInstances[T, m.MirroredElemTypes](summonAllowed = true, deriveAllowed = false),
-        compiletime.constValueTuple[m.MirroredElemLabels],
+        constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]],
       ).asInstanceOf[GenCodec[T]]
     case m: Mirror.SumOf[T] =>
       compiletime.summonFrom {
         case _: HasAnnotation[`flatten`, T] =>
           deriveFlattenSum(m)(
-            constName[T],
+            compiletime.summonFrom {
+              case hasAnnotation: HasAnnotation[`name`, T] => hasAnnotation.annotation.name
+              case _ => compiletime.summonInline[TypeRepr[T]]
+            },
             summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
-            compiletime.constValueTuple[m.MirroredElemLabels],
+            constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]],
             compiletime
               .summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]]
               .map[[X] =>> Class[?]]([CT] => (ct: CT) => ct.asInstanceOf[ClassTag[?]].runtimeClass)
@@ -294,9 +307,12 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
           )
         case _ =>
           deriveNestedSum(m)(
-            constName[T],
+            compiletime.summonFrom {
+              case hasAnnotation: HasAnnotation[`name`, T] => hasAnnotation.annotation.name
+              case _ => compiletime.summonInline[TypeRepr[T]]
+            },
             summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
-            compiletime.constValueTuple[m.MirroredElemLabels],
+            constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]],
             compiletime
               .summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]]
               .map[[X] =>> Class[?]]([CT] => (ct: CT) => ct.asInstanceOf[ClassTag[?]].runtimeClass)
@@ -305,13 +321,16 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       }
   }
 
-  inline def constName[T]: String = compiletime.summonFrom {
-    case h: HasAnnotation[`name`, T] => h.annotation.name
-    case _ => compiletime.summonInline[TypeRepr[T]]
-  }
-
-  inline def constNames[Tup <: Tuple]: Tup = inline compiletime.erasedValue[Tup] match {
-    case _: (head *: tail) => (constName[head] *: constNames[tail]).asInstanceOf[Tup]
+  inline private def constNames[Tup <: Tuple]: Tuple = inline compiletime.erasedValue[Tup] match {
+    case _: (head *: tail) =>
+      val head = inline compiletime.erasedValue match {
+        case _: (label, tpe) =>
+          compiletime.summonFrom {
+            case h: HasAnnotation[`name`, tpe] => h.annotation.name
+            case _ => compiletime.constValue[label]
+          }
+      }
+      (head *: constNames[tail]).asInstanceOf[Tup]
     case _: EmptyTuple => EmptyTuple.asInstanceOf[Tup]
   }
 
@@ -391,7 +410,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   )(
     typeRepr: String,
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
-    fieldNames: m.MirroredElemLabels,
+    fieldNames: Tuple,
     classes: Tuple.Map[m.MirroredElemTypes, Class],
   ): GenCodec[T] =
     new FlatSealedHierarchyCodec[T](
@@ -414,7 +433,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   )(
     typeRepr: String,
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
-    fieldNames: m.MirroredElemLabels,
+    fieldNames: Tuple,
     classes: Tuple.Map[m.MirroredElemTypes, Class],
   ): GenCodec[T] = new NestedSealedHierarchyCodec[T](
     typeRepr,
@@ -429,7 +448,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   )(
     typeRepr: String,
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
-    fieldNames: m.MirroredElemLabels,
+    fieldNames: Tuple,
   ): GenCodec[T] =
     new ProductCodec[T](typeRepr, false, fieldNames.toArray.map(_.asInstanceOf[String])) {
       override protected val dependencies: Array[GenCodec[?]] = instances.toArray.map(_.asInstanceOf[GenCodec[?]])
@@ -441,23 +460,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
         )
     }
 
-//  q"""
-  //      new $SerializationPkg.FlatSealedHierarchyCodec[$tpe](
-  //        ${tpe.toString},
-  //        ${typeOf[Null] <:< tpe},
-  //        ${mkArray(StringCls, caseInfos.map(_.caseName))},
-  //        ${mkArray(tq"$ClassCls[_]", caseInfos.map(_.classOf))},
-  //        ${mkArray(StringCls, oooParamNames)},
-  //        $SetObj(..$caseDependentFieldNames),
-  //        $caseFieldName,
-  //        ${defaultCase.map(caseInfos.indexOf).getOrElse(-1)},
-  //        ${defaultCase.exists(_.transientCase)}
-  //      ) {
-  //        ..$cachedImplicitDeclarations
-  //        def caseDependencies = ${mkArray(tq"$GenCodecObj.OOOFieldsObjectCodec[_]", caseInfos.map(_.depInstance))}
-  //        def oooDependencies = ${mkArray(tq"$GenCodecCls[_]", oooDependencies)}
-  //      }
-  //    """
   private def notNull = throw new ReadFailure("not null")
   trait NullSafeCodec[T] extends GenCodec[T] {
     override final def write(output: Output, value: T): Unit =
