@@ -272,7 +272,7 @@ object CodecTestData {
   object RecExpr {
     given [T: GenCodec] => GenCodec[RecExpr[T]] =
       mkCodec[Nothing](using GenCodec[T].asInstanceOf[GenCodec[Nothing]]).asInstanceOf[GenCodec[RecExpr[T]]]
-    private def mkCodec[T <: RecBound[T]: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.derived
+    private def mkCodec[T <: RecBound[T]: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
   }
   case object NullLiteral extends PureGadtExpr[Null]
   object Enumz {

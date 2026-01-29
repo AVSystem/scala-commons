@@ -275,31 +275,23 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       deriveTransparentWrapper[T]
     case v: ValueOf[T] =>
       deriveSingleton(
-        compiletime.summonFrom {
-          case hasAnnotation: HasAnnotation[`name`, T] => hasAnnotation.annotation.name
-          case _ => compiletime.summonInline[TypeRepr[T]]
-        },
+        constName[T](compiletime.summonInline[TypeRepr[T]]),
         v.asInstanceOf[ValueOf[T & Singleton]],
       ).asInstanceOf[GenCodec[T]]
     case m: Mirror.ProductOf[T & Product] =>
       deriveProduct(m)(
-        compiletime.summonFrom {
-          case hasAnnotation: HasAnnotation[`name`, T] => hasAnnotation.annotation.name
-          case _ => compiletime.summonInline[TypeRepr[T]]
-        },
+        constName[T](compiletime.summonInline[TypeRepr[T]]),
         summonInstances[T, m.MirroredElemTypes](summonAllowed = true, deriveAllowed = false),
         constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]],
       ).asInstanceOf[GenCodec[T]]
     case m: Mirror.SumOf[T] =>
       compiletime.summonFrom {
-        case _: HasAnnotation[`flatten`, T] =>
+        case f: HasAnnotation[`flatten`, T] =>
           deriveFlattenSum(m)(
-            compiletime.summonFrom {
-              case hasAnnotation: HasAnnotation[`name`, T] => hasAnnotation.annotation.name
-              case _ => compiletime.summonInline[TypeRepr[T]]
-            },
+            constName[T](compiletime.summonInline[TypeRepr[T]]),
             summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
             constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]],
+            f.annotation.caseFieldName,
             compiletime
               .summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]]
               .map[[X] =>> Class[?]]([CT] => (ct: CT) => ct.asInstanceOf[ClassTag[?]].runtimeClass)
@@ -307,10 +299,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
           )
         case _ =>
           deriveNestedSum(m)(
-            compiletime.summonFrom {
-              case hasAnnotation: HasAnnotation[`name`, T] => hasAnnotation.annotation.name
-              case _ => compiletime.summonInline[TypeRepr[T]]
-            },
+            constName[T](compiletime.summonInline[TypeRepr[T]]),
             summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
             constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]],
             compiletime
@@ -321,15 +310,14 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       }
   }
 
+  inline private def constName[T](fallback: String) = compiletime.summonFrom {
+    case h: HasAnnotation[`name`, tpe] => h.annotation.name
+    case _ => fallback
+  }
+
   inline private def constNames[Tup <: Tuple]: Tuple = inline compiletime.erasedValue[Tup] match {
-    case _: (head *: tail) =>
-      val head = inline compiletime.erasedValue match {
-        case _: (label, tpe) =>
-          compiletime.summonFrom {
-            case h: HasAnnotation[`name`, tpe] => h.annotation.name
-            case _ => compiletime.constValue[label]
-          }
-      }
+    case _: ((label, tpe) *: tail) =>
+      val head = constName(compiletime.constValue[label].asInstanceOf[String])
       (head *: constNames[tail]).asInstanceOf[Tup]
     case _: EmptyTuple => EmptyTuple.asInstanceOf[Tup]
   }
@@ -411,6 +399,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     typeRepr: String,
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
     fieldNames: Tuple,
+    caseFieldName: String,
     classes: Tuple.Map[m.MirroredElemTypes, Class],
   ): GenCodec[T] =
     new FlatSealedHierarchyCodec[T](
@@ -420,7 +409,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       classes.toArray.map(_.asInstanceOf[Class[?]]),
       fieldNames.toArray.map(_.asInstanceOf[String]),
       fieldNames.toArray.map(_.asInstanceOf[String]).toSet,
-      "dupa",
+      caseFieldName,
       0,
       false,
     ) {

@@ -41,7 +41,12 @@ object HasAnnotation {
     import quotes.reflect._
     TypeRepr.of[T].typeSymbol.getAnnotation(TypeRepr.of[A].typeSymbol) match {
       case Some(annot) => '{ new HasAnnotation(${ annot.asExprOf[A] }) }
-      case _ => report.errorAndAbort(s"${Type.show[T]} is not annotated with ${Type.show[A]}")
+      case _ =>
+//        report.info(
+//          s"Failed to find annotation ${Type.show[A]} on type ${Type.show[T]}. Available annotations: " +
+//            TypeRepr.of[T].typeSymbol.annotations.map(a => Type.show(using a.tpe.asType)).mkString(", "),
+//        )
+        report.errorAndAbort(s"${Type.show[T]} is not annotated with ${Type.show[A]}")
     }
   }
 
