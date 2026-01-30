@@ -23,6 +23,23 @@ case class SourceInfo(
     (filePath, offset).hashCode
 }
 
-object SourceInfo extends SourceInfoMacros {
+object SourceInfo {
   def here()(using si: SourceInfo): SourceInfo = si
+
+  inline given here: SourceInfo = ${ hereImpl }
+  private def hereImpl(using quotes: Quotes): Expr[SourceInfo] = {
+    import quotes.reflect.*
+    val pos = Position.ofMacroExpansion
+    '{
+      SourceInfo(
+        ${ Expr(pos.sourceFile.path) },
+        ${ Expr(pos.sourceFile.name) },
+        ${ Expr(pos.start) },
+        ${ Expr(pos.startLine + 1) },
+        ${ Expr(pos.startColumn + 1) },
+        ${ Expr("") }, // todo
+        ${ Expr(Nil) }, // todo
+      )
+    }
+  }
 }

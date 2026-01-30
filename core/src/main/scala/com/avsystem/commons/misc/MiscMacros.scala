@@ -28,9 +28,6 @@ trait SimpleClassNameMacros {
   inline implicit def materialize[T]: SimpleClassName[T] = ${ MiscMacros.materializeSimpleClassName[T] }
 }
 
-trait SourceInfoMacros {
-  inline implicit def here: SourceInfo = ${ MiscMacros.materializeSourceInfo }
-}
 
 trait ImplicitsMacros {
   inline def infer[T]: T = ${ MiscMacros.inferImpl[T] }
@@ -67,10 +64,7 @@ trait TypeStringMacros {
 trait JavaClassNameMacros {
   inline implicit def materialize[T]: JavaClassName[T] = ???
 }
-trait SealedUtilsMacros {
-  inline def caseObjectsFor[T]: List[T] = ???
-  inline def instancesFor[TC[_], T]: List[TC[T]] = ???
-}
+
 trait UnapplierMacros {
   inline implicit def materialize[T]: Unapplier[T] = ???
 }

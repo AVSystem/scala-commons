@@ -1,12 +1,28 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
-import scala.reflect.Enum
+object SealedUtils {
+  inline def instancesFor[TC[_], T: Mirror.SumOf as m]: List[TC[T]] =
+    compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, TC]].toList.asInstanceOf[List[TC[T]]]
 
-object SealedUtils extends SealedUtilsMacros
+  inline def caseObjects[T: Mirror.SumOf as m]: List[T] =
+    collectCaseObjects[T, m.MirroredElemTypes]
+
+  inline private def collectCaseObjects[T, Tup <: Tuple]: List[T] = inline compiletime.erasedValue[Tup] match {
+    case _: (h *: t) =>
+      compiletime.summonFrom {
+        case vo: ValueOf[`h`] =>
+          vo.value.asInstanceOf[T] :: Nil
+        case m: Mirror.SumOf[`h`] =>
+          collectCaseObjects[T, m.MirroredElemTypes] // todo: check if required to recurse into nested sum type
+        case _ =>
+          Nil
+      } ::: collectCaseObjects[T, t]
+    case _: EmptyTuple => Nil
+  }
+}
 
 /**
  * Base trait for companion objects of sealed traits that serve as enums, i.e. their only values are case objects. For
@@ -24,12 +40,12 @@ object SealedUtils extends SealedUtilsMacros
  *   }
  * }}}
  */
-trait SealedEnumCompanion[T] extends SealedUtilsMacros {
+trait SealedEnumCompanion[T] {
 
   /**
    * Thanks to this implicit, [[SealedEnumCompanion]] and its subtraits can be used as typeclasses.
    */
-  given evidence: this.type = this
+//  given evidence: this.type = this
 
   /**
    * Holds a list of all case objects of a sealed trait or class `T`. This must be implemented separately for every
@@ -51,7 +67,7 @@ trait SealedEnumCompanion[T] extends SealedUtilsMacros {
    * is consistent with declaration order in source file. However, if the enum is not an [[OrderedEnum]], the order may
    * be arbitrary.
    */
-  protected def caseObjects: List[T] = caseObjectsFor[T]
+  inline protected def caseObjects(using Mirror.SumOf[T]): List[T] = SealedUtils.caseObjects[T]
 }
 
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]

@@ -11,7 +11,7 @@ import scala.concurrent.duration.*
 import scala.jdk.javaapi.DurationConverters
 
 trait HoconGenCodecs {
-  given GenCodec[Config] = GenCodec.createNullable(
+  given GenCodec[Config] = GenCodec.create(
     input =>
       input.readCustom(ConfigValueMarker).fold(ConfigFactory.parseString(input.readSimple().readString())) {
         case obj: ConfigObject => obj.toConfig
@@ -24,7 +24,7 @@ trait HoconGenCodecs {
       },
   )
 
-  given GenCodec[FiniteDuration] = GenCodec.createNullable(
+  given GenCodec[FiniteDuration] = GenCodec.create(
     input =>
       input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
     (output, value) =>
@@ -34,17 +34,17 @@ trait HoconGenCodecs {
           .writeLong(value.toMillis),
   )
 
-  given GenCodec[JDuration] = GenCodec.createNullable(
+  given GenCodec[JDuration] = GenCodec.create(
     input => input.readCustom(DurationMarker).getOrElse(JDuration.ofMillis(input.readSimple().readLong())),
     (output, value) => if (!output.writeCustom(DurationMarker, value)) output.writeSimple().writeLong(value.toMillis),
   )
 
-  given GenCodec[Period] = GenCodec.createNullable(
+  given GenCodec[Period] = GenCodec.create(
     input => input.readCustom(PeriodMarker).getOrElse(Period.parse(input.readSimple().readString())),
     (output, value) => if (!output.writeCustom(PeriodMarker, value)) output.writeSimple().writeString(value.toString),
   )
 
-  given GenCodec[SizeInBytes] = GenCodec.nonNull(
+  given GenCodec[SizeInBytes] = GenCodec.create(
     input => SizeInBytes(input.readCustom(SizeInBytesMarker).getOrElse(input.readSimple().readLong())),
     (output, value) =>
       if (!output.writeCustom(SizeInBytesMarker, value.bytes)) output.writeSimple().writeLong(value.bytes),
@@ -54,7 +54,7 @@ trait HoconGenCodecs {
     GenKeyCodec.create(Class.forName, _.getName)
 
   given GenCodec[Class[?]] =
-    GenCodec.nullableString(Class.forName, _.getName)
+    GenCodec.createString(Class.forName, _.getName)
 }
 object HoconGenCodecs extends HoconGenCodecs
 

@@ -288,10 +288,10 @@ object CodecTestData {
     case object Third extends KeyEnumz
   }
   object SealedKey extends NamedEnumCompanion[SealedKey[?]] {
-    val values: List[SealedKey[?]] = caseObjects
     case object StringKey extends SealedKey[String]
     case object IntKey extends SealedKey[Int]
     case object BooleanKey extends SealedKey[Boolean]
+    val values: List[SealedKey[?]] = caseObjects
   }
   case object CustomizedObjekt extends CustomizedSeal
 
