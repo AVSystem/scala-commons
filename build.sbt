@@ -54,7 +54,8 @@ inThisBuild(
     scalaVersion := scala3Version,
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowArtifactUpload := false,
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
+//    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
+    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17")),
     githubWorkflowEnv += "JAVA_OPTS" -> "-Dfile.encoding=UTF-8 -Xmx4G",
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuildPreamble ++= Seq(
@@ -108,8 +109,6 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
       // "-Xprint-suspension",
       // "-Vprint:typer",
       "-Wsafe-init",
-      "-Yshow-suppressed-errors",
-      "-Yshow-var-bounds",
       "-Werror",
       "-experimental",
       "-preview",
