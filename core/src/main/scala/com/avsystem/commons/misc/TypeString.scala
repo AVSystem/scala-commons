@@ -25,15 +25,20 @@ import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 class TypeString[T](val value: String) extends AnyVal {
   override def toString: String = value
 }
-object TypeString extends TypeStringMacros {
+object TypeString {
+  inline given [T] => TypeString[T] = ${ materializeImpl[T] }
   def of[T: TypeString]: String = TypeString[T].value
   def apply[T](using ts: TypeString[T]): TypeString[T] = ts
-
   given GenKeyCodec[TypeString[?]] =
     GenKeyCodec.create[TypeString[?]](new TypeString(_), _.value)
-
   given GenCodec[TypeString[?]] =
     GenCodec.createSimple[TypeString[?]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
+  private def materializeImpl[T: Type](using quotes: Quotes) = {
+    import quotes.reflect.*
+    val tpe = TypeRepr.of[T].dealias
+    val typeString = Expr(tpe.show(using Printer.TypeReprShortCode))
+    '{ new TypeString[T]($typeString) }
+  }
 }
 
 /**
@@ -46,10 +51,10 @@ object TypeString extends TypeStringMacros {
 class JavaClassName[T](val value: String) extends AnyVal {
   override def toString: String = value
 }
-object JavaClassName extends JavaClassNameMacros {
+object JavaClassName {
+  inline given [T] => JavaClassName[T] = ${ materializeImpl[T] }
   def apply[T](using ts: JavaClassName[T]): JavaClassName[T] = ts
   def of[T: JavaClassName]: String = JavaClassName[T].value
-
   given JavaClassName[Nothing] = new JavaClassName("scala.runtime.Nothing$")
   given JavaClassName[Array[Nothing]] = new JavaClassName("[Lscala.runtime.Nothing$;")
   given JavaClassName[Unit] = new JavaClassName("void")
@@ -61,7 +66,8 @@ object JavaClassName extends JavaClassNameMacros {
   given JavaClassName[Float] = new JavaClassName("float")
   given JavaClassName[Double] = new JavaClassName("double")
   given JavaClassName[Char] = new JavaClassName("char")
-
+  given JavaClassName[Any] = new JavaClassName("java.lang.Object")
+  given JavaClassName[AnyVal] = new JavaClassName("java.lang.Object")
   given [T: JavaClassName] => JavaClassName[Array[T]] = {
     val elementName = JavaClassName.of[T] match {
       case "void" => "Lscala.runtime.BoxedUnit;"
@@ -78,10 +84,29 @@ object JavaClassName extends JavaClassNameMacros {
     }
     new JavaClassName("[" + elementName)
   }
-
   given GenKeyCodec[JavaClassName[?]] =
     GenKeyCodec.create[JavaClassName[?]](new JavaClassName(_), _.value)
-
   given GenCodec[JavaClassName[?]] =
     GenCodec.createSimple[JavaClassName[?]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
+  private def materializeImpl[T: Type](using quotes: Quotes) = {
+    import quotes.reflect.*
+    def javaClassName(sym: Symbol): String = {
+      val nameSuffix = if (sym.flags.is(Flags.Module) && !sym.flags.is(Flags.Package)) "$" else ""
+      val selfName = sym.name + nameSuffix
+      val owner = sym.owner
+      val prefix =
+        if (owner == defn.RootClass) ""
+        else if (owner.flags.is(Flags.Package)) javaClassName(owner) + "."
+        else if (owner.flags.is(Flags.Module)) javaClassName(owner)
+        else javaClassName(owner) + "$"
+      prefix + selfName
+    }
+
+    val tpe = TypeRepr.of[T].dealias
+    if (tpe.typeSymbol.isClassDef && tpe.typeSymbol != defn.ArrayClass) {
+      val name = Expr(javaClassName(tpe.typeSymbol))
+      '{ new JavaClassName[T]($name) }
+    } else
+      report.errorAndAbort(s"${Type.show[T]} does not represent a regular class")
+  }
 }

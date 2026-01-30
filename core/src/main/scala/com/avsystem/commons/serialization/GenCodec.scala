@@ -629,7 +629,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       wrapped.write(output, wrappedValue)
     }
   }
-  class SubclassCodec[T: ClassTag, S >: T: GenCodec](val nullable: Boolean) extends GenCodec[T] {
+  class SubclassCodec[T: ClassTag, S >: T: GenCodec] extends GenCodec[T] {
     override def read(input: Input): T = GenCodec.read[S](input) match {
       case sub: T => sub
       case v => throw new ReadFailure(s"$v is not an instance of ${classTag[T].runtimeClass}")
