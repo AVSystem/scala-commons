@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package serialization
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
-
 import org.scalatest.funsuite.AnyFunSuite
+
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
 
 case class Wrap(x: Int) derives GenCodec
 

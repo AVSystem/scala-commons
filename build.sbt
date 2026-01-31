@@ -114,7 +114,6 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
       "-preview",
       //  "-Yprofile-enabled",
       //  s"-Yprofile-trace:$moduleDir/compile-trace.json",
-      "-language:implicitConversions", // todo: disable
       "-language:experimental.macros",
       "-old-syntax",
     )

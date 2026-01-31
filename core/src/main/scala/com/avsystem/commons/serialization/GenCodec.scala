@@ -9,7 +9,7 @@ import com.avsystem.commons.misc.{Bytes, HasAnnotation, Timestamp}
 
 import java.util.UUID
 import scala.annotation.{implicitNotFound, tailrec, targetName}
-import scala.collection.Factory
+import scala.collection.{mutable, Factory}
 
 /**
  * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized from
@@ -232,6 +232,8 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
   given [T] => (fallback: Fallback[GenCodec[T]]) => GenCodec[T] =
     fallback.value
+  inline def fromJavaBuilder[T, B](inline newBuilder: B)(inline build: B => T): GenCodec[T] =
+    ${ fromJavaBuilderImpl[T, B]('{ newBuilder }, '{ build }) }
   inline private def unsafeDerived[T]: GenCodec[T] = compiletime.summonFrom {
     case _: HasAnnotation[`transparent`, T] =>
       deriveTransparentWrapper[T]
@@ -365,7 +367,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   ): GenCodec[T] =
     new FlatSealedHierarchyCodec[T](
       typeRepr,
-      false,
       fieldNames.toArray.map(_.asInstanceOf[String]),
       classes.toArray.map(_.asInstanceOf[Class[?]]),
       fieldNames.toArray.map(_.asInstanceOf[String]),
@@ -387,7 +388,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     classes: Tuple.Map[m.MirroredElemTypes, Class],
   ): GenCodec[T] = new NestedSealedHierarchyCodec[T](
     typeRepr,
-    false,
     fieldNames.toArray.map(_.asInstanceOf[String]),
     classes.toArray.map(_.asInstanceOf[Class[?]]),
   ) {
@@ -400,7 +400,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
     fieldNames: Tuple,
   ): GenCodec[T] =
-    new ProductCodec[T](typeRepr, false, fieldNames.toArray.map(_.asInstanceOf[String])) {
+    new ProductCodec[T](typeRepr, fieldNames.toArray.map(_.asInstanceOf[String])) {
       override protected val dependencies: Array[GenCodec[?]] = instances.toArray.map(_.asInstanceOf[GenCodec[?]])
       override protected def instantiate(fieldValues: FieldValues): T =
         m.fromProduct(
@@ -409,8 +409,88 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
             .asInstanceOf[m.MirroredElemTypes],
         )
     }
-
   private def notNull = throw new ReadFailure("not null")
+  private def fromJavaBuilderImpl[T: Type, B: Type](
+    newBuilder: Expr[B],
+    build: Expr[B => T],
+  )(using quotes: Quotes,
+  ): Expr[GenCodec[T]] = {
+    import quotes.reflect.*
+
+    extension (ms: Symbol) {
+      private def isJavaGetter: Boolean =
+        ms.paramSymss.exists(_.exists(_.isTypeParam)) && ms.paramSymss == List(Nil) && {
+          val expectedPrefix = if (ms.typeRef =:= TypeRepr.of[Boolean]) "is" else "get"
+          ms.name.startsWith(expectedPrefix) && ms.name.length > expectedPrefix.length &&
+          ms.name.charAt(expectedPrefix.length).isUpper
+        }
+
+      private def isJavaSetter: Boolean =
+        ms.paramSymss.exists(_.exists(_.isTypeParam)) && ms.paramSymss.map(_.length) == List(1) && {
+          ms.name.startsWith("set") && ms.name.length > 3 && ms.name.charAt(3).isUpper
+        }
+    }
+
+    val fieldNames = new mutable.ListBuffer[Expr[String]]
+    val getters = new mutable.ListBuffer[Expr[T => Any]]
+    val setters = new mutable.ListBuffer[Expr[(B, Any) => B]]
+    val deps = new mutable.ListBuffer[Expr[GenCodec[?]]]
+
+    TypeRepr.of[T].typeSymbol.declaredMethods.iterator.foreach {
+      case getter if getter.isDefDef && getter.isJavaGetter =>
+        getter.typeRef.asType match {
+          case '[propType] =>
+            val getterName = getter.name
+            val setterName = getterName.replaceFirst("^(get|is)", "set")
+
+            val setterOpt = TypeRepr.of[B].typeSymbol.methodMember(setterName).head.allOverriddenSymbols.find { s =>
+              s.isDefDef && s.isJavaSetter && s.paramSymss.head.head.typeRef =:= TypeRepr.of[propType]
+            }
+            setterOpt.foreach { setter =>
+              val propName = setterName.charAt(3).toLower.toString + setterName.drop(4)
+              fieldNames += Expr(propName)
+              deps +=
+                Expr
+                  .summon[GenCodec[propType]]
+                  .getOrElse(
+                    throw new RuntimeException(
+                      s"Cannot materialize GenCodec for ${Type.show[T]} because of problem with property $propName:\n",
+                    ),
+                  )
+              getters += Lambda(
+                Symbol.spliceOwner,
+                MethodType(List("v"))(_ => List(TypeRepr.of[T]), _ => TypeRepr.of[propType]),
+                (sym, args) => args.head.asInstanceOf[Term].select(getter),
+              ).asExprOf[T => propType]
+
+              setters += Lambda(
+                Symbol.spliceOwner,
+                MethodType(List("b", "v"))(_ => List(TypeRepr.of[B], TypeRepr.of[Any]), _ => TypeRepr.of[B]),
+                (sym, args) => {
+                  given Quotes = sym.asQuotes
+                  val Seq(b: Term, v: Term) = args.runtimeChecked
+                  b.select(setter).appliedTo('{ ${ v.asExpr }.asInstanceOf[propType] }.asTerm)
+                },
+              ).asExprOf[(B, Any) => B]
+            }
+        }
+      case _ =>
+    }
+
+    '{
+      new JavaBuilderBasedCodec[T, B](
+        compiletime.summonInline[com.avsystem.commons.serialization.TypeRepr[T]],
+        $newBuilder,
+        $build,
+        ${ Expr.ofList(fieldNames.result()) }.toArray,
+        ${ Expr.ofList(getters.result()) }.toArray,
+        ${ Expr.ofList(setters.result()) }.toArray,
+      ) {
+        override val dependencies = ${ Expr.ofList(deps.result()) }.toArray
+      }
+    }
+  }
+
   trait NullableCodec[T] extends GenCodec[T | Null] {
     override final def write(output: Output, value: T | Null): Unit =
       if (value == null) output.writeNull()
@@ -506,13 +586,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       case Opt(fr) => s"Cannot read field $fr of $typeRepr before $caseFieldName field is read"
       case Opt.Empty => s"Cannot read $typeRepr, $caseFieldName field is missing"
     })
-  case class NotSingleField(typeRepr: String, empty: Boolean)
-    extends ReadFailure(
-      s"Cannot read $typeRepr, expected object with exactly one field but got " +
-        (if (empty) "empty object" else "more than one"),
-    )
-  case class CaseReadFailed(typeRepr: String, caseName: String, cause: Throwable)
-    extends ReadFailure(s"Failed to read case $caseName of $typeRepr", cause)
 
   extension [A](coll: BIterable[A]) {
     def writeToList(lo: ListOutput)(using writer: GenCodec[A]): Unit = {
@@ -583,6 +656,13 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       b.result()
     }
   }
+  case class NotSingleField(typeRepr: String, empty: Boolean)
+    extends ReadFailure(
+      s"Cannot read $typeRepr, expected object with exactly one field but got " +
+        (if (empty) "empty object" else "more than one"),
+    )
+  case class CaseReadFailed(typeRepr: String, caseName: String, cause: Throwable)
+    extends ReadFailure(s"Failed to read case $caseName of $typeRepr", cause)
   case class FieldReadFailed(typeRepr: String, fieldName: String, cause: Throwable)
     extends ReadFailure(s"Failed to read field $fieldName of $typeRepr", cause)
   case class ListElementReadFailed(idx: Int, cause: Throwable)
@@ -652,4 +732,5 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
         wrapped.writeFields(output, onWrite(value))
     }
   }
+
 }

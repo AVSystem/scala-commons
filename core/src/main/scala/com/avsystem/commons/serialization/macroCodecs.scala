@@ -11,7 +11,6 @@ class SingletonCodec[T <: Singleton](
   singletonValue: => T,
 ) extends ErrorReportingCodec[T](typeRepr)
     with OOOFieldsObjectCodec[T] {
-  final def nullable = true
   final def readObject(input: ObjectInput, outOfOrderFields: FieldValues): T = singletonValue
   def size(value: T, output: Opt[SequentialOutput]): Int = 0
   def writeFields(output: ObjectOutput, value: T): Unit = ()
@@ -19,7 +18,6 @@ class SingletonCodec[T <: Singleton](
 
 abstract class ApplyUnapplyCodec[T](
   typeRepr: String,
-  val nullable: Boolean,
   fieldNames: Array[String],
 ) extends ErrorReportingCodec[T](typeRepr)
     with OOOFieldsObjectCodec[T] {
@@ -93,9 +91,8 @@ object ApplyUnapplyCodec {
 
 abstract class ProductCodec[T <: Product](
   typeRepr: String,
-  nullable: Boolean,
   fieldNames: Array[String],
-) extends ApplyUnapplyCodec[T](typeRepr, nullable, fieldNames) {
+) extends ApplyUnapplyCodec[T](typeRepr, fieldNames) {
   def size(value: T, output: Opt[SequentialOutput]): Int = value.productArity
 
   final def writeFields(output: ObjectOutput, value: T): Unit = {
@@ -111,7 +108,6 @@ abstract class ProductCodec[T <: Product](
 
 abstract class SealedHierarchyCodec[T](
   val typeRepr: String,
-  val nullable: Boolean,
   val caseNames: Array[String],
   val cases: Array[Class[?]],
 ) extends ErrorReportingCodec[T](typeRepr)
@@ -130,10 +126,9 @@ abstract class SealedHierarchyCodec[T](
 
 abstract class NestedSealedHierarchyCodec[T](
   typeRepr: String,
-  nullable: Boolean,
   caseNames: Array[String],
   cases: Array[Class[?]],
-) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
+) extends SealedHierarchyCodec[T](typeRepr, caseNames, cases) {
 
   private lazy val caseDeps = caseDependencies
   def caseDependencies: Array[GenCodec[?]]
@@ -156,7 +151,6 @@ abstract class NestedSealedHierarchyCodec[T](
 
 abstract class FlatSealedHierarchyCodec[T](
   typeRepr: String,
-  nullable: Boolean,
   caseNames: Array[String],
   cases: Array[Class[?]],
   val oooFieldNames: Array[String],
@@ -164,7 +158,7 @@ abstract class FlatSealedHierarchyCodec[T](
   override val caseFieldName: String,
   val defaultCaseIdx: Int,
   val defaultCaseTransient: Boolean,
-) extends SealedHierarchyCodec[T](typeRepr, nullable, caseNames, cases) {
+) extends SealedHierarchyCodec[T](typeRepr, caseNames, cases) {
 
   private lazy val oooDeps = oooDependencies
   private lazy val caseDeps = caseDependencies
@@ -355,7 +349,6 @@ abstract class ErrorReportingCodec[T](typeRepr: String) extends GenCodec[T] {
 
 abstract class JavaBuilderBasedCodec[T, B](
   val typeRepr: String,
-  val nullable: Boolean,
   newBuilder: => B,
   build: B => T,
   fieldNames: Array[String],

@@ -2,8 +2,8 @@ package com.avsystem.commons
 package jiop
 
 import com.avsystem.commons.jiop.GuavaInterop.*
-import com.avsystem.commons.jiop.JStreamUtils.*
 import com.avsystem.commons.jiop.JOptionalUtils.*
+import com.avsystem.commons.jiop.JStreamUtils.*
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -90,6 +90,8 @@ class JavaInteropTest extends AnyFunSuite {
   }
 
   test("java collection BuildFroms should have proper priority") {
+    import scala.language.implicitConversions
+    
     val intList = List(1, 2, 3)
     val pairList = intList.map(i => (i, i.toString))
     assertSameTypeValue(intList.to(JArrayList), arrayList)

@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package jiop
 
+import scala.Conversion.into
 import scala.annotation.unchecked.uncheckedVariance as uV
 import scala.collection.Factory
 
@@ -131,7 +132,7 @@ final class ScalaJStream[+A](private val jStream: JStream[A @uV]) extends AnyVal
   def toArray[B >: A <: AnyRef: ClassTag]: Array[B] =
     jStream.toArray[B](jIntFunction(n => new Array[B](n)))
 
-  def to[C](fac: Factory[A, C]): C = {
+  def to[C](fac: into[Factory[A, C]]): C = {
     val b = fac.newBuilder
     forEachOrdered(b += _)
     b.result()

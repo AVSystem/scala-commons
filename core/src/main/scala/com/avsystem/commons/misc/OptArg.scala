@@ -1,6 +1,7 @@
 package com.avsystem.commons.misc
 
 import scala.annotation.targetName
+import scala.language.implicitConversions
 
 object OptArg {
 

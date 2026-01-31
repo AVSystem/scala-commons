@@ -106,7 +106,6 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
         val codecWithAdjustedCaseCodecs =
           new NestedSealedHierarchyCodec[T](
             nestedCodec.typeRepr,
-            nestedCodec.nullable,
             nestedCodec.caseNames,
             nestedCodec.cases,
           ) {
@@ -124,7 +123,6 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
         val codecWithAdjustedCaseCodecs =
           new FlatSealedHierarchyCodec[T](
             flatCodec.typeRepr,
-            flatCodec.nullable,
             flatCodec.caseNames,
             flatCodec.cases,
             flatCodec.oooFieldNames,

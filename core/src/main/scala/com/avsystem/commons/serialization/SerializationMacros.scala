@@ -9,9 +9,7 @@ trait GenCodecMacros {
     ${ SerializationMacros.fromApplyUnapplyProviderImpl[T, GenCodec]('applyUnapplyProvider) }
   inline def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = ${ SerializationMacros.applyUnapplyCodecImpl[T] }
   def forSealedEnum[T]: GenCodec[T] = ???
-  inline def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] = ${
-    SerializationMacros.fromJavaBuilderImpl[T, B]('newBuilder, 'build)
-  }
+
 }
 
 trait RecursiveAutoCodecs { this: GenCodec.type =>
@@ -39,7 +37,7 @@ trait GenRefCreatorMacros[S] {
 }
 
 trait GenRefImplicitsMacros {
-  inline implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = ${ SerializationMacros.fun2GenRefImpl[S, T]('fun) }
+  given [S, T] => Conversion[S => T, GenRef[S, T]] = ???
 }
 
 object SerializationMacros {
@@ -54,6 +52,4 @@ object SerializationMacros {
 
   def refImpl[S: Type, T: Type](fun: Expr[S => T])(using Quotes): Expr[Nothing] = ???
   def fun2GenRefImpl[S: Type, T: Type](fun: Expr[S => T])(using Quotes): Expr[Nothing] = ???
-  def fromJavaBuilderImpl[T: Type, B: Type](newBuilder: Expr[B], build: Expr[B => T])(using Quotes): Expr[GenCodec[T]] =
-    '{ ??? }
 }
