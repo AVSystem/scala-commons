@@ -9,7 +9,7 @@ import com.avsystem.commons.misc.{Bytes, HasAnnotation, Timestamp}
 
 import java.util.UUID
 import scala.annotation.{implicitNotFound, tailrec, targetName}
-import scala.collection.{mutable, Factory}
+import scala.collection.{Factory, mutable}
 
 /**
  * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized from
@@ -52,7 +52,10 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     deferred.underlying = underlying
     underlying
   }
-
+  inline def materializeRecursively[T]: GenCodec[T] = {
+    given AllowRecursiveDerivation.type = AllowRecursiveDerivation
+    derived[T]
+  }
   inline given [Tup <: Tuple] => GenCodec[Tup] = mkTupleCodec(
     compiletime.summonAll[Tuple.Map[Tup, GenCodec]],
   )
@@ -88,7 +91,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     def readList(input: ListInput): T = readFun(input)
     def writeList(output: ListOutput, value: T): Unit = writeFun(output, value)
   }
-
   /**
    * Helper method to manually implement a `GenCodec` that writes an object. NOTE: in most cases the easiest way to
    * have a custom object codec is to manually implement `apply` and `unapply`/`unapplySeq` methods in companion object
@@ -100,7 +102,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       def readObject(input: ObjectInput): T = readFun(input)
       def writeObject(output: ObjectOutput, value: T): Unit = writeFun(output, value)
     }
-
   def fromKeyCodec[T](using keyCodec: GenKeyCodec[T]): GenCodec[T] = create(
     input => keyCodec.read(input.readSimple().readString()),
     (output, value) => output.writeSimple().writeString(keyCodec.write(value)),
@@ -109,7 +110,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     case tc: Transformed[_, _] => underlyingCodec(tc.wrapped)
     case _ => codec
   }
-
   given GenCodec[Nothing] =
     create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))
   given GenCodec[Null] =
@@ -146,7 +146,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
   given GenCodec[Timestamp] =
     GenCodec.createSimple(i => Timestamp(i.readTimestamp()), (o, t) => o.writeTimestamp(t.millis))
   given GenCodec[Bytes] = GenCodec.createSimple(i => Bytes(i.readBinary()), (o, b) => o.writeBinary(b.bytes))
-
   given [T] => (codec: GenCodec[T]) => GenCodec[T | Null] = createNullable(codec.read, codec.write)
   given [T: {ClassTag, GenCodec}] => GenCodec[Array[T]] = createList[Array[T]](
     _.iterator(read[T]).toArray[T],
@@ -273,19 +272,16 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
           )
       }
   }
-
   inline private def constName[T](fallback: String) = compiletime.summonFrom {
     case h: HasAnnotation[`name`, tpe] => h.annotation.name
     case _ => fallback
   }
-
   inline private def constNames[Tup <: Tuple]: Tuple = inline compiletime.erasedValue[Tup] match {
     case _: ((label, tpe) *: tail) =>
       val head = constName(compiletime.constValue[label].asInstanceOf[String])
       (head *: constNames[tail]).asInstanceOf[Tup]
     case _: EmptyTuple => EmptyTuple.asInstanceOf[Tup]
   }
-
   inline private def summonInstances[T, Elems <: Tuple](
     summonAllowed: Boolean,
     deriveAllowed: Boolean,
@@ -295,6 +291,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
         val elemCodec = compiletime.summonFrom {
           case codec: GenCodec[`elem`] if summonAllowed => codec
           case _ if deriveAllowed => derived[elem]
+          case _: AllowRecursiveDerivation.type => derived[elem]
         }
         (elemCodec *: summonInstances[T, elems](summonAllowed, deriveAllowed)).asInstanceOf[Tuple.Map[Elems, GenCodec]]
       case _: EmptyTuple => EmptyTuple.asInstanceOf[Tuple.Map[Elems, GenCodec]]
@@ -334,7 +331,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
         report.errorAndAbort(s"Transparent wrapper ${TypeRepr.of[T]} must have exactly one field")
     }
   }
-
   private def deriveSingleton[T <: Singleton](typeRepr: String, valueOf: ValueOf[T]): GenCodec[T] =
     new SingletonCodec[T](typeRepr, valueOf.value)
   private def mkTupleCodec[Tup <: Tuple](elementCodecs: Tuple.Map[Tup, GenCodec]): GenCodec[Tup] = new ListCodec[Tup] {
@@ -490,7 +486,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       }
     }
   }
-
   trait NullableCodec[T] extends GenCodec[T | Null] {
     override final def write(output: Output, value: T | Null): Unit =
       if (value == null) output.writeNull()
@@ -527,7 +522,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       result
     }
   }
-
   /**
    * Convenience base class for `GenCodec`s that serialize values as objects. NOTE: if you need to implement a custom
    * `GenCodec` that writes an object, the best way to do it is to have manually implemented `apply` and `unapply` in
@@ -586,6 +580,11 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       case Opt(fr) => s"Cannot read field $fr of $typeRepr before $caseFieldName field is read"
       case Opt.Empty => s"Cannot read $typeRepr, $caseFieldName field is missing"
     })
+  case class NotSingleField(typeRepr: String, empty: Boolean)
+    extends ReadFailure(
+      s"Cannot read $typeRepr, expected object with exactly one field but got " +
+        (if (empty) "empty object" else "more than one"),
+    )
 
   extension [A](coll: BIterable[A]) {
     def writeToList(lo: ListOutput)(using writer: GenCodec[A]): Unit = {
@@ -656,11 +655,6 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       b.result()
     }
   }
-  case class NotSingleField(typeRepr: String, empty: Boolean)
-    extends ReadFailure(
-      s"Cannot read $typeRepr, expected object with exactly one field but got " +
-        (if (empty) "empty object" else "more than one"),
-    )
   case class CaseReadFailed(typeRepr: String, caseName: String, cause: Throwable)
     extends ReadFailure(s"Failed to read case $caseName of $typeRepr", cause)
   case class FieldReadFailed(typeRepr: String, fieldName: String, cause: Throwable)
@@ -716,6 +710,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
     }
     override def write(output: Output, value: T): Unit = GenCodec.write[S](output, value)
   }
+  object AllowRecursiveDerivation
   object OOOFieldsObjectCodec {
     given [R, T] => (tw: TransparentWrapping[R, T]) => (wrapped: OOOFieldsObjectCodec[R]) => OOOFieldsObjectCodec[T] =
       new Transformed(wrapped, tw.unwrap, tw.wrap)

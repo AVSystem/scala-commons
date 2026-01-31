@@ -13,7 +13,6 @@ trait GenCodecMacros {
 }
 
 trait RecursiveAutoCodecs { this: GenCodec.type =>
-  inline def materializeRecursively[T]: GenCodec[T] = ${ SerializationMacros.materializeRecursivelyImpl[T] }
   inline implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
     ${ SerializationMacros.materializeImplicitlyImpl('allow) }
 }
