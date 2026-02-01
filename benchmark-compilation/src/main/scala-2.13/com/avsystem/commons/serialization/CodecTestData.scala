@@ -2,9 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.meta.MacroInstances
-import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, Opt, TypedKey}
-
-import scala.reflect.ClassTag
+import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
 
 object CodecTestData {
   sealed trait SealedBase
@@ -125,7 +123,7 @@ object CodecTestData {
   trait RecBound[+T]
   case class RecBounded(int: Int) extends RecBound[RecBounded]
   object RecBounded extends HasGenCodec[RecBounded]
-  
+
   @flatten sealed trait PureGadtExpr[T]
   case class StringLiteral(value: String) extends PureGadtExpr[String]
   case class IntLiteral(value: Int) extends PureGadtExpr[Int]
