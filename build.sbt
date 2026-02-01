@@ -350,10 +350,6 @@ lazy val benchmarks2 = project
   .settings(
     noPublishSettings,
     scalaVersion := scala2Version,
-    Compile / unmanagedSourceDirectories += (benchmark.base / "jvm" / "src" / "main" / "scala"),
-    Compile / unmanagedSourceDirectories += (benchmark.base / "jvm" / "src" / "main" / "scala-2.13"),
-    Compile / unmanagedSourceDirectories += (benchmark.base / "src" / "main" / "scala"),
-    Compile / excludeFilter := (Compile / excludeFilter).value || "OptBenchmarks.scala",
     libraryDependencies ++= Seq(
       "com.avsystem.commons" %% "commons-core" % "2.2.4",
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
