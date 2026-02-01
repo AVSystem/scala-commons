@@ -222,7 +222,7 @@ lazy val jvm = project
     jetty,
 //    mongo,
     hocon,
-    spring,
+//    spring,
 //    redis,
   )
   .settings(aggregateProjectSettings)
