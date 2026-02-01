@@ -31,14 +31,14 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Run Scala 3 benchmarks (new implementation)
-        run: |
-          sbt "project benchmark3" "Jmh/compile" "Jmh/run -rf json -rff benchmark-scala3-results.json"
-        continue-on-error: true
-
       - name: Run Scala 2 benchmarks (published version)
         run: |
           sbt "project benchmark2" "Jmh/compile" "Jmh/run -rf json -rff benchmark-scala2-results.json"
+        continue-on-error: true
+
+      - name: Run Scala 3 benchmarks (new implementation)
+        run: |
+          sbt "project benchmark3" "Jmh/compile" "Jmh/run -rf json -rff benchmark-scala3-results.json"
         continue-on-error: true
 
       - name: Upload benchmark results
@@ -46,8 +46,8 @@ jobs:
         with:
           name: benchmark-results
           path: |
-            benchmark-scala3-results.json
             benchmark-scala2-results.json
+            benchmark-scala3-results.json
 
       - name: Download previous benchmark results
         uses: dawidd6/action-download-artifact@v6
@@ -70,17 +70,17 @@ jobs:
             
             try {
               // Read current results
-              let scala3Results = null;
               let scala2Results = null;
+              let scala3Results = null;
+            
+              if (fs.existsSync('benchmark-scala2-results.json')) {
+                const scala2Data = fs.readFileSync('benchmark-scala2-results.json', 'utf8');
+                scala2Results = JSON.parse(scala2Data);
+              }
               
               if (fs.existsSync('benchmark-scala3-results.json')) {
                 const scala3Data = fs.readFileSync('benchmark-scala3-results.json', 'utf8');
                 scala3Results = JSON.parse(scala3Data);
-              }
-              
-              if (fs.existsSync('benchmark-scala2-results.json')) {
-                const scala2Data = fs.readFileSync('benchmark-scala2-results.json', 'utf8');
-                scala2Results = JSON.parse(scala2Data);
               }
               
               if (!scala3Results && !scala2Results) {
