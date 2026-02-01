@@ -1,8 +1,7 @@
 name: Benchmark
 
 on:
-  pull_request:
-    branches: ['**']
+  workflow_dispatch: {}
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,8 +45,8 @@ jobs:
         with:
           name: benchmark-results
           path: |
-            benchmark-scala2-results.json
-            benchmark-scala3-results.json
+            benchmark/benchmark-scala2-results.json
+            benchmark/benchmark-scala3-results.json
 
       - name: Download previous benchmark results
         uses: dawidd6/action-download-artifact@v6
@@ -74,12 +73,12 @@ jobs:
               let scala3Results = null;
             
               if (fs.existsSync('benchmark-scala2-results.json')) {
-                const scala2Data = fs.readFileSync('benchmark-scala2-results.json', 'utf8');
+                const scala2Data = fs.readFileSync('benchmark/benchmark-scala2-results.json', 'utf8');
                 scala2Results = JSON.parse(scala2Data);
               }
               
               if (fs.existsSync('benchmark-scala3-results.json')) {
-                const scala3Data = fs.readFileSync('benchmark-scala3-results.json', 'utf8');
+                const scala3Data = fs.readFileSync('benchmark/benchmark-scala3-results.json', 'utf8');
                 scala3Results = JSON.parse(scala3Data);
               }
               
