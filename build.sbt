@@ -89,34 +89,59 @@ inThisBuild(
 
 def commonSettings: Seq[Def.Setting[?]] = Seq(
   Compile / scalacOptions ++= {
-    Seq(
-      "-deprecation",
-      "-feature",
-//       "-explain",
-      "-unchecked",
-      "-language:noAutoTupling",
-      "-Vprofile",
-      "-Xprint-inline",
-      // "-Ycheck:all", // cannot be enabled when scoverage used :///todo: enable
-      "-Ycheck:macros",
-//       "-Ydebug-error",
-      "-Ydebug-flags",
-      "-Ydebug-missing-refs",
-      "-Yexplain-lowlevel",
-      "-Yexplicit-nulls",
-      // "-Yprint-debug",
-      // "-Xprint:postInlining",
-      // "-Xprint-suspension",
-      // "-Vprint:typer",
-      "-Wsafe-init",
-      "-Werror",
-      "-experimental",
-      "-preview",
-      //  "-Yprofile-enabled",
-      //  s"-Yprofile-trace:$moduleDir/compile-trace.json",
-      "-language:experimental.macros",
-      "-old-syntax",
-    )
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) =>
+        Seq(
+          "-encoding",
+          "utf-8",
+          "-Yrangepos",
+          "-explaintypes",
+          "-feature",
+          "-deprecation",
+          "-unchecked",
+          "-language:implicitConversions",
+          "-language:existentials",
+          "-language:dynamics",
+          "-language:experimental.macros",
+          "-language:higherKinds",
+          "-Xfatal-warnings",
+          "-Xsource:3",
+          "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
+          "-Ycache-plugin-class-loader:last-modified",
+          "-Ycache-macro-class-loader:last-modified",
+          "-Xnon-strict-patmat-analysis",
+          "-Xlint:-strict-unsealed-patmat",
+          "-Ytasty-reader",
+          "-Xsource:3",
+        )
+      case _ =>
+        Seq(
+          "-deprecation",
+          "-feature",
+          // "-explain",
+          "-unchecked",
+          "-language:noAutoTupling",
+          "-Vprofile",
+          "-Xprint-inline",
+          // "-Ycheck:all", // cannot be enabled when scoverage used :///todo: enable
+          "-Ycheck:macros",
+          // "-Ydebug-error",
+          "-Ydebug-flags",
+          "-Ydebug-missing-refs",
+          "-Yexplain-lowlevel",
+          "-Yexplicit-nulls",
+          // "-Yprint-debug",
+          // "-Xprint:postInlining",
+          // "-Xprint-suspension",
+          // "-Vprint:typer",
+          "-Wsafe-init",
+          "-Werror",
+          "-experimental",
+          "-preview",
+          //  "-Yprofile-enabled",
+          //  s"-Yprofile-trace:$moduleDir/compile-trace.json",
+        )
+    }
   },
   Test / scalacOptions := (Compile / scalacOptions).value,
   Compile / doc / sources := Seq.empty, // relying on unidoc
@@ -334,15 +359,47 @@ lazy val jetty = project
     ),
   )
 
-//lazy val benchmark = project
-//  .dependsOn(redis, mongo)
-//  .enablePlugins(JmhPlugin)
-//  .settings(
-//    jvmCommonSettings,
-//    noPublishSettings,
-//    sourceDirsSettings(_ / "jvm"),
-//    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
-//  )
+lazy val benchmark3 = project
+  .in(file("benchmark"))
+  .dependsOn(core % CompileAndTest)
+  .enablePlugins(JmhPlugin)
+  .settings(
+    jvmCommonSettings,
+    noPublishSettings,
+    sourceDirsSettings(_ / "jvm"),
+    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
+  )
+
+lazy val benchmark2 = project
+  .in(file("benchmark"))
+  .enablePlugins(JmhPlugin)
+  .settings(
+    scalaVersion := scala2Version,
+    jvmCommonSettings,
+    noPublishSettings,
+    sourceDirsSettings(_ / "jvm"),
+    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
+    libraryDependencies ++= Seq("com.avsystem.commons" %% "commons-core" % "2.26.0"),
+    target := baseDirectory.value / "target" / "scala-2.13",
+  )
+
+lazy val `benchmark-compilation3` = project
+  .in(file("benchmark-compilation"))
+  .dependsOn(core % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    noPublishSettings,
+  )
+
+lazy val `benchmark-compilation2` = project
+  .in(file("benchmark-compilation"))
+  .settings(
+    scalaVersion := scala2Version,
+    jvmCommonSettings,
+    noPublishSettings,
+    libraryDependencies ++= Seq("com.avsystem.commons" %% "commons-core" % "2.26.0"),
+    target := baseDirectory.value / "target" / "scala-2.13",
+  )
 
 //lazy val `benchmark-js` = project
 //  .in(benchmark.base / "js")

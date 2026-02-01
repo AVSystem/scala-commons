@@ -34,7 +34,7 @@ class GenCodecBenchmarks {
 }
 
 object GenCodecBenchmarks {
-  given [T: GenCodec] => GenCodec[Option[T]] =
+  def cleanOptionCodec[T: GenCodec]: GenCodec[Option[T]] =
     GenCodec.create[Option[T]](
       i => if (i.readNull()) None else Some(GenCodec.read[T](i)),
       (o, vo) => vo match {

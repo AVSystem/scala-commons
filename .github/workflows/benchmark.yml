@@ -1,0 +1,167 @@
+name: Benchmark
+
+on:
+  workflow_dispatch: {}
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  JAVA_OPTS: '-Dfile.encoding=UTF-8 -Xmx4G'
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Run Scala 2 benchmarks (published version)
+        run: |
+          sbt "project benchmark2" "Jmh/compile" "Jmh/run -rf json -rff benchmark-scala2-results.json"
+        continue-on-error: true
+
+      - name: Run Scala 3 benchmarks (new implementation)
+        run: |
+          sbt "project benchmark3" "Jmh/compile" "Jmh/run -rf json -rff benchmark-scala3-results.json"
+        continue-on-error: true
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            benchmark/benchmark-scala2-results.json
+            benchmark/benchmark-scala3-results.json
+
+      - name: Download previous benchmark results
+        uses: dawidd6/action-download-artifact@v6
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        with:
+          workflow: benchmark.yml
+          branch: ${{ github.event.pull_request.base.ref }}
+          name: benchmark-results
+          path: previous-results/
+
+      - name: Compare benchmarks and post PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let commentBody = '## Benchmark Results\n\n';
+            
+            try {
+              // Read current results
+              let scala2Results = null;
+              let scala3Results = null;
+            
+              if (fs.existsSync('benchmark-scala2-results.json')) {
+                const scala2Data = fs.readFileSync('benchmark/benchmark-scala2-results.json', 'utf8');
+                scala2Results = JSON.parse(scala2Data);
+              }
+              
+              if (fs.existsSync('benchmark-scala3-results.json')) {
+                const scala3Data = fs.readFileSync('benchmark/benchmark-scala3-results.json', 'utf8');
+                scala3Results = JSON.parse(scala3Data);
+              }
+              
+              if (!scala3Results && !scala2Results) {
+                commentBody += '⚠️ No benchmark results found.\n';
+              } else {
+                commentBody += '### Scala 3 (New Implementation) vs Scala 2 (Published Version)\n\n';
+                commentBody += '| Benchmark | Scala 3 (ops/s) | Scala 2 (ops/s) | Difference |\n';
+                commentBody += '|-----------|-----------------|-----------------|------------|\n';
+                
+                // Create a map of benchmark names to results
+                const scala3Map = new Map();
+                const scala2Map = new Map();
+                
+                if (scala3Results) {
+                  for (const result of scala3Results) {
+                    const name = result.benchmark || 'unknown';
+                    const score = result.primaryMetric?.score || 0;
+                    scala3Map.set(name, score);
+                  }
+                }
+                
+                if (scala2Results) {
+                  for (const result of scala2Results) {
+                    const name = result.benchmark || 'unknown';
+                    const score = result.primaryMetric?.score || 0;
+                    scala2Map.set(name, score);
+                  }
+                }
+                
+                // Get all unique benchmark names
+                const allBenchmarks = new Set([...scala3Map.keys(), ...scala2Map.keys()]);
+                
+                for (const name of allBenchmarks) {
+                  const scala3Score = scala3Map.get(name) || 0;
+                  const scala2Score = scala2Map.get(name) || 0;
+                  
+                  let diff = '';
+                  if (scala3Score > 0 && scala2Score > 0) {
+                    const percentDiff = ((scala3Score - scala2Score) / scala2Score * 100).toFixed(2);
+                    const symbol = percentDiff > 0 ? '🟢' : '🔴';
+                    diff = `${symbol} ${percentDiff > 0 ? '+' : ''}${percentDiff}%`;
+                  } else if (scala3Score > 0) {
+                    diff = '🆕 New';
+                  } else if (scala2Score > 0) {
+                    diff = '❌ Missing';
+                  }
+                  
+                  const benchmarkName = name.replace(/^.*\./, '');
+                  commentBody += `| ${benchmarkName} | ${scala3Score.toFixed(2)} | ${scala2Score.toFixed(2)} | ${diff} |\n`;
+                }
+                
+                commentBody += '\n*Higher ops/s is better*\n';
+                commentBody += '*🟢 = improvement, 🔴 = regression*\n';
+              }
+            } catch (error) {
+              commentBody += `\n⚠️ Error processing benchmark results: ${error.message}\n`;
+            }
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('## Benchmark Results')
+            );
+            
+            // Create or update comment
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody,
+              });
+            }
