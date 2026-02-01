@@ -6,7 +6,6 @@ import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
 
 import scala.annotation.meta.getter
-import scala.annotation.targetName
 
 object CodecTestData {
   val jArrayList: JArrayList[Int] = col(new JArrayList[Int])
@@ -19,13 +18,13 @@ object CodecTestData {
   val jDoubleHashMap: JHashMap[Double, Int] = doubleMap(new JHashMap[Double, Int])
   val jLinkedHashMap: JLinkedHashMap[String, Int] = stringMap(new JLinkedHashMap[String, Int])
   val some: Option[Int] = Option(42)
-  val none: Option[Int] = None
+  val none: Option[Int] = Option.empty
   val list: List[Int] = List(1, 2, 3)
   val set: Set[Int] = Set(1, 2, 3)
-  val map = Map("1" -> 1, "2" -> 2, "3" -> 3)
-  val hashMap = IHashMap("1" -> 1, "2" -> 2, "3" -> 3)
+  val map: Map[String, Int] = Map("1" -> 1, "2" -> 2, "3" -> 3)
+  val hashMap: IHashMap[String, Int] = IHashMap("1" -> 1, "2" -> 2, "3" -> 3)
   val intMap: Map[Int, Int] = Map(1 -> 1, 2 -> 2, 3 -> 3)
-  val doubleMap = Map(1.0 -> 1, 2.0 -> 2, 3.0 -> 3)
+  val doubleMap: Map[Double, Int] = Map(1.0 -> 1, 2.0 -> 2, 3.0 -> 3)
   def col[T <: JCollection[Int]](col: T): T = {
     col.add(1)
     col.add(2)
@@ -50,31 +49,31 @@ object CodecTestData {
     map.put(3.0, 3)
     map
   }
-  sealed trait SealedBase derives GenCodec
-  @flatten sealed trait FlatSealedBase derives GenCodec {
+  sealed trait SealedBase
+  @flatten sealed trait FlatSealedBase {
     @mongoId def id: String
     @generated
     @name("upper_id") def upperId: String = id.toUpperCase
   }
-//  @flatten sealed trait TransparentFlatSealedBase derives GenCodec
+  @flatten sealed trait TransparentFlatSealedBase
+  sealed trait CustomList
   sealed trait BaseExpr {
     type Value
     def value: Value
   }
   @flatten sealed trait RecExpr[+T]
-  @flatten sealed trait PureGadtExpr[T] derives GenCodec
-  sealed trait Tree[T] derives GenCodec
-  sealed trait Enumz derives GenCodec
-  sealed trait KeyEnumz derives GenCodec
-  @flatten("kejs") sealed trait CustomizedSeal derives GenCodec
+  @flatten sealed trait PureGadtExpr[T]
+  sealed trait Tree[T]
+  sealed trait Enumz
+  sealed trait KeyEnumz
+  @flatten("kejs") sealed trait CustomizedSeal
   @flatten
-  sealed trait Dep derives GenCodec
+  sealed trait Dep
   @flatten
-  sealed trait HasColl derives GenCodec
+  sealed trait HasColl
   sealed trait SealedRefined {
     type X
   }
-  sealed trait CustomList derives GenCodec
   trait HasSomeStr {
     @name("some.str") def str: String
     @generated def someStrLen: Int = str.length
@@ -94,8 +93,6 @@ object CodecTestData {
   sealed abstract class Expr[T](val value: T) extends BaseExpr {
     type Value = T
   }
-//  @transparent case class StringId(id: String)
-//  object StringId extends TransparentWrapperCompanion[String, StringId]
   sealed abstract class SealedKey[T](using val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
   abstract class Wrapper[Self <: Wrapper[Self]: ClassTag](private val args: Any*) { this: Self =>
     override def equals(obj: Any): Boolean = obj match {
@@ -110,21 +107,23 @@ object CodecTestData {
     @name("_id")
     final def aggregated: List[StaticAnnotation] = reifyAggregated
   }
-  case class TransparentFlatThing(num: Int, text: String) derives GenCodec
-  case class NoArgCaseClass() derives GenCodec
-  case class SingleArgCaseClass(str: String) derives GenCodec
+  case class TransparentCaseWrap(thing: TransparentFlatThing) extends TransparentFlatSealedBase
+  case class TransparentFlatThing(num: Int, text: String)
+  case class NoArgCaseClass()
+  case class SingleArgCaseClass(str: String)
   @transparent
-  case class TransparentWrapper(str: String) derives GenCodec
+  case class TransparentWrapper(str: String)
   @transparent
   case class TransparentWrapperWithDependency(str: String)
-  case class SomeCaseClass(str: String, intList: List[Int]) extends HasSomeStr derives GenCodec
+  @transparent case class StringId(id: String)
+  case class SomeCaseClass(str: String, intList: List[Int]) extends HasSomeStr
   case class Stuff[T](name: String)
-  case class CaseClassWithWildcard(stuff: Stuff[?]) derives GenCodec
+  case class CaseClassWithWildcard(stuff: Stuff[?])
   case class CaseClassWithOptionalFields(
     str: String,
     @optionalParam int: Opt[Int],
     @optionalParam bul: Option[Boolean],
-  ) derives GenCodec
+  )
   case class CaseClassWithAutoOptionalFields(
     str: String,
     int: Opt[Int],
@@ -134,14 +133,12 @@ object CodecTestData {
   class CaseClassLike(val str: String, val intList: List[Int]) extends Wrapper[CaseClassLike](str, intList)
   class HasInheritedApply(val str: String, val intList: List[Int]) extends Wrapper[HasInheritedApply](str, intList)
   case class ThirdParty(i: Int, s: String)
-  case class VarargsCaseClass(int: Int, strings: String*) derives GenCodec
-  case class OnlyVarargsCaseClass(strings: String*) derives GenCodec
+  case class VarargsCaseClass(int: Int, strings: String*)
+  case class OnlyVarargsCaseClass(strings: String*)
   class VarargsCaseClassLike(val str: String, val ints: Seq[Int]) extends Wrapper[VarargsCaseClassLike](str, ints)
   class OnlyVarargsCaseClassLike(val strings: Seq[String]) extends Wrapper[OnlyVarargsCaseClassLike](strings)
   case class HasDefaults(@transientDefault int: Int = 42, @transientDefault @whenAbsent("dafuq") str: String = "kek")
-    derives GenCodec
-  @transparent
-  case class CustomCons(tail: CustomList) extends CustomList
+  @transparent case class CustomCons(tail: CustomList) extends CustomList
   case class IntExpr(int: Int) extends Expr[Int](int)
   case class StringExpr(str: String) extends Expr[String](str)
   case class RecBounded(int: Int) extends RecBound[RecBounded]
@@ -181,14 +178,16 @@ object CodecTestData {
     a21: String,
     a22: String,
     a23: String,
-  ) derives GenCodec
+  )
   case class DepCase(str: String) extends Dep
   case class HasCollCase(coll: Seq[Dep]) extends HasColl
   case class StepOne(stepTwo: StepTwo)
   case class StepTwo(stepOne: Opt[StepOne])
   case class OuterThing(inner: InnerThing)
   case class InnerThing(recursiveThing: Opt[OuterThing])
-  case class Generator(value: String) extends GeneratorBase derives GenCodec {
+  @transparent
+  case class ThingId(value: String)
+  case class Generator(value: String) extends GeneratorBase {
     @generated val valUpper: String = value.toUpperCase
     @(generated @getter)
     val getterUpper: String = value.toUpperCase
@@ -196,8 +195,9 @@ object CodecTestData {
     @generated var varUpper: String = value.toUpperCase
     def abstractUpper: String = value.toUpperCase
   }
-//  case class TransparentCaseWrap(thing: TransparentFlatThing) extends TransparentFlatSealedBase
+  object ValueClass extends HasGenCodec[ValueClass]
   object SealedBase {
+    given GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
     sealed trait InnerBase extends SealedBase
     case class CaseClass(str: String) extends SealedBase
     case class Rec(sub: Opt[SealedBase], local: Opt[Rec]) extends SealedBase
@@ -207,7 +207,7 @@ object CodecTestData {
       case object InnerCaseObject extends InnerBase
     }
   }
-  object FlatSealedBase {
+  object FlatSealedBase extends HasGenCodec[FlatSealedBase] {
     case class FirstCase(id: String, int: Int = 42) extends FlatSealedBase
     case class SecondCase(id: String, dbl: Double, moar: Double*) extends FlatSealedBase
     case class RecursiveCase(id: String, sub: Opt[FlatSealedBase]) extends FlatSealedBase
@@ -217,24 +217,32 @@ object CodecTestData {
     }
   }
 //  object TransparentCaseWrap extends TransparentWrapperCompanion[TransparentFlatThing, TransparentCaseWrap]
+  object TransparentFlatSealedBase extends HasGenCodec[TransparentFlatSealedBase]
+  object TransparentFlatThing extends HasApplyUnapplyCodec[TransparentFlatThing]
   object SomeObject {
+    given GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
     @generated def random: Int = 42
-    given GenCodec[SomeObject.type] = GenCodec.derived[SomeObject.type]
   }
+  object NoArgCaseClass extends HasGenCodec[NoArgCaseClass]
+  object SingleArgCaseClass extends HasGenCodec[SingleArgCaseClass]
+  object TransparentWrapper extends HasGenCodec[TransparentWrapper]
   object TransparentWrapperWithDependency {
     // order matters
-    given GenCodec[TransparentWrapperWithDependency] = GenCodec.derived
-    given GenCodec[String] = GenCodec.given_GenCodec_String
+    given GenCodec[TransparentWrapperWithDependency] = GenCodec.materialize
+    given stringCodec: GenCodec[String] = GenCodec.given_GenCodec_String
   }
+//  object StringId extends TransparentWrapperCompanion[String, StringId]
+  object SomeCaseClass extends HasGenCodec[SomeCaseClass]
   object Stuff {
     given GenCodec[Stuff[?]] = GenCodec.create(
       in => new Stuff[Any](in.readSimple().readString()),
       (out, value) => out.writeSimple().writeString(value.name),
     )
   }
+  object CaseClassWithWildcard extends HasGenCodec[CaseClassWithWildcard]
+  object CaseClassWithOptionalFields extends HasGenCodec[CaseClassWithOptionalFields]
   object CaseClassWithAutoOptionalFields
     extends HasGenCodecWithDeps[AutoOptionalParams.type, CaseClassWithAutoOptionalFields]
-
   object CaseClassLike extends HasGenCodec[CaseClassLike] {
     def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
     def unapply(ccl: CaseClassLike): Opt[(String, List[Int])] = (ccl.str, ccl.intList).opt
@@ -248,6 +256,8 @@ object CodecTestData {
     def apply(str: String, int: Int): ThirdParty = ThirdParty(int, str)
     def unapply(tp: ThirdParty): Opt[(String, Int)] = (tp.s, tp.i).opt
   }
+  object VarargsCaseClass extends HasGenCodec[VarargsCaseClass]
+  object OnlyVarargsCaseClass extends HasGenCodec[OnlyVarargsCaseClass]
   object VarargsCaseClassLike extends HasGenCodec[VarargsCaseClassLike] {
     def apply(@name("some.str") str: String, ints: Int*): VarargsCaseClassLike = new VarargsCaseClassLike(str, ints)
     def unapplySeq(vccl: VarargsCaseClassLike): Opt[(String, Seq[Int])] = (vccl.str, vccl.ints).opt
@@ -256,15 +266,15 @@ object CodecTestData {
     def apply(strings: String*): OnlyVarargsCaseClassLike = new OnlyVarargsCaseClassLike(strings)
     def unapplySeq(vccl: OnlyVarargsCaseClassLike): Opt[Seq[String]] = vccl.strings.opt
   }
-  case object CustomTail extends CustomList derives GenCodec
+  object HasDefaults extends HasGenCodec[HasDefaults]
+  case object CustomTail extends CustomList
+  object CustomCons extends HasGenCodec[CustomCons]
+  object CustomList extends HasGenCodec[CustomList]
   case object NullExpr extends Expr[Null](null)
   object BaseExpr {
-    // todo: may be removed?
-    given GenCodec[BaseExpr] = GenCodec.derived
-    given GenCodec[Expr[String]] = GenCodec.derived
-
-    @targetName("codec_with_value")
-    given [T] => GenCodec[BaseExpr { type Value = T }] = GenCodec.derived
+    given baseGenericCodec[T]: GenCodec[BaseExpr { type Value = T }] = GenCodec.materialize
+    given baseCodec: GenCodec[BaseExpr] = GenCodec.materialize
+    given stringCodec: GenCodec[Expr[String]] = GenCodec.materialize
   }
   object Expr extends HasGadtCodec[Expr]
   object RecBounded extends HasGenCodec[RecBounded]
@@ -275,37 +285,44 @@ object CodecTestData {
     private def mkCodec[T <: RecBound[T]: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
   }
   case object NullLiteral extends PureGadtExpr[Null]
+  object PureGadtExpr extends HasGadtCodec[PureGadtExpr]
+  object Tree extends HasPolyGenCodec[Tree]
   object Enumz {
+    given GenCodec[Enumz] = GenCodec.materialize[Enumz]
     @name("Primary")
     case object First extends Enumz
     case object Second extends Enumz
     case object Third extends Enumz
   }
   object KeyEnumz {
+    given GenCodec[KeyEnumz] = GenCodec.derived[KeyEnumz]
     @name("Primary")
     case object First extends KeyEnumz
     case object Second extends KeyEnumz
     case object Third extends KeyEnumz
   }
   object SealedKey extends NamedEnumCompanion[SealedKey[?]] {
+    val values: List[SealedKey[?]] = caseObjects
     case object StringKey extends SealedKey[String]
     case object IntKey extends SealedKey[Int]
     case object BooleanKey extends SealedKey[Boolean]
-    val values: List[SealedKey[?]] = caseObjects
   }
   case object CustomizedObjekt extends CustomizedSeal
-
-//  @transparent
-//  case class ThingId(value: String)
-//  object ThingId extends StringWrapperCompanion[ThingId]
-
-  locally {
-    case class LocalStuff()
-  }
+  object CustomizedSeal extends HasGenCodec[CustomizedSeal]
+  object ItsOverTwentyTwo extends HasGenCodec[ItsOverTwentyTwo]
+  object HasColl extends HasRecursiveGenCodec[HasColl]
   object SealedRefined {
-    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.derived
+    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.materialize
     final case class First[Type](foo: Type) extends SealedRefined {
       type X = Type
     }
   }
+
+  locally {
+    case class LocalStuff()
+    object LocalStuff extends HasGenCodec[LocalStuff](using MacroInstances.materialize)
+  }
+  object OuterThing extends HasRecursiveGenCodec[OuterThing]
+//  object ThingId extends StringWrapperCompanion[ThingId]
+  object Generator extends HasGenCodec[Generator]
 }
