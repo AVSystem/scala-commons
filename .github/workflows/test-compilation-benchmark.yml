@@ -38,10 +38,10 @@ jobs:
           set -e
           
           echo "::group::Benchmarking Scala 3"
-          hyperfine --runs 5 --prepare "sbt benchmark-compilation3/clean benchmark-compilation3/update" "sbt benchmark-compilation3/compile" --export-json "scala3.json"
+          hyperfine --runs 5 --warmup 2 --prepare "sbt benchmark-compilation3/clean benchmark-compilation3/update" "sbt benchmark-compilation3/compile" --export-json "scala3.json"
           
           echo "::group::Benchmarking Scala 2"          
-          hyperfine --runs 5 --prepare "sbt benchmark-compilation2/clean benchmark-compilation2/update" "sbt benchmark-compilation2/compile" --export-json "scala2.json"
+          hyperfine --runs 5 --warmup 2 --prepare "sbt benchmark-compilation2/clean benchmark-compilation2/update" "sbt benchmark-compilation2/compile" --export-json "scala2.json"
 
       - name: Extract Results
         id: extract
