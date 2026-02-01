@@ -1,0 +1,118 @@
+name: Test Compilation Benchmark
+
+on:
+  pull_request:
+    branches: ['**']
+
+jobs:
+  benchmark:
+    name: Compilation Benchmark
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Install Hyperfine
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y hyperfine
+
+      - name: Run Benchmarks
+        id: benchmark
+        run: |
+          set -e
+          
+          run_bench() {
+            local version=$1
+          
+            echo "::group::Benchmarking Scala ${version}"
+            (
+              hyperfine --runs 5 --prepare "sbt clean update" "sbt benchmark-compilation-${version}/compile" --export-json "../${version}.json"
+            )
+            echo "::endgroup::"
+          }
+
+          run_bench "2"
+          run_bench "3"
+
+      - name: Extract Results
+        id: extract
+        run: |
+          echo "scala2_mean=$(jq '.results[0].mean' 2.json)" >> $GITHUB_OUTPUT
+          echo "scala3_mean=$(jq '.results[0].mean' 3.json)" >> $GITHUB_OUTPUT
+
+      - name: Upsert PR Comment
+        uses: actions/github-script@v8
+        env:
+          SCALA_2_MEAN: ${{ steps.extract.outputs.scala2_mean }}
+          SCALA_3_MEAN: ${{ steps.extract.outputs.scala3_mean }}
+        with:
+          script: |
+            const scala2Mean = parseFloat(process.env.SCALA_2_MEAN);
+            const scala3Mean = parseFloat(process.env.SCALA_3_MEAN);
+            
+            const diff = scala3Mean - scala2Mean;
+            const perc = (diff / scala2Mean) * 100;
+            
+            const diffAbs = Math.abs(diff).toFixed(3);
+            const percAbs = Math.abs(perc).toFixed(2);
+            
+            let status = 'faster';
+            let emoji = '✅';
+            if (perc > 1) {
+              status = 'slower';
+              emoji = '⚠️';
+            } else if (Math.abs(perc) <= 1) {
+              status = 'unchanged';
+              emoji = 'ℹ️';
+            }
+
+            const body = [
+              '### 📊 Test Compilation Benchmark',
+              '',
+              '| Scala Version | Average Time |',
+              '| :--- | :--- |',
+              `| **Scala 2.13** | ${scala2Mean.toFixed(3)}s |`,
+              `| **Scala 3** | ${scala3Mean.toFixed(3)}s |`,
+              '',
+              `**Result:** Scala 3 is **${diffAbs}s ${status}** (${percAbs}%) ${emoji}`
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c => c.body.includes('### 📊 Test Compilation Benchmark'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
