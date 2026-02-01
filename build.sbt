@@ -112,7 +112,7 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
           "-Xnon-strict-patmat-analysis",
           "-Xlint:-strict-unsealed-patmat",
           "-Ytasty-reader",
-          "-Xsource:3"
+          "-Xsource:3",
         )
       case _ =>
         Seq(
@@ -379,6 +379,24 @@ lazy val benchmark2 = project
     noPublishSettings,
     sourceDirsSettings(_ / "jvm"),
     ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
+    libraryDependencies ++= Seq("com.avsystem.commons" %% "commons-core" % "2.26.0"),
+    target := baseDirectory.value / "target" / "scala-2.13",
+  )
+
+lazy val `benchmark-compilation3` = project
+  .in(file("benchmark-compilation"))
+  .dependsOn(core % CompileAndTest)
+  .settings(
+    jvmCommonSettings,
+    noPublishSettings,
+  )
+
+lazy val `benchmark-compilation2` = project
+  .in(file("benchmark-compilation"))
+  .settings(
+    scalaVersion := scala2Version,
+    jvmCommonSettings,
+    noPublishSettings,
     libraryDependencies ++= Seq("com.avsystem.commons" %% "commons-core" % "2.26.0"),
     target := baseDirectory.value / "target" / "scala-2.13",
   )
