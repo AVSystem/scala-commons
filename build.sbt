@@ -112,6 +112,7 @@ def commonSettings: Seq[Def.Setting[?]] = Seq(
           "-Xnon-strict-patmat-analysis",
           "-Xlint:-strict-unsealed-patmat",
           "-Ytasty-reader",
+          "-Xsource:3"
         )
       case _ =>
         Seq(

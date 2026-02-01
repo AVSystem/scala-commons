@@ -38,7 +38,7 @@ jobs:
 
       - name: Run Scala 2 benchmarks (published version)
         run: |
-          sbt "project benchmarks2" "Jmh/compile" "Jmh/run -rf json -rff benchmark-scala2-results.json"
+          sbt "project benchmark2" "Jmh/compile" "Jmh/run -rf json -rff benchmark-scala2-results.json"
         continue-on-error: true
 
       - name: Upload benchmark results
