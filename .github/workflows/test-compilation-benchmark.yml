@@ -42,7 +42,7 @@ jobs:
           
             echo "::group::Benchmarking Scala ${version}"
             (
-              hyperfine --runs 5 --prepare "sbt clean update" "sbt benchmark-compilation-${version}/compile" --export-json "../${version}.json"
+              hyperfine --runs 5 --prepare "sbt clean update" "sbt benchmark-compilation${version}/compile" --export-json "../${version}.json"
             )
             echo "::endgroup::"
           }
