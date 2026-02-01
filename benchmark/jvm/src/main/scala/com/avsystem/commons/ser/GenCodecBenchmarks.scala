@@ -18,13 +18,13 @@ class GenCodecBenchmarks {
 
   @Benchmark
   def cleanSomeWriting: String = {
-    given GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
+    implicit val cleanCodec: GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
     JsonStringOutput.write(GenCodecBenchmarks.somes)
   }
 
   @Benchmark
   def cleanNoneWriting: String = {
-    given GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
+    implicit val cleanCodec: GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
     JsonStringOutput.write(GenCodecBenchmarks.nones)
   }
 

@@ -348,12 +348,33 @@ lazy val benchmarks2 = project
   .in(file("benchmarks2"))
   .enablePlugins(JmhPlugin)
   .settings(
-    jvmCommonSettings,
     noPublishSettings,
     scalaVersion := scala2Version,
     Compile / unmanagedSourceDirectories += (benchmark.base / "jvm" / "src" / "main" / "scala"),
+    Compile / unmanagedSourceDirectories += (benchmark.base / "jvm" / "src" / "main" / "scala-2.13"),
     Compile / unmanagedSourceDirectories += (benchmark.base / "src" / "main" / "scala"),
-    libraryDependencies += "com.avsystem.commons" %% "commons-core" % "2.2.4",
+    Compile / excludeFilter := (Compile / excludeFilter).value || "OptBenchmarks.scala",
+    libraryDependencies ++= Seq(
+      "com.avsystem.commons" %% "commons-core" % "2.2.4",
+      "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
+      "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-16" % scalatestplusScalacheckVersion % Test,
+    ),
+    Compile / scalacOptions := Seq(
+      "-deprecation",
+      "-feature",
+      "-unchecked",
+      "-Werror",
+    ),
+    Test / scalacOptions := (Compile / scalacOptions).value,
+    Compile / doc / sources := Seq.empty,
+    apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
+    autoAPIMappings := true,
+    pomIncludeRepository := { _ => false },
+    ideBasePackages := Seq(organization.value),
+    Compile / ideOutputDirectory := Some(target.value.getParentFile / "out/production"),
+    Test / ideOutputDirectory := Some(target.value.getParentFile / "out/test"),
+    Test / fork := true,
     ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
   )
 

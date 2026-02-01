@@ -2,7 +2,7 @@ package com.avsystem.commons
 package ser
 
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
-import org.openjdk.jmh.annotations.*
+import org.openjdk.jmh.annotations._
 
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 10, time = 2)
