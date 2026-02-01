@@ -334,15 +334,28 @@ lazy val jetty = project
     ),
   )
 
-//lazy val benchmark = project
-//  .dependsOn(redis, mongo)
-//  .enablePlugins(JmhPlugin)
-//  .settings(
-//    jvmCommonSettings,
-//    noPublishSettings,
-//    sourceDirsSettings(_ / "jvm"),
-//    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
-//  )
+lazy val benchmark = project
+  .dependsOn(core % CompileAndTest)
+  .enablePlugins(JmhPlugin)
+  .settings(
+    jvmCommonSettings,
+    noPublishSettings,
+    sourceDirsSettings(_ / "jvm"),
+    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
+  )
+
+lazy val benchmarks2 = project
+  .in(file("benchmarks2"))
+  .enablePlugins(JmhPlugin)
+  .settings(
+    jvmCommonSettings,
+    noPublishSettings,
+    scalaVersion := scala2Version,
+    Compile / unmanagedSourceDirectories += (benchmark.base / "jvm" / "src" / "main" / "scala"),
+    Compile / unmanagedSourceDirectories += (benchmark.base / "src" / "main" / "scala"),
+    libraryDependencies += "com.avsystem.commons" %% "commons-core" % "2.2.4",
+    ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
+  )
 
 //lazy val `benchmark-js` = project
 //  .in(benchmark.base / "js")

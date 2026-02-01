@@ -5,7 +5,7 @@ import org.openjdk.jmh.annotations._
 
 import scala.annotation.tailrec
 
-case class NullList(value: Int, tail: NullList) {
+case class NullList(value: Int, tail: NullList | Null) {
   @tailrec final def tailrecSum(acc: Int = 0): Int = {
     val newAcc = acc + value
     if (tail == null) newAcc else tail.tailrecSum(newAcc)
