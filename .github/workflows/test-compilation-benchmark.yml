@@ -37,18 +37,14 @@ jobs:
         run: |
           set -e
           
-          run_bench() {
-            local version=$1
+          echo "::group::Benchmarking Scala 3"
           
-            echo "::group::Benchmarking Scala ${version}"
-            (
-              hyperfine --runs 5 --prepare "sbt clean update" "sbt benchmark-compilation${version}/compile" --export-json "../${version}.json"
-            )
-            echo "::endgroup::"
-          }
-
-          run_bench "2"
-          run_bench "3"
+          hyperfine --runs 5  --prepare "sbt clean core/compile" "sbt benchmark-compilation3/compile" --export-json "../3.json"
+          
+          echo "::group::Benchmarking Scala 2"
+          sbt benchmark-compilation2/update
+          
+          hyperfine --runs 5 --prepare "sbt clean" "sbt benchmark-compilation2/compile" --export-json "../2.json"
 
       - name: Extract Results
         id: extract
