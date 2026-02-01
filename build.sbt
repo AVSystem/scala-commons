@@ -359,7 +359,8 @@ lazy val jetty = project
     ),
   )
 
-lazy val benchmark = project
+lazy val benchmark3 = project
+  .in(file("benchmark"))
   .dependsOn(core % CompileAndTest)
   .enablePlugins(JmhPlugin)
   .settings(

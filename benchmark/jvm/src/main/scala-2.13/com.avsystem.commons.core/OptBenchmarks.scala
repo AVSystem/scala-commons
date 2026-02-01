@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package core
 
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 
 import scala.annotation.tailrec
 
@@ -12,8 +12,8 @@ case class NullList(value: Int, tail: NullList) {
   }
 }
 object NullList {
-  final val Example: NullList = (0 until 1000).foldRight(NullList(1000, null)) {
-    (value, tail) => NullList(value, tail)
+  final val Example: NullList = (0 until 1000).foldRight(NullList(1000, null)) { (value, tail) =>
+    NullList(value, tail)
   }
 }
 
@@ -27,8 +27,8 @@ case class OptList(value: Int, tail: Opt[OptList]) {
   }
 }
 object OptList {
-  final val Example = (0 until 1000).foldRight(OptList(1000, Opt.Empty)) {
-    (value, tail) => OptList(value, Opt(tail))
+  final val Example = (0 until 1000).foldRight(OptList(1000, Opt.Empty)) { (value, tail) =>
+    OptList(value, Opt(tail))
   }
 }
 
@@ -42,8 +42,8 @@ case class OptRefList(value: Int, tail: OptRef[OptRefList]) {
   }
 }
 object OptRefList {
-  final val Example = (0 until 1000).foldRight(OptRefList(1000, OptRef.Empty)) {
-    (value, tail) => OptRefList(value, OptRef(tail))
+  final val Example = (0 until 1000).foldRight(OptRefList(1000, OptRef.Empty)) { (value, tail) =>
+    OptRefList(value, OptRef(tail))
   }
 }
 
@@ -57,27 +57,25 @@ case class OptionList(value: Int, tail: Option[OptionList]) {
   }
 }
 object OptionList {
-  final val Example: OptionList = (0 until 1000).foldRight(OptionList(1000, None)) {
-    (value, tail) => OptionList(value, Some(tail))
+  final val Example: OptionList = (0 until 1000).foldRight(OptionList(1000, None)) { (value, tail) =>
+    OptionList(value, Some(tail))
   }
 }
 
-@State(Scope.Thread)
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 10, time = 2)
+@Warmup(iterations = 2)
+@Measurement(iterations = 5)
 @Fork(1)
 @BenchmarkMode(Array(Mode.Throughput))
 class OptBenchmarks {
+  @Benchmark
+  def testNull: Int = NullList.Example.tailrecSum()
 
   @Benchmark
-  def nullListSum: Int = NullList.Example.tailrecSum()
+  def testOpt: Int = OptList.Example.tailrecSum()
 
   @Benchmark
-  def optListSum: Int = OptList.Example.tailrecSum()
+  def testOptRef: Int = OptRefList.Example.tailrecSum()
 
   @Benchmark
-  def optRefListSum: Int = OptRefList.Example.tailrecSum()
-
-  @Benchmark
-  def optionListSum: Int = OptionList.Example.tailrecSum()
+  def testOption: Int = OptionList.Example.tailrecSum()
 }
