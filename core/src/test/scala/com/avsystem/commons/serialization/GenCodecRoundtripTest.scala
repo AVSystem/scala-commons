@@ -65,7 +65,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   test("transparent wrapper with dependency") {
     testRoundtrip(TransparentWrapperWithDependency("something"))
   }
-//
+
 //  test("transparent wrapper companion") {
 //    testRoundtrip(StringId("lolfuu"), "lolfuu")
 //  }
@@ -157,28 +157,28 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
 //  test("flat sealed hierarchy with transparent cases") {
 //    testRoundtrip[TransparentFlatSealedBase](TransparentCaseWrap(TransparentFlatThing(42, "fuu")))
 //  }
-
+//
 //  test("GADT") {
-//    testRoundtrip[Expr[_]](NullExpr)
-//    testRoundtrip[Expr[_]](StringExpr("stringzor"))
+//    testRoundtrip[Expr[?]](NullExpr)
+//    testRoundtrip[Expr[?]](StringExpr("stringzor"))
 //    testRoundtrip[Expr[String]](StringExpr("stringzor"))
 //    testRoundtrip[Expr[Int]](IntExpr(42))
 //    testRoundtrip[BaseExpr](StringExpr("stringzor"))
 //    testRoundtrip[BaseExpr { type Value = String }](StringExpr("stringzor"))
 //  }
 
-  test("recursive GADT") {
-    testRoundtrip[RecExpr[Int]](IntRecExpr(42))
-    testRoundtrip[RecExpr[Int]](NothingRecExpr)
-    testRoundtrip[RecExpr[Int]](ArbitraryRecExpr(42))
-    testRoundtrip[RecExpr[Int]](LazyRecExpr(IntRecExpr(42)))
-    testRoundtrip[RecExpr[RecBounded]](RecBoundedExpr(RecBounded(42)))
-  }
-
-//  test("pure GADT") {
-//    testRoundtrip[PureGadtExpr[String]](StringLiteral("str"))
-//    testRoundtrip[PureGadtExpr[String]](Plus(StringLiteral("str"), StringLiteral("fag")))
+//  test("recursive GADT") {
+//    testRoundtrip[RecExpr[Int]](IntRecExpr(42))
+//    testRoundtrip[RecExpr[Int]](NothingRecExpr)
+//    testRoundtrip[RecExpr[Int]](ArbitraryRecExpr(42))
+//    testRoundtrip[RecExpr[Int]](LazyRecExpr(IntRecExpr(42)))
+//    testRoundtrip[RecExpr[RecBounded]](RecBoundedExpr(RecBounded(42)))
 //  }
+
+  test("pure GADT") {
+    testRoundtrip[PureGadtExpr[String]](StringLiteral("str"))
+    testRoundtrip[PureGadtExpr[String]](Plus(StringLiteral("str"), StringLiteral("fag")))
+  }
 
   // test type dealiasing during materialization
   type IntTree = Tree[Int]
