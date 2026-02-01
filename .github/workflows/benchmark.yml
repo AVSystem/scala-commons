@@ -3,8 +3,6 @@ name: Benchmark
 on:
   pull_request:
     branches: ['**']
-  push:
-    branches: ['**']
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
