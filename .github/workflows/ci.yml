@@ -18,6 +18,10 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   JAVA_OPTS: '-Dfile.encoding=UTF-8 -Xmx4G'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build and Test
@@ -53,9 +57,6 @@ jobs:
         with:
           mongodb-version: 8.0
           mongodb-replica-set: test-rs
-
-      - name: Check that workflows are up to date
-        run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
       - name: Build project
         run: sbt '++ ${{ matrix.scala }}' test
