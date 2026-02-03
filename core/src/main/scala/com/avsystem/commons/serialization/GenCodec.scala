@@ -254,7 +254,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
             constName[T](compiletime.summonInline[TypeRepr[T]]),
             summonInstances[T, m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true),
             constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]],
-            f.annotation.caseFieldName,
+            f.caseFieldName,
             compiletime
               .summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]]
               .map[[X] =>> Class[?]]([CT] => (ct: CT) => ct.asInstanceOf[ClassTag[?]].runtimeClass)
@@ -273,7 +273,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
       }
   }
   inline private def constName[T](fallback: String) = compiletime.summonFrom {
-    case h: HasAnnotation[`name`, tpe] => h.annotation.name
+    case h: HasAnnotation[`name`, tpe] => h.name
     case _ => fallback
   }
   inline private def constNames[Tup <: Tuple]: Tuple = inline compiletime.erasedValue[Tup] match {
