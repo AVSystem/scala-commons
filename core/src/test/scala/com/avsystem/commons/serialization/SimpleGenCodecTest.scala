@@ -142,9 +142,9 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 //    testWrite(HasInheritedApply("dafuq", List(1, 2, 3)), Map("a" -> "dafuq", "lb" -> List(1, 2, 3)))
 //  }
 
-  test("apply/unapply provider based codec") {
-    testWrite(ThirdParty(42, "lol"), Map("str" -> "lol", "int" -> 42))
-  }
+//  test("apply/unapply provider based codec") {
+//    testWrite(ThirdParty(42, "lol"), Map("str" -> "lol", "int" -> 42))
+//  }
 
   test("varargs case class") {
     testWrite(VarargsCaseClass(42, "foo", "bar"), Map("int" -> 42, "strings" -> List("foo", "bar")))

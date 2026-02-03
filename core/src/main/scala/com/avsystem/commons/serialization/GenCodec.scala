@@ -263,6 +263,7 @@ object GenCodec extends RecursiveAutoCodecs with GenCodecMacros {
             compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]],
           )
       }
+    case _ => raiseCannotDerivedTypeFor[GenCodec, T]
   }
   inline private def constName[T](fallback: String): String = compiletime.summonFrom {
     case h: HasAnnotation[`name`, T] => h.name

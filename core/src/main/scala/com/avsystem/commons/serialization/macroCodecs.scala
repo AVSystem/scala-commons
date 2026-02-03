@@ -87,6 +87,7 @@ abstract class ApplyUnapplyCodec[T](
 }
 object ApplyUnapplyCodec {
   def derived[T]: ApplyUnapplyCodec[T] = ???
+  def materialize[T]: ApplyUnapplyCodec[T] = ???
 }
 
 abstract class ProductCodec[T <: Product](

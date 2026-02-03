@@ -15,7 +15,9 @@ abstract class HasGenCodecStructure[T](
 sealed trait GenStructure[T] extends TypedMetadata[T] {
   def repr: String
 }
-object GenStructure extends AdtMetadataCompanion[GenStructure]
+object GenStructure extends AdtMetadataCompanion[GenStructure] {
+  given [T] => GenStructure[T] = ???
+}
 
 case class GenField[T](
   @infer ts: TypeString[T],
@@ -101,8 +103,8 @@ case class Galaxy(name: String, distance: Long) extends MaterialBeing
 
 class Peculiarity extends Being
 object Peculiarity {
-  implicit val codec: GenCodec[Peculiarity] | Null = null
-  implicit val structure: GenStructure[Peculiarity] | Null = null
+  given GenCodec[Peculiarity] | Null = null
+  given GenStructure[Peculiarity] | Null = null
 }
 
 case object God extends Being

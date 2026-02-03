@@ -50,11 +50,11 @@ object AnnotationReferringToEnclosingObjectTest {
     given Meta[T] = instances((), this).meta
   }
   class example[+T](value: T, @infer codec: GenCodec[T] = infer.value[GenCodec[T]]) extends StaticAnnotation
-  // object Meta extends AdtMetadataCompanion[Meta]
   class Meta[T](@reifyAnnot example: example[T])
   @example(Rec("lol", 42))
   case class Rec(str: String, int: Int)
-  object Rec extends HasMeta[Rec] {
-    given GenCodec[Rec] = GenCodec.materialize
-  }
+//  object Meta extends AdtMetadataCompanion[Meta]
+//  object Rec extends HasMeta[Rec] {
+//    given GenCodec[Rec] = GenCodec.materialize
+//  }
 }

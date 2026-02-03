@@ -6,6 +6,10 @@ import com.avsystem.commons.meta.*
 import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 
+extension [T](instances: (stdCodec: GenObjectCodec[T], metadata: CborAdtMetadata[T])) private def cborCodec
+  : GenObjectCodec[T] =
+  instances.metadata.setup(_.validate()).adjustCodec(instances.stdCodec)
+
 /**
  * Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
  * [[CborInput]]. The differences between this codec and regular codec are: <ul> <li>case class fields that are `Map`s
@@ -17,10 +21,7 @@ import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 abstract class HasCborCodec[T](
   using instances: MacroInstances[CborOptimizedCodecs, (stdCodec: GenObjectCodec[T], metadata: CborAdtMetadata[T])],
 ) {
-  given GenObjectCodec[T] = {
-    val inst = instances(CborOptimizedCodecs, this)
-    inst.metadata.setup(_.validate()).adjustCodec(inst.stdCodec)
-  }
+  given GenObjectCodec[T] = instances(CborOptimizedCodecs, this).cborCodec
 }
 
 /**
@@ -29,10 +30,7 @@ abstract class HasCborCodec[T](
 abstract class HasCborCodecWithDeps[D: ValueOf, T](
   using instances: MacroInstances[(CborOptimizedCodecs, D), (stdCodec: GenObjectCodec[T], metadata: CborAdtMetadata[T])],
 ) {
-  given GenObjectCodec[T] = {
-    val inst = instances((CborOptimizedCodecs, valueOf[D]), this)
-    inst.metadata.setup(_.validate()).adjustCodec(inst.stdCodec)
-  }
+  given GenObjectCodec[T] = instances((CborOptimizedCodecs, valueOf[D]), this).cborCodec
 }
 
 /**
@@ -130,7 +128,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
             flatCodec.caseFieldName,
             flatCodec.defaultCaseIdx,
             flatCodec.defaultCaseTransient,
-          ){
+          ) {
             override protected def doWriteCaseName(output: Output, caseName: String): Unit =
               if (!output.writeCustom(RawCbor, caseNamesKeyCodec.rawKeys(caseName))) {
                 super.doWriteCaseName(output, caseName)
@@ -242,26 +240,29 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
   }
 }
 
-trait CborAdtPolyInstances[C[_]] {
-  def stdCodec[T: GenCodec]: GenObjectCodec[C[T]]
-  def metadata[T]: CborAdtMetadata[C[T]]
+opaque type PolyGenObjectCodec[C[_]] <: [T] => GenCodec[T] => GenObjectCodec[C[T]] =
+  [T] => GenCodec[T] => GenObjectCodec[C[T]]
+object PolyGenObjectCodec {
+  given [C[_]] => PolyGenObjectCodec[C] = [T] =>
+    (codec: GenCodec[T]) => {
+      given GenCodec[T] = codec
+      GenObjectCodec.derived[C[T]]
+    }
+}
+opaque type PolyCborAdtMetadata[C[_]] <: [T] => () => CborAdtMetadata[C[T]] =
+  [T] => () => CborAdtMetadata[C[T]]
+object PolyCborAdtMetadata {
+  given [C[_]] => PolyCborAdtMetadata[C] = [T] => () => CborAdtMetadata.materialize
 }
 
 /**
  * Like [[HasCborCodec]] but for parameterized (generic) data types.
  */
 abstract class HasPolyCborCodec[C[_]](
-  using instances: MacroInstances[
-    CborOptimizedCodecs,
-    (stdCodec: [T: GenCodec] => () => GenObjectCodec[C[T]], metadata: [T] => () => CborAdtMetadata[C[T]]),
-  ],
+  using instances: MacroInstances[CborOptimizedCodecs, (stdCodec: PolyGenObjectCodec[C], metadata: PolyCborAdtMetadata[C])],
 ) {
-  private lazy val validatedInstances = {
-    val dupa = instances(CborOptimizedCodecs, this)
-    dupa.metadata[Nothing]().validate()
-    dupa
-  }
+  private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing]().validate())
 
-  given [T: GenCodec] => GenObjectCodec[C[T]] =
-    validatedInstances.metadata[T]().adjustCodec(validatedInstances.stdCodec[T]())
+  given [T: GenCodec as codec] => GenObjectCodec[C[T]] =
+    validatedInstances.metadata[T]().adjustCodec(validatedInstances.stdCodec[T](codec))
 }
