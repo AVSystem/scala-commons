@@ -232,8 +232,8 @@ object CodecTestData {
   object TransparentWrapper extends HasGenCodec[TransparentWrapper]
   object TransparentWrapperWithDependency {
     // order matters
-    given GenCodec[TransparentWrapperWithDependency] = GenCodec.materialize
     given stringCodec: GenCodec[String] = GenCodec.given_GenCodec_String
+    given GenCodec[TransparentWrapperWithDependency] = GenCodec.derived
   }
 //  object StringId extends TransparentWrapperCompanion[String, StringId]
   object SomeCaseClass extends HasGenCodec[SomeCaseClass]
@@ -292,7 +292,7 @@ object CodecTestData {
   object PureGadtExpr extends HasGadtCodec[PureGadtExpr]
   object Tree extends HasPolyGenCodec[Tree]
   object Enumz {
-    given GenCodec[Enumz] = GenCodec.materialize[Enumz]
+    given GenCodec[Enumz] = GenCodec.derived[Enumz]
     @name("Primary")
     case object First extends Enumz
     case object Second extends Enumz
