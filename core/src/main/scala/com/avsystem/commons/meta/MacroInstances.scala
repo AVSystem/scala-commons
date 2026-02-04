@@ -17,7 +17,7 @@ object MacroInstances {
   inline def materializeInstances[T <: Tuple]: T = inline compiletime.erasedValue[T] match {
     case _: EmptyTuple => EmptyTuple.asInstanceOf[T]
     case _: (h *: t) =>
-      given AllowDerivation[h] = AllowDerivation.create[h]
+      given AllowDerivation[h] = AllowDerivation.create
       (compiletime.summonInline[h] *: materializeInstances[t]).asInstanceOf[T]
   }
   
