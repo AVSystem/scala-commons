@@ -234,8 +234,8 @@ object GenCodec extends GenCodecMacros {
     fallback.value
   inline def fromJavaBuilder[T, B](inline newBuilder: B)(inline build: B => T): GenCodec[T] =
     ${ fromJavaBuilderImpl[T, B]('{ newBuilder }, '{ build }) }
-  inline given recursive[T](using AllowRecursiveDerivation.type): GenCodec[T] = GenCodec.derived[T]
-  inline given materialize[T](using AllowDerivation[GenCodec[T]]): GenCodec[T] = GenCodec.derived[T]
+  inline given [T] => (AllowRecursiveDerivation.type) => GenCodec[T] = GenCodec.derived[T]
+  inline given [T] => (AllowDerivation[GenCodec[T]]) => GenCodec[T] = GenCodec.derived[T]
   inline private def unsafeDerived[T]: GenCodec[T] = compiletime.summonFrom {
     case _: HasAnnotation[`transparent`, T] =>
       deriveTransparentWrapper[T]
@@ -266,6 +266,8 @@ object GenCodec extends GenCodecMacros {
             compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]],
           )
       }
+    case _: (T <:< AnyVal) =>
+      deriveTransparentWrapper[T]
     case _ => raiseCannotDerivedTypeFor[GenCodec, T]
   }
   inline private def constName[T](fallback: String): String = compiletime.summonFrom {
@@ -519,6 +521,7 @@ object GenCodec extends GenCodecMacros {
       result
     }
   }
+
   /**
    * Convenience base class for `GenCodec`s that serialize values as objects. NOTE: if you need to implement a custom
    * `GenCodec` that writes an object, the best way to do it is to have manually implemented `apply` and `unapply` in
