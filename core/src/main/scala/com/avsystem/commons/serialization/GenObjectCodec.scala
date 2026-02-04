@@ -2,6 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.derivation.DeferredInstance
+import com.avsystem.commons.meta.AllowDerivation
 
 import scala.annotation.implicitNotFound
 
@@ -28,8 +29,10 @@ trait GenObjectCodec[T] extends GenCodec[T] {
   }
 }
 object GenObjectCodec {
-  def derived[T] :GenObjectCodec[T] = ???
+  inline given materialize[T](using AllowDerivation[GenObjectCodec[T]]): GenObjectCodec[T] = derived[T]
   
+  def derived[T] :GenObjectCodec[T] = ???
+
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
   given [R, T] => (tw: TransparentWrapping[R, T]) => (wrappedCodec: GenObjectCodec[R]) => GenObjectCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)

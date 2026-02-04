@@ -1,7 +1,9 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.meta.MacroInstances
+import com.avsystem.commons.meta.{AllowDerivation, MacroInstances}
+
+import scala.util.NotGiven
 
 /**
  * Convenience abstract class for companion objects of types that have a [[GenCodec]]. There are many other flavors of
@@ -10,21 +12,21 @@ import com.avsystem.commons.meta.MacroInstances
  * etc.
  */
 abstract class HasGenCodec[T](using macroCodec: MacroInstances[Unit, (codec: GenCodec[T])]) {
-  given GenCodec[T] = macroCodec((), this).codec
+  given NotGiven[AllowDerivation[GenCodec[T]]] => GenCodec[T] = macroCodec((), this).codec
 }
 
 /**
  * Like [[HasGenCodec]] but materializes an [[ApplyUnapplyCodec]] instead of just [[GenCodec]].
  */
 abstract class HasApplyUnapplyCodec[T](using macroCodec: MacroInstances[Unit, (codec: ApplyUnapplyCodec[T])]) {
-  given ApplyUnapplyCodec[T] = macroCodec((), this).codec
+  given NotGiven[AllowDerivation[ApplyUnapplyCodec[T]]] => ApplyUnapplyCodec[T] = macroCodec((), this).codec
 }
 
 /**
  * Like [[HasGenCodec]] but materializes a [[GenObjectCodec]] instead of just [[GenCodec]].
  */
 abstract class HasGenObjectCodec[T](using macroCodec: MacroInstances[Unit, (codec: GenObjectCodec[T])]) {
-  given GenObjectCodec[T] = macroCodec((), this).codec
+  given NotGiven[AllowDerivation[GenObjectCodec[T]]] => GenObjectCodec[T] = macroCodec((), this).codec
 }
 
 /**
@@ -32,7 +34,7 @@ abstract class HasGenObjectCodec[T](using macroCodec: MacroInstances[Unit, (code
  * from an object specified with type parameter `D`. It must be a singleton object type, i.e. `SomeObject.type`.
  */
 abstract class HasGenCodecWithDeps[D, T](using deps: ValueOf[D], macroCodec: MacroInstances[D, (codec: GenCodec[T])]) {
-  given GenCodec[T] = macroCodec(deps.value, this).codec
+  given NotGiven[AllowDerivation[GenCodec[T]]] => GenCodec[T] = macroCodec(deps.value, this).codec
 }
 
 /**
@@ -43,7 +45,7 @@ abstract class HasGenCodecWithDeps[D, T](using deps: ValueOf[D], macroCodec: Mac
 abstract class HasApplyUnapplyCodecWithDeps[D: ValueOf, T](
   using macroCodec: MacroInstances[D, (codec: ApplyUnapplyCodec[T])],
 ) {
-  given ApplyUnapplyCodec[T] = macroCodec(valueOf[D], this).codec
+  given NotGiven[AllowDerivation[ApplyUnapplyCodec[T]]] => ApplyUnapplyCodec[T] = macroCodec(valueOf[D], this).codec
 }
 
 /**
@@ -52,7 +54,7 @@ abstract class HasApplyUnapplyCodecWithDeps[D: ValueOf, T](
  * `SomeObject.type`.
  */
 abstract class HasGenObjectCodecWithDeps[D: ValueOf, T](using macroCodec: MacroInstances[D, (codec: GenObjectCodec[T])]) {
-  given GenObjectCodec[T] = macroCodec(valueOf[D], this).codec
+  given NotGiven[AllowDerivation[GenObjectCodec[T]]] => GenObjectCodec[T] = macroCodec(valueOf[D], this).codec
 }
 
 //todo: check if ?=> applicable
@@ -71,7 +73,7 @@ object PolyCodec {
  * Like [[HasGenCodec]] but for parameterized (generic) data types.
  */
 abstract class HasPolyGenCodec[C[_]](using macroCodec: MacroInstances[Unit, (codec: PolyCodec[C])]) {
-  given [T: GenCodec as codec]: GenCodec[C[T]] = macroCodec((), this).codec[T](codec)
+  given [T: GenCodec as codec] => GenCodec[C[T]] = macroCodec((), this).codec[T](codec)
 }
 
 /**
@@ -80,7 +82,7 @@ abstract class HasPolyGenCodec[C[_]](using macroCodec: MacroInstances[Unit, (cod
  * `SomeObject.type`.
  */
 abstract class HasPolyGenCodecWithDeps[D: ValueOf, C[_]](using macroCodec: MacroInstances[D, (codec: PolyCodec[C])]) {
-  given [T: GenCodec as codec]: GenCodec[C[T]] = macroCodec(valueOf[D], this).codec[T](codec)
+  given [T: GenCodec as codec] => GenCodec[C[T]] = macroCodec(valueOf[D], this).codec[T](codec)
 }
 
 opaque type PolyObjectCodec[C[_]] <: [T] => GenCodec[T] => GenObjectCodec[C[T]] =
@@ -98,7 +100,7 @@ object PolyObjectCodec {
  * Like [[HasGenObjectCodec]] but for parameterized (generic) data types.
  */
 abstract class HasPolyGenObjectCodec[C[_]](using macroCodec: MacroInstances[Unit, (codec: PolyObjectCodec[C])]) {
-  given [T: GenCodec as codec]: GenObjectCodec[C[T]] = macroCodec((), this).codec[T](codec)
+  given [T: GenCodec as codec] => GenObjectCodec[C[T]] = macroCodec((), this).codec[T](codec)
 }
 
 /**
@@ -152,7 +154,7 @@ object GenKeyCodecFromTransparentWrapper {
 abstract class HasGenAndKeyCodec[T](
   using instances: MacroInstances[Unit, (codec: GenCodec[T], keyCodec: GenKeyCodecFromTransparentWrapper[T])],
 ) {
-  given GenCodec[T] = instances((), this).codec
+  given NotGiven[AllowDerivation[GenCodec[T]]] => GenCodec[T] = instances((), this).codec
   given GenKeyCodec[T] = instances((), this).keyCodec
 }
 
@@ -160,6 +162,7 @@ opaque type AUCodec[AU, T] <: AU => GenCodec[T] = AU => GenCodec[T]
 
 object AUCodec {
   def materialize[AU, T]: AUCodec[AU, T] = GenCodec.fromApplyUnapplyProvider[T](_)
+  given [AU, T] => (AllowDerivation[AUCodec[AU, T]]) => AUCodec[AU, T] = GenCodec.fromApplyUnapplyProvider[T](_)
 }
 
 /**

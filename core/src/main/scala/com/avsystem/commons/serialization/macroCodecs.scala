@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.meta.OptionLike
+import com.avsystem.commons.meta.{AllowDerivation, OptionLike}
 import com.avsystem.commons.serialization.GenCodec.*
 
 import scala.annotation.tailrec
@@ -87,7 +87,7 @@ abstract class ApplyUnapplyCodec[T](
 }
 object ApplyUnapplyCodec {
   def derived[T]: ApplyUnapplyCodec[T] = ???
-  def materialize[T]: ApplyUnapplyCodec[T] = ???
+  given materialize[T](using AllowDerivation[ApplyUnapplyCodec[T]]): ApplyUnapplyCodec[T] = ???
 }
 
 abstract class ProductCodec[T <: Product](

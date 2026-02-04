@@ -4,6 +4,9 @@ package serialization
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
+import com.avsystem.commons.serialization.ApplyUnapplyCodec.materialize
+import com.avsystem.commons.serialization.GenObjectCodec.materialize
+import com.avsystem.commons.serialization.GenCodec.materialize
 
 import scala.annotation.meta.getter
 
@@ -197,7 +200,7 @@ object CodecTestData {
   }
   object ValueClass extends HasGenCodec[ValueClass]
   object SealedBase {
-    given GenCodec[SealedBase] = GenCodec.materialize[SealedBase]
+    given GenCodec[SealedBase] = GenCodec.derived[SealedBase]
     sealed trait InnerBase extends SealedBase
     case class CaseClass(str: String) extends SealedBase
     case class Rec(sub: Opt[SealedBase], local: Opt[Rec]) extends SealedBase
@@ -223,9 +226,7 @@ object CodecTestData {
     given GenCodec[SomeObject.type] = GenCodec.derived[SomeObject.type]
     @generated def random: Int = 42
   }
-  
-  GenCodec.derived[NoArgCaseClass]
-  
+
   object NoArgCaseClass extends HasGenCodec[NoArgCaseClass]
   object SingleArgCaseClass extends HasGenCodec[SingleArgCaseClass]
   object TransparentWrapper extends HasGenCodec[TransparentWrapper]
@@ -315,7 +316,7 @@ object CodecTestData {
   object ItsOverTwentyTwo extends HasGenCodec[ItsOverTwentyTwo]
   object HasColl extends HasRecursiveGenCodec[HasColl]
   object SealedRefined {
-    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.materialize
+    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.derived
     final case class First[Type](foo: Type) extends SealedRefined {
       type X = Type
     }

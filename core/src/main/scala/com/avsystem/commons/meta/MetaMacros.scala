@@ -7,7 +7,7 @@ trait InferMacros {
 }
 
 trait AdtMetadataCompanionMacros[M[_]] {
-  inline def materialize[T]: M[T] = ${ MetaMacros.dummy }
+  inline implicit def materialize[T]: M[T] = ${ MetaMacros.dummy }
   inline def fromApplyUnapplyProvider[T](inline applyUnapplyProvider: Any): M[T] =
     ${ MetaMacros.dummy }
 }

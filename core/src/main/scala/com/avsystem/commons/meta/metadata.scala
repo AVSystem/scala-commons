@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.serialization.{transparent, HasGenCodec}
+import com.avsystem.commons.serialization.{GenCodec, HasGenCodec, transparent}
+import com.avsystem.commons.serialization.GenCodec.given
 
 /**
  * This trait must be extended by all method metadata classes and all parameter metadata classes. For method metadata,
@@ -54,19 +55,18 @@ final case class ParamFlags(rawFlags: Int) extends AnyVal {
 }
 
 object ParamFlags extends HasGenCodec[ParamFlags] {
-  private var currentFlag: Int = 1
-  private def nextFlag(): ParamFlags = {
-    val flag = currentFlag
-    currentFlag = currentFlag << 1
-    new ParamFlags(flag)
-  }
-
   final val Empty: ParamFlags = new ParamFlags(0)
   final val Implicit: ParamFlags = nextFlag()
   final val ByName: ParamFlags = nextFlag()
   final val Repeated: ParamFlags = nextFlag()
   final val HasDefaultValue: ParamFlags = nextFlag()
   final val Synthetic: ParamFlags = nextFlag()
+  private var currentFlag: Int = 1
+  private def nextFlag(): ParamFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new ParamFlags(flag)
+  }
 }
 
 /**
@@ -158,13 +158,6 @@ final case class TypeFlags(rawFlags: Int) extends AnyVal {
 }
 
 object TypeFlags extends HasGenCodec[TypeFlags] {
-  private var currentFlag: Int = 1
-  private def nextFlag(): TypeFlags = {
-    val flag = currentFlag
-    currentFlag = currentFlag << 1
-    new TypeFlags(flag)
-  }
-
   final val Empty: TypeFlags = new TypeFlags(0)
   final val Abstract: TypeFlags = nextFlag()
   final val Final: TypeFlags = nextFlag()
@@ -172,6 +165,12 @@ object TypeFlags extends HasGenCodec[TypeFlags] {
   final val Case: TypeFlags = nextFlag()
   final val Trait: TypeFlags = nextFlag()
   final val Object: TypeFlags = nextFlag()
+  private var currentFlag: Int = 1
+  private def nextFlag(): TypeFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new TypeFlags(flag)
+  }
 }
 
 /**
@@ -219,13 +218,6 @@ final case class MethodFlags(rawFlags: Int) extends AnyVal {
   }
 }
 object MethodFlags extends HasGenCodec[MethodFlags] {
-  private var currentFlag: Int = 1
-  private def nextFlag(): MethodFlags = {
-    val flag = currentFlag
-    currentFlag = currentFlag << 1
-    new MethodFlags(flag)
-  }
-
   final val Empty: MethodFlags = new MethodFlags(0)
   final val Abstract: MethodFlags = nextFlag()
   final val Final: MethodFlags = nextFlag()
@@ -233,4 +225,10 @@ object MethodFlags extends HasGenCodec[MethodFlags] {
   final val Getter: MethodFlags = nextFlag()
   final val Setter: MethodFlags = nextFlag()
   final val Var: MethodFlags = nextFlag()
+  private var currentFlag: Int = 1
+  private def nextFlag(): MethodFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new MethodFlags(flag)
+  }
 }

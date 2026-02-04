@@ -2,7 +2,6 @@ package com.avsystem.commons.serialization
 
 import com.avsystem.commons.derivation.AllowImplicitMacro
 import com.avsystem.commons.serialization
-import com.avsystem.commons.serialization.GenCodec.AllowRecursiveDerivation
 
 import scala.quoted.*
 
@@ -11,14 +10,6 @@ trait GenCodecMacros {
     ${ SerializationMacros.fromApplyUnapplyProviderImpl[T, GenCodec]('applyUnapplyProvider) }
   inline def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = ${ SerializationMacros.applyUnapplyCodecImpl[T] }
   def forSealedEnum[T]: GenCodec[T] = ???
-
-}
-
-trait RecursiveAutoCodecs { this: GenCodec.type =>
-
-  inline implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
-    ${ SerializationMacros.materializeImplicitlyImpl('allow) }
-  inline given recursive[T](using AllowRecursiveDerivation.type): GenCodec[T] = GenCodec.derived[T]
 }
 
 trait WhenAbsentMacros {
