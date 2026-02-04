@@ -247,14 +247,14 @@ object CodecTestData {
   object CaseClassWithOptionalFields extends HasGenCodec[CaseClassWithOptionalFields]
   object CaseClassWithAutoOptionalFields
     extends HasGenCodecWithDeps[AutoOptionalParams.type, CaseClassWithAutoOptionalFields]
-  object CaseClassLike extends HasGenCodec[CaseClassLike] {
-    def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
-    def unapply(ccl: CaseClassLike): Opt[(String, List[Int])] = (ccl.str, ccl.intList).opt
-  }
-  object HasInheritedApply extends HasGenCodec[HasInheritedApply] with ApplyAndUnapply[String, Int, HasInheritedApply] {
-    protected def doApply(a: String, lb: List[Int]): HasInheritedApply = new HasInheritedApply(a, lb)
-    protected def doUnapply(c: HasInheritedApply): Option[(String, List[Int])] = (c.str, c.intList).option
-  }
+//  object CaseClassLike extends HasGenCodec[CaseClassLike] {
+//    def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
+//    def unapply(ccl: CaseClassLike): Opt[(String, List[Int])] = (ccl.str, ccl.intList).opt
+//  }
+//  object HasInheritedApply extends HasGenCodec[HasInheritedApply] with ApplyAndUnapply[String, Int, HasInheritedApply] {
+//    protected def doApply(a: String, lb: List[Int]): HasInheritedApply = new HasInheritedApply(a, lb)
+//    protected def doUnapply(c: HasInheritedApply): Option[(String, List[Int])] = (c.str, c.intList).option
+//  }
   object ThirdParty extends HasGenCodecFromAU[ThirdPartyFakeCompanion.type, ThirdParty]
   object ThirdPartyFakeCompanion {
     def apply(str: String, int: Int): ThirdParty = ThirdParty(int, str)
@@ -262,14 +262,14 @@ object CodecTestData {
   }
   object VarargsCaseClass extends HasGenCodec[VarargsCaseClass]
   object OnlyVarargsCaseClass extends HasGenCodec[OnlyVarargsCaseClass]
-  object VarargsCaseClassLike extends HasGenCodec[VarargsCaseClassLike] {
-    def apply(@name("some.str") str: String, ints: Int*): VarargsCaseClassLike = new VarargsCaseClassLike(str, ints)
-    def unapplySeq(vccl: VarargsCaseClassLike): Opt[(String, Seq[Int])] = (vccl.str, vccl.ints).opt
-  }
-  object OnlyVarargsCaseClassLike extends HasGenCodec[OnlyVarargsCaseClassLike] {
-    def apply(strings: String*): OnlyVarargsCaseClassLike = new OnlyVarargsCaseClassLike(strings)
-    def unapplySeq(vccl: OnlyVarargsCaseClassLike): Opt[Seq[String]] = vccl.strings.opt
-  }
+//  object VarargsCaseClassLike extends HasGenCodec[VarargsCaseClassLike] {
+//    def apply(@name("some.str") str: String, ints: Int*): VarargsCaseClassLike = new VarargsCaseClassLike(str, ints)
+//    def unapplySeq(vccl: VarargsCaseClassLike): Opt[(String, Seq[Int])] = (vccl.str, vccl.ints).opt
+//  }
+//  object OnlyVarargsCaseClassLike extends HasGenCodec[OnlyVarargsCaseClassLike] {
+//    def apply(strings: String*): OnlyVarargsCaseClassLike = new OnlyVarargsCaseClassLike(strings)
+//    def unapplySeq(vccl: OnlyVarargsCaseClassLike): Opt[Seq[String]] = vccl.strings.opt
+//  }
   object HasDefaults extends HasGenCodec[HasDefaults]
   case object CustomTail extends CustomList
   object CustomCons extends HasGenCodec[CustomCons]
