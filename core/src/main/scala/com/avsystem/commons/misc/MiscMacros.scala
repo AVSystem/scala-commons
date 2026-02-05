@@ -38,11 +38,6 @@ trait ImplicitsMacros {
   inline def inferNonMacro[T](inline clue: String): T = ${ MiscMacros.inferNonMacroImpl[T]('clue) }
 }
 
-trait ValueEnumMacros {
-  protected final class ValName(val valName: String)
-
-  inline protected implicit def valName: ValName = ???
-}
 trait SelfInstanceMacros {
   inline implicit def materialize[C[_]]: SelfInstance[C] = ???
 }

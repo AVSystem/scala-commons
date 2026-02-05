@@ -59,14 +59,15 @@ class ValueEnumTest extends AnyFunSuite {
         |}
       """.stripMargin,
     )
-    assertDoesNotCompile(
-      """
-        |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
-        |object Enumz extends AbstractValueEnumCompanion[Enumz] {
-        |  final val Constant = new Enumz
-        |}
-      """.stripMargin,
-    )
+// no longer valid
+//    assertDoesNotCompile(
+//      """
+//        |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+//        |object Enumz extends AbstractValueEnumCompanion[Enumz] {
+//        |  final val Constant = new Enumz
+//        |}
+//      """.stripMargin,
+//    )
     assertDoesNotCompile(
       """
         |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum

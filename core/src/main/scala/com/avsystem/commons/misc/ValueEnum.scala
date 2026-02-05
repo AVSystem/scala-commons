@@ -79,7 +79,7 @@ sealed trait EnumCtx extends Any {
  * Base trait for companion objects of value based enums. See [[ValueEnum]] for more information. NOTE: if possible,
  * prefer using [[AbstractValueEnumCompanion]] instead of this trait directly.
  */
-trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with ValueEnumMacros { companion =>
+trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { companion =>
   type Value = T
 
   /**
@@ -127,6 +127,41 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] with Valu
   }
 
   given (valName: ValName) => EnumCtx = new Ctx(valName.valName, currentOrdinal)
+
+  protected final class ValName(val valName: String) // todo make it opaque
+
+  inline protected given ValName = ${ valNameImpl[Value, ValName, this.type]('{ ValName(_) }) }
+}
+
+def valNameImpl[T <: ValueEnum: Type, ValName: Type, Owner: Type](
+  createValName: Expr[String => ValName],
+)(using quotes: Quotes,
+): Expr[ValName] = {
+  import quotes.reflect.*
+
+  def omitAnonClass(owner: Symbol): Symbol =
+    if (owner.isDefDef && owner.name == "<init>" && owner.owner.name.contains("$anon"))
+      owner.owner.owner
+    else owner
+
+  extension (s: Symbol) def isPublic: Boolean =
+    !s.flags.is(Flags.Protected) && !s.flags.is(Flags.Private) && !s.flags.is(Flags.PrivateLocal)
+
+  val owner = omitAnonClass(Symbol.spliceOwner.owner)
+
+  val valid = owner.isTerm && owner.owner == TypeRepr.of[Owner].typeSymbol && owner.isValDef &&
+    owner.flags.is(Flags.Final) && !owner.flags.is(Flags.Lazy) && owner.isPublic && owner.typeRef <:< TypeRepr.of[T]
+
+  if (!valid) {
+    // idk it's still required, but let's keep it just in case
+    report.errorAndAbort(
+      "ValueEnum must be assigned to a public, final, non-lazy val in its companion object " +
+        "with explicit `Value` type annotation, e.g. `final val MyEnumValue: Value = new MyEnumClass",
+    )
+  }
+
+  val name = Expr(owner.name)
+  '{ $createValName.apply($name) }
 }
 
 /**
