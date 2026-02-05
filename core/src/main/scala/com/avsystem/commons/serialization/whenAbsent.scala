@@ -1,6 +1,11 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.misc.HasAnnotation
+
+import scala.annotation.RefiningAnnotation
+import scala.util.matching.Regex
+
 /**
  * An alternative way to provide default value for case class parameter used during deserialization with `GenCodec`
  * when its field is missing in data being deserialized. Normally, Scala-level default parameter values are picked up,
@@ -23,7 +28,50 @@ package serialization
  *
  * NOTE: [[whenAbsent]] also works for method parameters in RPC framework.
  */
-class whenAbsent[+T](v: => T) extends StaticAnnotation {
+class whenAbsent[+T](v: => T) extends RefiningAnnotation {
   def value: T = v
 }
-object whenAbsent extends WhenAbsentMacros
+object whenAbsent {
+  inline def value[T]: T = ${ valueImpl[T] }
+  private def valueImpl[T: Type](using quotes: Quotes): Expr[T] = {
+    import quotes.reflect.*
+
+    object DefaultValueMethod {
+      private val DefaultValueMethodName: Regex = """(.*)\$default\$(\d+)$""".r
+
+      def unapply(s: Symbol): Option[Symbol] = s match {
+        case ms if ms.isDefDef =>
+          ms.name match {
+            case DefaultValueMethodName(actualMethodName: String, idx: String) =>
+              val method = actualMethodName match {
+                case "$lessinit$greater" =>
+                  ms.owner.companionModule.companionClass.primaryConstructor
+                case name =>
+                  ms.owner.methodMember(name).headOpt.getOrElse {
+                    report.errorAndAbort(s"whenAbsent.value macro could not find method '$name' in ${ms.owner.fullName}")
+                  }
+              }
+
+              method.paramSymss.flatten.lift(idx.toInt - 1)
+            case _ => None
+          }
+        case _ => None
+      }
+    }
+
+    val owner = Symbol.spliceOwner.owner match {
+      case DefaultValueMethod(paramSymbol) => paramSymbol
+      case other => other
+    }
+
+    owner.typeRef.asType match {
+      case '[fieldType] =>
+        Expr.summon[HasAnnotation[whenAbsent[T], fieldType]] match {
+          case Some(hasAnnotExpr) =>
+            '{ $hasAnnotExpr.value }
+          case None =>
+            report.errorAndAbort(s"No @whenAbsent annotation found for ${Type.show[fieldType]}")
+        }
+    }
+  }
+}

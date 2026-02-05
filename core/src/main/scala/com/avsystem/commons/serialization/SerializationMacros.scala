@@ -12,10 +12,6 @@ trait GenCodecMacros {
   def forSealedEnum[T]: GenCodec[T] = ???
 }
 
-trait WhenAbsentMacros {
-  def value[T]: T = ???
-}
-
 trait GenKeyCodecMacros {
   def forSealedEnum[T]: GenKeyCodec[T] = ???
   def forTransparentWrapper[T]: GenKeyCodec[T] = ???
