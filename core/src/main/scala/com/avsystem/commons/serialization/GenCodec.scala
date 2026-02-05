@@ -8,6 +8,7 @@ import com.avsystem.commons.meta.{AllowDerivation, AllowRecursiveDerivation, Fal
 import com.avsystem.commons.misc.{Bytes, HasAnnotation, Timestamp}
 
 import java.util.UUID
+import scala.NamedTuple.*
 import scala.annotation.{implicitNotFound, tailrec, targetName}
 import scala.collection.{Factory, mutable}
 
@@ -59,6 +60,14 @@ object GenCodec extends GenCodecMacros {
   inline given [Tup <: Tuple] => GenCodec[Tup] = mkTupleCodec(
     compiletime.summonAll[Tuple.Map[Tup, GenCodec]],
   )
+
+  inline given [NT <: AnyNamedTuple] => GenCodec[NT] =
+    deriveProduct[DropNames[NT]](compiletime.summonInline[Mirror.ProductOf[DropNames[NT]]])(
+      constName[NT](compiletime.summonInline[TypeRepr[NT]]),
+      compiletime.summonAll[Tuple.Map[DropNames[NT], GenCodec]],
+      constNames[Tuple.Zip[Names[NT], DropNames[NT]]],
+    ).asInstanceOf[GenCodec[NT]]
+
   def materialize[T]: GenCodec[T] = ???
   @explicitGenerics
   def read[T: GenCodec](input: Input): T =
@@ -392,7 +401,7 @@ object GenCodec extends GenCodecMacros {
     m: Mirror.ProductOf[T],
   )(
     typeRepr: String,
-    instances: Tuple.Map[m.MirroredElemTypes, GenCodec],
+    instances: Tuple,
     fieldNames: Tuple,
   ): GenCodec[T] =
     new ProductCodec[T](typeRepr, fieldNames.toArrayOf[String]) {

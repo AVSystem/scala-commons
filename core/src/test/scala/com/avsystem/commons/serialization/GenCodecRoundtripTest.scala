@@ -125,7 +125,8 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip(HasDefaults(str = "dafuq"))
   }
 
-  case class Node[T](value: T, children: List[Node[T]] = Nil) derives GenCodec
+  // test type dealiasing during materialization
+  type IntTree = Tree[Int]
 
   test("recursive generic case class") {
     testRoundtrip(Node(123, List(Node(42, List(Node(52), Node(53))), Node(43))))
@@ -179,11 +180,9 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip[PureGadtExpr[String]](StringLiteral("str"))
     testRoundtrip[PureGadtExpr[String]](Plus(StringLiteral("str"), StringLiteral("fag")))
   }
-
-  // test type dealiasing during materialization
-  type IntTree = Tree[Int]
-  GenCodec.derived[IntTree]
   type IntBranch = Branch[Int]
+  GenCodec.derived[IntTree]
+  case class Node[T](value: T, children: List[Node[T]] = Nil) derives GenCodec
   GenCodec.derived[IntBranch]
 
   test("recursive generic ADT") {
@@ -268,5 +267,9 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip[BuildablePojo](BuildablePojo.builder().build())
     testRoundtrip[BuildablePojo](BuildablePojo.builder().setStr("foo").build())
     testRoundtrip[BuildablePojo](BuildablePojo.builder().setStr("foo").setFlags(JList(true, false)).setCool(false).build())
+  }
+
+  test("named tuple codec") {
+    testRoundtrip[NamedTup]((name = "foo", value = 42))
   }
 }

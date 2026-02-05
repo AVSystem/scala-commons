@@ -329,4 +329,8 @@ object CodecTestData {
   object OuterThing extends HasRecursiveGenCodec[OuterThing]
 //  object ThingId extends StringWrapperCompanion[ThingId]
   object Generator extends HasGenCodec[Generator]
+
+
+   type NamedTup = (name: String, value: Int)
+   object NamedTup extends HasGenCodec[NamedTup]
 }

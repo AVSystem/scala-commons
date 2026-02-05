@@ -31,10 +31,10 @@ abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, 
   given TransparentWrapping[R, T] = this
 
   def apply(r: R): T
-  def unapply(t: T): Option[R]
+  def unapply(t: T): R
 
   final def wrap(r: R): T = apply(r)
-  final def unwrap(t: T): R = unapply(t).getOrElse(throw new NoSuchElementException(s"unapply for $t failed"))
+  final def unwrap(t: T): R = unapply(t)
 
   given Ordering[R] => Ordering[T] = Ordering.by(unwrap)
 }

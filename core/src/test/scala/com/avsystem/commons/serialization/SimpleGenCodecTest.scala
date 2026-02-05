@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-
 import scala.annotation.nowarn
 import scala.collection.immutable.ListMap
 
@@ -451,6 +450,13 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
         "varUpper" -> "V",
         "lazyValUpper" -> "V",
       ),
+    )
+  }
+
+  test("named tuple") {
+    testWrite[NamedTup](
+      (name = "foo", value = 42),
+      Map("name" -> "foo", "value" -> 42),
     )
   }
 }
