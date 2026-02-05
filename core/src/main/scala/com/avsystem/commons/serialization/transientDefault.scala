@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import scala.annotation.RefiningAnnotation
+
 /**
  * If some case class field has default value or [[whenAbsent]] annotation, you can use [[transientDefault]] on this
  * field to instruct an automatically derived `GenCodec` to not persist the value of that field if it's equal to the
@@ -20,4 +22,4 @@ package serialization
  *
  * NOTE: [[transientDefault]] also works for method parameters in RPC framework.
  */
-class transientDefault extends StaticAnnotation
+class transientDefault extends RefiningAnnotation

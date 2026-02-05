@@ -9,12 +9,6 @@ trait GenCodecMacros {
   inline def fromApplyUnapplyProvider[T](inline applyUnapplyProvider: Any): GenCodec[T] =
     ${ SerializationMacros.fromApplyUnapplyProviderImpl[T, GenCodec]('applyUnapplyProvider) }
   inline def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = ${ SerializationMacros.applyUnapplyCodecImpl[T] }
-  def forSealedEnum[T]: GenCodec[T] = ???
-}
-
-trait GenKeyCodecMacros {
-  def forSealedEnum[T]: GenKeyCodec[T] = ???
-  def forTransparentWrapper[T]: GenKeyCodec[T] = ???
 }
 
 trait RawRefCreatorMacros[S] {

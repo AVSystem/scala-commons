@@ -279,17 +279,7 @@ object GenCodec extends GenCodecMacros {
       deriveTransparentWrapper[T]
     case _ => raiseCannotDerivedTypeFor[GenCodec, T]
   }
-  inline private def constName[T](fallback: String): String = compiletime.summonFrom {
-    case h: HasAnnotation[`name`, T] => h.name
-    case _ => fallback
-  }
-  inline private def constNames[Tup <: Tuple]: Tuple.Map[Tup, [X] =>> String] =
-    inline compiletime.erasedValue[Tup] match {
-      case _: ((label, tpe) *: tail) =>
-        val head = constName(compiletime.constValue[label].asInstanceOf[String])
-        (head *: constNames[tail]).asInstanceOf[Tuple.Map[Tup, [X] =>> String]]
-      case _: EmptyTuple => EmptyTuple.asInstanceOf[Tuple.Map[Tup, [X] =>> String]]
-    }
+
   inline private def summonInstances[Elems <: Tuple](
     summonAllowed: Boolean,
     deriveAllowed: Boolean,
