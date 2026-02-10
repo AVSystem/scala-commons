@@ -1,10 +1,10 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.serialization.GenCodec.ReadFailure
+
 import java.io.{DataInputStream, DataOutputStream}
 import java.lang as jl
-
-import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
 private object FormatConstants {
   final val ByteBytes = jl.Byte.BYTES
@@ -138,21 +138,18 @@ class StreamFieldInput(val fieldName: String, is: DataInputStream) extends Strea
 
 private class StreamListInput(is: DataInputStream) extends ListInput {
   private var currentInput: Opt[StreamInput] = Opt.empty
-
-  private def ensureInput(): Unit =
-    if (currentInput == Opt.empty) currentInput = Opt.some(new StreamInput(is))
-
   def nextElement(): Input = {
     if (!hasNext) throw new ReadFailure("List already emptied")
     val input = currentInput
     currentInput = Opt.empty
     input.get
   }
-
   def hasNext: Boolean = {
     ensureInput()
     currentInput.get.markerByte != ListEndMarker
   }
+  private def ensureInput(): Unit =
+    if (currentInput == Opt.empty) currentInput = Opt.some(new StreamInput(is))
 }
 
 private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
@@ -160,7 +157,16 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
   import StreamObjectInput.*
 
   private var currentField: FieldInput = NoneYet
-
+  def nextField(): FieldInput = {
+    if (!hasNext) throw new ReadFailure("Object already emptied")
+    val field = currentField
+    currentField = NoneYet
+    field
+  }
+  def hasNext: Boolean = {
+    ensureInput()
+    currentField ne End
+  }
   private def ensureInput(): Unit = {
     if (currentField eq NoneYet) {
       val keyInput = new StreamInput(is)
@@ -172,30 +178,16 @@ private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
       }
     }
   }
-
-  def nextField(): FieldInput = {
-    if (!hasNext) throw new ReadFailure("Object already emptied")
-    val field = currentField
-    currentField = NoneYet
-    field
-  }
-
-  def hasNext: Boolean = {
-    ensureInput()
-    currentField ne End
-  }
 }
 
 private object StreamObjectInput {
+  val NoneYet: EmptyFieldInput = EmptyFieldInput("NONE")
+  val End: EmptyFieldInput = EmptyFieldInput("END")
   case class EmptyFieldInput(name: String) extends InputAndSimpleInput with FieldInput {
-    private def nope: Nothing = throw new ReadFailure(s"Something went horribly wrong ($name)")
-
     def isNull: Boolean = false
     def isList: Boolean = false
     def isObject: Boolean = false
-
     def fieldName: String = name
-
     def readNull(): Boolean = false
     def readString(): String = nope
     def readBoolean(): Boolean = nope
@@ -208,10 +200,8 @@ private object StreamObjectInput {
     def readList(): ListInput = nope
     def readObject(): ObjectInput = nope
     def skip(): Unit = nope
+    private def nope: Nothing = throw new ReadFailure(s"Something went horribly wrong ($name)")
   }
-
-  val NoneYet: EmptyFieldInput = EmptyFieldInput("NONE")
-  val End: EmptyFieldInput = EmptyFieldInput("END")
 }
 
 class StreamOutput(os: DataOutputStream) extends OutputAndSimpleOutput {

@@ -91,6 +91,7 @@ private[commons] def typeReprInfo(
 ): String =
   s"""
      |type: ${tpe.show}
+     |raw: ${tpe}
      |widen: ${tpe.widen.show}
      |widenTermRefByName: ${tpe.widenTermRefByName.show}
      |widenByName: ${tpe.widenByName.show}
@@ -171,4 +172,12 @@ private def raiseCannotDerivedTypeForImpl[For <: AnyKind: Type, Provided: Type](
   given Printer[TypeRepr] = Printer.TypeReprShortCode
   report.error(s"Cannot derive for ${TypeRepr.of[For].show} for ${TypeRepr.of[Provided].show}")
   '{ ??? }
+}
+
+inline private[commons] def showTypeRepr[T] = ${ showTypeReprImpl[T] }
+
+private def showTypeReprImpl[T: Type](using quotes: Quotes): Expr[Nothing] = {
+  import quotes.reflect.*
+  
+  typeReprInfo(TypeRepr.of[T]).dbg
 }

@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons.serialization.name
 import org.scalatest.funsuite.AnyFunSuite
 
 class GraphUtilTest extends AnyFunSuite {
