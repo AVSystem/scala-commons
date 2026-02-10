@@ -66,7 +66,7 @@ object GenCodec extends GenCodecMacros {
     deriveProduct[DropNames[NT]](
       constName[NT](compiletime.summonInline[TypeRepr[NT]]),
       compiletime.summonAll[Tuple.Map[DropNames[NT], GenCodec]].toArrayOf[GenCodec[?]],
-      constNames[Tuple.Zip[Names[NT], DropNames[NT]]].toArrayOf[String],
+      compiletime.constValueTuple[Names[NT]].toArrayOf[String],
       arr => Tuple.fromArray(arr).asInstanceOf[DropNames[NT]],
     ).asInstanceOf[GenCodec[NT]]
 
@@ -254,31 +254,30 @@ object GenCodec extends GenCodecMacros {
         m.wrap,
         m.unwrap,
       )
-    case s: DerMirror.SingletonOf[T & Singleton] =>
-      deriveSingleton(constName[T](compiletime.constValue[s.MirroredLabel]), s.value)
-        .asInstanceOf[GenCodec[T]]
-    case m: DerMirror.ProductOf[T & Product] =>
+    case m: DerMirror.SingletonOf[T] =>
+      deriveSingleton(compiletime.constValue[m.MirroredLabel], m.value)
+    case m: DerMirror.ProductOf[T] =>
       deriveProduct(
-        constName[T](compiletime.summonInline[TypeRepr[T]]),
+        compiletime.constValue[m.MirroredLabel],
         summonInstances[m.MirroredElemTypes](summonAllowed = true, deriveAllowed = false).toArrayOf[GenCodec[?]],
-        constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]].toArrayOf[String],
-        m.fromUnsafeArray,
-      ).asInstanceOf[GenCodec[T]]
+        compiletime.constValueTuple[m.MirroredElemLabels].toArrayOf[String],
+        m.fromUnsafeArray(_),
+      )
     case m: DerMirror.SumOf[T] =>
       m.getAnnotation[flatten] match {
         case Some(f) =>
           deriveFlattenSum(
-            constName[T](compiletime.summonInline[TypeRepr[T]]),
+            compiletime.constValue[m.MirroredLabel],
             summonInstances[m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true).toArrayOf[GenCodec[?]],
-            constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]].toArrayOf[String],
+            compiletime.constValueTuple[m.MirroredElemLabels].toArrayOf[String],
             f.caseFieldName,
             compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]].toArrayOf[ClassTag[?]],
           )
         case _ =>
           deriveNestedSum(
-            constName[T](compiletime.summonInline[TypeRepr[T]]),
+            compiletime.constValue[m.MirroredLabel],
             summonInstances[m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true).toArrayOf[GenCodec[?]],
-            constNames[Tuple.Zip[m.MirroredElemLabels, m.MirroredElemTypes]].toArrayOf[String],
+            compiletime.constValueTuple[m.MirroredElemLabels].toArrayOf[String],
             compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]].toArrayOf[ClassTag[?]],
           )
       }
@@ -300,8 +299,8 @@ object GenCodec extends GenCodecMacros {
     }
   inline private def deriveTransparentWrapper[T, U](underlying: => GenCodec[U], unwrap: U => T, wrap: T => U)
     : GenCodec[T] = new Transformed[T, U](underlying, wrap, unwrap)
-  private def deriveSingleton[T <: Singleton](typeRepr: String, value: T): GenCodec[T] =
-    new SingletonCodec[T](typeRepr, value)
+  private def deriveSingleton[T](typeRepr: String, value: T): GenCodec[T] =
+    new SingletonCodec[T & Singleton](typeRepr, value.asInstanceOf[T & Singleton]).asInstanceOf[GenCodec[T]]
   private def mkTupleCodec[Tup <: Tuple](elementCodecs: Tuple.Map[Tup, GenCodec]): GenCodec[Tup] = new ListCodec[Tup] {
     override def readList(input: ListInput): Tup =
       elementCodecs
@@ -354,18 +353,17 @@ object GenCodec extends GenCodecMacros {
   ) {
     override def caseDependencies: Array[GenCodec[?]] = instances
   }
-  private def deriveProduct[T <: Product](
+  private def deriveProduct[T](
     typeRepr: String,
     instances: Array[GenCodec[?]],
     fieldNames: Array[String],
     fromUnsafeArray: Array[Any] => T,
   ): GenCodec[T] =
-    new ProductCodec[T](typeRepr, fieldNames) {
+    new ProductCodec[T & Product](typeRepr, fieldNames) {
       override protected val dependencies: Array[GenCodec[?]] = instances
-      override protected def instantiate(fieldValues: FieldValues): T = fromUnsafeArray(
-        Array.range(0, dependencies.length).map(getField(fieldValues, _)),
-      )
-    }
+      override protected def instantiate(fieldValues: FieldValues): T & Product =
+        fromUnsafeArray(Array.range(0, dependencies.length).map(getField(fieldValues, _))).asInstanceOf[T & Product]
+    }.asInstanceOf[GenCodec[T]]
   private def notNull = throw new ReadFailure("not null")
   private def fromJavaBuilderImpl[T: Type, B: Type](
     newBuilder: Expr[B],
