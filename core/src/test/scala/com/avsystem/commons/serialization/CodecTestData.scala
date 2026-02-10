@@ -222,9 +222,9 @@ object CodecTestData {
   }
 //  object TransparentCaseWrap extends TransparentWrapperCompanion[TransparentFlatThing, TransparentCaseWrap]
   object TransparentFlatSealedBase extends HasGenCodec[TransparentFlatSealedBase]
-  object TransparentFlatThing extends HasApplyUnapplyCodec[TransparentFlatThing] 
+  object TransparentFlatThing extends HasApplyUnapplyCodec[TransparentFlatThing]
   object SomeObject {
-    
+
     given GenCodec[SomeObject.type] = GenCodec.derived[SomeObject.type]
     @generated def random: Int = 42
   }

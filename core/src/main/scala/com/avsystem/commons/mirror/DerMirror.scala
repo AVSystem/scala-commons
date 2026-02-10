@@ -77,7 +77,6 @@ object DerMirror {
 
         Option
           .when(tpe.isSingleton) {
-            // copied from synthesizedValueOf
             val valueImpl = tpe match {
               case ConstantType(c: Constant) =>
                 Literal(c)
@@ -90,7 +89,7 @@ object DerMirror {
               case tp =>
                 report.errorAndAbort(s"Unsupported singleton type: ${tp.show}")
             }
-            ConstantType(StringConstant(symbol.companionClass.name)).asType match {
+            ConstantType(StringConstant(symbol.name.stripSuffix("$"))).asType match {
               case '[type mirroredLabel <: String; mirroredLabel] =>
                 '{
                   new DerMirror.Singleton {
@@ -105,7 +104,10 @@ object DerMirror {
                 }
             }
           } orElse {
-          Option.when(tpe <:< TypeRepr.of[AnyVal] || tpe.typeSymbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol)) {
+          Option.when(
+            (tpe <:< TypeRepr.of[AnyVal] && !defn.ScalaPrimitiveValueClasses.contains(symbol)) ||
+              tpe.typeSymbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol),
+          ) {
             tpe.typeSymbol.caseFields.runtimeChecked match {
               case field :: Nil =>
                 (

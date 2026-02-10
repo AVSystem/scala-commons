@@ -57,6 +57,45 @@ class DerMirrorTest extends AnyFunSuite {
     assert(mirror.value == SimpleObject)
   }
 
+  test("DerMirror for value class") {
+    val mirror = DerMirror.derived[ValueClass]
+    summon[mirror.MirroredLabel =:= "ValueClass"]
+    summon[mirror.MirroredElemLabels =:= ("str" *: EmptyTuple)]
+    summon[mirror.MirroredElemTypes =:= (String *: EmptyTuple)]
+
+    val vc = ValueClass("test")
+    assert(mirror.unwrap(vc) == "test")
+    assert(mirror.wrap("test") == vc)
+  }
+
+  test("DerMirror for @transparent case class") {
+    val mirror = DerMirror.derived[TransparentClass]
+    summon[mirror.MirroredLabel =:= "TransparentClass"]
+    summon[mirror.MirroredElemLabels =:= ("int" *: EmptyTuple)]
+    summon[mirror.MirroredElemTypes =:= (Int *: EmptyTuple)]
+
+    val tc = TransparentClass(42)
+    assert(mirror.unwrap(tc) == 42)
+    assert(mirror.wrap(42) == tc)
+  }
+
+  test("getAnnotation and hasAnnotation") {
+    val mirror = DerMirror.derived[AnnotatedCaseClass]
+    assert(mirror.hasAnnotation[Annotation1])
+    assert(mirror.hasAnnotation[Annotation2])
+    assert(!mirror.hasAnnotation[Annotation3])
+
+    assert(mirror.getAnnotation[Annotation1].isDefined)
+    assert(mirror.getAnnotation[Annotation2].isDefined)
+    assert(mirror.getAnnotation[Annotation3].isEmpty)
+  }
+
+  test("parametrized annotation") {
+    val mirror = DerMirror.derived[ParamAnnotated]
+    val annot = mirror.getAnnotation[ParamAnnotation].get
+    assert(annot.value == "foo")
+  }
+
   test("DerMirror with annotations") {
     val mirror = DerMirror.derived[AnnotatedCaseClass]
     summon[mirror.MirroredLabel =:= "AnnotatedCaseClass"]
@@ -92,6 +131,16 @@ object DerMirrorTest {
   }
 
   case object SimpleObject
+
+  case class ValueClass(str: String) extends AnyVal
+
+  @transparent
+  case class TransparentClass(int: Int)
+
+  case class ParamAnnotation(value: String) extends MetaAnnotation
+
+  @ParamAnnotation("foo")
+  case class ParamAnnotated(id: Int)
 
   case class Box[T](a: T)
 
