@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.mirror.transparent
+
 /**
  * A typeclass which serves as evidence that some type `T` is a "transparent" wrapper of some other type. This usually
  * means that instances of various typeclasses (e.g. [[GenCodec]]) for type `T` could be automatically derived from

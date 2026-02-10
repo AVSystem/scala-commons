@@ -1,4 +1,5 @@
-package com.avsystem.commons.mirror
+package com.avsystem.commons
+package mirror
 
 import scala.annotation.{RefiningAnnotation, implicitNotFound, tailrec}
 import scala.deriving.Mirror
