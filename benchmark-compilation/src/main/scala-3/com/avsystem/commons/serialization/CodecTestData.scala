@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.mirror.name
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, Opt, TypedKey}
 
 import scala.reflect.ClassTag

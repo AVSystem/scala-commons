@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.mirror.transparent
+import com.avsystem.commons.mirror.{name, transparent}
 import org.scalatest.funsuite.AnyFunSuite
 
 @flatten sealed trait Seal {

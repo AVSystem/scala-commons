@@ -3,6 +3,7 @@ package misc
 
 import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta.*
+import com.avsystem.commons.mirror.name
 import com.avsystem.commons.serialization.*
 
 abstract class HasGenCodecStructure[T](

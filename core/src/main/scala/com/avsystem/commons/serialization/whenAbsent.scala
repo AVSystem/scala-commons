@@ -65,13 +65,12 @@ object whenAbsent {
     }
 
     owner.typeRef.asType match {
-      case '[fieldType] =>
-        Expr.summon[HasAnnotation[whenAbsent[T], fieldType]] match {
-          case Some(hasAnnotExpr) =>
-            '{ $hasAnnotExpr.value }
-          case None =>
-            report.errorAndAbort(s"No @whenAbsent annotation found for ${Type.show[fieldType]}")
-        }
+      case '[fieldType] => '{ getValue[T, fieldType] }
     }
+  }
+  
+  inline private def getValue[T, fieldType]: T = inline HasAnnotation.get[whenAbsent[T], fieldType] match {
+    case Some(annot) => annot.value
+    case None => compiletime.error("whenAbsent.value can only be used inside a parameter annotated with @whenAbsent")
   }
 }

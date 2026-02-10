@@ -3,6 +3,7 @@ package serialization.cbor
 
 import com.avsystem.commons.annotation.{AnnotationAggregate, positioned}
 import com.avsystem.commons.meta.*
+import com.avsystem.commons.mirror.name
 import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
 

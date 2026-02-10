@@ -34,15 +34,20 @@ object AnnotationsOf extends AnnotationsOfMacros {}
  * Similar to [[AnnotationOf]] but does not reify the annotation itself into runtime.
  */
 @implicitNotFound("${T} is not annotated with ${A}")
-opaque type HasAnnotation[A <: RefiningAnnotation, T] <: A = A
+opaque type HasAnnotation[A <: RefiningAnnotation, T] = A
 
 object HasAnnotation {
-  transparent inline given [A <: RefiningAnnotation, T] => HasAnnotation[A, T] = ${ materializeImpl[A, T] }
-  private def materializeImpl[A <: RefiningAnnotation: Type, T: Type](using quotes: Quotes): Expr[HasAnnotation[A, T]] = {
+  transparent inline def check[A <: RefiningAnnotation, T]: Boolean = ${ checkImpl[A, T] }
+  transparent inline def get[A <: RefiningAnnotation, T]: Option[A] = ${ getImpl[A, T] }
+  private def checkImpl[A <: RefiningAnnotation: Type, T: Type](using quotes: Quotes): Expr[Boolean] = {
+    import quotes.reflect.*
+    Expr(TypeRepr.of[T].typeSymbol.hasAnnotation(TypeRepr.of[A].typeSymbol))
+  }
+  private def getImpl[A <: RefiningAnnotation: Type, T: Type](using quotes: Quotes): Expr[Option[A]] = {
     import quotes.reflect.*
     TypeRepr.of[T].typeSymbol.getAnnotation(TypeRepr.of[A].typeSymbol) match {
-      case Some(annot) => annot.asExprOf[A]
-      case _ => report.errorAndAbort(s"${Type.show[T]} is not annotated with ${Type.show[A]}")
+      case Some(annot) => '{ Some(${ annot.asExprOf[A] }) }
+      case _ => Expr(None)
     }
   }
 
