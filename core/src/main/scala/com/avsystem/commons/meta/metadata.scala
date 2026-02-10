@@ -2,6 +2,7 @@ package com.avsystem.commons
 package meta
 
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec, transparent}
+import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
 import com.avsystem.commons.serialization.GenCodec.given
 
 /**
