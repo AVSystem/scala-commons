@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.mirror.MetaAnnotation
+
 import scala.annotation.RefiningAnnotation
 
 /**
@@ -30,6 +32,6 @@ import scala.annotation.RefiningAnnotation
  *
  * The "_case" field name can be customized with annotation parameter
  */
-class flatten(val caseFieldName: String) extends RefiningAnnotation {
+class flatten(val caseFieldName: String) extends MetaAnnotation {
   def this() = this("_case")
 }
