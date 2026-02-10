@@ -105,6 +105,52 @@ object DerMirror {
                 }
             }
           } orElse {
+          Option.when(tpe <:< TypeRepr.of[AnyVal] || tpe.typeSymbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol)) {
+            tpe.typeSymbol.caseFields.runtimeChecked match {
+              case field :: Nil =>
+                (
+                  field.termRef.widen.asType,
+                  ConstantType(StringConstant(field.name)).asType,
+                  ConstantType(StringConstant(symbol.name)).asType,
+                ).runtimeChecked match {
+                  case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
+                    val unwrapExpr = Lambda(
+                      Symbol.spliceOwner,
+                      MethodType(List("x"))(_ => List(tpe), _ => TypeRepr.of[fieldType]),
+                      (sym, args) => args.head.asInstanceOf[Term].select(field),
+                    ).asExprOf[T => fieldType]
+
+                    val wrapExpr = Lambda(
+                      Symbol.spliceOwner,
+                      MethodType(List("x"))(_ => List(TypeRepr.of[fieldType]), _ => tpe),
+                      (sym, args) =>
+                        New(TypeTree.of[T]).select(symbol.primaryConstructor).appliedTo(args.head.asInstanceOf[Term]),
+                    ).asExprOf[fieldType => T]
+
+                    '{
+                      new Transparent {
+                        type Metadata = meta
+                        type MirroredType = T
+                        type MirroredLabel = label
+                        type MirroredMonoType = T
+                        type MirrorElemType = fieldType
+                        type MirroredElemTypes = fieldType *: EmptyTuple
+                        type MirroredElemLabels = elemLabel *: EmptyTuple
+
+                        def unwrap(value: T): fieldType = $unwrapExpr(value)
+                        def wrap(value: fieldType): T = $wrapExpr(value)
+                      }: DerMirror.TransparentOf[T] {
+                        type Metadata = meta
+                        type MirroredLabel = label
+                        type MirrorElemType = fieldType
+                        type MirroredElemTypes = fieldType *: EmptyTuple
+                        type MirroredElemLabels = elemLabel *: EmptyTuple
+                      }
+                    }
+                }
+            }
+          }
+        } orElse {
           Expr
             .summon[Mirror.Of[T]]
             .map {
@@ -167,52 +213,6 @@ object DerMirror {
                   }
                 }
             }
-        } orElse {
-          tpe.typeSymbol.caseFields match {
-            case field :: Nil
-                if tpe <:< TypeRepr.of[AnyVal] || tpe.typeSymbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol) =>
-              (
-                field.termRef.widen.asType,
-                ConstantType(StringConstant(field.name)).asType,
-                ConstantType(StringConstant(symbol.name)).asType,
-              ).runtimeChecked match {
-                case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
-                  val unwrapExpr = Lambda(
-                    Symbol.spliceOwner,
-                    MethodType(List("x"))(_ => List(tpe), _ => TypeRepr.of[fieldType]),
-                    (sym, args) => args.head.asInstanceOf[Term].select(field),
-                  ).asExprOf[T => fieldType]
-
-                  val wrapExpr = Lambda(
-                    Symbol.spliceOwner,
-                    MethodType(List("x"))(_ => List(TypeRepr.of[fieldType]), _ => tpe),
-                    (sym, args) =>
-                      New(TypeTree.of[T]).select(symbol.primaryConstructor).appliedTo(args.head.asInstanceOf[Term]),
-                  ).asExprOf[fieldType => T]
-
-                  Some('{
-                    new Transparent {
-                      type Metadata = meta
-                      type MirroredType = T
-                      type MirroredLabel = label
-                      type MirroredMonoType = T
-                      type MirrorElemType = fieldType
-                      type MirroredElemTypes = fieldType *: EmptyTuple
-                      type MirroredElemLabels = elemLabel *: EmptyTuple
-
-                      def unwrap(value: T): fieldType = $unwrapExpr(value)
-                      def wrap(value: fieldType): T = $wrapExpr(value)
-                    }: DerMirror.TransparentOf[T] {
-                      type Metadata = meta
-                      type MirroredLabel = label
-                      type MirrorElemType = fieldType
-                      type MirroredElemTypes = fieldType *: EmptyTuple
-                      type MirroredElemLabels = elemLabel *: EmptyTuple
-                    }
-                  })
-              }
-            case _ => None
-          }
         } getOrElse {
           report.errorAndAbort(s"Unsupported Mirror type for ${tpe.show}")
         }
