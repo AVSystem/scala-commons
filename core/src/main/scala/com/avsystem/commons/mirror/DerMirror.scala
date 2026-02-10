@@ -74,85 +74,77 @@ object DerMirror {
 
     meta match {
       case '[type meta <: Meta; meta] =>
-
-        Option
-          .when(tpe.isSingleton) {
-            val valueImpl = tpe match {
-              case ConstantType(c: Constant) =>
-                Literal(c)
-              case tp: TypeRef if tp <:< TypeRepr.of[Unit] =>
-                Literal(UnitConstant())
-              case n: TermRef =>
-                Ref(n.termSymbol)
-              case ts: ThisType =>
-                This(ts.classSymbol.get)
-              case tp =>
-                report.errorAndAbort(s"Unsupported singleton type: ${tp.show}")
-            }
-            ConstantType(StringConstant(symbol.name.stripSuffix("$"))).asType match {
-              case '[type mirroredLabel <: String; mirroredLabel] =>
-                '{
-                  new DerMirror.Singleton {
-                    type Metadata = meta
-                    type MirroredType = T
-                    type MirroredLabel = mirroredLabel
-                    def value: T = ${ valueImpl.asExprOf[T] }
-                  }: DerMirror.SingletonOf[T] {
-                    type Metadata = meta
-                    type MirroredLabel = mirroredLabel
-                  }
-                }
-            }
-          } orElse {
-          Option.when(
-            (tpe <:< TypeRepr.of[AnyVal] && !defn.ScalaPrimitiveValueClasses.contains(symbol)) ||
-              tpe.typeSymbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol),
-          ) {
-            tpe.typeSymbol.caseFields.runtimeChecked match {
-              case field :: Nil =>
-                (
-                  field.termRef.widen.asType,
-                  ConstantType(StringConstant(field.name)).asType,
-                  ConstantType(StringConstant(symbol.name)).asType,
-                ).runtimeChecked match {
-                  case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
-                    val unwrapExpr = Lambda(
-                      Symbol.spliceOwner,
-                      MethodType(List("x"))(_ => List(tpe), _ => TypeRepr.of[fieldType]),
-                      (sym, args) => args.head.asInstanceOf[Term].select(field),
-                    ).asExprOf[T => fieldType]
-
-                    val wrapExpr = Lambda(
-                      Symbol.spliceOwner,
-                      MethodType(List("x"))(_ => List(TypeRepr.of[fieldType]), _ => tpe),
-                      (sym, args) =>
-                        New(TypeTree.of[T]).select(symbol.primaryConstructor).appliedTo(args.head.asInstanceOf[Term]),
-                    ).asExprOf[fieldType => T]
-
-                    '{
-                      new Transparent {
-                        type Metadata = meta
-                        type MirroredType = T
-                        type MirroredLabel = label
-                        type MirroredMonoType = T
-                        type MirrorElemType = fieldType
-                        type MirroredElemTypes = fieldType *: EmptyTuple
-                        type MirroredElemLabels = elemLabel *: EmptyTuple
-
-                        def unwrap(value: T): fieldType = $unwrapExpr(value)
-                        def wrap(value: fieldType): T = $wrapExpr(value)
-                      }: DerMirror.TransparentOf[T] {
-                        type Metadata = meta
-                        type MirroredLabel = label
-                        type MirrorElemType = fieldType
-                        type MirroredElemTypes = fieldType *: EmptyTuple
-                        type MirroredElemLabels = elemLabel *: EmptyTuple
-                      }
-                    }
-                }
-            }
+        Option.when(tpe.isSingleton || tpe <:< TypeRepr.of[Unit]) {
+          val valueImpl = tpe match {
+            case ConstantType(c: Constant) =>
+              Literal(c)
+            case tp: TypeRef if tp <:< TypeRepr.of[Unit] =>
+              Literal(UnitConstant())
+            case n: TermRef =>
+              Ref(n.termSymbol)
+            case ts: ThisType =>
+              This(ts.classSymbol.get)
+            case tp =>
+              report.errorAndAbort(s"Unsupported singleton type: ${tp.show}")
           }
-        } orElse {
+          val name =
+            if (tpe <:< TypeRepr.of[Unit]) "Unit"
+            else {
+              val comp = symbol.companionClass
+              if (comp.exists) comp.name else symbol.name.stripSuffix("$")
+            }
+
+          ConstantType(StringConstant(name)).asType match {
+            case '[type mirroredLabel <: String; mirroredLabel] =>
+              '{
+                new DerMirror.Singleton {
+                  type Metadata = meta
+                  type MirroredType = T
+                  type MirroredLabel = mirroredLabel
+                  def value: T = ${ valueImpl.asExprOf[T] }
+                }: DerMirror.SingletonOf[T] {
+                  type Metadata = meta
+                  type MirroredLabel = mirroredLabel
+                }
+              }
+          }
+        } orElse Option.when(tpe.typeSymbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol)) {
+          tpe.typeSymbol.caseFields.runtimeChecked match {
+            case field :: Nil =>
+              (
+                field.termRef.widen.asType,
+                ConstantType(StringConstant(field.name)).asType,
+                ConstantType(StringConstant(symbol.name)).asType,
+              ).runtimeChecked match {
+                case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
+                  '{
+                    new Transparent {
+                      type Metadata = meta
+                      type MirroredType = T
+                      type MirroredLabel = label
+                      type MirroredMonoType = T
+                      type MirrorElemType = fieldType
+                      type MirroredElemTypes = fieldType *: EmptyTuple
+                      type MirroredElemLabels = elemLabel *: EmptyTuple
+
+                      def unwrap(value: T): fieldType = ${ '{ value }.asTerm.select(field).asExprOf[fieldType] }
+                      def wrap(v: fieldType): T = ${
+                        New(TypeTree.of[T])
+                          .select(symbol.primaryConstructor)
+                          .appliedTo('{ v }.asTerm)
+                          .asExprOf[T]
+                      }
+                    }: DerMirror.TransparentOf[T] {
+                      type Metadata = meta
+                      type MirroredLabel = label
+                      type MirrorElemType = fieldType
+                      type MirroredElemTypes = fieldType *: EmptyTuple
+                      type MirroredElemLabels = elemLabel *: EmptyTuple
+                    }
+                  }
+              }
+          }
+        } orElse
           Expr
             .summon[Mirror.Of[T]]
             .map {
@@ -165,9 +157,9 @@ object DerMirror {
                       type MirroredLabel = mirroredLabel
                       type MirroredElemTypes = mirroredElemTypes
                       type MirroredElemLabels = mirroredElemLabels
-                      type MirroredMonoType = mirroredMonoType
+                      type MirroredMonoType = T
                     }
-                  } => {
+                  } =>
                 '{
                   new DerMirror.Product {
                     type Metadata = meta
@@ -187,16 +179,16 @@ object DerMirror {
                     type MirroredElemLabels = mirroredElemLabels
                   }
                 }
-              }
               case '{
                     type mirroredLabel <: String
                     type mirroredElemLabels <: Tuple
                     type mirroredElemTypes <: Tuple
 
-                    $m: Mirror.SumOf[T] {
+                    $m: Mirror.SumOf[t] {
                       type MirroredLabel = mirroredLabel
                       type MirroredElemLabels = mirroredElemLabels
                       type MirroredElemTypes = mirroredElemTypes
+                      type MirroredMonoType = T
                     }
                   } =>
                 '{
@@ -214,14 +206,14 @@ object DerMirror {
                     type MirroredElemLabels = mirroredElemLabels
                   }
                 }
-            }
-        } getOrElse {
-          report.errorAndAbort(s"Unsupported Mirror type for ${tpe.show}")
-        }
+            } getOrElse {
+            report.errorAndAbort(s"Unsupported Mirror type for ${tpe.show}")
+          }
     }
   }
+
   sealed trait Product extends DerMirror {
-    def fromUnsafeArray(product: Array[Any]): MirroredMonoType
+    def fromUnsafeArray(product: Array[Any]): MirroredType
   }
   sealed trait Sum extends DerMirror
   sealed trait Singleton extends DerMirror {

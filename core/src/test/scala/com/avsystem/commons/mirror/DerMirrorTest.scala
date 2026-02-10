@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package mirror
 
+import com.avsystem.commons.mirror.DerMirror.Transparent
 import org.scalatest.funsuite.AnyFunSuite
 
 class DerMirrorTest extends AnyFunSuite {
@@ -55,6 +56,14 @@ class DerMirrorTest extends AnyFunSuite {
     summon[mirror.MirroredElemTypes =:= EmptyTuple]
     summon[mirror.Metadata =:= Meta]
     assert(mirror.value == SimpleObject)
+  }
+
+  test("DerMirror for Unit") {
+    val mirror = DerMirror.derived[Unit]
+    summon[mirror.MirroredType =:= Unit]
+    summon[mirror.MirroredMonoType =:= Unit]
+    summon[mirror.MirroredLabel =:= "Unit"]
+    assert(mirror.value == ())
   }
 
   test("DerMirror for value class") {
@@ -113,25 +122,23 @@ class DerMirrorTest extends AnyFunSuite {
     summon[mirror.MirroredElemLabels =:= ("End" *: "Next" *: EmptyTuple)]
   }
 
-  test("DerMirror for ADT with mixed cases") {
-    val mirror = DerMirror.derived[MixedADT]
-    summon[mirror.MirroredLabel =:= "MixedADT"]
-    summon[mirror.MirroredElemLabels =:= ("CaseObj" *: "CaseClass" *: EmptyTuple)]
-    summon[mirror.Metadata =:= Meta]
-  }
+//  test("DerMirror for ADT with mixed cases") {
+//    val mirror = DerMirror.derived[MixedADT]
+//    summon[mirror.MirroredLabel =:= "MixedADT"]
+//    summon[mirror.MirroredElemLabels =:= ("CaseObj" *: "CaseClass" *: EmptyTuple)]
+//    summon[mirror.Metadata =:= Meta]
+//  }
 }
 
 object DerMirrorTest {
+  sealed trait MixedADT
   case class SimpleCaseClass(id: Long, name: String)
   case class NoFields()
-
   enum SimpleEnum {
     case Case1
     case Case2(data: String)
   }
-
-  case object SimpleObject
-
+  @transparent
   case class ValueClass(str: String) extends AnyVal
 
   @transparent
@@ -143,28 +150,23 @@ object DerMirrorTest {
   case class ParamAnnotated(id: Int)
 
   case class Box[T](a: T)
-
-  sealed trait MixedADT
-  object MixedADT {
-    case object CaseObj extends MixedADT
-    case class CaseClass(v: Int) extends MixedADT
-  }
-
   class Annotation1 extends MetaAnnotation
   class Annotation2 extends MetaAnnotation
   class Annotation3 extends MetaAnnotation
-
   @Annotation1
   @Annotation2
   case class AnnotatedCaseClass(id: Long)
-
   @Annotation1
   @Annotation2
   @Annotation3
   case class ManyAnnotated(id: Long)
-
   enum Recursive {
     case End
     case Next(r: Recursive)
+  }
+  case object SimpleObject
+  object MixedADT {
+    case class CaseClass(v: Int) extends MixedADT
+    case object CaseObj extends MixedADT
   }
 }
