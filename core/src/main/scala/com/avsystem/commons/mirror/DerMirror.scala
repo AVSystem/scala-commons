@@ -59,6 +59,19 @@ object DerMirror {
     loop(metaTpe).fold(Expr(None))(a => '{ Some(${ a }) })
   }
 
+  private def stringToType(str: String)(using quotes: Quotes): Type[? <: String] = {
+    import quotes.reflect.*
+    ConstantType(StringConstant(str)).asType.asInstanceOf[Type[? <: String]]
+  }
+
+  private def labelOf[T <: AnyKind: Type](using quotes: Quotes): Option[Type[? <: String]] = {
+    import quotes.reflect.*
+    TypeRepr.of[T].typeSymbol.getAnnotation(TypeRepr.of[name].typeSymbol).map(_.asExprOf[name]).map {
+      case '{ new `name`($value) } => stringToType(value.valueOrAbort)
+      case other => report.errorAndAbort(s"Unsupported annotation for label: ${other.show}")
+    }
+  }
+
   private def derivedImpl[T: Type](using quotes: Quotes): Expr[Of[T]] = {
     import quotes.reflect.*
     val tpe = TypeRepr.of[T]
@@ -92,7 +105,7 @@ object DerMirror {
               if (comp.exists) comp.name else symbol.name.stripSuffix("$")
             }
 
-          ConstantType(StringConstant(name)).asType match {
+          labelOf[T].getOrElse(stringToType(name)) match {
             case '[type mirroredLabel <: String; mirroredLabel] =>
               '{
                 new DerMirror.Singleton {
@@ -111,8 +124,8 @@ object DerMirror {
             case field :: Nil =>
               (
                 field.termRef.widen.asType,
-                ConstantType(StringConstant(field.name)).asType,
-                ConstantType(StringConstant(symbol.name)).asType,
+                labelOf(using field.typeRef.asType).getOrElse(stringToType(field.name)),
+                labelOf(using symbol.typeRef.asType).getOrElse(stringToType(symbol.name)),
               ).runtimeChecked match {
                 case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
                   '{
@@ -148,8 +161,8 @@ object DerMirror {
             case field :: Nil =>
               (
                 field.termRef.widen.asType,
-                ConstantType(StringConstant(field.name)).asType,
-                ConstantType(StringConstant(symbol.name)).asType,
+                labelOf(using field.typeRef.asType).getOrElse(stringToType(field.name)),
+                labelOf(using symbol.typeRef.asType).getOrElse(stringToType(symbol.name)),
               ).runtimeChecked match {
                 case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
                   '{
@@ -186,24 +199,28 @@ object DerMirror {
                   type MirroredElemLabels = mirroredElemLabels
                 }
               } =>
-            '{
-              new DerMirror.Product {
-                type Metadata = meta
-                type MirroredType = T
-                type MirroredLabel = mirroredLabel
-                type MirroredMonoType = T
-                type MirroredElemTypes = mirroredElemTypes
-                type MirroredElemLabels = mirroredElemLabels
 
-                def fromUnsafeArray(product: Array[Any]): MirroredMonoType =
-                  $m.fromProduct(Tuple.fromArray(product)).asInstanceOf[MirroredMonoType]
+            labelOf[T].getOrElse(Type.of[mirroredLabel]) match {
+              case '[type label <: String; label] =>
+                '{
+                  new DerMirror.Product {
+                    type Metadata = meta
+                    type MirroredType = T
+                    type MirroredLabel = label
+                    type MirroredMonoType = T
+                    type MirroredElemTypes = mirroredElemTypes
+                    type MirroredElemLabels = mirroredElemLabels
 
-              }: DerMirror.ProductOf[T] {
-                type Metadata = meta
-                type MirroredLabel = mirroredLabel
-                type MirroredElemTypes = mirroredElemTypes
-                type MirroredElemLabels = mirroredElemLabels
-              }
+                    def fromUnsafeArray(product: Array[Any]): MirroredMonoType =
+                      $m.fromProduct(Tuple.fromArray(product)).asInstanceOf[MirroredMonoType]
+
+                  }: DerMirror.ProductOf[T] {
+                    type Metadata = meta
+                    type MirroredLabel = label
+                    type MirroredElemTypes = mirroredElemTypes
+                    type MirroredElemLabels = mirroredElemLabels
+                  }
+                }
             }
           case '{
                 type mirroredLabel <: String
@@ -216,20 +233,23 @@ object DerMirror {
                   type MirroredElemTypes = mirroredElemTypes
                 }
               } =>
-            '{
-              new DerMirror.Sum {
-                type Metadata = meta
-                type MirroredType = T
-                type MirroredLabel = mirroredLabel
-                type MirroredMonoType = T
-                type MirroredElemTypes = mirroredElemTypes
-                type MirroredElemLabels = mirroredElemLabels
-              }: DerMirror.SumOf[T] {
-                type Metadata = meta
-                type MirroredLabel = mirroredLabel
-                type MirroredElemTypes = mirroredElemTypes
-                type MirroredElemLabels = mirroredElemLabels
-              }
+            labelOf[T].getOrElse(Type.of[mirroredLabel]) match {
+              case '[type label <: String; label] =>
+                '{
+                  new DerMirror.Sum {
+                    type Metadata = meta
+                    type MirroredType = T
+                    type MirroredLabel = label
+                    type MirroredMonoType = T
+                    type MirroredElemTypes = mirroredElemTypes
+                    type MirroredElemLabels = mirroredElemLabels
+                  }: DerMirror.SumOf[T] {
+                    type Metadata = meta
+                    type MirroredLabel = label
+                    type MirroredElemTypes = mirroredElemTypes
+                    type MirroredElemLabels = mirroredElemLabels
+                  }
+                }
             }
         } getOrElse {
           report.errorAndAbort(s"Unsupported Mirror type for ${tpe.show}")
