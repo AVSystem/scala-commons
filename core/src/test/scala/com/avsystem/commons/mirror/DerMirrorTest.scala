@@ -91,7 +91,7 @@ class DerMirrorTest extends AnyFunSuite {
   }
 
   test("getAnnotation and hasAnnotation") {
-    val mirror= DerMirror.derived[AnnotatedCaseClass]
+    val mirror = DerMirror.derived[AnnotatedCaseClass]
     summon[mirror.Metadata =:= (Meta @Annotation2 @Annotation1)]
 
     assert(mirror.hasAnnotation[Annotation1])
@@ -150,15 +150,12 @@ object DerMirrorTest {
   @ParamAnnotation("foo")
   case class ParamAnnotated(id: Int)
   case class Box[T](a: T)
-  class Annotation1 extends MetaAnnotation with RefiningAnnotation
-  class Annotation2 extends MetaAnnotation with RefiningAnnotation
-  class Annotation3 extends MetaAnnotation with RefiningAnnotation
-  @Annotation1
-  @Annotation2
+  class Annotation1 extends MetaAnnotation
+  class Annotation2 extends MetaAnnotation
+  class Annotation3 extends MetaAnnotation
+  @Annotation1 @Annotation2
   case class AnnotatedCaseClass(id: Long)
-  @Annotation1
-  @Annotation2
-  @Annotation3
+  @Annotation1 @Annotation2 @Annotation3
   case class ManyAnnotated(id: Long)
   enum Recursive {
     case End

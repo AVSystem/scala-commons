@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.mirror.{DerMirror, transparent}
+import com.avsystem.commons.mirror.{DerMirror, name, transparent}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
 import com.avsystem.commons.serialization.GenCodec.given
 
@@ -24,7 +24,7 @@ final class DefaultValue[T](dv: => T) {
  * Information about real parameter flags and modifiers as defined in Scala code.
  */
 @transparent
-final case class ParamFlags(rawFlags: Int) extends AnyVal {
+final case class ParamFlags(@name("dupa") rawFlags: Int) extends AnyVal {
 
   import ParamFlags.*
 

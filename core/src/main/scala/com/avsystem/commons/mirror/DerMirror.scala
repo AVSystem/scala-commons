@@ -14,6 +14,12 @@ sealed trait DerMirror {
   type MirroredElemLabels <: Tuple
 }
 
+sealed trait DerElem {
+  type Metadata <: Meta
+  type MirroredType
+  type MirroredLabel <: String
+}
+
 private trait Meta
 
 open class MetaAnnotation extends RefiningAnnotation

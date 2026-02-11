@@ -239,6 +239,8 @@ object CodecTestData {
     given GenCodec[TransparentWrapperWithDependency] = GenCodec.derived
   }
 //  object StringId extends TransparentWrapperCompanion[String, StringId]
+  
+  DerMirror.derived[SomeCaseClass]
   object SomeCaseClass extends HasGenCodec[SomeCaseClass]
   object Stuff {
     given GenCodec[Stuff[?]] = GenCodec.create(
