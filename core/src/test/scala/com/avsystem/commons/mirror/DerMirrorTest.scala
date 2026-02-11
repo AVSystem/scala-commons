@@ -120,6 +120,11 @@ class DerMirrorTest extends AnyFunSuite {
     summon[mirror.Metadata =:= (Meta @Annotation3 @Annotation2 @Annotation1)]
   }
 
+//  test("DerMirror for enum with @name") {
+//    val mirror = DerMirror.derived[NamedEnum]
+//    summon[mirror.MirroredElemLabels =:= ("C1" *: "Case2" *: EmptyTuple)]
+//  }
+
   test("DerMirror for recursive ADT") {
     val mirror = DerMirror.derived[Recursive]
     summon[mirror.MirroredLabel =:= "Recursive"]
@@ -150,6 +155,10 @@ object DerMirrorTest {
   @ParamAnnotation("foo")
   case class ParamAnnotated(id: Int)
   case class Box[T](a: T)
+  enum NamedEnum {
+    @name("C1") case Case1
+    case Case2
+  }
   class Annotation1 extends MetaAnnotation
   class Annotation2 extends MetaAnnotation
   class Annotation3 extends MetaAnnotation

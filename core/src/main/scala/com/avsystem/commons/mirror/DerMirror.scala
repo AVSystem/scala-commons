@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mirror
 
-import scala.annotation.{RefiningAnnotation, implicitNotFound, tailrec}
+import scala.annotation.{implicitNotFound, tailrec, RefiningAnnotation}
 import scala.deriving.Mirror
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -106,29 +106,38 @@ object DerMirror {
 
   private def derivedImpl[T: Type](using quotes: Quotes): Expr[DerMirror.Of[T]] = {
     import quotes.reflect.*
+
     val tpe = TypeRepr.of[T]
     val symbol = tpe.typeSymbol
 
-    val annotations = symbol.annotations.filter(_.tpe <:< TypeRepr.of[MetaAnnotation])
+    def metaTypeOf(symbol: Symbol): Type[? <: Meta] = {
+      val annotations = symbol.annotations.filter(_.tpe <:< TypeRepr.of[MetaAnnotation])
+      annotations
+        .foldRight(TypeRepr.of[Meta])((annot, tpe) => AnnotatedType(tpe, annot))
+        .asType
+        .asInstanceOf[Type[? <: Meta]]
+    }
 
-    val meta = annotations
-      .foldRight(TypeRepr.of[Meta])((annot, tpe) => AnnotatedType(tpe, annot))
-      .asType
+    def singleCaseFieldOf(symbol: Symbol): Symbol = symbol.caseFields match {
+      case field :: Nil => field
+      case _ => report.errorAndAbort(s"Expected a single case field for ${symbol.name}")
+    }
 
-    meta match {
+    def newTFrom(args: List[Term]): Expr[T] =
+      New(TypeTree.of[T])
+        .select(symbol.primaryConstructor)
+        .appliedToArgs(args)
+        .asExprOf[T]
+
+    metaTypeOf(symbol) match {
       case '[type meta <: Meta; meta] =>
-        Option.when(tpe.isSingleton || tpe <:< TypeRepr.of[Unit]) {
+        def deriveSingleton = Option.when(tpe.isSingleton || tpe <:< TypeRepr.of[Unit]) {
           val valueImpl = tpe match {
-            case ConstantType(c: Constant) =>
-              Literal(c)
-            case tp: TypeRef if tp <:< TypeRepr.of[Unit] =>
-              Literal(UnitConstant())
-            case n: TermRef =>
-              Ref(n.termSymbol)
-            case ts: ThisType =>
-              This(ts.classSymbol.get)
-            case tp =>
-              report.errorAndAbort(s"Unsupported singleton type: ${tp.show}")
+            case ConstantType(c: Constant) => Literal(c)
+            case tp: TypeRef if tp <:< TypeRepr.of[Unit] => Literal(UnitConstant())
+            case n: TermRef => Ref(n.termSymbol)
+            case ts: ThisType => This(ts.classSymbol.get)
+            case tp => report.errorAndAbort(s"Unsupported singleton type: ${tp.show}")
           }
           val name =
             if (tpe <:< TypeRepr.of[Unit]) "Unit"
@@ -136,7 +145,6 @@ object DerMirror {
               val comp = symbol.companionClass
               if (comp.exists) comp.name else symbol.name.stripSuffix("$")
             }
-
           labelOf[T].getOrElse(stringToType(name)) match {
             case '[type mirroredLabel <: String; mirroredLabel] =>
               '{
@@ -151,85 +159,78 @@ object DerMirror {
                 }
               }
           }
-        } orElse Option.when(tpe.typeSymbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol)) {
-          tpe.typeSymbol.caseFields.runtimeChecked match {
-            case field :: Nil =>
-              (
-                field.termRef.widen.asType,
-                labelOf(using field.typeRef.asType).getOrElse(stringToType(field.name)),
-                labelOf(using symbol.typeRef.asType).getOrElse(stringToType(symbol.name)),
-              ).runtimeChecked match {
-                case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
-                  '{
-                    new TransparentWorkaround[T, fieldType] {
-                      type Metadata = meta
-                      type MirroredLabel = label
-                      type MirroredElemLabels = elemLabel *: EmptyTuple
+        }
 
-                      def unwrap(value: T): fieldType = ${
-                        '{ value }.asTerm.select(field).asExprOf[fieldType]
-                      }
+        def deriveTransparent = Option.when(symbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol)) {
+          val field = singleCaseFieldOf(symbol)
+          (
+            field.termRef.widen.asType,
+            labelOf(using field.typeRef.asType).getOrElse(stringToType(field.name)),
+            labelOf(using symbol.typeRef.asType).getOrElse(stringToType(symbol.name)),
+          ).runtimeChecked match {
+            case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
+              '{
+                new TransparentWorkaround[T, fieldType] {
+                  type Metadata = meta
+                  type MirroredLabel = label
+                  type MirroredElemLabels = elemLabel *: EmptyTuple
 
-                      def wrap(v: fieldType): T = ${
-                        New(TypeTree.of[T])
-                          .select(symbol.primaryConstructor)
-                          .appliedTo('{ v }.asTerm)
-                          .asExprOf[T]
-                      }
-                    }: DerMirror.TransparentOf[T] {
-                      type Metadata = meta
-                      type MirroredLabel = label
-                      type MirrorElemType = fieldType
-                      type MirroredElemTypes = fieldType *: EmptyTuple
-                      type MirroredElemLabels = elemLabel *: EmptyTuple
-                    }
+                  def unwrap(value: T): fieldType = ${
+                    '{ value }.asTerm.select(field).asExprOf[fieldType]
                   }
+
+                  def wrap(v: fieldType): T = ${ newTFrom(List('{ v }.asTerm)) }
+                }: DerMirror.TransparentOf[T] {
+                  type Metadata = meta
+                  type MirroredLabel = label
+                  type MirrorElemType = fieldType
+                  type MirroredElemTypes = fieldType *: EmptyTuple
+                  type MirroredElemLabels = elemLabel *: EmptyTuple
+                }
               }
           }
-        } orElse Option.when(tpe <:< TypeRepr.of[AnyVal]) {
-          tpe.typeSymbol.caseFields.runtimeChecked match {
-            case field :: Nil =>
-              (
-                field.termRef.widen.asType,
-                labelOf(using field.typeRef.asType).getOrElse(stringToType(field.name)),
-                labelOf(using symbol.typeRef.asType).getOrElse(stringToType(symbol.name)),
-              ).runtimeChecked match {
-                case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
-                  '{
-                    new DerMirror.Product {
-                      type Metadata = meta
-                      type MirroredType = T
-                      type MirroredLabel = label
-                      type MirroredMonoType = T
-                      type MirroredElemTypes = EmptyTuple
-                      type MirroredElemLabels = EmptyTuple
+        }
 
-                      def fromUnsafeArray(product: Array[Any]): T = ${
-                        New(TypeTree.of[T])
-                          .select(symbol.primaryConstructor)
-                          .appliedTo('{ product(0).asInstanceOf[fieldType] }.asTerm)
-                          .asExprOf[T]
-                      }
-                    }: DerMirror.ProductOf[T] {
-                      type Metadata = meta
-                      type MirroredLabel = label
-                    }
+        def deriveAnyValProduct = Option.when(tpe <:< TypeRepr.of[AnyVal]) {
+          val field = singleCaseFieldOf(symbol)
+          (
+            field.termRef.widen.asType,
+            labelOf(using field.typeRef.asType).getOrElse(stringToType(field.name)),
+            labelOf(using symbol.typeRef.asType).getOrElse(stringToType(symbol.name)),
+          ).runtimeChecked match {
+            case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
+              '{
+                new DerMirror.Product {
+                  type Metadata = meta
+                  type MirroredType = T
+                  type MirroredLabel = label
+                  type MirroredMonoType = T
+                  type MirroredElemTypes = EmptyTuple
+                  type MirroredElemLabels = EmptyTuple
+
+                  def fromUnsafeArray(product: Array[Any]): T = ${
+                    newTFrom(List('{ product(0).asInstanceOf[fieldType] }.asTerm))
                   }
+                }: DerMirror.ProductOf[T] {
+                  type Metadata = meta
+                  type MirroredLabel = label
+                }
               }
           }
-        } orElse Expr.summon[Mirror.Of[T]].map {
+        }
+
+        def deriveProduct(m: Expr[Mirror.ProductOf[T]]) = m match {
           case '{
                 type mirroredLabel <: String
                 type mirroredElemTypes <: Tuple
                 type mirroredElemLabels <: Tuple
 
-                $m: Mirror.Product {
+                $m: Mirror.ProductOf[T] {
                   type MirroredLabel = mirroredLabel
                   type MirroredElemTypes = mirroredElemTypes
                   type MirroredElemLabels = mirroredElemLabels
                 }
               } =>
-
             (labelOf[T].getOrElse(Type.of[mirroredLabel]), labelsOf[mirroredElemTypes, mirroredElemLabels]) match {
               case ('[type label <: String; label], '[type labels <: Tuple; labels]) =>
                 '{
@@ -253,18 +254,21 @@ object DerMirror {
                 }
               case (_, _) => wontHappen
             }
+        }
+
+        def deriveSum(m: Expr[Mirror.SumOf[T]]) = m match {
           case '{
                 type mirroredLabel <: String
                 type mirroredElemLabels <: Tuple
                 type mirroredElemTypes <: Tuple
 
-                $m: Mirror.SumOf[t] {
+                $m: Mirror.SumOf[T] {
                   type MirroredLabel = mirroredLabel
                   type MirroredElemLabels = mirroredElemLabels
                   type MirroredElemTypes = mirroredElemTypes
                 }
               } =>
-            (labelOf[T].getOrElse(Type.of[mirroredLabel]), labelsOf[mirroredElemLabels, mirroredElemLabels]) match {
+            (labelOf[T].getOrElse(Type.of[mirroredLabel]), labelsOf[mirroredElemTypes, mirroredElemLabels]) match {
               case ('[type label <: String; label], '[type labels <: Tuple; labels]) =>
                 '{
                   new DerMirror.Sum {
@@ -283,6 +287,11 @@ object DerMirror {
                 }
               case (_, _) => wontHappen
             }
+        }
+
+        deriveSingleton orElse deriveTransparent orElse deriveAnyValProduct orElse Expr.summon[Mirror.Of[T]].map {
+          case '{ $m: Mirror.ProductOf[T] } => deriveProduct(m)
+          case '{ $m: Mirror.SumOf[T] } => deriveSum(m)
         } getOrElse {
           report.errorAndAbort(s"Unsupported Mirror type for ${tpe.show}")
         }
