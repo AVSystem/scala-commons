@@ -74,16 +74,16 @@ jobs:
             exit 1
           fi
           
-          # Check for zero or near-zero scala2_mean
-          is_zero=$(echo "$scala2_mean < 0.001" | bc -l)
+          # Check for zero or near-zero scala2_mean using awk
+          is_zero=$(awk -v val="$scala2_mean" 'BEGIN { print (val < 0.001) ? 1 : 0 }')
           if [ "$is_zero" -eq 1 ]; then
             echo "Error: Invalid scala2_mean value"
             exit 1
           fi
           
-          # Calculate difference and percentage
-          diff=$(echo "$scala3_mean - $scala2_mean" | bc -l)
-          perc=$(echo "scale=2; ($diff / $scala2_mean) * 100" | bc -l)
+          # Calculate difference and percentage using awk
+          diff=$(awk -v s3="$scala3_mean" -v s2="$scala2_mean" 'BEGIN { printf "%.3f", s3 - s2 }')
+          perc=$(awk -v s3="$scala3_mean" -v s2="$scala2_mean" 'BEGIN { printf "%.2f", ((s3 - s2) / s2) * 100 }')
           echo "Difference: ${diff}s (${perc}%)"
           
           # Determine status using awk for float comparison
