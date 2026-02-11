@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mirror
 
-import scala.annotation.{RefiningAnnotation, implicitNotFound, tailrec}
+import scala.annotation.{RefiningAnnotation, implicitNotFound}
 import scala.deriving.Mirror
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -36,7 +36,7 @@ object DerMirror {
     type MirroredType = T; type MirroredMonoType = T
   }
 
-  extension [T](m: DerMirror.Of[T]) {
+  extension (m: DerMirror) {
     inline def hasAnnotation[A <: MetaAnnotation]: Boolean = inline getAnnotation[A] match {
       case _: None.type => false
       case _: Some[?] => true
@@ -44,21 +44,16 @@ object DerMirror {
     }
     inline def getAnnotation[A <: MetaAnnotation]: Option[A] = ${ getAnnotationImpl[A, m.Metadata] }
   }
+
   transparent inline given derived[T]: Of[T] = ${ derivedImpl[T] }
   private def getAnnotationImpl[A <: MetaAnnotation: Type, M <: Meta: Type](using quotes: Quotes): Expr[Option[A]] = {
     import quotes.reflect.*
-    val metaTpe = TypeRepr.of[M]
-    val annotpe = TypeRepr.of[A]
 
-    @tailrec def loop(tpe: TypeRepr): Option[Expr[A]] = tpe match {
-      case AnnotatedType(_, annot) if annot.tpe <:< annotpe => Some(annot.asExprOf[A])
-      case AnnotatedType(parent, _) => loop(parent)
-      case _ => None
+    TypeRepr.of[M].typeSymbol.getAnnotation(TypeRepr.of[A].typeSymbol) match {
+      case Some(annot) => '{ Some(${ annot.asExprOf[A] }) }
+      case _ => Expr(None)
     }
-
-    loop(metaTpe).fold(Expr(None))(a => '{ Some(${ a }) })
   }
-
   private def stringToType(str: String)(using quotes: Quotes): Type[? <: String] = {
     import quotes.reflect.*
     ConstantType(StringConstant(str)).asType.asInstanceOf[Type[? <: String]]
@@ -289,7 +284,7 @@ object DerMirror {
     def unwrap(value: MirroredType): MirrorElemType
     def wrap(value: MirrorElemType): MirroredType
   }
-  
+
   // workaround for https://github.com/scala/scala3/issues/25245
   private sealed trait TransparentWorkaround[T, U] extends DerMirror.Transparent {
     final type MirroredType = T
