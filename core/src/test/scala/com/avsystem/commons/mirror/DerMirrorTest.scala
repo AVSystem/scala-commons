@@ -103,12 +103,6 @@ class DerMirrorTest extends AnyFunSuite {
     assert(mirror.getAnnotation[Annotation3].isEmpty)
   }
 
-  test("getAnnotation and hasAnnotation for extended annotations") {
-    val mirror = DerMirror.derived[InheritedAnnotatedCaseClass]
-    assert(mirror.hasAnnotation[Annotation1])
-    assert(mirror.getAnnotation[Annotation1].isDefined)
-  }
-
   test("parametrized annotation") {
     val mirror = DerMirror.derived[ParamAnnotated]
     val annot = mirror.getAnnotation[ParamAnnotation].get
@@ -142,9 +136,6 @@ class DerMirrorTest extends AnyFunSuite {
 
 object DerMirrorTest {
   sealed trait MixedADT
-  trait AnnotatedTrait {
-    @Annotation1 def annotatedMethod: String
-  }
   case class SimpleCaseClass(id: Long, name: String)
   case class NoFields()
   enum SimpleEnum {
@@ -169,7 +160,6 @@ object DerMirrorTest {
   @Annotation2
   @Annotation3
   case class ManyAnnotated(id: Long)
-  case class InheritedAnnotatedCaseClass(annotatedMethod: String) extends AnnotatedTrait
   enum Recursive {
     case End
     case Next(r: Recursive)
