@@ -8,13 +8,13 @@ on:
       runs:
         description: 'Number of benchmark runs'
         required: false
-        default: '5'
-        type: string
+        default: 5
+        type: number
       warmup:
         description: 'Number of warmup runs'
         required: false
-        default: '2'
-        type: string
+        default: 2
+        type: number
 
 jobs:
   benchmark:
@@ -49,9 +49,9 @@ jobs:
         run: |
           set -e
           
-          # Use workflow inputs if available, otherwise use defaults
-          RUNS="${{ inputs.runs || '5' }}"
-          WARMUP="${{ inputs.warmup || '2' }}"
+          # Use workflow inputs for manual runs, defaults for PR runs
+          RUNS="${{ github.event.inputs.runs || 5 }}"
+          WARMUP="${{ github.event.inputs.warmup || 2 }}"
           
           echo "Running benchmarks with --runs $RUNS --warmup $WARMUP"
           
