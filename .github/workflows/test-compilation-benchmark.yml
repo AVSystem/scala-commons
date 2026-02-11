@@ -3,6 +3,7 @@ name: Test Compilation Benchmark
 on:
   pull_request:
     branches: ['**']
+  workflow_dispatch: {}
 
 jobs:
   benchmark:
@@ -49,7 +50,36 @@ jobs:
           echo "scala2_mean=$(jq '.results[0].mean' scala2.json)" >> $GITHUB_OUTPUT
           echo "scala3_mean=$(jq '.results[0].mean' scala3.json)" >> $GITHUB_OUTPUT
 
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: compilation-benchmark-results
+          path: |
+            scala2.json
+            scala3.json
+
+      - name: Print Results Summary
+        run: |
+          echo "=== Compilation Benchmark Results ==="
+          echo ""
+          echo "Scala 2.13: ${{ steps.extract.outputs.scala2_mean }}s"
+          echo "Scala 3:    ${{ steps.extract.outputs.scala3_mean }}s"
+          echo ""
+          scala2_mean=${{ steps.extract.outputs.scala2_mean }}
+          scala3_mean=${{ steps.extract.outputs.scala3_mean }}
+          diff=$(echo "$scala3_mean - $scala2_mean" | bc -l)
+          perc=$(echo "scale=2; ($diff / $scala2_mean) * 100" | bc -l)
+          echo "Difference: ${diff}s (${perc}%)"
+          if (( $(echo "$perc > 1" | bc -l) )); then
+            echo "Status: Scala 3 is slower ⚠️"
+          elif (( $(echo "$perc < -1" | bc -l) )); then
+            echo "Status: Scala 3 is faster ✅"
+          else
+            echo "Status: Performance is similar ℹ️"
+          fi
+
       - name: Upsert PR Comment
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
           SCALA_2_MEAN: ${{ steps.extract.outputs.scala2_mean }}
