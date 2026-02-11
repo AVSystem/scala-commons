@@ -3,7 +3,7 @@ package serialization
 
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
-import com.avsystem.commons.mirror.{DerMirror, name, transparent}
+import com.avsystem.commons.mirror.{name, transparent, DerMirror}
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
 import com.avsystem.commons.serialization.ApplyUnapplyCodec.materialize
 import com.avsystem.commons.serialization.GenObjectCodec.materialize
@@ -199,7 +199,8 @@ object CodecTestData {
     @generated var varUpper: String = value.toUpperCase
     def abstractUpper: String = value.toUpperCase
   }
-  object ValueClass extends HasGenCodec[ValueClass]
+
+//  object ValueClass extends HasGenCodec[ValueClass]
   object SealedBase {
     given GenCodec[SealedBase] = GenCodec.derived[SealedBase]
     sealed trait InnerBase extends SealedBase
@@ -332,7 +333,6 @@ object CodecTestData {
 //  object ThingId extends StringWrapperCompanion[ThingId]
   object Generator extends HasGenCodec[Generator]
 
-
-   type NamedTup = (name: String, value: Int)
-   object NamedTup extends HasGenCodec[NamedTup]
+  type NamedTup = (name: String, value: Int)
+  object NamedTup extends HasGenCodec[NamedTup]
 }
