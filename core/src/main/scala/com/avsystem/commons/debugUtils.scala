@@ -91,7 +91,7 @@ private[commons] def typeReprInfo(
 ): String =
   s"""
      |type: ${tpe.show}
-     |raw: ${tpe}
+     |raw: $tpe
      |widen: ${tpe.widen.show}
      |widenTermRefByName: ${tpe.widenTermRefByName.show}
      |widenByName: ${tpe.widenByName.show}
@@ -153,12 +153,14 @@ private def showRawAstImpl(body: Expr[Any])(using quotes: Quotes): Expr[Nothing]
   Printer.TreeStructure.show(body.asTerm.underlyingArgument).dbg
 }
 
-extension (s: String) def dbg(using quotes: Quotes): Nothing = {
+extension (s: String) private[commons] def dbg(using quotes: Quotes): Nothing = {
   import quotes.reflect.*
   report.errorAndAbort(s)
 }
 
-inline def raiseUnsupportedTypeFor[For <: AnyKind, Provided] = ${ raiseUnsupportedTypeForImpl[For, Provided] }
+inline private[commons] def raiseUnsupportedTypeFor[For <: AnyKind, Provided] = ${
+  raiseUnsupportedTypeForImpl[For, Provided]
+}
 private def raiseUnsupportedTypeForImpl[For <: AnyKind: Type, Provided: Type](using quotes: Quotes): Expr[Nothing] = {
   import quotes.reflect.*
   given Printer[TypeRepr] = Printer.TypeReprShortCode
@@ -166,7 +168,9 @@ private def raiseUnsupportedTypeForImpl[For <: AnyKind: Type, Provided: Type](us
   '{ ??? }
 }
 
-inline def raiseCannotDerivedTypeFor[For <: AnyKind, Provided] = ${ raiseCannotDerivedTypeForImpl[For, Provided] }
+inline private[commons] def raiseCannotDerivedTypeFor[For <: AnyKind, Provided] = ${
+  raiseCannotDerivedTypeForImpl[For, Provided]
+}
 private def raiseCannotDerivedTypeForImpl[For <: AnyKind: Type, Provided: Type](using quotes: Quotes): Expr[Nothing] = {
   import quotes.reflect.*
   given Printer[TypeRepr] = Printer.TypeReprShortCode
@@ -178,6 +182,9 @@ inline private[commons] def showTypeRepr[T] = ${ showTypeReprImpl[T] }
 
 private def showTypeReprImpl[T: Type](using quotes: Quotes): Expr[Nothing] = {
   import quotes.reflect.*
-  
+
   typeReprInfo(TypeRepr.of[T]).dbg
 }
+
+private[commons] def wontHappen(using quotes: Quotes) =
+  quotes.reflect.report.errorAndAbort("This code should never be executed")

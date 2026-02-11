@@ -72,6 +72,20 @@ object DerMirror {
     }
   }
 
+  private def labelsOf[Types <: Tuple: Type, Fallback <: Tuple: Type](using quotes: Quotes): Type[? <: Tuple] = {
+    def loop[T <: Tuple: Type, F <: Tuple: Type]: Type[? <: Tuple] = (Type.of[T], Type.of[F]) match {
+      case ('[h *: t], '[fh *: ft]) =>
+        (labelOf[h].getOrElse(Type.of[fh]), loop[t, ft]) match {
+          case ('[type head <: String; head], '[type tail <: Tuple; tail]) => Type.of[head *: tail]
+          case (_, _) => wontHappen
+        }
+      case ('[EmptyTuple], '[EmptyTuple]) => Type.of[EmptyTuple]
+      case _ => wontHappen
+    }
+
+    loop[Types, Fallback]
+  }
+
   private def derivedImpl[T: Type](using quotes: Quotes): Expr[Of[T]] = {
     import quotes.reflect.*
     val tpe = TypeRepr.of[T]
@@ -200,8 +214,8 @@ object DerMirror {
                 }
               } =>
 
-            labelOf[T].getOrElse(Type.of[mirroredLabel]) match {
-              case '[type label <: String; label] =>
+            (labelOf[T].getOrElse(Type.of[mirroredLabel]), labelsOf[mirroredElemTypes, mirroredElemLabels]) match {
+              case ('[type label <: String; label], '[type labels <: Tuple; labels]) =>
                 '{
                   new DerMirror.Product {
                     type Metadata = meta
@@ -209,7 +223,7 @@ object DerMirror {
                     type MirroredLabel = label
                     type MirroredMonoType = T
                     type MirroredElemTypes = mirroredElemTypes
-                    type MirroredElemLabels = mirroredElemLabels
+                    type MirroredElemLabels = labels
 
                     def fromUnsafeArray(product: Array[Any]): MirroredMonoType =
                       $m.fromProduct(Tuple.fromArray(product)).asInstanceOf[MirroredMonoType]
@@ -218,9 +232,10 @@ object DerMirror {
                     type Metadata = meta
                     type MirroredLabel = label
                     type MirroredElemTypes = mirroredElemTypes
-                    type MirroredElemLabels = mirroredElemLabels
+                    type MirroredElemLabels = labels
                   }
                 }
+              case (_, _) => wontHappen
             }
           case '{
                 type mirroredLabel <: String
@@ -233,8 +248,8 @@ object DerMirror {
                   type MirroredElemTypes = mirroredElemTypes
                 }
               } =>
-            labelOf[T].getOrElse(Type.of[mirroredLabel]) match {
-              case '[type label <: String; label] =>
+            (labelOf[T].getOrElse(Type.of[mirroredLabel]), labelsOf[mirroredElemLabels, mirroredElemLabels]) match {
+              case ('[type label <: String; label], '[type labels <: Tuple; labels]) =>
                 '{
                   new DerMirror.Sum {
                     type Metadata = meta
@@ -242,14 +257,15 @@ object DerMirror {
                     type MirroredLabel = label
                     type MirroredMonoType = T
                     type MirroredElemTypes = mirroredElemTypes
-                    type MirroredElemLabels = mirroredElemLabels
+                    type MirroredElemLabels = labels
                   }: DerMirror.SumOf[T] {
                     type Metadata = meta
                     type MirroredLabel = label
                     type MirroredElemTypes = mirroredElemTypes
-                    type MirroredElemLabels = mirroredElemLabels
+                    type MirroredElemLabels = labels
                   }
                 }
+              case (_, _) => wontHappen
             }
         } getOrElse {
           report.errorAndAbort(s"Unsupported Mirror type for ${tpe.show}")
