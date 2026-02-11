@@ -67,16 +67,43 @@ jobs:
           echo ""
           scala2_mean=${{ steps.extract.outputs.scala2_mean }}
           scala3_mean=${{ steps.extract.outputs.scala3_mean }}
+          
+          # Validate inputs
+          if [ -z "$scala2_mean" ] || [ -z "$scala3_mean" ]; then
+            echo "Error: Missing benchmark results"
+            exit 1
+          fi
+          
+          # Check for zero or near-zero scala2_mean
+          is_zero=$(echo "$scala2_mean < 0.001" | bc -l)
+          if [ "$is_zero" -eq 1 ]; then
+            echo "Error: Invalid scala2_mean value"
+            exit 1
+          fi
+          
+          # Calculate difference and percentage
           diff=$(echo "$scala3_mean - $scala2_mean" | bc -l)
           perc=$(echo "scale=2; ($diff / $scala2_mean) * 100" | bc -l)
           echo "Difference: ${diff}s (${perc}%)"
-          if (( $(echo "$perc > 1" | bc -l) )); then
-            echo "Status: Scala 3 is slower ⚠️"
-          elif (( $(echo "$perc < -1" | bc -l) )); then
-            echo "Status: Scala 3 is faster ✅"
-          else
-            echo "Status: Performance is similar ℹ️"
-          fi
+          
+          # Determine status using awk for float comparison
+          status=$(awk -v p="$perc" 'BEGIN {
+            if (p > 1) print "slower"
+            else if (p < -1) print "faster"
+            else print "similar"
+          }')
+          
+          case "$status" in
+            slower)
+              echo "Status: Scala 3 is slower ⚠️"
+              ;;
+            faster)
+              echo "Status: Scala 3 is faster ✅"
+              ;;
+            *)
+              echo "Status: Performance is similar ℹ️"
+              ;;
+          esac
 
       - name: Upsert PR Comment
         if: github.event_name == 'pull_request'
