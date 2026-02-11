@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mirror
 
-import scala.annotation.{RefiningAnnotation, implicitNotFound}
+import scala.annotation.{RefiningAnnotation, implicitNotFound, tailrec}
 import scala.deriving.Mirror
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -37,23 +37,40 @@ object DerMirror {
   }
 
   extension (m: DerMirror) {
-    inline def hasAnnotation[A <: MetaAnnotation]: Boolean = inline getAnnotation[A] match {
-      case _: None.type => false
-      case _: Some[?] => true
-      case other => other.isDefined
-    }
-    inline def getAnnotation[A <: MetaAnnotation]: Option[A] = ${ getAnnotationImpl[A, m.Metadata] }
+    transparent inline def hasAnnotation[A <: MetaAnnotation]: Boolean = ${ hasAnnotationImpl[A, m.type] }
+    inline def getAnnotation[A <: MetaAnnotation]: Option[A] = ${ getAnnotationImpl[A, m.type] }
   }
-
   transparent inline given derived[T]: Of[T] = ${ derivedImpl[T] }
-  private def getAnnotationImpl[A <: MetaAnnotation: Type, M <: Meta: Type](using quotes: Quotes): Expr[Option[A]] = {
+  private def metaOf[DM <: DerMirror: Type](using quotes: Quotes): Type[? <: Meta] =
+    Type.of[DM] match {
+      // it cannot be extracted via type Metadata = meta
+      case '[type meta <: Meta; DerMirror { type Metadata <: meta }] =>
+        Type.of[meta]
+    }
+  private def getAnnotationImpl[A <: MetaAnnotation: Type, DM <: DerMirror: Type](using quotes: Quotes)
+    : Expr[Option[A]] = {
     import quotes.reflect.*
 
-    TypeRepr.of[M].typeSymbol.getAnnotation(TypeRepr.of[A].typeSymbol) match {
-      case Some(annot) => '{ Some(${ annot.asExprOf[A] }) }
-      case _ => Expr(None)
+    @tailrec def loop(tpe: TypeRepr): Option[Expr[A]] = tpe match {
+      case AnnotatedType(underlying, annot) if annot.tpe <:< TypeRepr.of[A] => Some(annot.asExprOf[A])
+      case AnnotatedType(underlying, _) => loop(underlying)
+      case _ => None
     }
+
+    Expr.ofOption(loop(TypeRepr.of(using metaOf[DM])))
   }
+  private def hasAnnotationImpl[A <: MetaAnnotation: Type, DM <: DerMirror: Type](using quotes: Quotes): Expr[Boolean] = {
+    import quotes.reflect.*
+
+    @tailrec def loop(tpe: TypeRepr): Boolean = tpe match {
+      case AnnotatedType(underlying, annot) if annot.tpe <:< TypeRepr.of[A] => true
+      case AnnotatedType(underlying, _) => loop(underlying)
+      case _ => false
+    }
+
+    Expr(loop(TypeRepr.of(using metaOf[DM])))
+  }
+
   private def stringToType(str: String)(using quotes: Quotes): Type[? <: String] = {
     import quotes.reflect.*
     ConstantType(StringConstant(str)).asType.asInstanceOf[Type[? <: String]]

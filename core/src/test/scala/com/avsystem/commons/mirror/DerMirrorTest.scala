@@ -1,8 +1,9 @@
 package com.avsystem.commons
 package mirror
 
-import com.avsystem.commons.mirror.DerMirror.{Transparent, getAnnot}
 import org.scalatest.funsuite.AnyFunSuite
+
+import scala.annotation.RefiningAnnotation
 
 class DerMirrorTest extends AnyFunSuite {
   import DerMirrorTest.*
@@ -90,7 +91,7 @@ class DerMirrorTest extends AnyFunSuite {
   }
 
   test("getAnnotation and hasAnnotation") {
-    val mirror = DerMirror.derived[AnnotatedCaseClass]
+    val mirror= DerMirror.derived[AnnotatedCaseClass]
     summon[mirror.Metadata =:= (Meta @Annotation2 @Annotation1)]
 
     assert(mirror.hasAnnotation[Annotation1])
@@ -158,9 +159,9 @@ object DerMirrorTest {
   @ParamAnnotation("foo")
   case class ParamAnnotated(id: Int)
   case class Box[T](a: T)
-  class Annotation1 extends MetaAnnotation
-  class Annotation2 extends MetaAnnotation
-  class Annotation3 extends MetaAnnotation
+  class Annotation1 extends MetaAnnotation with RefiningAnnotation
+  class Annotation2 extends MetaAnnotation with RefiningAnnotation
+  class Annotation3 extends MetaAnnotation with RefiningAnnotation
   @Annotation1
   @Annotation2
   case class AnnotatedCaseClass(id: Long)
@@ -168,7 +169,7 @@ object DerMirrorTest {
   @Annotation2
   @Annotation3
   case class ManyAnnotated(id: Long)
-  case class InheritedAnnotatedCaseClass(annotatedMethod: String)
+  case class InheritedAnnotatedCaseClass(annotatedMethod: String) extends AnnotatedTrait
   enum Recursive {
     case End
     case Next(r: Recursive)
