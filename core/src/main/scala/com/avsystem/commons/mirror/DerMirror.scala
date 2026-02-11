@@ -151,8 +151,9 @@ object DerMirror {
                       type MirroredElemTypes = fieldType *: EmptyTuple
                       type MirroredElemLabels = elemLabel *: EmptyTuple
 
-                      def unwrap(value: T): fieldType =
-                        ${ '{ value.castTo[T] }.asTerm.select(field).asExprOf[fieldType] }
+                      def unwrap(value: T): fieldType = ${
+                        '{ value.castTo[T] }.asTerm.select(field).asExprOf[fieldType]
+                      }
 
                       def wrap(v: fieldType): T = ${
                         New(TypeTree.of[T])
@@ -160,6 +161,7 @@ object DerMirror {
                           .appliedTo('{ v.castTo[fieldType] }.asTerm)
                           .asExprOf[T]
                       }
+
                     }: DerMirror.TransparentOf[T] {
                       type Metadata = meta
                       type MirroredLabel = label
@@ -191,7 +193,7 @@ object DerMirror {
                       def fromUnsafeArray(product: Array[Any]): T = ${
                         New(TypeTree.of[T])
                           .select(symbol.primaryConstructor)
-                          .appliedTo('{ product(0).asInstanceOf[fieldType] }.asTerm)
+                          .appliedTo('{ product(0).castTo[fieldType] }.asTerm)
                           .asExprOf[T]
                       }
                     }: DerMirror.ProductOf[T] {

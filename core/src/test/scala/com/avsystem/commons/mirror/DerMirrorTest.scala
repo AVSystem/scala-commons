@@ -67,6 +67,7 @@ class DerMirrorTest extends AnyFunSuite {
   }
 
   test("DerMirror for value class") {
+
     val mirror = DerMirror.derived[ValueClass]
     summon[mirror.MirroredLabel =:= "ValueClass"]
     summon[mirror.MirroredElemLabels =:= ("str" *: EmptyTuple)]
@@ -97,6 +98,12 @@ class DerMirrorTest extends AnyFunSuite {
     assert(mirror.getAnnotation[Annotation1].isDefined)
     assert(mirror.getAnnotation[Annotation2].isDefined)
     assert(mirror.getAnnotation[Annotation3].isEmpty)
+  }
+
+  test("getAnnotation and hasAnnotation for extended annotations") {
+    val mirror = DerMirror.derived[InheritedAnnotatedCaseClass]
+    assert(mirror.hasAnnotation[Annotation1])
+    assert(mirror.getAnnotation[Annotation1].isDefined)
   }
 
   test("parametrized annotation") {
@@ -160,6 +167,12 @@ object DerMirrorTest {
   @Annotation2
   @Annotation3
   case class ManyAnnotated(id: Long)
+
+  trait AnnotatedTrait {
+    @Annotation1 def annotatedMethod: String
+  }
+
+  case class InheritedAnnotatedCaseClass(annotatedMethod: String)
   enum Recursive {
     case End
     case Next(r: Recursive)

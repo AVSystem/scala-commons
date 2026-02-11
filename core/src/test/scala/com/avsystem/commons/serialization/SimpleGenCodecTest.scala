@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.mirror.DerMirror
+
 import scala.annotation.nowarn
 import scala.collection.immutable.ListMap
 
@@ -92,6 +94,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 //  test("transparent wrapper companion") {
 //    testWrite(StringId("lolfuu"), "lolfuu")
 //  }
+  
 
   test("case class") {
     testWrite(
