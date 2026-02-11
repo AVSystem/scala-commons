@@ -3,6 +3,18 @@ name: Test Compilation Benchmark
 on:
   pull_request:
     branches: ['**']
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 'Number of benchmark runs'
+        required: false
+        default: 5
+        type: number
+      warmup:
+        description: 'Number of warmup runs'
+        required: false
+        default: 2
+        type: number
 
 jobs:
   benchmark:
@@ -37,11 +49,17 @@ jobs:
         run: |
           set -e
           
+          # Use workflow inputs for manual runs, defaults for PR runs
+          RUNS="${{ github.event.inputs.runs || 5 }}"
+          WARMUP="${{ github.event.inputs.warmup || 2 }}"
+          
+          echo "Running benchmarks with --runs $RUNS --warmup $WARMUP"
+          
           echo "::group::Benchmarking Scala 3"
-          hyperfine --runs 5 --warmup 2 --prepare "sbt benchmark-compilation3/clean benchmark-compilation3/update" "sbt benchmark-compilation3/compile" --export-json "scala3.json"
+          hyperfine --runs "$RUNS" --warmup "$WARMUP" --prepare "sbt benchmark-compilation3/clean benchmark-compilation3/update" "sbt benchmark-compilation3/compile" --export-json "scala3.json"
           
           echo "::group::Benchmarking Scala 2"          
-          hyperfine --runs 5 --warmup 2 --prepare "sbt benchmark-compilation2/clean benchmark-compilation2/update" "sbt benchmark-compilation2/compile" --export-json "scala2.json"
+          hyperfine --runs "$RUNS" --warmup "$WARMUP" --prepare "sbt benchmark-compilation2/clean benchmark-compilation2/update" "sbt benchmark-compilation2/compile" --export-json "scala2.json"
 
       - name: Extract Results
         id: extract
@@ -49,7 +67,68 @@ jobs:
           echo "scala2_mean=$(jq '.results[0].mean' scala2.json)" >> $GITHUB_OUTPUT
           echo "scala3_mean=$(jq '.results[0].mean' scala3.json)" >> $GITHUB_OUTPUT
 
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: compilation-benchmark-results
+          path: |
+            scala2.json
+            scala3.json
+
+      - name: Print Results Summary
+        run: |
+          echo "=== Compilation Benchmark Results ==="
+          echo ""
+          echo "Scala 2.13: ${{ steps.extract.outputs.scala2_mean }}s"
+          echo "Scala 3:    ${{ steps.extract.outputs.scala3_mean }}s"
+          echo ""
+          scala2_mean=${{ steps.extract.outputs.scala2_mean }}
+          scala3_mean=${{ steps.extract.outputs.scala3_mean }}
+          MIN_VALID_BENCHMARK_TIME=0.001
+          
+          # Validate inputs
+          if [ -z "$scala2_mean" ]; then
+            echo "Error: Missing Scala 2 benchmark result"
+            exit 1
+          fi
+          if [ -z "$scala3_mean" ]; then
+            echo "Error: Missing Scala 3 benchmark result"
+            exit 1
+          fi
+          
+          # Check for zero or near-zero scala2_mean using awk
+          is_zero=$(awk -v val="$scala2_mean" -v min="$MIN_VALID_BENCHMARK_TIME" 'BEGIN { print (val < min) ? 1 : 0 }')
+          if [ "$is_zero" -eq 1 ]; then
+            echo "Error: Invalid scala2_mean value (must be >= ${MIN_VALID_BENCHMARK_TIME}s)"
+            exit 1
+          fi
+          
+          # Calculate difference and percentage using awk
+          diff=$(awk -v s3="$scala3_mean" -v s2="$scala2_mean" 'BEGIN { printf "%.3f", s3 - s2 }')
+          perc=$(awk -v s3="$scala3_mean" -v s2="$scala2_mean" 'BEGIN { printf "%.2f", ((s3 - s2) / s2) * 100 }')
+          echo "Difference: ${diff}s (${perc}%)"
+          
+          # Determine status using awk for float comparison
+          status=$(awk -v p="$perc" 'BEGIN {
+            if (p > 1) print "slower"
+            else if (p < -1) print "faster"
+            else print "similar"
+          }')
+          
+          case "$status" in
+            slower)
+              echo "Status: Scala 3 is slower ⚠️"
+              ;;
+            faster)
+              echo "Status: Scala 3 is faster ✅"
+              ;;
+            *)
+              echo "Status: Performance is similar ℹ️"
+              ;;
+          esac
+
       - name: Upsert PR Comment
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         env:
           SCALA_2_MEAN: ${{ steps.extract.outputs.scala2_mean }}
