@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mirror
 
-import scala.annotation.{implicitNotFound, tailrec, RefiningAnnotation}
+import scala.annotation.{RefiningAnnotation, implicitNotFound, tailrec}
 import scala.deriving.Mirror
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -20,7 +20,7 @@ open class MetaAnnotation extends RefiningAnnotation
 
 object DerMirror {
   type Of[T] = DerMirror {
-    type MirroredType = T; type MirroredMonoType; type MirroredElemTypes <: Tuple
+    type MirroredType = T; type MirroredMonoType = T; type MirroredElemTypes <: Tuple
   }
   type ProductOf[T] = DerMirror.Product {
     type MirroredType = T; type MirroredMonoType = T; type MirroredElemTypes <: Tuple
@@ -86,7 +86,7 @@ object DerMirror {
     loop[Types, Fallback]
   }
 
-  private def derivedImpl[T: Type](using quotes: Quotes): Expr[Of[T]] = {
+  private def derivedImpl[T: Type](using quotes: Quotes): Expr[DerMirror.Of[T]] = {
     import quotes.reflect.*
     val tpe = TypeRepr.of[T]
     val symbol = tpe.typeSymbol
@@ -143,25 +143,21 @@ object DerMirror {
               ).runtimeChecked match {
                 case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type label <: String; label]) =>
                   '{
-                    new Transparent {
+                    new TransparentWorkaround[T, fieldType] {
                       type Metadata = meta
-                      type MirroredType = T
                       type MirroredLabel = label
-                      type MirrorElemType = fieldType
-                      type MirroredElemTypes = fieldType *: EmptyTuple
                       type MirroredElemLabels = elemLabel *: EmptyTuple
 
                       def unwrap(value: T): fieldType = ${
-                        '{ value.castTo[T] }.asTerm.select(field).asExprOf[fieldType]
+                        '{ value }.asTerm.select(field).asExprOf[fieldType]
                       }
 
                       def wrap(v: fieldType): T = ${
                         New(TypeTree.of[T])
                           .select(symbol.primaryConstructor)
-                          .appliedTo('{ v.castTo[fieldType] }.asTerm)
+                          .appliedTo('{ v }.asTerm)
                           .asExprOf[T]
                       }
-
                     }: DerMirror.TransparentOf[T] {
                       type Metadata = meta
                       type MirroredLabel = label
@@ -193,7 +189,7 @@ object DerMirror {
                       def fromUnsafeArray(product: Array[Any]): T = ${
                         New(TypeTree.of[T])
                           .select(symbol.primaryConstructor)
-                          .appliedTo('{ product(0).castTo[fieldType] }.asTerm)
+                          .appliedTo('{ product(0).asInstanceOf[fieldType] }.asTerm)
                           .asExprOf[T]
                       }
                     }: DerMirror.ProductOf[T] {
@@ -286,14 +282,20 @@ object DerMirror {
     def value: MirroredType
   }
   sealed trait Transparent extends DerMirror {
-    type MirrorElemType
     final type MirroredMonoType = MirroredType
-    type MirroredElemTypes <: MirrorElemType *: EmptyTuple
+    final type MirroredElemTypes = MirrorElemType *: EmptyTuple
+    type MirrorElemType
     type MirroredElemLabels <: String *: EmptyTuple
     def unwrap(value: MirroredType): MirrorElemType
     def wrap(value: MirrorElemType): MirroredType
   }
-
+  
   // workaround for https://github.com/scala/scala3/issues/25245
-  extension (value: Any) private def castTo[T]: T = value.asInstanceOf[T]
+  private sealed trait TransparentWorkaround[T, U] extends DerMirror.Transparent {
+    final type MirroredType = T
+    final type MirrorElemType = U
+
+    def unwrap(value: T): U
+    def wrap(value: U): T
+  }
 }
