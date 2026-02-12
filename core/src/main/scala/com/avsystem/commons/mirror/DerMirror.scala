@@ -2,7 +2,6 @@ package com.avsystem.commons
 package mirror
 
 import scala.annotation.{RefiningAnnotation, implicitNotFound, tailrec}
-import scala.deriving.Mirror
 import scala.quoted.{Expr, Quotes, Type}
 
 @implicitNotFound("No DerMirror could be generated.\nDiagnose any issues by calling DerMirror.derived[T] directly")
@@ -86,34 +85,12 @@ object DerMirror {
     ConstantType(StringConstant(str)).asType.asInstanceOf[Type[? <: String]]
   }
 
-  private def labelOf[T <: AnyKind: Type](using quotes: Quotes): Option[Type[? <: String]] = {
-    import quotes.reflect.*
-    TypeRepr.of[T].typeSymbol.getAnnotation(TypeRepr.of[name].typeSymbol).map(_.asExprOf[name]).map {
-      case '{ new `name`($value) } => stringToType(value.valueOrAbort)
-      case other => report.errorAndAbort(s"Unsupported annotation for label: ${other.show}")
-    }
-  }
-
   private def traverseTypes(tpes: List[Type[? <: AnyKind]])(using Quotes): Type[? <: Tuple] = {
     val empty: Type[? <: Tuple] = Type.of[EmptyTuple]
     tpes.foldLeft(empty) {
       case ('[type acc <: Tuple; acc], '[tpe]) => Type.of[tpe *: acc]
       case (_, _) => wontHappen
     }
-  }
-
-  private def labelsOf[Types <: Tuple: Type, Fallback <: Tuple: Type](using quotes: Quotes): Type[? <: Tuple] = {
-    def loop[T <: Tuple: Type, F <: Tuple: Type]: Type[? <: Tuple] = (Type.of[T], Type.of[F]) match {
-      case ('[h *: t], '[fh *: ft]) =>
-        (labelOf[h].getOrElse(Type.of[fh]), loop[t, ft]) match {
-          case ('[type head <: String; head], '[type tail <: Tuple; tail]) => Type.of[head *: tail]
-          case (_, _) => wontHappen
-        }
-      case ('[EmptyTuple], '[EmptyTuple]) => Type.of[EmptyTuple]
-      case _ => wontHappen
-    }
-
-    loop[Types, Fallback]
   }
 
   private def derivedImpl[T: Type](using quotes: Quotes): Expr[DerMirror.Of[T]] = {
@@ -130,12 +107,14 @@ object DerMirror {
         .asInstanceOf[Type[? <: Meta]]
     }
 
+    def labelTypeOf(sym: Symbol): Type[? <: String] =
+      stringToType(sym.getAnnotation(TypeRepr.of[name].typeSymbol).map(_.asExprOf[name]) match {
+        case Some('{ new `name`($value) }) => value.valueOrAbort
+        case _ => sym.name
+      })
+
     def derElemOf(symbol: Symbol): Type[? <: DerElem] =
-      (
-        symbol.typeRef.widen.asType, // todo: shoyld be widen?
-        labelOf(using symbol.typeRef.asType).getOrElse(stringToType(symbol.name)),
-        metaTypeOf(symbol),
-      ).runtimeChecked match {
+      (symbol.termRef.widen.asType, labelTypeOf(symbol), metaTypeOf(symbol)).runtimeChecked match {
         case ('[elemTpe], '[type elemLabel <: String; elemLabel], '[type meta <: Meta; meta]) =>
           Type.of[
             DerElem {
@@ -184,12 +163,7 @@ object DerMirror {
 
     (
       metaTypeOf(symbol),
-      labelOf[T].getOrElse {
-        stringToType {
-          val comp = symbol.companionClass
-          if (comp.exists) comp.name else symbol.name.stripSuffix("$")
-        }
-      },
+      labelTypeOf(symbol),
     ).runtimeChecked match {
       case ('[type meta <: Meta; meta], '[type label <: String; label]) =>
         def deriveSingleton = Option.when(tpe.isSingleton || tpe <:< TypeRepr.of[Unit]) {
@@ -215,11 +189,7 @@ object DerMirror {
 
         def deriveTransparent = Option.when(symbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol)) {
           val field = singleCaseFieldOf(symbol)
-          (
-            field.termRef.widen.asType,
-            labelOf(using field.typeRef.asType).getOrElse(stringToType(field.name)),
-            metaTypeOf(field),
-          ).runtimeChecked match {
+          (field.termRef.widen.asType, labelTypeOf(field), metaTypeOf(field)).runtimeChecked match {
             case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type fieldMeta <: Meta; fieldMeta]) =>
               '{
                 new TransparentWorkaround[T, fieldType] {
@@ -253,11 +223,7 @@ object DerMirror {
 
         def deriveValueClass = Option.when(tpe <:< TypeRepr.of[AnyVal]) {
           val field = singleCaseFieldOf(symbol)
-          (
-            field.termRef.widen.asType,
-            labelOf(using field.typeRef.asType).getOrElse(stringToType(field.name)),
-            metaTypeOf(field),
-          ).runtimeChecked match {
+          (field.termRef.widen.asType, labelTypeOf(field), metaTypeOf(field)).runtimeChecked match {
             case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type fieldMeta <: Meta; fieldMeta]) =>
               '{
                 new DerMirror.Product {
@@ -297,14 +263,15 @@ object DerMirror {
                   type MirroredLabel = label
                   type Metadata = meta
                   type MirroredElems = mirroredElems
-                  def fromUnsafeArray(product: Array[Any]): T = ${
-                    newTFrom(
-                      elems.zipWithIndex.map {
-                        case ('[DerMirror.Of[elemTpe]], idx) => '{ product(${ Expr(idx) }).asInstanceOf[elemTpe] }
-                        case (_, _) => wontHappen
-                      },
-                    )
-                  }
+                  def fromUnsafeArray(product: Array[Any]): T = ???
+//    ${
+//                    newTFrom(
+//                      elems.zipWithIndex.map {
+//                        case ('[DerMirror.Of[elemTpe]], idx) => '{ product(${ Expr(idx) }).asInstanceOf[elemTpe] }
+//                        case (_, _) => wontHappen
+//                      },
+//                    )
+//                  }
 
                 }: DerMirror.ProductOf[T] {
                   type MirroredLabel = label

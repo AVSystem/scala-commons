@@ -1,5 +1,8 @@
 package com.avsystem.commons
 
+import com.avsystem.commons.misc.SourceInfo
+import com.sun.source.util.SourcePositions
+
 import scala.util.Try
 
 /**
@@ -186,5 +189,5 @@ private def showTypeReprImpl[T: Type](using quotes: Quotes): Expr[Nothing] = {
   typeReprInfo(TypeRepr.of[T]).dbg
 }
 
-private[commons] def wontHappen(using quotes: Quotes) =
-  quotes.reflect.report.errorAndAbort("This code should never be executed")
+private[commons] def wontHappen(using quotes: Quotes)(using pos: SourceInfo) =
+  quotes.reflect.report.errorAndAbort(s"This code should never be executed. $pos")
