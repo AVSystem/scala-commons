@@ -9,7 +9,7 @@ object Main {
     val body = document.getElementById("body")
     BenchmarkGUI.renderMenu(body)(
       IsoInstantBenchmarks.suite,
-      JsonBenchmarks.suite
+      JsonBenchmarks.suite,
     )
   }
 }

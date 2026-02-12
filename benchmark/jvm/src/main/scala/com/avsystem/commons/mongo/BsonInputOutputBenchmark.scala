@@ -45,24 +45,20 @@ class BsonInputOutputBenchmark {
   }
 
   @Benchmark
-  def binaryEncoding(): Array[Byte] = {
+  def binaryEncoding(): Array[Byte] =
     binaryEncode(something)
-  }
 
   @Benchmark
-  def documentEncoding(): BsonDocument = {
+  def documentEncoding(): BsonDocument =
     documentEncode(something)
-  }
 
   @Benchmark
-  def jsonEncoding(): String = {
+  def jsonEncoding(): String =
     jsonEncode(something)
-  }
 
   @Benchmark
-  def valueEncoding(): BsonValue = {
+  def valueEncoding(): BsonValue =
     BsonValueOutput.write(something)
-  }
 
   def read(bsonReader: BsonReader): Toplevel = {
     val input = new BsonReaderInput(bsonReader)
@@ -70,17 +66,14 @@ class BsonInputOutputBenchmark {
   }
 
   @Benchmark
-  def binaryDecoding(): Toplevel = {
+  def binaryDecoding(): Toplevel =
     read(new BsonBinaryReader(ByteBuffer.wrap(bytes)))
-  }
 
   @Benchmark
-  def documentDecoding(): Toplevel = {
+  def documentDecoding(): Toplevel =
     read(new BsonDocumentReader(doc))
-  }
 
   @Benchmark
-  def jsonDecoding(): Toplevel = {
+  def jsonDecoding(): Toplevel =
     read(new JsonReader(json))
-  }
 }
