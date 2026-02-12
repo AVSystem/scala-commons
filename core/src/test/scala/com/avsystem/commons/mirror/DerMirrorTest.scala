@@ -10,8 +10,11 @@ class DerMirrorTest extends AnyFunSuite {
     val mirror = DerMirror.derived[SimpleCaseClass]
     summon[mirror.MirroredType =:= SimpleCaseClass]
     summon[mirror.MirroredLabel =:= "SimpleCaseClass"]
-    summon[mirror.MirroredElemLabels =:= ("id" *: "name" *: EmptyTuple)]
-    summon[mirror.MirroredElemTypes =:= (Long *: String *: EmptyTuple)]
+    summon[mirror.MirroredElems =:= (
+      DerElem.Of[Long] { type MirroredLabel = "id"; type Metadata = Meta } *:
+      DerElem.Of[String] { type MirroredLabel = "name"; type Metadata = Meta } *:
+      EmptyTuple
+    )]
     summon[mirror.Metadata =:= Meta]
   }
 
@@ -19,8 +22,7 @@ class DerMirrorTest extends AnyFunSuite {
     val mirror = DerMirror.derived[NoFields]
     summon[mirror.MirroredType =:= NoFields]
     summon[mirror.MirroredLabel =:= "NoFields"]
-    summon[mirror.MirroredElemLabels =:= EmptyTuple]
-    summon[mirror.MirroredElemTypes =:= EmptyTuple]
+    summon[mirror.MirroredElems =:= EmptyTuple]
     summon[mirror.Metadata =:= Meta]
   }
 
@@ -28,8 +30,10 @@ class DerMirrorTest extends AnyFunSuite {
     val mirror = DerMirror.derived[Box[Int]]
     summon[mirror.MirroredType =:= Box[Int]]
     summon[mirror.MirroredLabel =:= "Box"]
-    summon[mirror.MirroredElemLabels =:= ("a" *: EmptyTuple)]
-    summon[mirror.MirroredElemTypes =:= (Int *: EmptyTuple)]
+    summon[mirror.MirroredElems =:= (
+      DerElem.Of[Int] { type MirroredLabel = "a"; type Metadata = Meta } *:
+      EmptyTuple
+    )]
     summon[mirror.Metadata =:= Meta]
   }
 
@@ -37,18 +41,19 @@ class DerMirrorTest extends AnyFunSuite {
     val mirror = DerMirror.derived[SimpleEnum]
     summon[mirror.MirroredType =:= SimpleEnum]
     summon[mirror.MirroredLabel =:= "SimpleEnum"]
-    summon[mirror.MirroredElemLabels =:= ("Case1" *: "Case2" *: EmptyTuple)]
-    summon[mirror.MirroredElemTypes =:= (SimpleEnum.Case1.type *: SimpleEnum.Case2 *: EmptyTuple)]
+    summon[mirror.MirroredElems =:= (
+      DerMirror.Of[SimpleEnum.Case1.type] { type MirroredLabel = "Case1"; type Metadata = Meta } *:
+      DerMirror.Of[SimpleEnum.Case2] { type MirroredLabel = "Case2"; type Metadata = Meta } *:
+      EmptyTuple
+    )]
     summon[mirror.Metadata =:= Meta]
   }
 
   test("DerMirror for object") {
     val mirror = DerMirror.derived[SimpleObject.type]
     summon[mirror.MirroredType =:= SimpleObject.type]
-    summon[mirror.MirroredMonoType =:= SimpleObject.type]
     summon[mirror.MirroredLabel =:= "SimpleObject"]
-    summon[mirror.MirroredElemLabels =:= EmptyTuple]
-    summon[mirror.MirroredElemTypes =:= EmptyTuple]
+    summon[mirror.MirroredElems =:= EmptyTuple]
     summon[mirror.Metadata =:= Meta]
     assert(mirror.value == SimpleObject)
   }
@@ -56,17 +61,18 @@ class DerMirrorTest extends AnyFunSuite {
   test("DerMirror for Unit") {
     val mirror = DerMirror.derived[Unit]
     summon[mirror.MirroredType =:= Unit]
-    summon[mirror.MirroredMonoType =:= Unit]
     summon[mirror.MirroredLabel =:= "Unit"]
+    summon[mirror.MirroredElems =:= EmptyTuple]
     assert(mirror.value == ())
   }
 
   test("DerMirror for value class") {
-
     val mirror = DerMirror.derived[ValueClass]
     summon[mirror.MirroredLabel =:= "ValueClass"]
-    summon[mirror.MirroredElemLabels =:= ("str" *: EmptyTuple)]
-    summon[mirror.MirroredElemTypes =:= (String *: EmptyTuple)]
+    summon[mirror.MirroredElems =:= (
+      DerElem.Of[String] { type MirroredLabel = "str"; type Metadata = Meta } *:
+      EmptyTuple
+    )]
 
     val vc = ValueClass("test")
     assert(mirror.unwrap(vc) == "test")
@@ -76,8 +82,10 @@ class DerMirrorTest extends AnyFunSuite {
   test("DerMirror for @transparent case class") {
     val mirror = DerMirror.derived[TransparentClass]
     summon[mirror.MirroredLabel =:= "TransparentClass"]
-    summon[mirror.MirroredElemLabels =:= ("int" *: EmptyTuple)]
-    summon[mirror.MirroredElemTypes =:= (Int *: EmptyTuple)]
+    summon[mirror.MirroredElems =:= (
+      DerElem.Of[Int] { type MirroredLabel = "int"; type Metadata = Meta } *:
+      EmptyTuple
+    )]
 
     val tc = TransparentClass(42)
     assert(mirror.unwrap(tc) == 42)
@@ -122,7 +130,11 @@ class DerMirrorTest extends AnyFunSuite {
   test("DerMirror for recursive ADT") {
     val mirror = DerMirror.derived[Recursive]
     summon[mirror.MirroredLabel =:= "Recursive"]
-    summon[mirror.MirroredElemLabels =:= ("End" *: "Next" *: EmptyTuple)]
+    summon[mirror.MirroredElems =:= (
+      DerMirror.Of[Recursive.End.type] { type MirroredLabel = "End"; type Metadata = Meta } *:
+      DerMirror.Of[Recursive.Next] { type MirroredLabel = "Next"; type Metadata = Meta } *:
+      EmptyTuple
+    )]
   }
 
 //  test("DerMirror for ADT with mixed cases") {

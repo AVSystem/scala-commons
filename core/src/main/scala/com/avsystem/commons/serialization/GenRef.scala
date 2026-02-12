@@ -23,7 +23,7 @@ object RawRef {
 }
 
 object SimpleRawRef {
-  given GenCodec[SimpleRawRef] = GenCodec.derived
+  given GenCodec[SimpleRawRef] = ???
 }
 
 case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) {
