@@ -87,8 +87,8 @@ object DerMirror {
 
   private def traverseTypes(tpes: List[Type[? <: AnyKind]])(using Quotes): Type[? <: Tuple] = {
     val empty: Type[? <: Tuple] = Type.of[EmptyTuple]
-    tpes.foldLeft(empty) {
-      case ('[type acc <: Tuple; acc], '[tpe]) => Type.of[tpe *: acc]
+    tpes.foldRight(empty) {
+      case ('[tpe], '[type acc <: Tuple; acc]) => Type.of[tpe *: acc]
       case (_, _) => wontHappen
     }
   }
@@ -107,14 +107,14 @@ object DerMirror {
         .asInstanceOf[Type[? <: Meta]]
     }
 
-    def labelTypeOf(sym: Symbol): Type[? <: String] =
+    def labelTypeOf(sym: Symbol, fallback: String): Type[? <: String] =
       stringToType(sym.getAnnotation(TypeRepr.of[name].typeSymbol).map(_.asExprOf[name]) match {
         case Some('{ new `name`($value) }) => value.valueOrAbort
-        case _ => sym.name
+        case _ => fallback
       })
 
     def derElemOf(symbol: Symbol): Type[? <: DerElem] =
-      (symbol.termRef.widen.asType, labelTypeOf(symbol), metaTypeOf(symbol)).runtimeChecked match {
+      (symbol.termRef.widen.asType, labelTypeOf(symbol, symbol.name), metaTypeOf(symbol)).runtimeChecked match {
         case ('[elemTpe], '[type elemLabel <: String; elemLabel], '[type meta <: Meta; meta]) =>
           Type.of[
             DerElem {
@@ -161,10 +161,8 @@ object DerMirror {
         }
     }
 
-    (
-      metaTypeOf(symbol),
-      labelTypeOf(symbol),
-    ).runtimeChecked match {
+    //find a better way than $
+    (metaTypeOf(symbol), labelTypeOf(symbol, symbol.name.stripSuffix("$"))).runtimeChecked match {
       case ('[type meta <: Meta; meta], '[type label <: String; label]) =>
         def deriveSingleton = Option.when(tpe.isSingleton || tpe <:< TypeRepr.of[Unit]) {
           val valueImpl = tpe match {
@@ -189,7 +187,7 @@ object DerMirror {
 
         def deriveTransparent = Option.when(symbol.hasAnnotation(TypeRepr.of[transparent].typeSymbol)) {
           val field = singleCaseFieldOf(symbol)
-          (field.termRef.widen.asType, labelTypeOf(field), metaTypeOf(field)).runtimeChecked match {
+          (field.termRef.widen.asType, labelTypeOf(field, field.name), metaTypeOf(field)).runtimeChecked match {
             case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type fieldMeta <: Meta; fieldMeta]) =>
               '{
                 new TransparentWorkaround[T, fieldType] {
@@ -223,7 +221,7 @@ object DerMirror {
 
         def deriveValueClass = Option.when(tpe <:< TypeRepr.of[AnyVal]) {
           val field = singleCaseFieldOf(symbol)
-          (field.termRef.widen.asType, labelTypeOf(field), metaTypeOf(field)).runtimeChecked match {
+          (field.termRef.widen.asType, labelTypeOf(field, field.name), metaTypeOf(field)).runtimeChecked match {
             case ('[fieldType], '[type elemLabel <: String; elemLabel], '[type fieldMeta <: Meta; fieldMeta]) =>
               '{
                 new DerMirror.Product {

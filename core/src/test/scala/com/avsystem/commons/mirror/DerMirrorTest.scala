@@ -26,7 +26,7 @@ class DerMirrorTest extends AnyFunSuite {
       type MirroredType = NoFields
       type MirroredLabel = "NoFields"
       type Metadata = Meta
-      type MirroredElems = Any
+      type MirroredElems = EmptyTuple
     } = DerMirror.derived[NoFields]
   }
 
@@ -62,7 +62,7 @@ class DerMirrorTest extends AnyFunSuite {
       type MirroredType = SimpleObject.type
       type MirroredLabel = "SimpleObject"
       type Metadata = Meta
-      type MirroredElems = Any
+      type MirroredElems = EmptyTuple
     } = DerMirror.derived[SimpleObject.type]
 
     assert(mirror.value == SimpleObject)
