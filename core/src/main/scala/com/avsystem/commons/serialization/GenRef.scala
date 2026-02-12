@@ -1,7 +1,10 @@
 package com.avsystem.commons
 package serialization
 
-sealed trait RawRef derives GenCodec {
+import com.avsystem.commons.mirror.DerMirror
+
+
+sealed trait RawRef {
 
   import RawRef.*
 
