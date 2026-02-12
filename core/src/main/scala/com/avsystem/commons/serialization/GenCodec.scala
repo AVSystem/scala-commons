@@ -261,7 +261,7 @@ object GenCodec extends GenCodecMacros {
         compiletime.constValue[m.MirroredLabel],
         summonInstances[m.MirroredElemTypes](summonAllowed = true, deriveAllowed = false).toArrayOf[GenCodec[?]],
         compiletime.constValueTuple[m.MirroredElemLabels].toArrayOf[String],
-        m.fromUnsafeArray(_),
+        m.fromUnsafeArray,
       )
     case m: DerMirror.SumOf[T] =>
       m.getAnnotation[flatten] match {

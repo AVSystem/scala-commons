@@ -3,15 +3,12 @@ package mirror
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.annotation.RefiningAnnotation
-
 class DerMirrorTest extends AnyFunSuite {
   import DerMirrorTest.*
 
   test("DerMirror for case class") {
     val mirror = DerMirror.derived[SimpleCaseClass]
     summon[mirror.MirroredType =:= SimpleCaseClass]
-    summon[mirror.MirroredMonoType =:= SimpleCaseClass]
     summon[mirror.MirroredLabel =:= "SimpleCaseClass"]
     summon[mirror.MirroredElemLabels =:= ("id" *: "name" *: EmptyTuple)]
     summon[mirror.MirroredElemTypes =:= (Long *: String *: EmptyTuple)]
@@ -21,7 +18,6 @@ class DerMirrorTest extends AnyFunSuite {
   test("DerMirror for case class with no fields") {
     val mirror = DerMirror.derived[NoFields]
     summon[mirror.MirroredType =:= NoFields]
-    summon[mirror.MirroredMonoType =:= NoFields]
     summon[mirror.MirroredLabel =:= "NoFields"]
     summon[mirror.MirroredElemLabels =:= EmptyTuple]
     summon[mirror.MirroredElemTypes =:= EmptyTuple]
@@ -31,7 +27,6 @@ class DerMirrorTest extends AnyFunSuite {
   test("DerMirror for generic case class") {
     val mirror = DerMirror.derived[Box[Int]]
     summon[mirror.MirroredType =:= Box[Int]]
-    summon[mirror.MirroredMonoType =:= Box[Int]]
     summon[mirror.MirroredLabel =:= "Box"]
     summon[mirror.MirroredElemLabels =:= ("a" *: EmptyTuple)]
     summon[mirror.MirroredElemTypes =:= (Int *: EmptyTuple)]
@@ -41,7 +36,6 @@ class DerMirrorTest extends AnyFunSuite {
   test("DerMirror for enum") {
     val mirror = DerMirror.derived[SimpleEnum]
     summon[mirror.MirroredType =:= SimpleEnum]
-    summon[mirror.MirroredMonoType =:= SimpleEnum]
     summon[mirror.MirroredLabel =:= "SimpleEnum"]
     summon[mirror.MirroredElemLabels =:= ("Case1" *: "Case2" *: EmptyTuple)]
     summon[mirror.MirroredElemTypes =:= (SimpleEnum.Case1.type *: SimpleEnum.Case2 *: EmptyTuple)]
