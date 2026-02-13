@@ -2,7 +2,7 @@ package com.avsystem.commons
 package ser
 
 import com.avsystem.commons.serialization.json.JsonStringOutput
-import com.avsystem.commons.serialization.{HasGenCodec, flatten}
+import com.avsystem.commons.serialization.{flatten, HasGenCodec}
 
 import scala.annotation.nowarn
 
@@ -10,7 +10,7 @@ case class Something(
   name: String,
   year: Int,
   stuffs: List[Stuff],
-  ints: Set[Int]
+  ints: Set[Int],
 )
 @nowarn
 object Something extends HasGenCodec[Something] {
@@ -26,8 +26,8 @@ object Something extends HasGenCodec[Something] {
       //      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.19),
     ),
     Set(
-      1 //5, 62, -23, 454, 123, 75, -234,
-    )
+      1 // 5, 62, -23, 454, 123, 75, -234,
+    ),
   )
 
   final val ExampleJsonString = JsonStringOutput.write(Example)
@@ -37,7 +37,7 @@ case class Primitives(
   b: Boolean,
   i: Int,
   l: Long,
-  d: Double
+  d: Double,
 )
 @nowarn
 object Primitives extends HasGenCodec[Primitives] {
@@ -73,9 +73,11 @@ object FlatSealedStuff extends HasGenCodec[FlatSealedStuff] {
 case class Foo(s: String, d: Double, i: Int, l: Long, bs: List[Boolean])
 @nowarn
 object Foo extends HasGenCodec[Foo] {
-  final val ExampleMap: Map[String, Foo] = List.tabulate(100) { i =>
-    ("b" * i) -> Foo("a" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
-  }.toMap
+  final val ExampleMap: Map[String, Foo] = List
+    .tabulate(100) { i =>
+      ("b" * i) -> Foo("a" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
+    }
+    .toMap
 
   final val ExampleJsonString = JsonStringOutput.write(ExampleMap)
 }

@@ -28,7 +28,7 @@ object IsoInstantBenchmarks {
       },
       Benchmark("without regex validation") {
         parse("2013-11-27T12:55:32.234Z", validate = false)
-      }
+      },
     )
   )
 }
