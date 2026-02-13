@@ -21,7 +21,8 @@ object Commons extends ProjectGroup("commons") {
   // idea.managed property is set by IntelliJ when running SBT (shell or import), idea.runid is set only for IntelliJ's
   // SBT shell. In order for this technique to work, you MUST NOT set the "Use the sbt shell for build and import"
   // option in IntelliJ's SBT settings.
-  val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
+  val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean &&
+    System.getProperty("idea.runid") == null
 
   val guavaVersion = "33.5.0-jre"
   val jsr305Version = "3.0.2"
@@ -29,7 +30,7 @@ object Commons extends ProjectGroup("commons") {
   val scalatestplusScalacheckVersion = "3.2.14.0"
   val scalacheckVersion = "1.19.0"
   val jettyVersion = "12.1.5"
-  val mongoVersion = "5.6.2"
+  val mongoVersion = "5.6.3"
   val springVersion = "6.2.15"
   val typesafeConfigVersion = "1.4.5"
   val commonsIoVersion = "1.3.2" // test only
@@ -54,17 +55,17 @@ object Commons extends ProjectGroup("commons") {
     description := "AVSystem commons library for Scala",
     startYear := Some(2015),
     licenses := Vector(License.MIT),
-    scmInfo := Some(ScmInfo(
-      browseUrl = url("https://github.com/AVSystem/scala-commons"),
-      connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
-      devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
-    )),
-    developers := List(
-      Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak")),
+    scmInfo := Some(
+      ScmInfo(
+        browseUrl = url("https://github.com/AVSystem/scala-commons"),
+        connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
+        devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
+      )
     ),
-
+    developers := List(
+      Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak"))
+    ),
     scalaVersion := "2.13.18",
-
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
@@ -81,24 +82,27 @@ object Commons extends ProjectGroup("commons") {
         params = Map(
           "mongodb-version" -> "8.0",
           "mongodb-replica-set" -> "test-rs",
-        )
+        ),
       ),
     ),
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
-    githubWorkflowPublish := Seq(WorkflowStep.Sbt(
-      List("ci-release"),
-      env = Map(
-        "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-        "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
-        "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
-        "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    githubWorkflowPublish := Seq(
+      WorkflowStep.Sbt(
+        List("ci-release"),
+        env = Map(
+          "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+          "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+          "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+          "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
+        ),
       )
-    )),
+    ),
   )
 
   override def commonSettings: Seq[Def.Setting[_]] = Seq(
     Compile / scalacOptions ++= Seq(
-      "-encoding", "utf-8",
+      "-encoding",
+      "utf-8",
       "-Yrangepos",
       "-explaintypes",
       "-feature",
@@ -115,22 +119,19 @@ object Commons extends ProjectGroup("commons") {
       "-Ycache-plugin-class-loader:last-modified",
       "-Ycache-macro-class-loader:last-modified",
     ),
-
     Compile / scalacOptions ++= {
-      if (scalaBinaryVersion.value == "2.13") Seq(
-        "-Xnon-strict-patmat-analysis",
-        "-Xlint:-strict-unsealed-patmat"
-      ) else Seq.empty
+      if (scalaBinaryVersion.value == "2.13")
+        Seq(
+          "-Xnon-strict-patmat-analysis",
+          "-Xlint:-strict-unsealed-patmat",
+        )
+      else Seq.empty
     },
-
     Test / scalacOptions := (Compile / scalacOptions).value,
-
     Compile / doc / sources := Seq.empty, // relying on unidoc
     apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
     autoAPIMappings := true,
-
     pomIncludeRepository := { _ => false },
-
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
@@ -150,9 +151,8 @@ object Commons extends ProjectGroup("commons") {
     mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
       organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
     },
-    Test / jsEnv := new NodeJSEnv(NodeJSEnv.Config().withEnv(Map(
-      "RESOURCES_DIR" -> (Test / resourceDirectory).value.absolutePath)
-    )),
+    Test / jsEnv :=
+      new NodeJSEnv(NodeJSEnv.Config().withEnv(Map("RESOURCES_DIR" -> (Test / resourceDirectory).value.absolutePath))),
   )
 
   val jsCommonSettings = Seq(
@@ -173,7 +173,7 @@ object Commons extends ProjectGroup("commons") {
   val aggregateProjectSettings =
     noPublishSettings ++ Seq(
       ideSkipProject := true,
-      ideExcludedDirectories := Seq(baseDirectory.value)
+      ideExcludedDirectories := Seq(baseDirectory.value),
     )
 
   val CompileAndTest = "compile->compile;test->test"
@@ -190,16 +190,16 @@ object Commons extends ProjectGroup("commons") {
       name := "commons",
       ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
       ScalaUnidoc / unidoc / scalacOptions += "-Ymacro-expand:none",
-      ScalaUnidoc / unidoc / unidocProjectFilter :=
-        inAnyProject -- inProjects(
-          analyzer,
-          macros,
-          `core-js`,
-          comprof,
-        ),
+      ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(
+        analyzer,
+        macros,
+        `core-js`,
+        comprof,
+      ),
     )
 
-  lazy val jvm = mkSubProject.in(file(".jvm"))
+  lazy val jvm = mkSubProject
+    .in(file(".jvm"))
     .aggregate(
       analyzer,
       macros,
@@ -212,7 +212,8 @@ object Commons extends ProjectGroup("commons") {
     )
     .settings(aggregateProjectSettings)
 
-  lazy val js = mkSubProject.in(file(".js"))
+  lazy val js = mkSubProject
+    .in(file(".js"))
     .aggregate(
       `core-js`,
       `mongo-js`,
@@ -232,14 +233,13 @@ object Commons extends ProjectGroup("commons") {
   def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
     base / "src" / conf / "scala",
     base / "src" / conf / s"scala-$scalaBinary",
-    base / "src" / conf / "java"
+    base / "src" / conf / "java",
   )
 
   def sourceDirsSettings(baseMapper: File => File) = Seq(
     Compile / unmanagedSourceDirectories ++=
       mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "main"),
-    Test / unmanagedSourceDirectories ++=
-      mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "test"),
+    Test / unmanagedSourceDirectories ++= mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "test"),
   )
 
   def sameNameAs(proj: Project) =
@@ -262,7 +262,8 @@ object Commons extends ProjectGroup("commons") {
       ),
     )
 
-  lazy val `core-js` = mkSubProject.in(core.base / "js")
+  lazy val `core-js` = mkSubProject
+    .in(core.base / "js")
     .enablePlugins(ScalaJSPlugin)
     .configure(p => if (forIdeaImport) p.dependsOn(core) else p)
     .dependsOn(macros)
@@ -271,8 +272,8 @@ object Commons extends ProjectGroup("commons") {
       sameNameAs(core),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
-        "io.monix" %%% "monix" % monixVersion % Optional,
-      )
+        "io.monix" %%% "monix" % monixVersion % Optional
+      ),
     )
 
   lazy val mongo = mkSubProject
@@ -292,7 +293,8 @@ object Commons extends ProjectGroup("commons") {
     )
 
   // only to allow @mongoId & MongoEntity to be usedJS/JVM cross-compiled code
-  lazy val `mongo-js` = mkSubProject.in(mongo.base / "js")
+  lazy val `mongo-js` = mkSubProject
+    .in(mongo.base / "js")
     .enablePlugins(ScalaJSPlugin)
     .configure(p => if (forIdeaImport) p.dependsOn(mongo) else p)
     .dependsOn(`core-js`)
@@ -322,7 +324,7 @@ object Commons extends ProjectGroup("commons") {
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
-        "com.typesafe" % "config" % typesafeConfigVersion,
+        "com.typesafe" % "config" % typesafeConfigVersion
       ),
     )
 
@@ -357,7 +359,8 @@ object Commons extends ProjectGroup("commons") {
       ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
     )
 
-  lazy val `benchmark-js` = mkSubProject.in(benchmark.base / "js")
+  lazy val `benchmark-js` = mkSubProject
+    .in(benchmark.base / "js")
     .enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
     .configure(p => if (forIdeaImport) p.dependsOn(benchmark) else p)
     .dependsOn(`core-js`)
@@ -367,7 +370,7 @@ object Commons extends ProjectGroup("commons") {
       sameNameAs(benchmark),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
-        "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion,
+        "com.github.japgolly.scalajs-benchmark" %%% "benchmark" % scalajsBenchmarkVersion
       ),
       scalaJSUseMainModuleInitializer := true,
     )
@@ -388,8 +391,7 @@ object Commons extends ProjectGroup("commons") {
         "-Ystatistics:typer",
       ),
       Compile / sourceGenerators += Def.task {
-        val originalSrc = (core / sourceDirectory).value /
-          "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
+        val originalSrc = (core / sourceDirectory).value / "test/scala/com/avsystem/commons/rest/RestTestApi.scala"
         val originalContent = IO.read(originalSrc)
         (0 until 100).map { i =>
           val pkg = f"oa$i%02d"
@@ -398,6 +400,6 @@ object Commons extends ProjectGroup("commons") {
           IO.write(newFile, newContent)
           newFile
         }
-      }.taskValue
+      }.taskValue,
     )
 }
