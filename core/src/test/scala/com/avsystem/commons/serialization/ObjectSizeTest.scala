@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.mirror.generated
 import org.scalatest.funsuite.AnyFunSuite
 
 final case class RecordWithDefaults(

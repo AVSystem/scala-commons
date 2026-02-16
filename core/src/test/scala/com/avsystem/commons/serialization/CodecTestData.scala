@@ -3,11 +3,8 @@ package serialization
 
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
-import com.avsystem.commons.mirror.{name, transparent, DerMirror}
+import com.avsystem.commons.mirror.{DerMirror, generated, name, transparent}
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
-import com.avsystem.commons.serialization.ApplyUnapplyCodec.materialize
-import com.avsystem.commons.serialization.GenObjectCodec.materialize
-import com.avsystem.commons.serialization.GenCodec.materialize
 
 import scala.annotation.meta.getter
 

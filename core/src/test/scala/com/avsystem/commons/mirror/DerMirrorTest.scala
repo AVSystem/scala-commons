@@ -192,6 +192,28 @@ class DerMirrorTest extends AnyFunSuite {
       } *: EmptyTuple
     } = DerMirror.derived[MixedADT]
   }
+
+  test("DerMirror should include @generated members") {
+    val m: DerMirror {
+      type MirroredType = HasGenerated
+      type MirroredLabel = "HasGenerated"
+      type Metadata = Meta
+      type MirroredElems = DerElem {
+        type MirroredType = String
+        type MirroredLabel = "str"
+        type Metadata = Meta
+      } *: EmptyTuple
+      type GeneratedElems = GeneratedDerElem {
+        type OuterMirroredType = HasGenerated
+        type MirroredType = Int
+        type MirroredLabel = "gen"
+        type Metadata = Meta @generated
+      } *: EmptyTuple
+    } = DerMirror.derived[HasGenerated]
+
+    val instance = HasGenerated("test")
+    assert(m.generatedElems(0).apply(instance) == 4)
+  }
 }
 
 object DerMirrorTest {
@@ -223,6 +245,9 @@ object DerMirrorTest {
   enum Recursive {
     case End
     case Next(r: Recursive)
+  }
+  case class HasGenerated(str: String) {
+    @generated def gen: Int = str.length
   }
   case object SimpleObject
   object MixedADT {
