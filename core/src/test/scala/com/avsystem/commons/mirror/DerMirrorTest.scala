@@ -214,10 +214,54 @@ class DerMirrorTest extends AnyFunSuite {
     val instance = HasGenerated("test")
     assert(m.generatedElems(0).apply(instance) == 4)
   }
+
+  test("DerMirror for HK case class") {
+    val _: DerMirror.Product {
+      type MirroredType = HKBox[List]
+      type MirroredLabel = "HKBox"
+      type Metadata = Meta
+      type MirroredElems = DerElem {
+        type MirroredType = List[Int]
+        type MirroredLabel = "fa"
+        type Metadata = Meta
+      } *: EmptyTuple
+    } = DerMirror.derived[HKBox[List]]
+  }
+
+  test("DerMirror for HK sum") {
+    val _: DerMirror.Sum {
+      type MirroredType = HKADT[List, Int]
+      type MirroredLabel = "HKADT"
+      type Metadata = Meta
+      type MirroredElems = DerElem {
+        type MirroredType = HKADT.Case1[List, Int]
+        type MirroredLabel = "Case1"
+        type Metadata = Meta
+      } *: DerElem {
+        type MirroredType = HKADT.Case2[List, Int]
+        type MirroredLabel = "Case2"
+        type Metadata = Meta
+      } *: EmptyTuple
+    } = DerMirror.derived[HKADT[List, Int]]
+  }
+
+  test("DerMirror for case class with wildcard") {
+    val _: DerMirror.Product {
+      type MirroredType = Box[?]
+      type MirroredLabel = "Box"
+      type Metadata = Meta
+      type MirroredElems = DerElem {
+//        type MirroredType = Box[?]#T
+        type MirroredLabel = "a"
+        type Metadata = Meta
+      } *: EmptyTuple
+    } = DerMirror.derived[Box[?]]
+  }
 }
 
 object DerMirrorTest {
   sealed trait MixedADT
+  sealed trait HKADT[F[_], T]
   case class SimpleCaseClass(id: Long, name: String)
   case class NoFields()
   enum SimpleEnum {
@@ -248,6 +292,11 @@ object DerMirrorTest {
   }
   case class HasGenerated(str: String) {
     @generated def gen: Int = str.length
+  }
+  case class HKBox[F[_]](fa: F[Int])
+  object HKADT {
+    case class Case1[F[_], T](a: T) extends HKADT[F, T]
+    case class Case2[F[_], T](fa: F[T]) extends HKADT[F, T]
   }
   case object SimpleObject
   object MixedADT {

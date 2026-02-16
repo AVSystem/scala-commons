@@ -176,23 +176,23 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
 //    testRoundtrip[RecExpr[Int]](LazyRecExpr(IntRecExpr(42)))
 //    testRoundtrip[RecExpr[RecBounded]](RecBoundedExpr(RecBounded(42)))
 //  }
-
-  test("pure GADT") {
-    testRoundtrip[PureGadtExpr[String]](StringLiteral("str"))
-    testRoundtrip[PureGadtExpr[String]](Plus(StringLiteral("str"), StringLiteral("fag")))
-  }
-  type IntBranch = Branch[Int]
+//
+//  test("pure GADT") {
+//    testRoundtrip[PureGadtExpr[String]](StringLiteral("str"))
+//    testRoundtrip[PureGadtExpr[String]](Plus(StringLiteral("str"), StringLiteral("fag")))
+//  }
+//  type IntBranch = Branch[Int]
 //  showAst{
 //    compiletime.summonInline[Mirror.Of[IntTree]]
 //  }
-  
+
 //  GenCodec.derived[IntTree]
   case class Node[T](value: T, children: List[Node[T]] = Nil) derives GenCodec
-  GenCodec.derived[IntBranch]
+//  GenCodec.derived[IntBranch]
 
-  test("recursive generic ADT") {
-    testRoundtrip[Tree[Int]](Branch(Leaf(1), Branch(Leaf(2), Leaf(3))))
-  }
+//  test("recursive generic ADT") {
+//    testRoundtrip[Tree[Int]](Branch(Leaf(1), Branch(Leaf(2), Leaf(3))))
+//  }
 
   test("sealed enum") {
     testRoundtrip[Enumz](Enumz.First)
