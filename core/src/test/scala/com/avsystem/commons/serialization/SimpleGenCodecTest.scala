@@ -70,8 +70,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
   test("object") {
     testWrite(
       SomeObject,
-      Map(),
-//      Map("random" -> 42)
+      Map("random" -> 42)
     )
   }
 
@@ -213,9 +212,9 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     )
   }
 
-//  test("value class") {
-//    testWrite(ValueClass("costam"), Map("str" -> "costam"))
-//  }
+  test("value class") {
+    testWrite(ValueClass("costam"), Map("str" -> "costam"))
+  }
 
   test("sealed hierarchy") {
     testWrite[SealedBase](SealedBase.CaseObject, Map("CaseObject" -> Map()))

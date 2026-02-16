@@ -102,7 +102,7 @@ object CodecTestData {
     }
     override def hashCode(): Int = args.hashCode()
   }
-  case class ValueClass(str: String) extends AnyVal
+  case class ValueClass(str: String) extends AnyVal derives GenCodec
   class mongoId extends AnnotationAggregate {
     @outOfOrder
     @name("_id")
