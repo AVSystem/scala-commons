@@ -4,7 +4,7 @@ package mirror
 import scala.annotation.{RefiningAnnotation, implicitNotFound, tailrec}
 import scala.quoted.{Expr, Quotes, Type}
 
-@implicitNotFound("No DerMirror could be generated.\nDiagnose any issues by calling DerMirror.derived[T] directly")
+@implicitNotFound("No DerMirror could be generated.\nDiagnose any issues by calling DerMirror.derived directly")
 sealed trait DerMirror extends DerElem {
   final type MirroredElemTypes = Tuple.Map[
     MirroredElems,
@@ -113,8 +113,13 @@ object DerMirror {
         case _ => fallback
       })
 
-    def derElemOf(symbol: Symbol): Type[? <: DerElem] =
-      (symbol.termRef.widen.asType, labelTypeOf(symbol, symbol.name), metaTypeOf(symbol)).runtimeChecked match {
+    def derElemOf(subSymbol: Symbol): Type[? <: DerElem] = {
+      val elemTpe =
+        if (subSymbol.flags.is(Flags.ParamAccessor)) tpe.memberType(subSymbol)
+        else if (subSymbol.isTerm) subSymbol.termRef 
+        else subSymbol.typeRef
+      
+      (elemTpe.asType, labelTypeOf(subSymbol, subSymbol.name), metaTypeOf(subSymbol)).runtimeChecked match {
         case ('[elemTpe], '[type elemLabel <: String; elemLabel], '[type meta <: Meta; meta]) =>
           Type.of[
             DerElem {
@@ -124,6 +129,7 @@ object DerMirror {
             },
           ]
       }
+    }
 
     def singleCaseFieldOf(symbol: Symbol): Symbol = symbol.caseFields match {
       case field :: Nil => field
@@ -139,7 +145,8 @@ object DerMirror {
     extension (s: Symbol) {
       def isGenericProduct =
         s.isClassDef && s.flags.is(Flags.Case) && !s.flags.is(Flags.Abstract) &&
-          s.primaryConstructor.paramSymss.length == 1 && !s.typeRef.derivesFrom(defn.AnyValClass) &&
+          s.primaryConstructor.paramSymss.count(paramList => paramList.isEmpty || !paramList.head.isTypeParam) == 1 &&
+          !s.typeRef.derivesFrom(defn.AnyValClass) &&
           !(s.primaryConstructor.flags.is(Flags.Private) || s.primaryConstructor.flags.is(Flags.Protected))
 
       /**
@@ -161,7 +168,7 @@ object DerMirror {
         }
     }
 
-    //find a better way than $
+    // find a better way than $
     (metaTypeOf(symbol), labelTypeOf(symbol, symbol.name.stripSuffix("$"))).runtimeChecked match {
       case ('[type meta <: Meta; meta], '[type label <: String; label]) =>
         def deriveSingleton = Option.when(tpe.isSingleton || tpe <:< TypeRepr.of[Unit]) {
@@ -208,7 +215,7 @@ object DerMirror {
                 }: DerMirror.TransparentOf[T] {
                   type MirroredLabel = label
                   type Metadata = meta
-                  type MirrorElemType = fieldType
+                  type MirroredElemType = fieldType
                   type MirroredElems = DerElem {
                     type MirroredType = fieldType
                     type MirroredLabel = elemLabel
@@ -316,16 +323,16 @@ object DerMirror {
     def value: MirroredType
   }
   sealed trait Transparent extends DerMirror {
-    final type MirroredElems = DerElem.Of[MirrorElemType] *: EmptyTuple
-    type MirrorElemType
-    def unwrap(value: MirroredType): MirrorElemType
-    def wrap(value: MirrorElemType): MirroredType
+    type MirroredElemType
+    type MirroredElems <: DerElem.Of[MirroredElemType] *: EmptyTuple
+    def unwrap(value: MirroredType): MirroredElemType
+    def wrap(value: MirroredElemType): MirroredType
   }
 
   // workaround for https://github.com/scala/scala3/issues/25245
   private sealed trait TransparentWorkaround[T, U] extends DerMirror.Transparent {
     final type MirroredType = T
-    final type MirrorElemType = U
+    final type MirroredElemType = U
 
     def unwrap(value: T): U
     def wrap(value: U): T

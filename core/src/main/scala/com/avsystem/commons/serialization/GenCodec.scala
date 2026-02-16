@@ -249,8 +249,8 @@ object GenCodec extends GenCodecMacros {
   inline given [T: DerMirror.Of] => (AllowDerivation[GenCodec[T]]) => GenCodec[T] = GenCodec.derived[T]
   inline private def unsafeDerived[T: DerMirror.Of as derMirror]: GenCodec[T] = inline derMirror match {
     case m: DerMirror.TransparentOf[T] =>
-      deriveTransparentWrapper[T, m.MirrorElemType](
-        compiletime.summonInline[GenCodec[m.MirrorElemType]],
+      deriveTransparentWrapper[T, m.MirroredElemType](
+        compiletime.summonInline[GenCodec[m.MirroredElemType]],
         m.wrap,
         m.unwrap,
       )
@@ -264,22 +264,14 @@ object GenCodec extends GenCodecMacros {
         m.fromUnsafeArray,
       )
     case m: DerMirror.SumOf[T] =>
+      val label = compiletime.constValue[m.MirroredLabel]
+      val instances = summonInstances[m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true).toArrayOf[GenCodec[?]]
+      val labels = compiletime.constValueTuple[m.MirroredElemLabels].toArrayOf[String]
+      val classTags = compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]].toArrayOf[ClassTag[?]]
+
       m.getAnnotation[flatten] match {
-        case Some(f) =>
-          deriveFlattenSum(
-            compiletime.constValue[m.MirroredLabel],
-            summonInstances[m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true).toArrayOf[GenCodec[?]],
-            compiletime.constValueTuple[m.MirroredElemLabels].toArrayOf[String],
-            f.caseFieldName,
-            compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]].toArrayOf[ClassTag[?]],
-          )
-        case _ =>
-          deriveNestedSum(
-            compiletime.constValue[m.MirroredLabel],
-            summonInstances[m.MirroredElemTypes](summonAllowed = false, deriveAllowed = true).toArrayOf[GenCodec[?]],
-            compiletime.constValueTuple[m.MirroredElemLabels].toArrayOf[String],
-            compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, ClassTag]].toArrayOf[ClassTag[?]],
-          )
+        case Some(f) => deriveFlattenSum(label, instances, labels, f.caseFieldName, classTags)
+        case _ => deriveNestedSum(label, instances, labels, classTags)
       }
   }
 

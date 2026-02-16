@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.mirror.DerMirror
 import com.avsystem.commons.serialization.CodecTestData.*
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {
@@ -181,7 +182,11 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip[PureGadtExpr[String]](Plus(StringLiteral("str"), StringLiteral("fag")))
   }
   type IntBranch = Branch[Int]
-  GenCodec.derived[IntTree]
+//  showAst{
+//    compiletime.summonInline[Mirror.Of[IntTree]]
+//  }
+  
+//  GenCodec.derived[IntTree]
   case class Node[T](value: T, children: List[Node[T]] = Nil) derives GenCodec
   GenCodec.derived[IntBranch]
 

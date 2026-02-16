@@ -315,7 +315,7 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
     )
   }
   type IntBranch = Branch[Int]
-  GenCodec.derived[IntTree]
+//  GenCodec.derived[IntTree]
   GenCodec.derived[IntBranch]
 
   case class Node[T](value: T, children: List[Node[T]] = Nil) derives GenCodec

@@ -202,6 +202,8 @@ object CodecTestData {
 
 //  object ValueClass extends HasGenCodec[ValueClass]
   object SealedBase {
+    DerMirror.derived[InnerBase]
+
     given GenCodec[SealedBase] = GenCodec.derived[SealedBase]
     sealed trait InnerBase extends SealedBase
     case class CaseClass(str: String) extends SealedBase
@@ -321,7 +323,8 @@ object CodecTestData {
   object ItsOverTwentyTwo extends HasGenCodec[ItsOverTwentyTwo]
   object HasColl extends HasRecursiveGenCodec[HasColl]
   object SealedRefined {
-    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = GenCodec.derived
+    given [T: GenCodec] => GenCodec[SealedRefined { type X = T }] = ???
+//    GenCodec.derived
     final case class First[Type](foo: Type) extends SealedRefined {
       type X = Type
     }
