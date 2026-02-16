@@ -9,18 +9,18 @@ sealed class MacroInstances[Implicits, Instances <: AnyNamedTuple](applyImpl: (I
 }
 
 object MacroInstances {
-  inline given materialize[Implicits, Instances <: AnyNamedTuple]: MacroInstances[Implicits, Instances] = ???
-//    MacroInstances[Implicits, Instances] { (implicits, companion) =>
-//      import implicits.given
-//      materializeInstances[DropNames[Instances]].asInstanceOf[Instances]
-//    }
+  inline given materialize[Implicits, Instances <: AnyNamedTuple]: MacroInstances[Implicits, Instances] =
+    MacroInstances[Implicits, Instances] { (implicits, companion) =>
+      import implicits.given
+      materializeInstances[DropNames[Instances]].asInstanceOf[Instances]
+    }
   inline def materializeInstances[T <: Tuple]: T = inline compiletime.erasedValue[T] match {
     case _: EmptyTuple => EmptyTuple.asInstanceOf[T]
     case _: (h *: t) =>
       given AllowDerivation[h] = AllowDerivation.create
       (compiletime.summonInline[h] *: materializeInstances[t]).asInstanceOf[T]
   }
-  
+
   /**
    * Annotation which may be applied on methods of `Implicits` trait in [[MacroInstances]] to instruct
    * [[MacroInstances.materialize]] macro how to implement these methods.
