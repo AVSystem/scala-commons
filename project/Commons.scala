@@ -208,7 +208,6 @@ object Commons extends ProjectGroup("commons") {
       mongo,
       hocon,
       spring,
-      redis,
     )
     .settings(aggregateProjectSettings)
 
@@ -304,21 +303,6 @@ object Commons extends ProjectGroup("commons") {
       sourceDirsSettings(_.getParentFile),
     )
 
-  lazy val redis = mkSubProject
-    .dependsOn(core % CompileAndTest)
-    .settings(
-      jvmCommonSettings,
-      libraryDependencies ++= Seq(
-        "com.google.guava" % "guava" % guavaVersion,
-        "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
-        "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-        "io.monix" %% "monix" % monixVersion,
-      ),
-      Test / parallelExecution := false,
-      Compile / scalacOptions += "-Wconf:cat=deprecation:is", // only inform about deprecations due to scheduled removal
-      Test / skip := true,
-    )
-
   lazy val hocon = mkSubProject
     .dependsOn(core % CompileAndTest)
     .settings(
@@ -350,7 +334,7 @@ object Commons extends ProjectGroup("commons") {
     )
 
   lazy val benchmark = mkSubProject
-    .dependsOn(redis, mongo)
+    .dependsOn(mongo)
     .enablePlugins(JmhPlugin)
     .settings(
       jvmCommonSettings,
