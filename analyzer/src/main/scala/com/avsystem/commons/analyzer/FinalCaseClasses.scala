@@ -1,28 +1,30 @@
 package com.avsystem.commons
 package analyzer
 
-import com.avsystem.commons.analyzer.Level.Info
+import dotty.tools.dotc.ast.tpd
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Flags
 
-import scala.tools.nsc.Global
+class FinalCaseClasses extends AnalyzerRule {
+  val name: String = "finalCaseClasses"
 
-class FinalCaseClasses(g: Global) extends AnalyzerRule(g, "finalCaseClasses", Level.Warn) {
+  override def transformTypeDef(tree: tpd.TypeDef)(using Context): tpd.Tree = {
+    val sym = tree.symbol
+    // TypeDef is used for classes, traits, and type aliases in Scala 3 - filter for classes
+    if (sym.isClass) {
+      val flags = sym.flags
+      val isCaseClass = flags.is(Flags.Case)
+      val isFinal = flags.is(Flags.Final)
+      val isSealed = flags.is(Flags.Sealed)
+      // isStatic means top-level or nested in an object (not nested in a class/trait)
+      val isStatic = sym.isStatic
 
-  import global.*
-
-  def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
-    case cd: ClassDef if !cd.mods.hasFlag(Flag.FINAL | Flag.SEALED) && cd.mods.hasFlag(Flag.CASE) =>
-      // Skip case classes defined inside traits (SI-4440)
-      val isInner = cd.symbol.isStatic
-
-      if (isInner) {
-        report(cd.pos, "Case classes should be marked as final")
-      } else {
-        report(
-          cd.pos,
-          "Case classes should be marked as final. Due to the SI-4440 bug, it cannot be done here. Consider moving the case class to the companion object",
-          level = Info,
-        )
+      // Check if it's a case class that's not final and not sealed
+      // For SI-4440: only report error for static (non-inner) case classes
+      if (isCaseClass && !isFinal && !isSealed && isStatic) {
+        report(tree, "Case classes should be marked as final")
       }
-    case _ =>
+    }
+    tree
   }
 }
