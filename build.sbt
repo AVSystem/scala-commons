@@ -208,7 +208,7 @@ lazy val root = project
     ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
     ScalaUnidoc / unidoc / scalacOptions += "-Ymacro-expand:none",
     ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(
-//      analyzer,
+      analyzer,
       `core-js`,
 //      comprof,
     ),
@@ -217,7 +217,7 @@ lazy val root = project
 lazy val jvm = project
   .in(file(".jvm"))
   .aggregate(
-//    analyzer,
+    analyzer,
     core,
     jetty,
 //    mongo,
@@ -235,16 +235,15 @@ lazy val js = project
   )
   .settings(aggregateProjectSettings)
 
-//todo: migrate to scala 3 compiler plugin API
-//lazy val analyzer = project
-//  .dependsOn(core % Test)
-//  .settings(
-//    jvmCommonSettings,
-//    libraryDependencies ++= Seq(
-//      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-//      "io.monix" %% "monix" % monixVersion % Test,
-//    ),
-//  )
+lazy val analyzer = project
+  .settings(
+    noPublishSettings,
+    libraryDependencies ++= Seq(
+      "org.scala-lang" %% "scala3-compiler" % scalaVersion.value % "provided",
+      "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+    ),
+    Test / fork := true,
+  )
 
 def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
   base / "src" / conf / "scala",
