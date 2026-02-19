@@ -1,24 +1,38 @@
 package com.avsystem.commons
 package analyzer
 
-import scala.tools.nsc.Global
+import dotty.tools.dotc.ast.tpd
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Flags
+import dotty.tools.dotc.core.Names.termName
 
-class ThrowableObjects(g: Global) extends AnalyzerRule(g, "throwableObjects", Level.Warn) {
+class ThrowableObjects extends AnalyzerRule {
+  val name: String = "throwableObjects"
 
-  import global._
+  override def transformTypeDef(tree: tpd.TypeDef)(using ctx: Context): tpd.Tree = {
+    val sym = tree.symbol
+    // Check if it's a module (object) class definition
+    if (sym.is(Flags.Module) && sym.isClass) {
+      val tpe = sym.asClass.typeRef
+      val throwableTpe = ctx.definitions.ThrowableClass.typeRef
 
-  private lazy val throwableTpe = typeOf[Throwable]
-  private lazy val throwableSym = throwableTpe.dealias.typeSymbol
+      // Check if the object extends Throwable (subtype check)
+      if (tpe <:< throwableTpe) {
+        val throwableSym = ctx.definitions.ThrowableClass
 
-  def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
-    case md: ModuleDef =>
-      val tpe = md.symbol.typeSignature
-      def fillInStackTraceSym: Symbol =
-        tpe.member(TermName("fillInStackTrace")).alternatives.find(_.paramLists == List(Nil)).get
+        // Look up fillInStackTrace member on the object's type
+        val fillInMember = sym.info.member(termName("fillInStackTrace"))
 
-      if (tpe <:< throwableTpe && fillInStackTraceSym.owner == throwableSym) {
-        report(md.pos, "objects should never extend Throwable unless they have no stack trace")
+        // Check if the no-arg fillInStackTrace is still owned by Throwable (not overridden)
+        // If all alternatives are owned by Throwable, the method hasn't been overridden
+        val alternatives = fillInMember.alternatives
+        val notOverridden = alternatives.nonEmpty && alternatives.forall(_.symbol.owner == throwableSym)
+
+        if (notOverridden) {
+          report(tree, "objects should never extend Throwable unless they have no stack trace")
+        }
       }
-    case _ =>
+    }
+    tree
   }
 }
