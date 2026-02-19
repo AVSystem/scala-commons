@@ -1,19 +1,46 @@
 package com.avsystem.commons
 package analyzer
 
-import scala.tools.nsc.Global
+import dotty.tools.dotc.ast.tpd
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Symbols.NoSymbol
 
-class FindUsages(g: Global) extends AnalyzerRule(g, "findUsages") {
+class FindUsages extends AnalyzerRule {
+  val name: String = "findUsages"
 
-  import global._
+  private lazy val rejectedSymbols: Set[String] =
+    argument.map(_.split(";").toSet).getOrElse(Set.empty)
 
-  lazy val rejectedSymbols: Set[String] =
-    if (argument == null) Set.empty else argument.split(";").toSet
+  override def transformIdent(tree: tpd.Ident)(using Context): tpd.Tree = {
+    checkTree(tree)
+    tree
+  }
 
-  override def analyze(unit: CompilationUnit): Unit = if (rejectedSymbols.nonEmpty) {
-    unit.body.foreach { tree =>
-      if (tree.symbol != null && rejectedSymbols.contains(tree.symbol.fullName)) {
-        report(tree.pos, s"found usage of ${tree.symbol.fullName}")
+  override def transformSelect(tree: tpd.Select)(using Context): tpd.Tree = {
+    checkTree(tree)
+    tree
+  }
+
+  override def transformApply(tree: tpd.Apply)(using Context): tpd.Tree = {
+    checkTree(tree)
+    tree
+  }
+
+  override def transformNew(tree: tpd.New)(using Context): tpd.Tree = {
+    checkTree(tree)
+    tree
+  }
+
+  override def transformOther(tree: tpd.Tree)(using Context): tpd.Tree = {
+    checkTree(tree)
+    tree
+  }
+
+  private def checkTree(tree: tpd.Tree)(using Context): Unit = {
+    if (rejectedSymbols.nonEmpty && tree.symbol != NoSymbol) {
+      val fullName = tree.symbol.fullName.toString
+      if (rejectedSymbols.contains(fullName)) {
+        report(tree, s"found usage of $fullName")
       }
     }
   }
