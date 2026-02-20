@@ -1,30 +1,39 @@
 package com.avsystem.commons
 package analyzer
 
-import scala.tools.nsc.Global
+import dotty.tools.dotc.ast.tpd
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Symbols
+import dotty.tools.dotc.core.Symbols.{NoSymbol, Symbol}
 
-class ShowAst(g: Global) extends AnalyzerRule(g, "showAst", Level.Error) {
+class ShowAst extends AnalyzerRule {
+  val name: String = "showAst"
+  level = Level.Error
 
-  import global._
+  private def showAstAnnotClass(using Context): Symbol =
+    Symbols.getClassIfDefined("com.avsystem.commons.annotation.showAst")
 
-  lazy val showAstAnnotType: Type = classType("com.avsystem.commons.annotation.showAst")
+  override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree = {
+    checkShowAst(tree)
+    tree
+  }
 
-  def analyze(unit: CompilationUnit): Unit = if (showAstAnnotType != NoType) {
-    def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
-      case `tree` | EmptyTree =>
-        tree match {
-          case Annotated(annot, arg) if annot.tpe <:< showAstAnnotType =>
-            report(arg.pos, showCode(arg))
-          case Typed(expr, tpt) if tpt.tpe.annotations.exists(_.tpe <:< showAstAnnotType) =>
-            report(expr.pos, showCode(expr))
-          case _: MemberDef if tree.symbol.annotations.exists(_.tpe <:< showAstAnnotType) =>
-            report(tree.pos, showCode(tree))
-          case _ =>
-        }
-        tree.children.foreach(analyzeTree)
-      case prevTree =>
-        analyzeTree(prevTree)
+  override def transformDefDef(tree: tpd.DefDef)(using Context): tpd.Tree = {
+    checkShowAst(tree)
+    tree
+  }
+
+  override def transformTypeDef(tree: tpd.TypeDef)(using Context): tpd.Tree = {
+    checkShowAst(tree)
+    tree
+  }
+
+  private def checkShowAst(tree: tpd.MemberDef)(using Context): Unit = {
+    val annotCls = showAstAnnotClass
+    if (annotCls != NoSymbol && tree.symbol != NoSymbol) {
+      if (tree.symbol.annotations.exists(_.symbol == annotCls)) {
+        report(tree, tree.show)
+      }
     }
-    analyzeTree(unit.body)
   }
 }
