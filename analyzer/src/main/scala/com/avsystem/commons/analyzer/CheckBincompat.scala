@@ -33,7 +33,10 @@ class CheckBincompat extends AnalyzerRule {
       val sym = tree.symbol
       val hasAnnot = sym.annotations.exists(annot => annot.symbol == annotCls)
       if (hasAnnot && !isDefinitionSite(sym, tree)) {
-        report(tree, "Symbols annotated as @bincompat exist only for binary compatibility and should not be used directly")
+        report(
+          tree,
+          "Symbols annotated as @bincompat exist only for binary compatibility and should not be used directly",
+        )
       }
     }
   }
@@ -59,7 +62,8 @@ class CheckBincompat extends AnalyzerRule {
     spanContains(sym) || {
       // For module classes, also check the module val (companion module)
       // For module vals, also check the module class
-      val companion = if (sym.is(dotty.tools.dotc.core.Flags.ModuleClass)) sym.companionModule
+      val companion =
+        if (sym.is(dotty.tools.dotc.core.Flags.ModuleClass)) sym.companionModule
         else if (sym.is(dotty.tools.dotc.core.Flags.Module)) sym.companionClass
         else NoSymbol
       companion != NoSymbol && spanContains(companion)

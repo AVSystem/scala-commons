@@ -20,10 +20,10 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
     assertWarnings(
       1,
       explicitGenericsAnnotDef + scala"""
-        |import com.avsystem.commons.annotation.explicitGenerics
-        |@explicitGenerics def myMethod[A](a: A): A = a
-        |val result = myMethod(42)
-        |""".stripMargin,
+                                        |import com.avsystem.commons.annotation.explicitGenerics
+                                        |@explicitGenerics def myMethod[A](a: A): A = a
+                                        |val result = myMethod(42)
+                                        |""".stripMargin,
     )
   }
 
@@ -31,10 +31,10 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
     assertWarnings(
       0,
       explicitGenericsAnnotDef + scala"""
-        |import com.avsystem.commons.annotation.explicitGenerics
-        |@explicitGenerics def myMethod[A](a: A): A = a
-        |val result = myMethod[Int](42)
-        |""".stripMargin,
+                                        |import com.avsystem.commons.annotation.explicitGenerics
+                                        |@explicitGenerics def myMethod[A](a: A): A = a
+                                        |val result = myMethod[Int](42)
+                                        |""".stripMargin,
     )
   }
 
@@ -42,9 +42,9 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
     assertWarnings(
       0,
       explicitGenericsAnnotDef + scala"""
-        |def myMethod[A](a: A): A = a
-        |val result = myMethod(42)
-        |""".stripMargin,
+                                        |def myMethod[A](a: A): A = a
+                                        |val result = myMethod(42)
+                                        |""".stripMargin,
     )
   }
 
@@ -52,9 +52,9 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
     assertWarnings(
       0,
       scala"""
-        |def myMethod[A](a: A): A = a
-        |val result = myMethod(42)
-        |""".stripMargin,
+             |def myMethod[A](a: A): A = a
+             |val result = myMethod(42)
+             |""".stripMargin,
     )
   }
 
@@ -62,10 +62,10 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
     assertWarnings(
       1,
       explicitGenericsAnnotDef + scala"""
-        |import com.avsystem.commons.annotation.explicitGenerics
-        |@explicitGenerics def twoParams[A, B](a: A, b: B): (A, B) = (a, b)
-        |val result = twoParams(1, "hello")
-        |""".stripMargin,
+                                        |import com.avsystem.commons.annotation.explicitGenerics
+                                        |@explicitGenerics def twoParams[A, B](a: A, b: B): (A, B) = (a, b)
+                                        |val result = twoParams(1, "hello")
+                                        |""".stripMargin,
     )
   }
 
@@ -73,10 +73,10 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
     assertWarnings(
       0,
       explicitGenericsAnnotDef + scala"""
-        |import com.avsystem.commons.annotation.explicitGenerics
-        |@explicitGenerics def twoParams[A, B](a: A, b: B): (A, B) = (a, b)
-        |val result = twoParams[Int, String](1, "hello")
-        |""".stripMargin,
+                                        |import com.avsystem.commons.annotation.explicitGenerics
+                                        |@explicitGenerics def twoParams[A, B](a: A, b: B): (A, B) = (a, b)
+                                        |val result = twoParams[Int, String](1, "hello")
+                                        |""".stripMargin,
     )
   }
 }

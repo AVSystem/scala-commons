@@ -72,8 +72,11 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("given parameter with default value should fail") {
-    assertErrors(1, scala"""
+    assertErrors(
+      1,
+      scala"""
       def bar(using x: Int = 42): Int = x
-    """)
+    """,
+    )
   }
 }

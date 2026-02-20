@@ -27,8 +27,6 @@ class ImplicitFunctionParams extends AnalyzerRule {
 
   private def isFunctionLikeType(tpe: Type)(using ctx: Context): Boolean = {
     val defn = ctx.definitions
-    defn.isFunctionType(tpe) ||
-      defn.isContextFunctionType(tpe) ||
-      tpe.isRef(defn.PartialFunctionClass)
+    defn.isFunctionType(tpe) || defn.isContextFunctionType(tpe) || tpe.isRef(defn.PartialFunctionClass)
   }
 }

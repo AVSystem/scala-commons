@@ -39,8 +39,7 @@ class ValueEnumExhaustiveMatch extends AnalyzerRule {
     // Collect expected enum values: final, non-lazy, public vals of the selector type
     val unmatched = mutable.LinkedHashSet.from(
       companion.info.decls.iterator.filter { s =>
-        s.isTerm && s.is(Flags.Final) && !s.is(Flags.Lazy) &&
-        s.isPublic && s.info.finalResultType <:< selectorTpe
+        s.isTerm && s.is(Flags.Final) && !s.is(Flags.Lazy) && s.isPublic && s.info.finalResultType <:< selectorTpe
       },
     )
 
@@ -63,7 +62,8 @@ class ValueEnumExhaustiveMatch extends AnalyzerRule {
   private def findMatchedEnums(
     pattern: tpd.Tree,
     unmatched: mutable.Set[Symbol],
-  )(using Context): Unit = pattern match {
+  )(using Context,
+  ): Unit = pattern match {
     case tpd.Bind(_, body) => findMatchedEnums(body, unmatched)
     case tpd.Alternative(pats) => pats.foreach(findMatchedEnums(_, unmatched))
     case id: tpd.Ident if id.name == nme.WILDCARD => unmatched.clear()

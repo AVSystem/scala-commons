@@ -15,8 +15,8 @@ final class ThrowableObjectsTest extends AnyFunSuite with AnalyzerTest {
 
   test("throwable object with NoStackTrace should be allowed") {
     assertNoErrors(scala"""
-             |object noStackTraceThrowableObject extends Throwable with scala.util.control.NoStackTrace
-             |""".stripMargin)
+                          |object noStackTraceThrowableObject extends Throwable with scala.util.control.NoStackTrace
+                          |""".stripMargin)
   }
 
   test("throwable objects - mixed (one with override, one without)") {
@@ -31,15 +31,15 @@ final class ThrowableObjectsTest extends AnyFunSuite with AnalyzerTest {
 
   test("regular object not extending Throwable should be allowed") {
     assertNoErrors(scala"""
-             |object regularObject {
-             |  def x: Int = 42
-             |}
-             |""".stripMargin)
+                          |object regularObject {
+                          |  def x: Int = 42
+                          |}
+                          |""".stripMargin)
   }
 
   test("throwable class (not object) should not be flagged") {
     assertNoErrors(scala"""
-             |class MyException extends Throwable
-             |""".stripMargin)
+                          |class MyException extends Throwable
+                          |""".stripMargin)
   }
 }

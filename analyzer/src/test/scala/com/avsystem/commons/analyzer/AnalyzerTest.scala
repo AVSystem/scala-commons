@@ -87,12 +87,7 @@ trait AnalyzerTest { this: Assertions =>
     )
   }
 
-  implicit final def stringContextToScalaInterpolator(sc: StringContext): AnalyzerTest.ScalaInterpolator =
-    new AnalyzerTest.ScalaInterpolator(sc)
-}
-
-object AnalyzerTest {
-  final class ScalaInterpolator(private val sc: StringContext) extends AnyVal {
+  extension (sc: StringContext) {
     def scala(args: Any*): String = s"object TopLevel {${sc.s(args*)}}"
   }
 }

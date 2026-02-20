@@ -20,7 +20,8 @@ class ImportJavaUtil extends AnalyzerRule {
             sel.name.toString == "util" && sel.renamed.isEmpty
           }
           if (importsJavaUtil) {
-            report(imp,
+            report(
+              imp,
               "Don't import java.util: either import with rename (e.g. import java.{util => ju}) " +
                 "or use type aliases from JavaInterop (e.g. JList, JSet, etc)",
             )

@@ -15,13 +15,8 @@ class ConstantDeclarations extends AnalyzerRule {
 
     // Skip local vals, params, modules (objects), synthetic (compiler-generated)
     if (
-      !sym.exists ||
-      !sym.owner.isClass ||
-      !sym.isPublic ||
-      sym.is(Flags.Module) ||
-      sym.is(Flags.Param) ||
-      sym.is(Flags.Synthetic) ||
-      sym.is(Flags.Mutable)
+      !sym.exists || !sym.owner.isClass || !sym.isPublic || sym.is(Flags.Module) || sym.is(Flags.Param) ||
+      sym.is(Flags.Synthetic) || sym.is(Flags.Mutable)
     ) return tree
 
     val isConstantValue = tree.rhs.tpe.widenTermRefExpr match {
@@ -49,8 +44,8 @@ class ConstantDeclarations extends AnalyzerRule {
     } else if (isFinal && isConstantValue) {
       // Case 3: Final literal-valued constant with explicit type annotation
       val tpt = tree.tpt
-      val hasExplicitType = tpt.span.exists && tpt.span.isSourceDerived &&
-        tpt.span != tree.nameSpan && tpt.span.start != tpt.span.end
+      val hasExplicitType = tpt.span.exists && tpt.span.isSourceDerived && tpt.span != tree.nameSpan &&
+        tpt.span.start != tpt.span.end
       if (hasExplicitType) {
         report(
           tree,

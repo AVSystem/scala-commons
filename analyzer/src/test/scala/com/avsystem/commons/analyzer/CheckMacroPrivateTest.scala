@@ -20,32 +20,32 @@ final class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       1,
       macroPrivateAnnotDef + scala"""
-             |import com.avsystem.commons.annotation.macroPrivate
-             |
-             |@macroPrivate def secret: Int = 42
-             |val x = secret
-             |""".stripMargin,
+                                    |import com.avsystem.commons.annotation.macroPrivate
+                                    |
+                                    |@macroPrivate def secret: Int = 42
+                                    |val x = secret
+                                    |""".stripMargin,
     )
   }
 
   test("usage of @macroPrivate symbol inside inline method should be allowed") {
     assertNoErrors(
       macroPrivateAnnotDef + scala"""
-             |import com.avsystem.commons.annotation.macroPrivate
-             |
-             |@macroPrivate def secret: Int = 42
-             |inline def macroLike: Int = secret
-             |""".stripMargin,
+                                    |import com.avsystem.commons.annotation.macroPrivate
+                                    |
+                                    |@macroPrivate def secret: Int = 42
+                                    |inline def macroLike: Int = secret
+                                    |""".stripMargin,
     )
   }
 
   test("definition of @macroPrivate symbol itself should not be rejected") {
     assertNoErrors(
       macroPrivateAnnotDef + scala"""
-             |import com.avsystem.commons.annotation.macroPrivate
-             |
-             |@macroPrivate def secret: Int = 42
-             |""".stripMargin,
+                                    |import com.avsystem.commons.annotation.macroPrivate
+                                    |
+                                    |@macroPrivate def secret: Int = 42
+                                    |""".stripMargin,
     )
   }
 
@@ -53,24 +53,24 @@ final class CheckMacroPrivateTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       1,
       macroPrivateAnnotDef + scala"""
-             |import com.avsystem.commons.annotation.macroPrivate
-             |
-             |@macroPrivate val secret: Int = 42
-             |val x = secret
-             |""".stripMargin,
+                                    |import com.avsystem.commons.annotation.macroPrivate
+                                    |
+                                    |@macroPrivate val secret: Int = 42
+                                    |val x = secret
+                                    |""".stripMargin,
     )
   }
 
   test("usage inside nested inline method should be allowed") {
     assertNoErrors(
       macroPrivateAnnotDef + scala"""
-             |import com.avsystem.commons.annotation.macroPrivate
-             |
-             |@macroPrivate def secret: Int = 42
-             |object Wrapper {
-             |  inline def macroLike: Int = secret
-             |}
-             |""".stripMargin,
+                                    |import com.avsystem.commons.annotation.macroPrivate
+                                    |
+                                    |@macroPrivate def secret: Int = 42
+                                    |object Wrapper {
+                                    |  inline def macroLike: Int = secret
+                                    |}
+                                    |""".stripMargin,
     )
   }
 }

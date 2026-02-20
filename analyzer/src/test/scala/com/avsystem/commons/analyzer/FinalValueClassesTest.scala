@@ -11,44 +11,44 @@ final class FinalValueClassesTest extends AnyFunSuite with AnalyzerTest {
 
   test("final value class should pass") {
     assertNoErrors(scala"""
-             |final class GoodValueClass(val x: Int) extends AnyVal {
-             |  def double: Int = x * 2
-             |}
-             |""".stripMargin)
+                          |final class GoodValueClass(val x: Int) extends AnyVal {
+                          |  def double: Int = x * 2
+                          |}
+                          |""".stripMargin)
   }
 
   test("value class not marked as final should not trigger in Scala 3 (compiler auto-finalizes)") {
     // In Scala 3, value classes are automatically final even without the keyword.
     // The compiler adds Final flag before our phase runs, so our rule sees it as final.
     assertNoErrors(scala"""
-             |class ValueClass1(val x: Int) extends AnyVal {
-             |  def double: Int = x * 2
-             |}
-             |""".stripMargin)
+                          |class ValueClass1(val x: Int) extends AnyVal {
+                          |  def double: Int = x * 2
+                          |}
+                          |""".stripMargin)
   }
 
   test("generic value class should not trigger in Scala 3 (compiler auto-finalizes)") {
     // Same as above: Scala 3 automatically finalizes value classes.
     assertNoErrors(scala"""
-             |class ValueClass2[T <: Int](val x: T) extends AnyVal {
-             |  def double: Int = x * 2
-             |}
-             |""".stripMargin)
+                          |class ValueClass2[T <: Int](val x: T) extends AnyVal {
+                          |  def double: Int = x * 2
+                          |}
+                          |""".stripMargin)
   }
 
   test("regular class with multiple parameters should not be affected") {
     assertNoErrors(scala"""
-             |class RegularClass(val x: Int, val y: Int) {
-             |  def double: Int = x * 2
-             |}
-             |""".stripMargin)
+                          |class RegularClass(val x: Int, val y: Int) {
+                          |  def double: Int = x * 2
+                          |}
+                          |""".stripMargin)
   }
 
   test("regular class not extending AnyVal should not be affected") {
     assertNoErrors(scala"""
-             |class RegularClass2(val x: Int) {
-             |  def double: Int = x * 2
-             |}
-             |""".stripMargin)
+                          |class RegularClass2(val x: Int) {
+                          |  def double: Int = x * 2
+                          |}
+                          |""".stripMargin)
   }
 }

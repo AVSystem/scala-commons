@@ -36,9 +36,17 @@ final class CanaryTest extends AnyFunSuite with AnalyzerTest {
         |  }
         |}""".stripMargin
     val result = compile(source)
-    assert(result.warningCount > 0, s"Should capture at least one match-not-exhaustive warning, got ${result.warningCount}")
-    assert(result.warnings.exists(msg => msg.toLowerCase.contains("match") || msg.toLowerCase.contains("not exhaustive") || msg.toLowerCase.contains("blue")),
-      s"Warning messages should mention non-exhaustive match, got: ${result.warnings.mkString("; ")}")
+    assert(
+      result.warningCount > 0,
+      s"Should capture at least one match-not-exhaustive warning, got ${result.warningCount}",
+    )
+    assert(
+      result.warnings.exists(msg =>
+        msg.toLowerCase.contains("match") || msg.toLowerCase.contains("not exhaustive") ||
+          msg.toLowerCase.contains("blue"),
+      ),
+      s"Warning messages should mention non-exhaustive match, got: ${result.warnings.mkString("; ")}",
+    )
   }
 
   test("reporter captures compiler errors") {
@@ -64,11 +72,16 @@ final class CanaryTest extends AnyFunSuite with AnalyzerTest {
     val withoutPlugin = compileWithoutPlugin(source)
     // Both should have zero errors on valid code
     assert(!withPlugin.hasErrors, s"With plugin, valid code should have no errors: ${withPlugin.errors.mkString("; ")}")
-    assert(!withoutPlugin.hasErrors, s"Without plugin, valid code should have no errors: ${withoutPlugin.errors.mkString("; ")}")
+    assert(
+      !withoutPlugin.hasErrors,
+      s"Without plugin, valid code should have no errors: ${withoutPlugin.errors.mkString("; ")}",
+    )
     // Without plugin should have no [AVS] diagnostics
     val allWithoutPluginMessages = withoutPlugin.errors ++ withoutPlugin.warnings
-    assert(!allWithoutPluginMessages.exists(_.contains("[AVS]")),
-      "Without plugin, no [AVS]-prefixed diagnostics should appear")
+    assert(
+      !allWithoutPluginMessages.exists(_.contains("[AVS]")),
+      "Without plugin, no [AVS]-prefixed diagnostics should appear",
+    )
   }
 
   test("fresh context per compilation avoids stale state") {
@@ -84,9 +97,13 @@ final class CanaryTest extends AnyFunSuite with AnalyzerTest {
     assert(result1.hasErrors, "First compilation should have errors")
 
     val result2 = compile(validSource)
-    assert(!result2.hasErrors,
-      s"Second compilation should have zero errors (fresh context), but got: ${result2.errors.mkString("; ")}")
-    assert(result2.errorCount == 0,
-      s"Error count should be 0 for valid code after prior error compilation, got ${result2.errorCount}")
+    assert(
+      !result2.hasErrors,
+      s"Second compilation should have zero errors (fresh context), but got: ${result2.errors.mkString("; ")}",
+    )
+    assert(
+      result2.errorCount == 0,
+      s"Error count should be 0 for valid code after prior error compilation, got ${result2.errorCount}",
+    )
   }
 }

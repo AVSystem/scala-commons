@@ -10,24 +10,20 @@ final class BasePackageTest extends AnyFunSuite with AnalyzerTest {
 
   test("file with required base package should pass") {
     assertNoErrors(
-      "package com.avsystem\n" +
-        "object Good { def x = 1 }",
+      "package com.avsystem\n" + "object Good { def x = 1 }",
     )
   }
 
   test("file with wrong base package should be rejected") {
     assertErrors(
       1,
-      "package com.other\n" +
-        "object Bad { def x = 1 }",
+      "package com.other\n" + "object Bad { def x = 1 }",
     )
   }
 
   test("file with nested required base package should pass") {
     assertNoErrors(
-      "package com\n" +
-        "package avsystem\n" +
-        "object Nested { def x = 1 }",
+      "package com\n" + "package avsystem\n" + "object Nested { def x = 1 }",
     )
   }
 }

@@ -52,21 +52,21 @@ final class ValueEnumExhaustiveMatchTest extends AnyFunSuite with AnalyzerTest {
 
   private def source(caseDefs: String): String =
     valueEnumStubs + scala"""
-           |import com.avsystem.commons.misc._
-           |
-           |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
-           |object Enumz extends AbstractValueEnumCompanion[Enumz] {
-           |  final val One, Two, Three: Value = new Enumz
-           |}
-           |
-           |object Main {
-           |  val value: Enumz = Enumz.One
-           |  import Enumz._
-           |  value match {
-           |    $caseDefs
-           |  }
-           |}
-           |""".stripMargin
+                            |import com.avsystem.commons.misc._
+                            |
+                            |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+                            |object Enumz extends AbstractValueEnumCompanion[Enumz] {
+                            |  final val One, Two, Three: Value = new Enumz
+                            |}
+                            |
+                            |object Main {
+                            |  val value: Enumz = Enumz.One
+                            |  import Enumz._
+                            |  value match {
+                            |    $caseDefs
+                            |  }
+                            |}
+                            |""".stripMargin
 
   test("should report two unmatched enum values") {
     assertErrors(

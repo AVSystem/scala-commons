@@ -44,7 +44,8 @@ class VarargsAtLeast extends AnalyzerRule {
     fun: tpd.Tree,
     params: List[?],
     actualVarargCount: Int,
-  )(using ctx: Context): Unit = {
+  )(using ctx: Context,
+  ): Unit = {
     val atLeastAnnotClass = Symbols.getClassIfDefined("com.avsystem.commons.annotation.atLeast")
 
     if (atLeastAnnotClass != NoSymbol) {

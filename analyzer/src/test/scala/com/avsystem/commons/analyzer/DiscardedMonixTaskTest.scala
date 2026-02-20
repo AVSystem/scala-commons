@@ -23,30 +23,30 @@ final class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       1,
       fakeMonixTask + scala"""
-             |import monix.eval.Task
-             |def test(): Unit = {
-             |  Task.eval(42)
-             |  ()
-             |}
-             |""".stripMargin,
+                             |import monix.eval.Task
+                             |def test(): Unit = {
+                             |  Task.eval(42)
+                             |  ()
+                             |}
+                             |""".stripMargin,
     )
   }
 
   test("assigned Task should not be rejected") {
     assertNoErrors(
       fakeMonixTask + scala"""
-             |import monix.eval.Task
-             |val t: Task[Int] = Task.eval(42)
-             |""".stripMargin,
+                             |import monix.eval.Task
+                             |val t: Task[Int] = Task.eval(42)
+                             |""".stripMargin,
     )
   }
 
   test("returned Task should not be rejected") {
     assertNoErrors(
       fakeMonixTask + scala"""
-             |import monix.eval.Task
-             |def test(): Task[Int] = Task.eval(42)
-             |""".stripMargin,
+                             |import monix.eval.Task
+                             |def test(): Task[Int] = Task.eval(42)
+                             |""".stripMargin,
     )
   }
 
@@ -54,24 +54,24 @@ final class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       1,
       fakeMonixTask + scala"""
-             |import monix.eval.Task
-             |def test(): Unit = {
-             |  var i = 0
-             |  while (i < 10) {
-             |    Task.eval(i)
-             |    i += 1
-             |  }
-             |}
-             |""".stripMargin,
+                             |import monix.eval.Task
+                             |def test(): Unit = {
+                             |  var i = 0
+                             |  while (i < 10) {
+                             |    Task.eval(i)
+                             |    i += 1
+                             |  }
+                             |}
+                             |""".stripMargin,
     )
   }
 
   test("Task in if/else non-discarded position should not be rejected") {
     assertNoErrors(
       fakeMonixTask + scala"""
-             |import monix.eval.Task
-             |def test(): Task[Int] = if (true) Task.eval(1) else Task.now(2)
-             |""".stripMargin,
+                             |import monix.eval.Task
+                             |def test(): Task[Int] = if (true) Task.eval(1) else Task.now(2)
+                             |""".stripMargin,
     )
   }
 
@@ -79,13 +79,13 @@ final class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       2,
       fakeMonixTask + scala"""
-             |import monix.eval.Task
-             |def test(): Unit = {
-             |  Task.eval(1)
-             |  Task.eval(2)
-             |  ()
-             |}
-             |""".stripMargin,
+                             |import monix.eval.Task
+                             |def test(): Unit = {
+                             |  Task.eval(1)
+                             |  Task.eval(2)
+                             |  ()
+                             |}
+                             |""".stripMargin,
     )
   }
 }
