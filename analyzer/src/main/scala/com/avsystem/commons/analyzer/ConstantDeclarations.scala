@@ -1,36 +1,64 @@
 package com.avsystem.commons
 package analyzer
 
-import scala.tools.nsc.Global
+import dotty.tools.dotc.ast.tpd
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Flags
+import dotty.tools.dotc.core.Types.ConstantType
 
-class ConstantDeclarations(g: Global) extends AnalyzerRule(g, "constantDeclarations", Level.Off) {
+class ConstantDeclarations extends AnalyzerRule {
+  val name: String = "constantDeclarations"
+  level = Level.Off
 
-  import global._
+  override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree = {
+    val sym = tree.symbol
 
-  def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
-    case t @ ValDef(_, name, tpt, rhs) if t.symbol.hasGetter && t.symbol.owner.isEffectivelyFinal =>
+    // Skip local vals, params, modules (objects), synthetic (compiler-generated)
+    if (
+      !sym.exists ||
+      !sym.owner.isClass ||
+      !sym.isPublic ||
+      sym.is(Flags.Module) ||
+      sym.is(Flags.Param) ||
+      sym.is(Flags.Synthetic) ||
+      sym.is(Flags.Mutable)
+    ) return tree
 
-      val getter = t.symbol.getterIn(t.symbol.owner)
-      if (getter.isPublic && getter.isStable && getter.overrides.isEmpty) {
-        val constantValue = rhs.tpe match {
-          case ConstantType(_) => true
-          case _ => false
-        }
+    val isConstantValue = tree.rhs.tpe.widenTermRefExpr match {
+      case _: ConstantType => true
+      case _ => false
+    }
 
-        def doReport(msg: String): Unit =
-          report(t.pos, msg, site = t.symbol)
+    val nameStr = sym.name.toString
+    val firstChar = nameStr.charAt(0)
+    val isUpperCase = firstChar.isUpper
+    val isFinal = sym.is(Flags.Final)
 
-        val firstChar = name.toString.charAt(0)
-        if (constantValue && (firstChar.isLower || !getter.isFinal)) {
-          doReport("a literal-valued constant should be declared as a `final val` with an UpperCamelCase name")
-        }
-        if (!constantValue && firstChar.isUpper && !getter.isFinal) {
-          doReport("a constant with UpperCamelCase name should be declared as a `final val`")
-        }
-        if (getter.isFinal && constantValue && !(tpt.tpe =:= rhs.tpe)) {
-          doReport("a constant with a literal value should not have an explicit type annotation")
-        }
+    if (isConstantValue && (!isUpperCase || !isFinal)) {
+      // Case 1: Literal-valued constant with lowercase name OR not final
+      report(
+        tree,
+        "a literal-valued constant should be declared as a `final val` with an UpperCamelCase name and no explicit type annotation",
+      )
+    } else if (!isConstantValue && isUpperCase && !isFinal) {
+      // Case 2: Non-constant UpperCamelCase val without final
+      report(
+        tree,
+        "an UpperCamelCase val should be declared as a `final val`",
+      )
+    } else if (isFinal && isConstantValue) {
+      // Case 3: Final literal-valued constant with explicit type annotation
+      val tpt = tree.tpt
+      val hasExplicitType = tpt.span.exists && tpt.span.isSourceDerived &&
+        tpt.span != tree.nameSpan && tpt.span.start != tpt.span.end
+      if (hasExplicitType) {
+        report(
+          tree,
+          "a constant with a literal value should not have an explicit type annotation (to enable constant inlining)",
+        )
       }
-    case _ =>
+    }
+
+    tree
   }
 }
