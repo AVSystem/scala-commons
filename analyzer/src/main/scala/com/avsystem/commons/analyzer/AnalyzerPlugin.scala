@@ -19,7 +19,6 @@ class AnalyzerPlugin extends StandardPlugin {
       new ShowAst,
       new FindUsages,
       new CheckBincompat,
-      new Any2StringAdd,
       new ThrowableObjects,
       new DiscardedMonixTask,
       new NothingAsFunctionArgument,
@@ -66,8 +65,7 @@ class AnalyzerPlugin extends StandardPlugin {
             case Some(rule) =>
               rule.level = level
               ruleArg.foreach(arg => rule.argument = Some(arg))
-            case None =>
-              dotty.tools.dotc.report.warning(s"Unrecognized AVS analyzer rule: $ruleName")
+            case None => () // Silently ignore unknown rules for backward compatibility
           }
       }
     }
