@@ -1,92 +1,75 @@
 package com.avsystem.commons
 package analyzer
 
-import scala.reflect.internal.util.NoPosition
-import scala.tools.nsc.plugins.{Plugin, PluginComponent}
-import scala.tools.nsc.{Global, Phase}
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 
-final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
+class AnalyzerPlugin extends StandardPlugin {
 
-  override def init(options: List[String], error: String => Unit): Boolean = {
-    options.foreach { option =>
-      if (option.startsWith("requireJDK=")) {
-        val jdkVersionRegex = option.substring(option.indexOf('=') + 1)
+  val name: String = "AVSystemAnalyzer"
+  override val description: String = "AVSystem custom Scala static analyzer"
+
+  override def initialize(options: List[String])(using Context): List[PluginPhase] = {
+    val rules: List[AnalyzerRule] = List(
+      new ImportJavaUtil,
+      new VarargsAtLeast,
+      new CheckMacroPrivate,
+      new ExplicitGenerics,
+      new ValueEnumExhaustiveMatch,
+      new ShowAst,
+      new FindUsages,
+      new CheckBincompat,
+      new Any2StringAdd,
+      new ThrowableObjects,
+      new DiscardedMonixTask,
+      new NothingAsFunctionArgument,
+      new ConstantDeclarations,
+      new BasePackage,
+      new ImplicitTypes,
+      new ImplicitValueClasses,
+      new FinalValueClasses,
+      new FinalCaseClasses,
+      new ImplicitParamDefaults,
+      new CatchThrowable,
+      new ImplicitFunctionParams,
+    )
+    parseOptions(options, rules)
+    rules.filter(_.level != Level.Off)
+  }
+
+  private def parseOptions(options: List[String], rules: List[AnalyzerRule])(using Context): Unit = {
+    val byName = rules.map(r => r.name -> r).toMap
+    options.foreach { opt =>
+      if (opt.startsWith("requireJDK=")) {
+        val jdkVersionRegex = opt.substring(opt.indexOf('=') + 1)
         val javaVersion = System.getProperty("java.version", "")
-        if (!javaVersion.matches(jdkVersionRegex)) {
-          global.reporter.error(
-            NoPosition,
-            s"This project must be compiled on JDK version that matches $jdkVersionRegex but got $javaVersion",
+        if (!javaVersion.matches(jdkVersionRegex))
+          dotty.tools.dotc.report.error(
+            s"This project must be compiled on JDK version matching $jdkVersionRegex but got $javaVersion",
           )
-        }
       } else {
-        val level = option.charAt(0) match {
-          case '-' => Level.Off
-          case '*' => Level.Info
-          case '+' => Level.Error
-          case _ => Level.Warn
+        val (level, nameArg) = opt.headOption match {
+          case Some('-') => (Level.Off, opt.drop(1))
+          case Some('+') => (Level.Error, opt.drop(1))
+          case Some('*') => (Level.Info, opt.drop(1))
+          case _ => (Level.Warn, opt)
         }
-        val nameArg = if (level != Level.Warn) option.drop(1) else option
-        if (nameArg == "_") {
+        // Split on ':' to extract per-rule argument, e.g. "findUsages:com.foo.Bar"
+        val colonIdx = nameArg.indexOf(':')
+        val (ruleName, ruleArg) =
+          if (colonIdx >= 0) (nameArg.substring(0, colonIdx), Some(nameArg.substring(colonIdx + 1)))
+          else (nameArg, None)
+        if (ruleName == "_")
           rules.foreach(_.level = level)
-        } else {
-          val (name, arg) = nameArg.split(":", 2) match {
-            case Array(n, a) => (n, a)
-            case Array(n) => (n, null)
-          }
-          rulesByName.get(name) match {
+        else
+          byName.get(ruleName) match {
             case Some(rule) =>
               rule.level = level
-              rule.argument = arg
+              ruleArg.foreach(arg => rule.argument = Some(arg))
             case None =>
-              error(s"Unrecognized AVS analyzer rule: $name")
+              dotty.tools.dotc.report.warning(s"Unrecognized AVS analyzer rule: $ruleName")
           }
-        }
       }
     }
-    true
   }
-
-  private lazy val rules = List(
-    new ImportJavaUtil(global),
-    new VarargsAtLeast(global),
-    new CheckMacroPrivate(global),
-    new ExplicitGenerics(global),
-    new ValueEnumExhaustiveMatch(global),
-    new ShowAst(global),
-    new FindUsages(global),
-    new CheckBincompat(global),
-    new Any2StringAdd(global),
-    new ThrowableObjects(global),
-    new DiscardedMonixTask(global),
-    new NothingAsFunctionArgument(global),
-    new ConstantDeclarations(global),
-    new BasePackage(global),
-    new ImplicitValueClasses(global),
-    new FinalValueClasses(global),
-    new FinalCaseClasses(global),
-    new ImplicitParamDefaults(global),
-    new CatchThrowable(global),
-    new ImplicitFunctionParams(global),
-  )
-
-  private lazy val rulesByName = rules.map(r => (r.name, r)).toMap
-
-  val name = "AVSystemAnalyzer"
-  val description = "AVSystem custom Scala static analyzer"
-  val components: List[PluginComponent] = List(component)
-
-  private object component extends PluginComponent {
-    val global: plugin.global.type = plugin.global
-    val runsAfter: List[String] = List("typer")
-    override val runsBefore: List[String] = List("patmat")
-    val phaseName = "avsAnalyze"
-
-    import global._
-
-    def newPhase(prev: Phase): StdPhase = new StdPhase(prev) {
-      def apply(unit: CompilationUnit): Unit =
-        rules.foreach(rule => if (rule.level != Level.Off) rule.analyze(unit.asInstanceOf[rule.global.CompilationUnit]))
-    }
-  }
-
 }
