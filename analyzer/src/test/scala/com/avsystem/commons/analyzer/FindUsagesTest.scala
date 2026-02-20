@@ -25,7 +25,7 @@ final class FindUsagesTest extends AnyFunSuite with AnalyzerTest {
 
   test("code not using tracked symbol should pass") {
     assertNoErrors(
-      scala"""val x: Int = 42""",
+      scala"""def x: Int = 42""",
     )
   }
 }

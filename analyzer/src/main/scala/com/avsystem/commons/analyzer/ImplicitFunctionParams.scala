@@ -1,24 +1,34 @@
 package com.avsystem.commons
 package analyzer
 
-import scala.tools.nsc.Global
+import dotty.tools.dotc.ast.tpd
+import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Flags
+import dotty.tools.dotc.core.Types.Type
 
-class ImplicitFunctionParams(g: Global) extends AnalyzerRule(g, "implicitFunctionParams", Level.Warn) {
+class ImplicitFunctionParams extends AnalyzerRule {
+  val name: String = "implicitFunctionParams"
 
-  import global.*
-
-  def analyze(unit: CompilationUnit): Unit = unit.body.foreach {
-    case dd: DefDef =>
-      dd.vparamss.foreach { paramList =>
-        if (paramList.nonEmpty && paramList.head.mods.hasFlag(Flag.IMPLICIT)) {
-          paramList.foreach { param =>
-            val paramTpe = param.tpt.tpe
-            if (paramTpe != null && (definitions.isFunctionType(paramTpe) || definitions.isPartialFunctionType(paramTpe))) {
-              report(param.pos, "Implicit parameters should not have any function type")
-            }
-          }
+  override def transformDefDef(tree: tpd.DefDef)(using Context): tpd.Tree = {
+    tree.termParamss.foreach { paramList =>
+      paramList.foreach { param =>
+        val sym = param.symbol
+        val isImplicitOrUsing = sym.is(Flags.Implicit) || sym.is(Flags.Given)
+        if (isImplicitOrUsing && isFunctionLikeType(param.tpt.tpe)) {
+          report(
+            param,
+            "implicit/using parameter should not be a function type; consider a non-implicit parameter or a type class instead",
+          )
         }
       }
-    case _ =>
+    }
+    tree
+  }
+
+  private def isFunctionLikeType(tpe: Type)(using ctx: Context): Boolean = {
+    val defn = ctx.definitions
+    defn.isFunctionType(tpe) ||
+      defn.isContextFunctionType(tpe) ||
+      tpe.isRef(defn.PartialFunctionClass)
   }
 }

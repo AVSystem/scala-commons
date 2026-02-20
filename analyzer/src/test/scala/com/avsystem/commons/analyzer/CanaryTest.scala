@@ -8,7 +8,7 @@ final class CanaryTest extends AnyFunSuite with AnalyzerTest {
   test("plugin initializes and compiles valid code without errors") {
     // Proves: ContextBase plugin injection works, Compiler runs,
     // and valid code produces no errors with the plugin loaded.
-    val result = compile("object ValidCode { val x: Int = 42 }")
+    val result = compile("object ValidCode { def x: Int = 42 }")
     assert(!result.hasErrors, s"Valid code should compile without errors: ${result.errors.mkString("; ")}")
   }
 
@@ -59,7 +59,7 @@ final class CanaryTest extends AnyFunSuite with AnalyzerTest {
     // the plugin, no [AVS]-prefixed diagnostics appear. This is the
     // foundation for the Phase 3+ canary that will assert diagnostics
     // ARE produced with the plugin but NOT without it.
-    val source = "object SimpleCode { val x: Int = 42 }"
+    val source = "object SimpleCode { def x: Int = 42 }"
     val withPlugin = compile(source)
     val withoutPlugin = compileWithoutPlugin(source)
     // Both should have zero errors on valid code
@@ -78,7 +78,7 @@ final class CanaryTest extends AnyFunSuite with AnalyzerTest {
       """object Bad {
         |  val x: Int = "not an int"
         |}""".stripMargin
-    val validSource = "object Good { val x: Int = 42 }"
+    val validSource = "object Good { def x: Int = 42 }"
 
     val result1 = compile(errorSource)
     assert(result1.hasErrors, "First compilation should have errors")

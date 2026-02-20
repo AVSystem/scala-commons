@@ -11,7 +11,7 @@ final class BasePackageTest extends AnyFunSuite with AnalyzerTest {
   test("file with required base package should pass") {
     assertNoErrors(
       "package com.avsystem\n" +
-        "object Good { val x = 1 }",
+        "object Good { def x = 1 }",
     )
   }
 
@@ -19,7 +19,7 @@ final class BasePackageTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       1,
       "package com.other\n" +
-        "object Bad { val x = 1 }",
+        "object Bad { def x = 1 }",
     )
   }
 
@@ -27,7 +27,7 @@ final class BasePackageTest extends AnyFunSuite with AnalyzerTest {
     assertNoErrors(
       "package com\n" +
         "package avsystem\n" +
-        "object Nested { val x = 1 }",
+        "object Nested { def x = 1 }",
     )
   }
 }

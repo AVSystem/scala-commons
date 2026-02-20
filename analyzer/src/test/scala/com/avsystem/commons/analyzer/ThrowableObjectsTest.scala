@@ -32,7 +32,7 @@ final class ThrowableObjectsTest extends AnyFunSuite with AnalyzerTest {
   test("regular object not extending Throwable should be allowed") {
     assertNoErrors(scala"""
              |object regularObject {
-             |  val x: Int = 42
+             |  def x: Int = 42
              |}
              |""".stripMargin)
   }
