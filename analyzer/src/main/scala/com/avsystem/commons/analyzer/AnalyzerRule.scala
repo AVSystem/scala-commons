@@ -42,13 +42,12 @@ trait AnalyzerRule extends PluginPhase {
   override def runsBefore: Set[String] = Set(Pickler.name)
 
   /** Emit a diagnostic at the given tree's source position, using the configured [[level]]. */
-  protected final def report(tree: tpd.Tree, message: String)(using Context): Unit =
-    level match {
-      case Level.Off => ()
-      case Level.Info => dotty.tools.dotc.report.echo(s"[AVS] $message", tree.srcPos)
-      case Level.Warn => dotty.tools.dotc.report.warning(s"[AVS] $message", tree.srcPos)
-      case Level.Error => dotty.tools.dotc.report.error(s"[AVS] $message", tree.srcPos)
-    }
+  protected final def report(tree: tpd.Tree, message: String)(using Context): Unit = level match {
+    case Level.Off => ()
+    case Level.Info => dotty.tools.dotc.report.echo(s"[AVS] $message", tree.srcPos)
+    case Level.Warn => dotty.tools.dotc.report.warning(s"[AVS] $message", tree.srcPos)
+    case Level.Error => dotty.tools.dotc.report.error(s"[AVS] $message", tree.srcPos)
+  }
 }
 
 enum Level {

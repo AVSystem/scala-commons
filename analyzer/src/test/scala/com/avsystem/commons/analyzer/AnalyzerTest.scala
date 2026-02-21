@@ -26,6 +26,7 @@ trait AnalyzerTest { this: Assertions =>
     }
     given ctx: FreshContext = ctxBase.initialCtx.fresh
     ctx.settings.Yusejavacp.update(true)
+    ctx.settings.experimental.update(true)
     ctx.settings.pluginOptions.update(pluginOptions)
 
     val compiler = new Compiler
@@ -50,6 +51,7 @@ trait AnalyzerTest { this: Assertions =>
     val ctxBase = new ContextBase {}
     given ctx: FreshContext = ctxBase.initialCtx.fresh
     ctx.settings.Yusejavacp.update(true)
+    ctx.settings.experimental.update(true)
 
     val compiler = new Compiler
     val run = compiler.newRun

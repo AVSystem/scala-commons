@@ -6,9 +6,8 @@ import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 
 class AnalyzerPlugin extends StandardPlugin {
 
-  val name: String = "AVSystemAnalyzer"
   override val description: String = "AVSystem custom Scala static analyzer"
-
+  val name: String = "AVSystemAnalyzer"
   override def initialize(options: List[String])(using Context): List[PluginPhase] = {
     val rules: List[AnalyzerRule] = List(
       new ImportJavaUtil,
@@ -26,7 +25,6 @@ class AnalyzerPlugin extends StandardPlugin {
       new BasePackage,
       new ImplicitTypes,
       new ImplicitValueClasses,
-      new FinalValueClasses,
       new FinalCaseClasses,
       new ImplicitParamDefaults,
       new CatchThrowable,
@@ -65,7 +63,7 @@ class AnalyzerPlugin extends StandardPlugin {
             case Some(rule) =>
               rule.level = level
               ruleArg.foreach(arg => rule.argument = Some(arg))
-            case None => () // Silently ignore unknown rules for backward compatibility
+            case None => dotty.tools.dotc.report.error(s"Unrecognized AVS analyzer rule: $name")
           }
       }
     }
