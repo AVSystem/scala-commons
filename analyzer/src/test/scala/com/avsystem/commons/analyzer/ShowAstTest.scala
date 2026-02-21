@@ -9,9 +9,9 @@ final class ShowAstTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       1,
       scala"""
-                               |import com.avsystem.commons.annotation.showAst
-                               |@showAst val x: List[Int] = List(1, 2, 3)
-                               |""".stripMargin,
+             |import com.avsystem.commons.annotation.showAst
+             |@showAst val x: List[Int] = List(1, 2, 3)
+             |""".stripMargin,
     )
   }
 
@@ -19,9 +19,9 @@ final class ShowAstTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       1,
       scala"""
-                               |import com.avsystem.commons.annotation.showAst
-                               |@showAst def foo(x: Int): Int = x + 1
-                               |""".stripMargin,
+             |import com.avsystem.commons.annotation.showAst
+             |@showAst def foo(x: Int): Int = x + 1
+             |""".stripMargin,
     )
   }
 
@@ -29,25 +29,25 @@ final class ShowAstTest extends AnyFunSuite with AnalyzerTest {
     assertErrors(
       1,
       scala"""
-                               |import com.avsystem.commons.annotation.showAst
-                               |@showAst class Foo
-                               |""".stripMargin,
+             |import com.avsystem.commons.annotation.showAst
+             |@showAst class Foo
+             |""".stripMargin,
     )
   }
 
   test("val without @showAst should not emit error") {
     assertNoErrors(
       scala"""
-                               |val x: List[Int] = List(1, 2, 3)
-                               |""".stripMargin,
+             |val x: List[Int] = List(1, 2, 3)
+             |""".stripMargin,
     )
   }
 
   test("def without @showAst should not emit error") {
     assertNoErrors(
       scala"""
-                               |def foo(x: Int): Int = x + 1
-                               |""".stripMargin,
+             |def foo(x: Int): Int = x + 1
+             |""".stripMargin,
     )
   }
 

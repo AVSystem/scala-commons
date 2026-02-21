@@ -10,13 +10,13 @@ import dotty.tools.dotc.core.Symbols.{NoSymbol, Symbol}
 
 import scala.collection.mutable
 
-class ValueEnumExhaustiveMatch extends AnalyzerRule {
+class ValueEnumExhaustiveMatch(using Context) extends AnalyzerRule {
   val name: String = "valueEnumExhaustiveMatch"
 
-  private def valueEnumClass(using Context): Symbol =
+  private val valueEnumClass: Symbol =
     Symbols.getClassIfDefined("com.avsystem.commons.misc.ValueEnum")
 
-  private def valueEnumCompanionClass(using Context): Symbol =
+  private val valueEnumCompanionClass: Symbol =
     Symbols.getClassIfDefined("com.avsystem.commons.misc.ValueEnumCompanion")
 
   override def transformMatch(tree: tpd.Match)(using Context): tpd.Tree = {

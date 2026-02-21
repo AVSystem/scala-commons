@@ -3,23 +3,18 @@ package analyzer
 
 import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Contexts.Context
-import dotty.tools.dotc.core.Symbols.NoSymbol
+import dotty.tools.dotc.core.Symbols.{defn, NoSymbol}
 
 class NothingAsFunctionArgument extends AnalyzerRule {
   val name: String = "nothingAsFunctionArgument"
 
-  override def transformApply(tree: tpd.Apply)(using ctx: Context): tpd.Tree = {
-    val fun = tree.fun
-    val args = tree.args
-
-    if (fun.symbol != NoSymbol) {
-      val paramInfoss = fun.symbol.info.paramInfoss
+  override def transformApply(tree: tpd.Apply)(using Context): tpd.Tree = {
+    if (tree.fun.symbol != NoSymbol) {
+      val paramInfoss = tree.fun.symbol.info.paramInfoss
       if (paramInfoss.nonEmpty) {
         val params = paramInfoss.head
-        args.zip(params).foreach { case (arg, paramTpe) =>
-          val isFunctionTpe = ctx.definitions.isFunctionType(paramTpe)
-          val isNothingTpe = arg.tpe <:< ctx.definitions.NothingType
-          if (isFunctionTpe && isNothingTpe) {
+        tree.args.zip(params).foreach { (arg, paramTpe) =>
+          if (defn.isFunctionType(paramTpe) && arg.tpe <:< defn.NothingType) {
             report(
               arg,
               s"""|A value of type `Nothing` was passed where a function is expected.

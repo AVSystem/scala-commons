@@ -6,10 +6,10 @@ import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.core.Symbols
 import dotty.tools.dotc.core.Symbols.{NoSymbol, Symbol}
 
-class CheckBincompat extends AnalyzerRule {
+class CheckBincompat(using Context) extends AnalyzerRule {
   val name: String = "bincompat"
 
-  private def bincompatAnnotClass(using Context): Symbol =
+  private val bincompatAnnotClass: Symbol =
     Symbols.getClassIfDefined("com.avsystem.commons.annotation.bincompat")
 
   override def transformIdent(tree: tpd.Ident)(using Context): tpd.Tree = {
@@ -28,10 +28,9 @@ class CheckBincompat extends AnalyzerRule {
   }
 
   private def checkTree(tree: tpd.Tree)(using Context): Unit = {
-    val annotCls = bincompatAnnotClass
-    if (tree.symbol != NoSymbol && annotCls != NoSymbol) {
+    if (tree.symbol != NoSymbol && bincompatAnnotClass != NoSymbol) {
       val sym = tree.symbol
-      val hasAnnot = sym.annotations.exists(annot => annot.symbol == annotCls)
+      val hasAnnot = sym.annotations.exists(annot => annot.symbol == bincompatAnnotClass)
       if (hasAnnot && !isDefinitionSite(sym, tree)) {
         report(
           tree,

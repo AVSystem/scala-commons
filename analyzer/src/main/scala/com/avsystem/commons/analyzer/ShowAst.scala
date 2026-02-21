@@ -6,11 +6,11 @@ import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.core.Symbols
 import dotty.tools.dotc.core.Symbols.{NoSymbol, Symbol}
 
-class ShowAst extends AnalyzerRule {
+class ShowAst(using Context) extends AnalyzerRule {
   val name: String = "showAst"
   level = Level.Error
 
-  private def showAstAnnotClass(using Context): Symbol =
+  private val showAstAnnotClass: Symbol =
     Symbols.getClassIfDefined("com.avsystem.commons.annotation.showAst")
 
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree = {
@@ -29,9 +29,8 @@ class ShowAst extends AnalyzerRule {
   }
 
   private def checkShowAst(tree: tpd.MemberDef)(using Context): Unit = {
-    val annotCls = showAstAnnotClass
-    if (annotCls != NoSymbol && tree.symbol != NoSymbol) {
-      if (tree.symbol.annotations.exists(_.symbol == annotCls)) {
+    if (showAstAnnotClass != NoSymbol && tree.symbol != NoSymbol) {
+      if (tree.symbol.annotations.exists(_.symbol == showAstAnnotClass)) {
         report(tree, tree.show)
       }
     }

@@ -3,13 +3,12 @@ package analyzer
 
 import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.core.Symbols.defn
 
 class CatchThrowable extends AnalyzerRule {
   val name: String = "catchThrowable"
 
-  override def transformTry(tree: tpd.Try)(using ctx: Context): tpd.Tree = {
-    val throwableTpe = ctx.definitions.ThrowableClass.typeRef
-
+  override def transformTry(tree: tpd.Try)(using Context): tpd.Tree = {
     tree.cases.foreach { caseDef =>
       // Skip cases without source position or with synthetic spans (generated from custom handlers)
       if (caseDef.span.exists && caseDef.span.isSourceDerived) {
@@ -19,9 +18,7 @@ class CatchThrowable extends AnalyzerRule {
     tree
   }
 
-  private def checkPattern(pat: tpd.Tree, caseDef: tpd.CaseDef)(using ctx: Context): Unit = {
-    val throwableTpe = ctx.definitions.ThrowableClass.typeRef
-
+  private def checkPattern(pat: tpd.Tree, caseDef: tpd.CaseDef)(using Context): Unit = {
     pat match {
       // Handle simple Bind patterns: case t: Throwable
       case tpd.Bind(_, body) =>
@@ -29,7 +26,7 @@ class CatchThrowable extends AnalyzerRule {
 
       // Handle Typed patterns: t: Throwable
       case tpd.Typed(_, tpt) =>
-        if (tpt.tpe =:= throwableTpe && !isCustomExtractor(pat)) {
+        if (tpt.tpe =:= defn.ThrowableType && !isCustomExtractor(pat)) {
           report(caseDef, "Catching Throwable is discouraged, catch specific exceptions instead")
         }
 
@@ -39,7 +36,7 @@ class CatchThrowable extends AnalyzerRule {
 
       // Handle direct type patterns
       case _ =>
-        if (pat.tpe =:= throwableTpe && !isCustomExtractor(pat)) {
+        if (pat.tpe =:= defn.ThrowableType && !isCustomExtractor(pat)) {
           report(caseDef, "Catching Throwable is discouraged, catch specific exceptions instead")
         }
     }

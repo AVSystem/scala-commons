@@ -50,9 +50,9 @@ final class FinalCaseClassesTest extends AnyFunSuite with AnalyzerTest {
                           |""".stripMargin)
   }
 
-  // SI-4440 https://github.com/scala/bug/issues/4440
-  test("inner case class in trait should not be affected due to SI-4440") {
-    assertNoErrors(
+  test("inner case class in trait should be flagged") {
+    assertErrors(
+      1,
       scala"""
              |trait Outer {
              |  case class Inner(x: Int, y: String) {
@@ -63,8 +63,9 @@ final class FinalCaseClassesTest extends AnyFunSuite with AnalyzerTest {
     )
   }
 
-  test("inner case class in class should not be affected due to SI-4440") {
-    assertNoErrors(
+  test("inner case class in class should be flagged") {
+    assertErrors(
+      1,
       scala"""
              |class Outer2 {
              |  case class Inner(x: Int, y: String) {

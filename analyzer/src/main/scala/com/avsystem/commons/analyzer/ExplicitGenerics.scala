@@ -6,18 +6,17 @@ import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.core.Symbols
 import dotty.tools.dotc.core.Symbols.{NoSymbol, Symbol}
 
-class ExplicitGenerics extends AnalyzerRule {
+class ExplicitGenerics(using Context) extends AnalyzerRule {
   val name: String = "explicitGenerics"
 
-  private def explicitGenericsAnnotClass(using Context): Symbol =
+  private val explicitGenericsAnnotClass: Symbol =
     Symbols.getClassIfDefined("com.avsystem.commons.annotation.explicitGenerics")
 
   override def transformTypeApply(tree: tpd.TypeApply)(using Context): tpd.Tree = {
-    val annotCls = explicitGenericsAnnotClass
-    if (annotCls != NoSymbol && tree.fun.symbol != NoSymbol) {
+    if (explicitGenericsAnnotClass != NoSymbol && tree.fun.symbol != NoSymbol) {
       val sym = tree.fun.symbol
       val hasAnnot = (sym :: sym.allOverriddenSymbols.toList)
-        .exists(_.hasAnnotation(annotCls))
+        .exists(_.hasAnnotation(explicitGenericsAnnotClass))
 
       if (hasAnnot) {
         // Inferred type args in Scala 3 have their span set to the fun's span

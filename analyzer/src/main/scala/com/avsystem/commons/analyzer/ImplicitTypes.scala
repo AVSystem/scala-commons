@@ -31,9 +31,7 @@ class ImplicitTypes extends AnalyzerRule {
 
   private def checkImplicitType(tree: tpd.MemberDef, tpt: tpd.Tree)(using Context): Unit = {
     val sym = tree.symbol
-    val isImplicitOrGiven = sym.is(Flags.Implicit) || sym.is(Flags.Given)
-
-    if (isImplicitOrGiven && !sym.is(Flags.Synthetic) && !sym.is(Flags.Param)) {
+    if (sym.isOneOf(Flags.GivenOrImplicit) && !sym.is(Flags.Synthetic) && !sym.is(Flags.Param)) {
       // Detect inferred type: when the compiler infers a type, the TypeTree's span
       // is either non-existent or not source-derived (synthetic span).
       val typeInferred = !tpt.span.exists || !tpt.span.isSourceDerived

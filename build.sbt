@@ -236,8 +236,10 @@ lazy val js = project
   .settings(aggregateProjectSettings)
 
 lazy val analyzer = project
+  .dependsOn(core % Test)
   .settings(
     noPublishSettings,
+    jvmCommonSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" %% "scala3-compiler" % scalaVersion.value % "provided",
       "org.scalatest" %% "scalatest" % scalatestVersion % Test,
