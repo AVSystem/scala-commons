@@ -97,6 +97,38 @@ final class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
              |}
              |""".stripMargin)
   }
+
+  test("implicit class with by-name value class parameter should pass") {
+    assertNoErrors(scala"""
+             |final class ValueClass(val underlying: Int) extends AnyVal
+             |implicit final class LazyValueClassOps(lvc: => ValueClass) {
+             |  def someOp: Int = lvc.underlying
+             |}
+             |""".stripMargin)
+  }
+
+  test("implicit class with by-name regular class parameter should fail") {
+    assertErrors(
+      1,
+      scala"""
+             |class RegularClass(val underlying: Int)
+             |implicit final class LazyRegularClassOps(rc: => RegularClass) {
+             |  def someOp: Int = rc.underlying
+             |}
+             |""".stripMargin,
+    )
+  }
+
+  test("implicit class with by-name primitive parameter should fail") {
+    assertErrors(
+      1,
+      scala"""
+             |implicit final class LazyIntOps(i: => Int) {
+             |  def someOp: Int = i
+             |}
+             |""".stripMargin,
+    )
+  }
 }
 
 final class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
