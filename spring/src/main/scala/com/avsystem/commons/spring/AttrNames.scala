@@ -6,6 +6,7 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition
 
 /** Created: 17-03-2014 Author: ghik
   */
+@deprecated(spring.DeprecatedMessage, "v2.27.0")
 object AttrNames {
   final val AbstractAttr = "%abstract"
   final val ArgTypesAttr = "%arg-types"

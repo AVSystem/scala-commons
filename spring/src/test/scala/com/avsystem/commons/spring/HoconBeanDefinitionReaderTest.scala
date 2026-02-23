@@ -8,7 +8,8 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.context.support.GenericApplicationContext
 import org.springframework.core.StandardReflectionParameterNameDiscoverer
 
-import java.{util => ju}
+import java.util as ju
+import scala.annotation.nowarn
 import scala.beans.BeanProperty
 
 class TestBean(val constrInt: Int = 1, val constrString: String = "constrDefault") {
@@ -35,6 +36,7 @@ object ConditionalTestBean {
   var initializedCount = 0
 }
 
+@nowarn("msg=deprecated")
 class HoconBeanDefinitionReaderTest extends AnyFunSuite with BeforeAndAfterEach {
   def createContext(resource: String): GenericApplicationContext = {
     val beanFactory = new DefaultListableBeanFactory

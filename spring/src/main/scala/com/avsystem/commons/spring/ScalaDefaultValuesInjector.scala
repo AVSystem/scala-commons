@@ -11,6 +11,7 @@ import scala.annotation.tailrec
 import scala.beans.BeanProperty
 import scala.reflect.{ScalaLongSignature, ScalaSignature}
 
+@deprecated(spring.DeprecatedMessage, "v2.27.0")
 class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
   @BeanProperty var paramNameDiscoverer: ParameterNameDiscoverer =
     new StandardReflectionParameterNameDiscoverer
