@@ -13,7 +13,7 @@ import org.springframework.core.io.Resource
 import java.{util => ju}
 import scala.annotation.nowarn
 
-@deprecated(spring.DeprecatedMessage, "v2.27.0")
+@deprecated(spring.DeprecatedMessage, "2.27.0")
 class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends AbstractBeanDefinitionReader(registry) {
 
   import com.avsystem.commons.spring.HoconBeanDefinitionReader.Keys._
