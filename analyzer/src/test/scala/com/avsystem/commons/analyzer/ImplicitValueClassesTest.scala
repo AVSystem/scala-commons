@@ -5,11 +5,13 @@ import org.scalatest.funsuite.AnyFunSuite
 
 final class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
   test("implicit final class extending AnyVal should pass") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |implicit final class GoodImplicitClass(val x: Int) extends AnyVal {
              |  def double: Int = x * 2
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("implicit class not extending AnyVal should fail") {
@@ -35,23 +37,28 @@ final class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
   }
 
   test("regular class should not be affected") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |class RegularClass(val x: Int) {
              |  def double: Int = x * 2
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("implicit class with implicit parameter should not be affected") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |implicit final class ImplicitClassWithImplicitParameter(val x: Int)(implicit dummy: DummyImplicit) {
              |  def double: Int = x * 2
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("implicit class extending other classes should not be affected") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |class SomeClass
              |
              |implicit final class GoodImplicitClass1(val x: Int) extends SomeClass {
@@ -62,7 +69,8 @@ final class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
              |implicit final class GoodImplicitClass2(val x: Int) extends SomeTrait {
              |  def double: Int = x * 2
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("implicit class extending AnyVal with traits should be handled correctly") {
@@ -81,7 +89,8 @@ final class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
   }
 
   test("nested implicit class not extending AnyVal should pass") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |class Outer {
              |  implicit final class NestedImplicitClass(val x: Int) {
              |    def double: Int = x * 2
@@ -91,20 +100,24 @@ final class ImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTest {
   }
 
   test("implicit class for value class should not be affected") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |implicit final class ValueClass(x: com.avsystem.commons.misc.Timestamp) {
              |  def sth: Long = x.millis
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("implicit class with by-name value class parameter should pass") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |final class ValueClass(val underlying: Int) extends AnyVal
              |implicit final class LazyValueClassOps(lvc: => ValueClass) {
              |  def someOp: Int = lvc.underlying
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("implicit class with by-name regular class parameter should fail") {
@@ -176,15 +189,18 @@ final class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTes
   }
 
   test("regular class should not be affected") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |class RegularClass(val x: Int) {
              | def double: Int = x * 2
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("implicit class extending other classes should not be affected") {
-    assertNoErrors(scala"""
+    assertNoErrors(
+      scala"""
              |class Outer {
              | class SomeClass
              |
@@ -197,7 +213,8 @@ final class NestedImplicitValueClassesSuite extends AnyFunSuite with AnalyzerTes
              |   def double: Int = x * 2
              | }
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("implicit class extending AnyVal with traits should be handled correctly") {
