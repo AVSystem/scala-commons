@@ -34,8 +34,10 @@ class ImplicitValueClasses(g: Global) extends AnalyzerRule(g, "implicitValueClas
       def hasExactlyOneParam = paramLists.exists(lists => lists.size == 1 && lists.head.size == 1)
 
       def paramIsValueClass = paramLists.exists { lists =>
-        /* lists.nonEmpty && lists.head.nonEmpty && */
-        lists.head.head.typeSignature.typeSymbol.isDerivedValueClass
+        /* assert(lists.nonEmpty && lists.head.nonEmpty) */
+        val paramTpe = lists.head.head.typeSignature
+        val resultTpe = dropByName(paramTpe.dealiasWiden)
+        resultTpe.typeSymbol.isDerivedValueClass
       }
 
       if (!inheritsAnyVal && !inheritsOtherClass && hasExactlyOneParam && !paramIsValueClass) {
