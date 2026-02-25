@@ -1,5 +1,4 @@
 import com.github.ghik.sbt.nosbt.ProjectGroup
-import com.typesafe.tools.mima.plugin.MimaKeys.*
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
 import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
 import org.scalajs.jsenv.nodejs.NodeJSEnv
@@ -148,9 +147,6 @@ object Commons extends ProjectGroup("commons") {
       "org.apache.commons" % "commons-io" % commonsIoVersion % Test,
       "org.slf4j" % "slf4j-simple" % slf4jVersion % Test,
     ),
-    mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
-      organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
-    },
     Test / jsEnv :=
       new NodeJSEnv(NodeJSEnv.Config().withEnv(Map("RESOURCES_DIR" -> (Test / resourceDirectory).value.absolutePath))),
   )
@@ -167,7 +163,6 @@ object Commons extends ProjectGroup("commons") {
 
   val noPublishSettings = Seq(
     publish / skip := true,
-    mimaPreviousArtifacts := Set.empty,
   )
 
   val aggregateProjectSettings =
