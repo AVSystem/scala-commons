@@ -4,6 +4,9 @@ package spring
 import com.typesafe.config.ConfigFactory
 import org.springframework.context.support.GenericApplicationContext
 
+import scala.annotation.nowarn
+
+@nowarn("msg=deprecated")
 object XmlPlayground {
   def main(args: Array[String]): Unit = {
     val ctx = new GenericApplicationContext
