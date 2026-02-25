@@ -4,7 +4,7 @@ package spring
 import com.typesafe.config._
 import scala.annotation.nowarn
 
-@deprecated(spring.DeprecatedMessage, "2.27.0")
+@deprecated(spring.DeprecatedMessage, spring.DeprecatedSince)
 trait HoconType[T] {
 
   protected def requireNonNull(value: ConfigValue): ConfigValue = {
