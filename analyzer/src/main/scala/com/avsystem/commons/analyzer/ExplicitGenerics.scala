@@ -9,7 +9,6 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
 
   lazy val explicitGenericsAnnotTpe = classType("com.avsystem.commons.annotation.explicitGenerics")
 
-
   private def fail(pos: Position, symbol: Symbol): Unit =
     report(pos, s"$symbol requires that its type arguments are explicit (not inferred)")
 
@@ -30,7 +29,9 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
     def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
       case `tree` | EmptyTree =>
         tree match {
-          case t@TypeApply(pre, args) if requiresExplicitGenerics(pre.symbol) || applyOfAnnotatedCompanion(pre.symbol) =>
+          case t @ TypeApply(pre, args)
+              if requiresExplicitGenerics(pre.symbol) || applyOfAnnotatedCompanion(pre.symbol) =>
+
             val inferredTypeParams = args.forall {
               case tt: TypeTree => tt.original == null || tt.original == EmptyTree
               case _ => false
@@ -40,12 +41,13 @@ class ExplicitGenerics(g: Global) extends AnalyzerRule(g, "explicitGenerics") {
               val targetSym = if (applyOfAnnotatedCompanion(pre.symbol)) pre.symbol.owner.companionClass else pre.symbol
               fail(t.pos, targetSym)
             }
-          case n@New(tpt) if requiresExplicitGenerics(tpt.tpe.typeSymbol) =>
+          case n @ New(tpt) if requiresExplicitGenerics(tpt.tpe.typeSymbol) =>
             val explicitTypeArgsProvided = tpt match {
-              case tt: TypeTree => tt.original match {
-                case AppliedTypeTree(_, args) if args.nonEmpty => true
-                case _ => false
-              }
+              case tt: TypeTree =>
+                tt.original match {
+                  case AppliedTypeTree(_, args) if args.nonEmpty => true
+                  case _ => false
+                }
               case _ => false
             }
             if (!explicitTypeArgsProvided) {

@@ -43,28 +43,30 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("inferred in constructor should be rejected") {
-    assertErrors(2,
+    assertErrors(
+      2,
       scala"""
              |import com.avsystem.commons.analyzer.TestUtils
              |
              |val x = new TestUtils.GenericClass()
              |val y = new TestUtils.GenericCaseClass(123)
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
-
   test("inferred in apply when constructor marked should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |import com.avsystem.commons.analyzer.TestUtils
              |
              |val x = TestUtils.GenericCaseClass(123)
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("explicit in constructor should not be rejected") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |import com.avsystem.commons.analyzer.TestUtils
              |
              |val x = new TestUtils.GenericClass[Int]()
@@ -72,8 +74,7 @@ final class ExplicitGenericsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("not marked should not be rejected") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |def method[T](e: T) = e
              |class NotMarkedGenericClass[T]
              |final case class NotMarkedGenericCaseClass[T](arg: T)
