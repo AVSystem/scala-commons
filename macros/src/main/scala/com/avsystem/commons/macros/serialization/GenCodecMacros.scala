@@ -135,8 +135,14 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
   }
 
-  def isTransientDefault(param: ApplyParam): Boolean =
-    param.defaultValue.nonEmpty && hasAnnotation(param.sym, TransientDefaultAnnotType)
+  def isTransientDefault(param: ApplyParam): Boolean = isTransientDefault(param, warnIfDefaultNotProvided = false)
+  def isTransientDefault(param: ApplyParam, warnIfDefaultNotProvided: Boolean): Boolean =
+    (hasAnnotation(param.sym, TransientDefaultAnnotType), param.defaultValue.nonEmpty, warnIfDefaultNotProvided) match {
+      case (true, false, true) =>
+        error(s"@transientDefault has no effect on parameter ${param.sym.name} because it has no default value")
+        false
+      case (hasAnnotation, hasDefaultValue, _) => hasAnnotation && hasDefaultValue
+    }
 
   def isOptimizedPrimitive(param: ApplyParam): Boolean = {
     val vt = param.valueType
@@ -260,13 +266,13 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     }
 
     def anyParamHasTransientDefault: Boolean =
-      params.exists(isTransientDefault)
+      params.exists(isTransientDefault(_))
 
     def isOptionLike(p: ApplyParam): Boolean =
       p.optionLike.nonEmpty
 
     def mayBeTransient(p: ApplyParam): Boolean =
-      isOptionLike(p) || isTransientDefault(p)
+      isOptionLike(p) || isTransientDefault(p, warnIfDefaultNotProvided = true)
 
     def transientValue(p: ApplyParam): Tree = p.optionLike match {
       case Some(optionLike) => q"${optionLike.reference(Nil)}.none"
