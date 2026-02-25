@@ -8,16 +8,15 @@ object NOpt {
   private object EmptyMarker extends Serializable
   private object NullMarker extends Serializable
 
-  /**
-    * Creates a [[NOpt]] out of given value. Works like `Option.apply`, i.e. `null` is translated into
-    * an empty [[NOpt]]. Note however that [[NOpt]] does have a representation of "present null" (which
-    * can be obtained using [[NOpt.some]]).
+  /** Creates a [[NOpt]] out of given value. Works like `Option.apply`, i.e. `null` is translated into an empty
+    * [[NOpt]]. Note however that [[NOpt]] does have a representation of "present null" (which can be obtained using
+    * [[NOpt.some]]).
     */
   def apply[A](value: A): NOpt[A] =
     if (value == null) NOpt.Empty
     else new NOpt(value)
 
-  def unapply[A](opt: NOpt[A]): NOpt[A] = opt //name-based extractor
+  def unapply[A](opt: NOpt[A]): NOpt[A] = opt // name-based extractor
 
   def some[A](value: A): NOpt[A] =
     new NOpt(if (value == null) NullMarker else value)
@@ -30,18 +29,17 @@ object NOpt {
 
   private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
-  final class WithFilter[+A] private[NOpt](self: NOpt[A], p: A => Boolean) {
-    def map[B](f: A => B): NOpt[B] = self filter p map f
-    def flatMap[B](f: A => NOpt[B]): NOpt[B] = self filter p flatMap f
-    def foreach[U](f: A => U): Unit = self filter p foreach f
+  final class WithFilter[+A] private[NOpt] (self: NOpt[A], p: A => Boolean) {
+    def map[B](f: A => B): NOpt[B] = self.filter(p) map f
+    def flatMap[B](f: A => NOpt[B]): NOpt[B] = self.filter(p) flatMap f
+    def foreach[U](f: A => U): Unit = self.filter(p).foreach(f)
     def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }
 }
 
-/**
-  * Like [[Opt]] but does have a counterpart for `Some(null)`. In other words, [[NOpt]] is a "nullable [[Opt]]".
+/** Like [[Opt]] but does have a counterpart for `Some(null)`. In other words, [[NOpt]] is a "nullable [[Opt]]".
   */
-final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class NOpt[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
   import NOpt._
 
@@ -63,22 +61,20 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptB
   @inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
-  /**
-    * Converts this `NOpt` into `Opt`. Because `Opt` cannot hold `null`, `NOpt(null)` is translated to `Opt.Empty`.
+  /** Converts this `NOpt` into `Opt`. Because `Opt` cannot hold `null`, `NOpt(null)` is translated to `Opt.Empty`.
     */
   @inline def toOpt: Opt[A] =
     if (isEmpty) Opt.Empty else Opt(value)
 
-  /**
-    * Converts this `NOpt` into `OptRef`, changing the element type into boxed representation if
-    * necessary (e.g. `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`,
-    * `NOpt(null)` is translated to `OptRef.Empty`.
+  /** Converts this `NOpt` into `OptRef`, changing the element type into boxed representation if necessary (e.g.
+    * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `NOpt(null)` is translated to
+    * `OptRef.Empty`.
     */
   @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
-  /**
-    * Converts this `NOpt` into `OptArg`. Because `OptArg` cannot hold `null`, `NOpt(null)` is translated to `OptArg.Empty`.
+  /** Converts this `NOpt` into `OptArg`. Because `OptArg` cannot hold `null`, `NOpt(null)` is translated to
+    * `OptArg.Empty`.
     */
   @inline def toOptArg: OptArg[A] =
     if (isEmpty) OptArg.Empty else OptArg(value)
@@ -95,8 +91,7 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptB
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  /**
-    * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+  /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
     */
   @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
@@ -153,8 +148,7 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptB
   @inline def zip[B](that: NOpt[B]): NOpt[(A, B)] =
     if (isEmpty || that.isEmpty) NOpt.Empty else NOpt((this.get, that.get))
 
-  /**
-    * Apply side effect only if NOpt is empty. It's a bit like foreach for NOpt.Empty
+  /** Apply side effect only if NOpt is empty. It's a bit like foreach for NOpt.Empty
     *
     * @param sideEffect - code to be executed if nopt is empty
     * @return the same nopt

@@ -5,19 +5,20 @@ import org.scalatest.funsuite.AnyFunSuite
 
 final class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
   test("catching Throwable should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |try {
              |  println("test")
              |} catch {
              |  case t: Throwable => println(t)
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("catching specific exceptions should be allowed") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |try {
              |  println("test")
              |} catch {
@@ -29,7 +30,8 @@ final class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("catching Throwable with other exceptions should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |try {
              |  println("test")
@@ -37,11 +39,13 @@ final class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
              |  case e: IllegalArgumentException => println(e)
              |  case t: Throwable => println(t)
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("catching Throwable in nested catch block should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |try println("test")
              |catch {
@@ -50,12 +54,12 @@ final class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
              |    case e: Throwable => println(e)
              |  }
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("catching Throwable using custom extractor should be allowed") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |import  com.avsystem.commons.CommonAliases._
              |
              |object custom {
@@ -93,19 +97,20 @@ final class CatchThrowableTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("catching Throwable with pattern match should be rejected") {
-    assertErrors(1,
+    assertErrors(
+      1,
       scala"""
              |try {
              |  println("test")
              |} catch {
              |  case _: IndexOutOfBoundsException | _: Throwable => println("Not OK!")
              |}
-             |""".stripMargin)
+             |""".stripMargin,
+    )
   }
 
   test("catching Throwable using custom handler should be allowed") {
-    assertNoErrors(
-      scala"""
+    assertNoErrors(scala"""
              |object CustomHandler {
              |  def apply[T](): PartialFunction[Throwable, T] = ???
              |}

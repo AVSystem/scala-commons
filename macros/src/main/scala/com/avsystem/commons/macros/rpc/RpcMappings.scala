@@ -11,8 +11,13 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
   import c.universe._
 
   def collectMethodMappings[Raw <: RealMethodTarget with AritySymbol, M](
-    rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod], allowIncomplete: Boolean
-  )(createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
+    rawSymbols: List[Raw],
+    errorBase: String,
+    realMethods: List[RealMethod],
+    allowIncomplete: Boolean,
+  )(
+    createMapping: (Raw, MatchedMethod) => Res[M]
+  ): List[M] = {
 
     val failedReals = new ListBuffer[String]
     def addFailure(realMethod: RealMethod, message: String): Unit = {
@@ -40,11 +45,13 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         case Nil =>
           s"it has illegal combination of tags (annotations)"
         case errors =>
-          errors.map { case (raw, err) =>
-            val unmatchedError = raw.unmatchedError.getOrElse(
-              s"${raw.shortDescription.capitalize} ${raw.nameStr} did not match")
-            s" * $unmatchedError:\n   ${indent(err, "   ")}"
-          }.mkString("\n")
+          errors
+            .map { case (raw, err) =>
+              val unmatchedError =
+                raw.unmatchedError.getOrElse(s"${raw.shortDescription.capitalize} ${raw.nameStr} did not match")
+              s" * $unmatchedError:\n   ${indent(err, "   ")}"
+            }
+            .mkString("\n")
       } match {
         case Ok(v) => Some(v)
         case FailMsg(msg) =>
@@ -75,12 +82,13 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     private def validatedWhenAbsentValue(annotatedDefault: Tree, expectedTpe: Type): Tree = {
       if (!(annotatedDefault.tpe <:< expectedTpe)) {
-        realParam.reportProblem(s"expected value of type $expectedTpe in @whenAbsent annotation, " +
-          s"got ${annotatedDefault.tpe.widen}")
+        realParam.reportProblem(
+          s"expected value of type $expectedTpe in @whenAbsent annotation, " + s"got ${annotatedDefault.tpe.widen}"
+        )
       }
       val transformer = new Transformer {
         override def transform(tree: Tree): Tree = tree match {
-          case Super(t@This(_), _) if !enclosingClasses.contains(t.symbol) =>
+          case Super(t @ This(_), _) if !enclosingClasses.contains(t.symbol) =>
             realParam.reportProblem(s"illegal super-reference in @whenAbsent annotation")
           case This(_) if tree.symbol == realParam.owner.ownerApi.symbol => q"${realParam.owner.ownerApi.safeTermName}"
           case This(_) if !enclosingClasses.contains(tree.symbol) =>
@@ -93,12 +101,14 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
 
     // TODO: materialize arbitrary metadata into @whenAbsent?
     val whenAbsent: Tree =
-      matchedParam.annot(WhenAbsentAT, materializeImplicit)
+      matchedParam
+        .annot(WhenAbsentAT, materializeImplicit)
         .fold(EmptyTree)(annot => validatedWhenAbsentValue(annot.tree.children.tail.head, realParam.actualType))
 
     val rawWhenAbsent: Tree = encoding match {
       case rre: RpcEncoding.RealRawEncoding =>
-        matchedParam.annot(RawWhenAbsentAT, materializeImplicit)
+        matchedParam
+          .annot(RawWhenAbsentAT, materializeImplicit)
           .fold(EmptyTree)(annot => validatedWhenAbsentValue(annot.tree.children.tail.head, rre.decRawType))
       case _: RpcEncoding.Verbatim => EmptyTree
     }
@@ -121,11 +131,13 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       else encoding.applyAsReal(c.untypecheck(rawWhenAbsent))
 
     private def defaultValue(useThis: Boolean): Tree = {
-      val prevListParams = realParam.owner.realParams
-        .take(realParam.index - realParam.indexInList).map(rp => q"${rp.safeName}")
+      val prevListParams =
+        realParam.owner.realParams.take(realParam.index - realParam.indexInList).map(rp => q"${rp.safeName}")
       if (realParam.encodingDependency && prevListParams.nonEmpty) {
-        realParam.reportProblem("implicit dependency parameters cannot have default values " +
-          "unless they are in the first parameter list - note: you can use @whenAbsent instead")
+        realParam.reportProblem(
+          "implicit dependency parameters cannot have default values " +
+            "unless they are in the first parameter list - note: you can use @whenAbsent instead"
+        )
       }
       val prevListParamss = List(prevListParams).filter(_.nonEmpty)
       val realInst = if (useThis) q"this" else q"${realParam.owner.ownerApi.safeTermName}"
@@ -153,12 +165,12 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
 
     def ensureUniqueRpcNames(): Unit = this match {
-      case multi: ParamMapping.Multi => multi.reals.groupBy(_.rpcName).foreach {
-        case (rpcName, head :: tail) if tail.nonEmpty =>
-          head.matchedParam.real.reportProblem(
-            s"it has the same RPC name ($rpcName) as ${tail.size} other parameters")
-        case _ =>
-      }
+      case multi: ParamMapping.Multi =>
+        multi.reals.groupBy(_.rpcName).foreach {
+          case (rpcName, head :: tail) if tail.nonEmpty =>
+            head.matchedParam.real.reportProblem(s"it has the same RPC name ($rpcName) as ${tail.size} other parameters")
+          case _ =>
+        }
       case _ =>
     }
 
@@ -225,7 +237,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       def rawValueTree: Tree = rawParam.mkMulti(reals.map(_.rawValueTree))
     }
     case class IterableMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ListedMulti {
-      def realDecls: List[Tree] = if (reals.isEmpty) Nil else {
+      def realDecls: List[Tree] = if (reals.isEmpty) Nil
+      else {
         val itName = c.freshName(TermName("it"))
         val itDecl = q"val $itName = ${rawParam.safePath}.iterator"
         itDecl :: reals.map { erp =>
@@ -239,19 +252,18 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       }
     }
     case class IndexedMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends ListedMulti {
-      def realDecls: List[Tree] = {
+      def realDecls: List[Tree] =
         reals.zipWithIndex.map { case (erp, idx) =>
-          erp.localValueDecl(
-            q"""
+          erp.localValueDecl(q"""
               ${erp.encoding.andThenAsReal(rawParam.safePath, erp.matchedParam)}
                 .applyOrElse($idx, (_: $IntCls) => ${erp.fallbackValueTree})
             """)
         }
-      }
     }
     case class NamedMulti(rawParam: RawValueParam, reals: List[EncodedRealParam]) extends Multi {
       def rawValueTree: Tree =
-        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.factory.reference(Nil)})" else {
+        if (reals.isEmpty) q"$RpcUtils.createEmpty(${rawParam.factory.reference(Nil)})"
+        else {
           val builderName = c.freshName(TermName("builder"))
           val addStatements = reals.map { erp =>
             erp.realParam.optionLike match {
@@ -314,16 +326,27 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       if (rawParam.verbatim) {
         if (realParam.actualType =:= encArgType)
           Ok(Verbatim(encArgType))
-        else FailMsg(
-          s"${realParam.problemStr}:\nexpected real parameter exactly of type " +
-            s"$encArgType, got ${realParam.actualType}")
+        else
+          FailMsg(
+            s"${realParam.problemStr}:\nexpected real parameter exactly of type " +
+              s"$encArgType, got ${realParam.actualType}"
+          )
       } else {
         val errorCtx = ErrorCtx(s"${realParam.problemStr}:\n", realParam.pos)
         val implicitParams = realParam.owner.encodingDeps.takeWhile(_ != realParam)
         val encInterceptors = interceptors(encArgType, matchedParam, EncodingInterceptorTpe)
         val decInterceptors = interceptors(encArgType, matchedParam, DecodingInterceptorTpe)
-        Ok(RealRawEncoding(realParam.nonOptionalType, encInterceptors, decInterceptors, encArgType,
-          Some(errorCtx), realParam.tparamReferences, implicitParams))
+        Ok(
+          RealRawEncoding(
+            realParam.nonOptionalType,
+            encInterceptors,
+            decInterceptors,
+            encArgType,
+            Some(errorCtx),
+            realParam.tparamReferences,
+            implicitParams,
+          )
+        )
       }
     }
 
@@ -365,7 +388,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       rawType: Type,
       errorCtx: Option[ErrorCtx],
       typeParams: List[RealTypeParam],
-      implicitParams: List[RealParam]
+      implicitParams: List[RealParam],
     ) extends RpcEncoding {
 
       val decRawType: Type = decInterceptors.headOption
@@ -383,18 +406,19 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         val implicitDeps = implicitParams.map(_.actualType)
         val res = errorCtx match {
           case Some(ctx) =>
-            inferCachedImplicit(convTpe, ctx, tparams, implicitDeps)
-              .reference(implicitParams.map(_.argToPass))
+            inferCachedImplicit(convTpe, ctx, tparams, implicitDeps).reference(implicitParams.map(_.argToPass))
           case None =>
             tryInferCachedImplicit(convTpe, tparams, implicitDeps)
-              .map(_.reference(implicitParams.map(_.argToPass))).getOrElse(EmptyTree)
+              .map(_.reference(implicitParams.map(_.argToPass)))
+              .getOrElse(EmptyTree)
         }
         // TODO: avoid wrapping and unnecessary instantiation of AsRaw/AsReal, cache interceptors
         val interceptMethod = TermName(if (encNotDec) "interceptEnc" else "interceptDec")
         if (res == EmptyTree) res
-        else interceptors.foldLeft(res) {
-          (acc, interceptor) => q"$RpcUtils.$interceptMethod($acc, ${c.untypecheck(interceptor.tree)})"
-        }
+        else
+          interceptors.foldLeft(res) { (acc, interceptor) =>
+            q"$RpcUtils.$interceptMethod($acc, ${c.untypecheck(interceptor.tree)})"
+          }
       }
 
       private lazy val asRawTree: Tree = infer(true)
@@ -431,7 +455,7 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     matchedMethod: MatchedMethod,
     rawMethod: RawMethod,
     paramMappingList: List[ParamMapping],
-    resultEncoding: RpcEncoding
+    resultEncoding: RpcEncoding,
   ) {
 
     def realMethod: RealMethod = matchedMethod.real
@@ -441,8 +465,11 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       paramMappingList.iterator.map(m => (m.rawParam, m)).toMap
 
     def ensureUniqueRpcNames(): Unit =
-      paramMappings.valuesIterator.filterNot(_.rawParam.auxiliary).toList
-        .flatMap(_.allMatchedParams).groupBy(_.rawName)
+      paramMappings.valuesIterator
+        .filterNot(_.rawParam.auxiliary)
+        .toList
+        .flatMap(_.allMatchedParams)
+        .groupBy(_.rawName)
         .foreach {
           case (rpcName, head :: tail) if tail.nonEmpty =>
             head.real.reportProblem(s"it has the same RPC name ($rpcName) as ${tail.size} other parameters")
@@ -488,10 +515,11 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         """
 
       if (realMethod.typeParams.isEmpty) caseImpl
-      else stripTparamRefs(realMethod.sig.typeParams) {
-        val fakeMethodName = c.freshName(TermName("gendef"))
-        q"def $fakeMethodName[..${realMethod.typeParams.map(_.typeParamDecl)}] = $caseImpl; $fakeMethodName"
-      }
+      else
+        stripTparamRefs(realMethod.sig.typeParams) {
+          val fakeMethodName = c.freshName(TermName("gendef"))
+          q"def $fakeMethodName[..${realMethod.typeParams.map(_.typeParamDecl)}] = $caseImpl; $fakeMethodName"
+        }
     }
   }
 
@@ -506,7 +534,9 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
     }
 
     private def extractMapping(
-      method: MatchedMethod, rawParam: RawValueParam, parser: ParamsParser[RealParam]
+      method: MatchedMethod,
+      rawParam: RawValueParam,
+      parser: ParamsParser[RealParam],
     ): Res[ParamMapping] = {
       def matchedParam(real: RealParam, indexInRaw: Int): Option[MatchedParam] =
         rawParam.matchRealParam(method, real, indexInRaw).toOption
@@ -518,7 +548,8 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       rawParam.arity match {
         case _: ParamArity.Single =>
           val unmatchedErrorMsg = rawParam.unmatchedError.getOrElse(
-            s"${raw.shortDescription} ${rawParam.pathStr} was not matched by real parameter")
+            s"${raw.shortDescription} ${rawParam.pathStr} was not matched by real parameter"
+          )
           parser.extractSingle(consume, createErp(_, 0), unmatchedErrorMsg).map(ParamMapping.Single(rawParam, _))
         case _: ParamArity.Optional =>
           Ok(ParamMapping.Optional(rawParam, parser.extractOptional(consume, createErp(_, 0))))
@@ -545,8 +576,15 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         } else {
           val encInterceptors = RpcEncoding.interceptors(rawMethod.resultType, matchedMethod, EncodingInterceptorTpe)
           val decInterceptors = RpcEncoding.interceptors(rawMethod.resultType, matchedMethod, DecodingInterceptorTpe)
-          val enc = RpcEncoding.RealRawEncoding(realResultType, encInterceptors, decInterceptors, rawMethod.resultType,
-            None, realMethod.resultTparamReferences, realMethod.encodingDeps)
+          val enc = RpcEncoding.RealRawEncoding(
+            realResultType,
+            encInterceptors,
+            decInterceptors,
+            rawMethod.resultType,
+            None,
+            realMethod.resultTparamReferences,
+            realMethod.encodingDeps,
+          )
           if ((!forAsRaw || enc.hasAsRaw) && (!forAsReal || enc.hasAsReal))
             Ok(enc)
           else {
@@ -560,8 +598,10 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
         realParams = matchedMethod.real.encodingDeps ++ matchedMethod.real.regularParams
         paramMappings <- collectParamMappings(realParams, rawMethod.allValueParams, allowIncomplete = false)(
           extractMapping(matchedMethod, _, _),
-          rp => rawMethod.errorForUnmatchedParam(rp).getOrElse(
-            s"no raw parameter was found that would match ${rp.shortDescription} ${rp.nameStr}")
+          rp =>
+            rawMethod
+              .errorForUnmatchedParam(rp)
+              .getOrElse(s"no raw parameter was found that would match ${rp.shortDescription} ${rp.nameStr}"),
         )
       } yield MethodMapping(matchedMethod, rawMethod, paramMappings, resultConv)
     }
@@ -575,9 +615,11 @@ private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
       methodMappings.groupBy(_.matchedMethod.rawName).foreach {
         case (_, single :: Nil) =>
           single.ensureUniqueRpcNames()
-        case (rpcName, head :: tail) => head.realMethod.reportProblem(
-          s"it has the same RPC name ($rpcName) as ${tail.size} other methods - " +
-            s"if you want to overload RPC methods, disambiguate them with @rpcName")
+        case (rpcName, head :: tail) =>
+          head.realMethod.reportProblem(
+            s"it has the same RPC name ($rpcName) as ${tail.size} other methods - " +
+              s"if you want to overload RPC methods, disambiguate them with @rpcName"
+          )
         case _ =>
       }
 

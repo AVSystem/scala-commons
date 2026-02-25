@@ -12,8 +12,8 @@ case class NullList(value: Int, tail: NullList) {
   }
 }
 object NullList {
-  final val Example = (0 until 1000).foldRight(NullList(1000, null)) {
-    (value, tail) => NullList(value, tail)
+  final val Example = (0 until 1000).foldRight(NullList(1000, null)) { (value, tail) =>
+    NullList(value, tail)
   }
 }
 
@@ -27,8 +27,8 @@ case class OptList(value: Int, tail: Opt[OptList]) {
   }
 }
 object OptList {
-  final val Example = (0 until 1000).foldRight(OptList(1000, Opt.Empty)) {
-    (value, tail) => OptList(value, Opt(tail))
+  final val Example = (0 until 1000).foldRight(OptList(1000, Opt.Empty)) { (value, tail) =>
+    OptList(value, Opt(tail))
   }
 }
 
@@ -42,8 +42,8 @@ case class OptRefList(value: Int, tail: OptRef[OptRefList]) {
   }
 }
 object OptRefList {
-  final val Example = (0 until 1000).foldRight(OptRefList(1000, OptRef.Empty)) {
-    (value, tail) => OptRefList(value, OptRef(tail))
+  final val Example = (0 until 1000).foldRight(OptRefList(1000, OptRef.Empty)) { (value, tail) =>
+    OptRefList(value, OptRef(tail))
   }
 }
 
@@ -57,8 +57,8 @@ case class OptionList(value: Int, tail: Option[OptionList]) {
   }
 }
 object OptionList {
-  final val Example = (0 until 1000).foldRight(OptionList(1000, None)) {
-    (value, tail) => OptionList(value, Some(tail))
+  final val Example = (0 until 1000).foldRight(OptionList(1000, None)) { (value, tail) =>
+    OptionList(value, Some(tail))
   }
 }
 

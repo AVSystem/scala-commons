@@ -61,7 +61,8 @@ trait JCollectionUtils extends JFactories {
       Some(set.iterator.asScala.toSeq)
   }
   object JSortedSetCreator {
-    implicit def asJSortedSetFactory[C[X] <: JSortedSet[X], T: Ordering](creator: JSortedSetCreator[C]): Factory[T, C[T]] =
+    implicit def asJSortedSetFactory[C[X] <: JSortedSet[X], T: Ordering](creator: JSortedSetCreator[C])
+      : Factory[T, C[T]] =
       new JCollectionFactory[T, C[T]](creator.empty[T])
   }
 
@@ -122,13 +123,13 @@ trait JCollectionUtils extends JFactories {
   }
 
   object JEnumSet {
-    def allOf[T <: Enum[T] : ClassTag]: JEnumSet[T] =
+    def allOf[T <: Enum[T]: ClassTag]: JEnumSet[T] =
       ju.EnumSet.allOf(classTag[T].runtimeClass.asInstanceOf[Class[T]])
 
-    def empty[T <: Enum[T] : ClassTag]: JEnumSet[T] =
+    def empty[T <: Enum[T]: ClassTag]: JEnumSet[T] =
       ju.EnumSet.noneOf(classTag[T].runtimeClass.asInstanceOf[Class[T]])
 
-    def apply[T <: Enum[T] : ClassTag](values: T*): JEnumSet[T] = {
+    def apply[T <: Enum[T]: ClassTag](values: T*): JEnumSet[T] = {
       val result = empty[T]
       values.foreach(result.add)
       result
@@ -200,13 +201,13 @@ trait JCollectionUtils extends JFactories {
   }
 
   object JEnumMap {
-    def empty[K <: Enum[K] : ClassTag, V]: JEnumMap[K, V] =
+    def empty[K <: Enum[K]: ClassTag, V]: JEnumMap[K, V] =
       new JEnumMap[K, V](classTag[K].runtimeClass.asInstanceOf[Class[K]])
 
-    def apply[K <: Enum[K] : ClassTag, V](keyValues: (K, V)*): JEnumMap[K, V] = {
+    def apply[K <: Enum[K]: ClassTag, V](keyValues: (K, V)*): JEnumMap[K, V] = {
       val result = empty[K, V]
-      keyValues.foreach {
-        case (k, v) => result.put(k, v)
+      keyValues.foreach { case (k, v) =>
+        result.put(k, v)
       }
       result
     }

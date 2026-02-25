@@ -1,10 +1,9 @@
 package com.avsystem.commons
 package macros
 
-import scala.reflect.macros.{TypecheckException, blackbox}
+import scala.reflect.macros.{blackbox, TypecheckException}
 
-private[commons]
-class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
+private[commons] class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   import c.universe._
 
@@ -30,7 +29,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
   }
 
   def forSealedHierarchy(tpe: Type, subtypes: List[KnownSubtype]): Tree = {
-    val deps = subtypes.map({ case KnownSubtype(_, st, tree) => q"(${st.typeSymbol.name.toString}, $tree)" })
+    val deps = subtypes.map { case KnownSubtype(_, st, tree) => q"(${st.typeSymbol.name.toString}, $tree)" }
     q"$SealedHierarchyTCObj[$tpe](${tpe.toString}, $ListObj(..$deps))"
   }
 
@@ -56,9 +55,7 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
   }
 
   def testKnownSubtypes[T: WeakTypeTag, R: WeakTypeTag]: Tree = instrument {
-    val computedResultType = knownSubtypes(weakTypeOf[T])
-      .map(types => getType(tq"(..$types)"))
-      .getOrElse(typeOf[Nothing])
+    val computedResultType = knownSubtypes(weakTypeOf[T]).map(types => getType(tq"(..$types)")).getOrElse(typeOf[Nothing])
 
     assertSameTypes(weakTypeOf[R], computedResultType)
     q"$PredefObj.???"
@@ -70,9 +67,9 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     val ttpe = weakTypeOf[T]
     val ftpe = weakTypeOf[F]
 
-    val au = applyUnapplyFor(ttpe)
-      .getOrElse(c.abort(c.enclosingPosition,
-        s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe"))
+    val au = applyUnapplyFor(ttpe).getOrElse(
+      c.abort(c.enclosingPosition, s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe")
+    )
 
     val companion = au.unapply.owner.asClass.module
 

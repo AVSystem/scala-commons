@@ -47,7 +47,8 @@ final class SourceFile(val contents: String, val name: String) {
     else if (offset >= contents.length()) lineCount - 1
     else {
       @tailrec def binsearch(beg: Int, end: Int): Int =
-        if (beg > end) end else {
+        if (beg > end) end
+        else {
           val mid = (beg + end) / 2
           if (lineOffsets(mid) > offset) binsearch(beg, mid - 1)
           else binsearch(mid + 1, end)
@@ -99,10 +100,13 @@ final case class SourcePos(input: SourceFile, start: Int, end: Int) {
 
   /** 0-based starting line number */
   def startLine: Int = startCoords._1
+
   /** 0-based starting column number */
   def startColumn: Int = startCoords._2
+
   /** 0-based ending line number */
   def endLine: Int = endCoords._1
+
   /** 0-based ending column number */
   def endColumn: Int = endCoords._2
 

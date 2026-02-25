@@ -29,8 +29,7 @@ case class InnerRecord(
   intMap: Map[String, Int],
 )
 object InnerRecord extends MongoDataCompanion[InnerRecord] {
-  final val Example = InnerRecord(
-    24, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
+  final val Example = InnerRecord(24, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
 }
 
 case class Props(map: Map[String, String]) extends AnyVal
@@ -56,10 +55,20 @@ case class RecordTestEntity(
 ) extends MongoEntity[String]
 object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity] {
   final val Example = RecordTestEntity(
-    "rid", 42, "str", Timestamp.Zero, Opt("stropt"), Opt.Empty,
-    List(1, 2, 3), Map("one" -> 1, "two" -> 2), TypedMap(PKey.IntKey -> 42, PKey.InnerKey -> InnerRecord.Example),
-    InnerRecord.Example, Opt(InnerRecord.Example), List(InnerRecord.Example),
-    Map(InnerId("iid") -> InnerRecord.Example), Opt(Map(InnerId("iid") -> List(InnerRecord.Example))),
+    "rid",
+    42,
+    "str",
+    Timestamp.Zero,
+    Opt("stropt"),
+    Opt.Empty,
+    List(1, 2, 3),
+    Map("one" -> 1, "two" -> 2),
+    TypedMap(PKey.IntKey -> 42, PKey.InnerKey -> InnerRecord.Example),
+    InnerRecord.Example,
+    Opt(InnerRecord.Example),
+    List(InnerRecord.Example),
+    Map(InnerId("iid") -> InnerRecord.Example),
+    Opt(Map(InnerId("iid") -> List(InnerRecord.Example))),
     Props(Map.empty),
   )
 }

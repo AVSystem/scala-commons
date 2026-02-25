@@ -3,11 +3,11 @@ package mongo.typed
 
 import com.mongodb.client.model._
 
-/**
-  * Represents a single MongoDB write operation in a
+/** Represents a single MongoDB write operation in a
   * [[https://docs.mongodb.com/manual/core/bulk-write-operations/ bulk write operation]].
   *
-  * @tparam E type of the entity
+  * @tparam E
+  *   type of the entity
   */
 sealed trait MongoWrite[E] {
 
@@ -51,28 +51,28 @@ object MongoWrite {
   final case class UpdateOne[E](
     filter: MongoDocumentFilter[E],
     update: MongoDocumentUpdate[E],
-    setupOptions: UpdateOptions => UpdateOptions = identity
+    setupOptions: UpdateOptions => UpdateOptions = identity,
   ) extends MongoWrite[E]
 
   final case class UpdateMany[E](
     filter: MongoDocumentFilter[E],
     update: MongoDocumentUpdate[E],
-    setupOptions: UpdateOptions => UpdateOptions = identity
+    setupOptions: UpdateOptions => UpdateOptions = identity,
   ) extends MongoWrite[E]
 
   final case class ReplaceOne[E](
     filter: MongoDocumentFilter[E],
     replacement: E,
-    setupOptions: ReplaceOptions => ReplaceOptions = identity
+    setupOptions: ReplaceOptions => ReplaceOptions = identity,
   ) extends MongoWrite[E]
 
   final case class DeleteOne[E](
     filter: MongoDocumentFilter[E],
-    setupOptions: DeleteOptions => DeleteOptions = identity
+    setupOptions: DeleteOptions => DeleteOptions = identity,
   ) extends MongoWrite[E]
 
   final case class DeleteMany[E](
     filter: MongoDocumentFilter[E],
-    setupOptions: DeleteOptions => DeleteOptions = identity
+    setupOptions: DeleteOptions => DeleteOptions = identity,
   ) extends MongoWrite[E]
 }

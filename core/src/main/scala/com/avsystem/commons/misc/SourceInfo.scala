@@ -1,10 +1,8 @@
 package com.avsystem.commons
 package misc
 
-/**
-  * Macro-materialized implicit value that provides information about callsite source file position.
-  * It can be used in runtime for logging and debugging purposes.
-  * Similar to Scalactic's `Position`, but contains more information.
+/** Macro-materialized implicit value that provides information about callsite source file position. It can be used in
+  * runtime for logging and debugging purposes. Similar to Scalactic's `Position`, but contains more information.
   */
 case class SourceInfo(
   filePath: String,
@@ -13,11 +11,10 @@ case class SourceInfo(
   line: Int,
   column: Int,
   lineContent: String,
-  enclosingSymbols: List[String]
+  enclosingSymbols: List[String],
 ) {
   override def equals(obj: Any): Boolean = obj match {
-    case otherInfo: SourceInfo => filePath ==
-      otherInfo.filePath && offset == otherInfo.offset
+    case otherInfo: SourceInfo => filePath == otherInfo.filePath && offset == otherInfo.offset
     case _ => false
   }
 

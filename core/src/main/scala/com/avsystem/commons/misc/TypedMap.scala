@@ -4,13 +4,11 @@ import com.avsystem.commons.SharedExtensions._
 import com.avsystem.commons.misc.TypedMap.GenCodecMapping
 import com.avsystem.commons.serialization._
 
-/**
-  * A map whose keys are parameterized with value type.
-  * This makes it possible to associate different value type with each key, in a type-safe way.
+/** A map whose keys are parameterized with value type. This makes it possible to associate different value type with
+  * each key, in a type-safe way.
   *
-  * [[TypedMap[K]]] has a [[GenCodec]] instance as long as there is a `GenCodec[K[_]]` instance for the key
-  * type and a [[GenCodecMapping[K]]] instance that determines the codec for the value type associated with given
-  * key.
+  * [[TypedMap[K]]] has a [[GenCodec]] instance as long as there is a `GenCodec[K[_]]` instance for the key type and a
+  * [[GenCodecMapping[K]]] instance that determines the codec for the value type associated with given key.
   *
   * Example:
   * {{{
@@ -30,8 +28,7 @@ import com.avsystem.commons.serialization._
   *   )
   * }}}
   *
-  * Note that since all keys and value types are known statically,
-  * the map above is somewhat equivalent to a case class:
+  * Note that since all keys and value types are known statically, the map above is somewhat equivalent to a case class:
   *
   * {{{
   *   case class Attributes(
@@ -41,8 +38,8 @@ import com.avsystem.commons.serialization._
   * }}}
   *
   * [[TypedMap]] might be a good choice if there is a lot of attribute keys, they aren't statically known or some
-  * collection-like behaviour is necessary (e.g. computing the size, iterating over all elements). A [[TypedMap]]
-  * is also easier to evolve than a case class (e.g. because of binary compatibility issues).
+  * collection-like behaviour is necessary (e.g. computing the size, iterating over all elements). A [[TypedMap]] is
+  * also easier to evolve than a case class (e.g. because of binary compatibility issues).
   */
 class TypedMap[K[_]](val raw: Map[K[_], Any]) extends AnyVal {
   def apply[T](key: K[T]): T =
@@ -91,10 +88,8 @@ object TypedMap {
     def valueCodec[T](key: K[T]): GenCodec[T]
   }
 
-  implicit def typedMapCodec[K[_]](implicit
-    keyCodec: GenKeyCodec[K[_]],
-    codecMapping: GenCodecMapping[K]
-  ): GenObjectCodec[TypedMap[K]] =
+  implicit def typedMapCodec[K[_]](implicit keyCodec: GenKeyCodec[K[_]], codecMapping: GenCodecMapping[K])
+    : GenObjectCodec[TypedMap[K]] =
     new GenCodec.ObjectCodec[TypedMap[K]] {
       def nullable = false
       def readObject(input: ObjectInput): TypedMap[K] = {
@@ -120,10 +115,8 @@ object TypedMap {
     }
 }
 
-/**
-  * Base class for key types of [[TypedMap]] (typically enums parameterized by value type).
-  * Provides an instance of [[GenCodecMapping]] which is necessary for [[GenCodec]] instance for [[TypedMap]] that
-  * uses this key type.
+/** Base class for key types of [[TypedMap]] (typically enums parameterized by value type). Provides an instance of
+  * [[GenCodecMapping]] which is necessary for [[GenCodec]] instance for [[TypedMap]] that uses this key type.
   */
 trait TypedKey[T] {
   def valueCodec: GenCodec[T]

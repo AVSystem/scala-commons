@@ -4,13 +4,10 @@ package collection
 import scala.collection.{immutable => sci, mutable => scm}
 import scala.{collection => sc}
 
-/**
-  * Aliases for Scala collections which are both concise and leave no doubt about whether the collection type is
+/** Aliases for Scala collections which are both concise and leave no doubt about whether the collection type is
   * immutable, mutable or the base type (read only).
   *
-  * `B` stands for base (read only)
-  * `I` stands for immutable
-  * `M` stands for mutable
+  * `B` stands for base (read only) `I` stands for immutable `M` stands for mutable
   */
 trait CollectionAliases {
   type BIterable[+A] = sc.Iterable[A]

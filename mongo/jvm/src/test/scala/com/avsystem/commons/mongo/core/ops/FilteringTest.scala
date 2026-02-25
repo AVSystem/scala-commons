@@ -50,9 +50,9 @@ class FilteringTest extends AnyFunSuite {
   private val regexString = "\\d"
   private val regexScala = regexString.r
   private val regexJava = Pattern.compile(regexString)
-  testCase("regexScala")(_ regex regexScala)(Filters.regex(_, regexString))
-  testCase("regexJava")(_ regex regexJava)(Filters.regex(_, regexJava))
-  testCase("regexString")(_ regex regexString)(Filters.regex(_, regexString))
+  testCase("regexScala")(_.regex(regexScala))(Filters.regex(_, regexString))
+  testCase("regexJava")(_.regex(regexJava))(Filters.regex(_, regexJava))
+  testCase("regexString")(_.regex(regexString))(Filters.regex(_, regexString))
   testCase("regexOptions")(_.regex(regexString, "ops"))(Filters.regex(_, regexString, "ops"))
 
   import BsonEquality.bsonEquality

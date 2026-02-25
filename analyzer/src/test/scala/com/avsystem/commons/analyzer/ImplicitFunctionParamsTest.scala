@@ -61,14 +61,13 @@ final class ImplicitFunctionParamsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   // Define a SAM type (Single Abstract Method) for all SAM type tests
-  private val SamDefinition = {
-    //language=Scala
+  private val SamDefinition =
+    // language=Scala
     """
       |trait IntToString {
       |    def apply(i: Int): String
       |}
       |""".stripMargin
-  }
 
   test("regular parameter with SAM type should pass") {
     assertNoErrors(scala"$SamDefinition def goodMethod1(f: IntToString): Unit = ???")
@@ -95,23 +94,19 @@ final class ImplicitFunctionParamsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("regular parameter with Function2 type should pass") {
-    assertNoErrors(
-      scala"def goodMethod1(f: (Int, String) => Boolean): Unit = ???")
+    assertNoErrors(scala"def goodMethod1(f: (Int, String) => Boolean): Unit = ???")
   }
 
   test("regular parameter with Function3 type should pass") {
-    assertNoErrors(
-      scala"def goodMethod2(f: (Int, String, Double) => Boolean): Unit = ???")
+    assertNoErrors(scala"def goodMethod2(f: (Int, String, Double) => Boolean): Unit = ???")
   }
 
   test("implicit parameter with non-function type should pass (multiple params context)") {
-    assertNoErrors(
-      scala"def goodMethod3(implicit s: String): Unit = ???")
+    assertNoErrors(scala"def goodMethod3(implicit s: String): Unit = ???")
   }
 
   test("implicit parameter with Function2 type should fail") {
-    assertErrors(1,
-      scala"def badMethod1(implicit f: (Int, String) => Boolean): Unit = ???")
+    assertErrors(1, scala"def badMethod1(implicit f: (Int, String) => Boolean): Unit = ???")
   }
 
   test("implicit parameter with Function2 type in second parameter list should fail") {

@@ -26,8 +26,8 @@ class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDriven
   test("traverseMap") {
     forAll { (data: List[(String, Int)]) =>
       val map = data.toMap
-      val expected = map.view.map({ case (key, value) => (key + key, value + 2) }).toMap
-      val result = Task.traverseMap(map)({ case (key, value) => Task((key + key, value + 2)) }).runToFuture.futureValue
+      val expected = map.view.map { case (key, value) => (key + key, value + 2) }.toMap
+      val result = Task.traverseMap(map) { case (key, value) => Task((key + key, value + 2)) }.runToFuture.futureValue
       result shouldBe expected
     }
   }
@@ -36,7 +36,7 @@ class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDriven
     forAll { (data: List[(String, Int)]) =>
       val map = data.toMap
       val expected = map.view.mapValues(value => value + 2).toMap
-      val result = Task.traverseMapValues(map)({ case (key, value) => Task(value + 2) }).runToFuture.futureValue
+      val result = Task.traverseMapValues(map) { case (key, value) => Task(value + 2) }.runToFuture.futureValue
       result shouldBe expected
     }
   }

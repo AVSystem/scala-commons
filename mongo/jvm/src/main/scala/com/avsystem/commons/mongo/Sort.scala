@@ -4,8 +4,8 @@ package mongo
 import com.mongodb.client.model.{Sorts => S}
 import org.bson.conversions.Bson
 
-/**
-  * @author MKej
+/** @author
+  *   MKej
   */
 object Sort {
   def ascending(keys: DocKey[_, _]*): Bson = S.ascending(keys.map(_.key).asJava)

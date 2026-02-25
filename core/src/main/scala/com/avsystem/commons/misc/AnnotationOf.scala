@@ -4,9 +4,8 @@ import com.avsystem.commons.macros
 
 import scala.annotation.implicitNotFound
 
-/**
-  * A typeclass which captures an annotation of type `A` applied on a class/trait/object associated with
-  * type `T`. If this annotation is absent, compilation will fail.
+/** A typeclass which captures an annotation of type `A` applied on a class/trait/object associated with type `T`. If
+  * this annotation is absent, compilation will fail.
   * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
   */
 @implicitNotFound("${T} is not annotated with ${A}")
@@ -15,9 +14,8 @@ object AnnotationOf {
   implicit def materialize[A, T]: AnnotationOf[A, T] = macro macros.misc.MiscMacros.annotationOf[A, T]
 }
 
-/**
-  * A typeclass which captures a possible annotation of type `A` applied on a class/trait/object associated with
-  * type `T`. [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]]
+/** A typeclass which captures a possible annotation of type `A` applied on a class/trait/object associated with type
+  * `T`. [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]]
   * apply.
   */
 case class OptAnnotationOf[A, T](annotOpt: Opt[A])
@@ -25,23 +23,21 @@ object OptAnnotationOf {
   implicit def materialize[A, T]: OptAnnotationOf[A, T] = macro macros.misc.MiscMacros.optAnnotationOf[A, T]
 }
 
-/**
-  * A typeclass which captures all annotations of type `A` applied on a class/trait/object associated with
-  * type `T`. [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]]
-  * apply.
+/** A typeclass which captures all annotations of type `A` applied on a class/trait/object associated with type `T`.
+  * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
   */
 case class AnnotationsOf[A, T](annots: List[A]) extends AnyVal
 object AnnotationsOf {
   implicit def materialize[A, T]: AnnotationsOf[A, T] = macro macros.misc.MiscMacros.annotationsOf[A, T]
 }
 
-/**
-  * A typeclass which serves as an evidence that an annotation of type `A` is applied on a class/trait/object associated
-  * with type `T`. [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]]
-  * apply. Similar to [[AnnotationOf]] but does not reify the annotation itself into runtime.
+/** A typeclass which serves as an evidence that an annotation of type `A` is applied on a class/trait/object associated
+  * with type `T`.
+  * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
+  * Similar to [[AnnotationOf]] but does not reify the annotation itself into runtime.
   */
 @implicitNotFound("${T} is not annotated with ${A}")
-final class HasAnnotation[A, T] private()
+final class HasAnnotation[A, T] private ()
 object HasAnnotation {
   private[this] val reusable = new HasAnnotation
   def create[A, T]: HasAnnotation[A, T] = reusable.asInstanceOf[HasAnnotation[A, T]]
@@ -49,14 +45,13 @@ object HasAnnotation {
   implicit def materialize[A, T]: HasAnnotation[A, T] = macro macros.misc.MiscMacros.hasAnnotation[A, T]
 }
 
-/**
-  * A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures an annotation of
+/** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures an annotation of
   * type `A` applied on a class or object which extends this abstract class. If this annotation is absent, compilation
-  * will fail.
-  * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
+  * will fail. [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]]
+  * apply.
   *
   * @example
-  * {{{
+  *   {{{
   *   final class awesome(value: Boolean) extends scala.annotation.Annotation
   *
   *   abstract class Base(implicit awesomeAnnot: SelfAnnotation[awesome]) {
@@ -65,20 +60,19 @@ object HasAnnotation {
   *
   *   @awesome(true)
   *   class AwesomeSubclass extends Base
-  * }}}
+  *   }}}
   */
 case class SelfAnnotation[A](annot: A) extends AnyVal
 object SelfAnnotation {
   implicit def materialize[A]: SelfAnnotation[A] = macro macros.misc.MiscMacros.selfAnnotation[A]
 }
 
-/**
-  * A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures a possible
+/** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures a possible
   * annotation of type `A` applied on a class or object which extends this abstract class.
   * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
   *
   * @example
-  * {{{
+  *   {{{
   *   final class awesome(value: Boolean) extends scala.annotation.Annotation
   *
   *   abstract class Base(implicit awesomeAnnot: SelfOptAnnotation[awesome]) {
@@ -88,20 +82,19 @@ object SelfAnnotation {
   *   class NotAwesomeSubclass extends Base
   *   @awesome(true) class AwesomeSubclass extends Base
   *   @awesome(false) class ExplicitlyNotAwesomeSubclass extends Base
-  * }}}
+  *   }}}
   */
 case class SelfOptAnnotation[A](annotOpt: Opt[A])
 object SelfOptAnnotation {
   implicit def materialize[A]: SelfOptAnnotation[A] = macro macros.misc.MiscMacros.selfOptAnnotation[A]
 }
 
-/**
-  * A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures all annotations of
+/** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures all annotations of
   * type `A` applied on a class or object which extends this abstract class.
   * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
   *
   * @example
-  * {{{
+  *   {{{
   *   final class tag(value: String) extends scala.annotation.Annotation
   *
   *   abstract class Base(implicit tagAnnots: SelfAnnotations[tag]) {
@@ -110,7 +103,7 @@ object SelfOptAnnotation {
   *
   *   @tag("t1") @tag("t2") @tag("t3")
   *   class TaggedSubclass extends Base
-  * }}}
+  *   }}}
   */
 case class SelfAnnotations[A](annots: List[A]) extends AnyVal
 object SelfAnnotations {

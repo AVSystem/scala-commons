@@ -10,8 +10,7 @@ class GenCodecProvider[T: GenCodec](legacyOptionEncoding: Boolean)(implicit ct: 
   private val mongoCodec = new GenCodecBasedBsonCodec[T](legacyOptionEncoding)
   private val runtimeClass = ct.runtimeClass
 
-  override def get[X](clazz: Class[X], registry: CodecRegistry): Codec[X] = {
+  override def get[X](clazz: Class[X], registry: CodecRegistry): Codec[X] =
     if (runtimeClass.isAssignableFrom(clazz)) mongoCodec.asInstanceOf[Codec[X]]
     else null
-  }
 }

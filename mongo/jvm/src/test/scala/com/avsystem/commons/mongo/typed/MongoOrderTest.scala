@@ -18,16 +18,17 @@ class MongoOrderTest extends AnyFunSuite {
   }
 
   test("single field") {
-    assert(Rte.ref(_.int).ascending.toBson.toString ==
-      """{"int": 1}""")
-    assert(Rte.ref(_.int).descending.toBson.toString ==
-      """{"int": -1}""")
+    assert(Rte.ref(_.int).ascending.toBson.toString == """{"int": 1}""")
+    assert(Rte.ref(_.int).descending.toBson.toString == """{"int": -1}""")
   }
 
   test("multi field") {
-    assert(Rte.ref(_.int).ascending.andThenDescendingBy(Rte.ref(_.renamedStr)).toBson.toString ==
-      """{"int": 1, "str": -1}""")
-    assert(MongoDocumentOrder(Rte.ref(_.int) -> true, Rte.ref(_.renamedStr) -> false).toBson.toString ==
-      """{"int": 1, "str": -1}""")
+    assert(
+      Rte.ref(_.int).ascending.andThenDescendingBy(Rte.ref(_.renamedStr)).toBson.toString == """{"int": 1, "str": -1}"""
+    )
+    assert(
+      MongoDocumentOrder(Rte.ref(_.int) -> true, Rte.ref(_.renamedStr) -> false).toBson.toString ==
+        """{"int": 1, "str": -1}"""
+    )
   }
 }

@@ -3,8 +3,7 @@ package misc
 
 import scala.annotation.implicitNotFound
 
-/**
-  * Typeclass which captures case class `apply` method in a raw form that takes untyped sequence of arguments.
+/** Typeclass which captures case class `apply` method in a raw form that takes untyped sequence of arguments.
   */
 @implicitNotFound("cannot materialize Applier: ${T} is not a case class or case class like type")
 trait Applier[T] {
@@ -14,9 +13,8 @@ object Applier {
   implicit def materialize[T]: Applier[T] = macro macros.misc.MiscMacros.applier[T]
 }
 
-/**
-  * Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns
-  * untyped sequence of values.
+/** Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns untyped sequence of
+  * values.
   */
 @implicitNotFound("cannot materialize Unapplier: ${T} is not a case class or case class like type")
 trait Unapplier[T] {

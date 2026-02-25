@@ -6,7 +6,7 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec, GenObjectCodec}
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject, ConfigRenderOptions}
 
-import java.time.{Period, Duration as JDuration}
+import java.time.{Duration as JDuration, Period}
 import scala.concurrent.duration.*
 import scala.jdk.javaapi.DurationConverters
 
@@ -34,8 +34,11 @@ object HoconGenCodecs {
   )
 
   implicit final val FiniteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
-    input => input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
-    (output, value) => if (!output.writeCustom(DurationMarker, DurationConverters.toJava(value))) output.writeSimple().writeLong(value.toMillis),
+    input =>
+      input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
+    (output, value) =>
+      if (!output.writeCustom(DurationMarker, DurationConverters.toJava(value)))
+        output.writeSimple().writeLong(value.toMillis),
   )
 
   implicit final val JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(
@@ -50,7 +53,8 @@ object HoconGenCodecs {
 
   implicit final val SizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(
     input => SizeInBytes(input.readCustom(SizeInBytesMarker).getOrElse(input.readSimple().readLong())),
-    (output, value) => if (!output.writeCustom(SizeInBytesMarker, value.bytes)) output.writeSimple().writeLong(value.bytes),
+    (output, value) =>
+      if (!output.writeCustom(SizeInBytesMarker, value.bytes)) output.writeSimple().writeLong(value.bytes),
   )
 
   implicit final val ClassKeyCodec: GenKeyCodec[Class[?]] =
@@ -75,13 +79,12 @@ abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
   final def read(config: Config): T = HoconInput.read[T](config)
 }
 
-/**
-  * Base class for companion objects of configuration case classes and sealed traits
-  * (typically deserialized from HOCON files).
+/** Base class for companion objects of configuration case classes and sealed traits (typically deserialized from HOCON
+  * files).
   *
-  * [[DefaultConfigCompanion]] is equivalent to [[com.avsystem.commons.serialization.HasGenCodec HasGenCodec]]
-  * except that it automatically imports codecs from [[HoconGenCodecs]] - codecs for third party types often used
-  * in configuration.
+  * [[DefaultConfigCompanion]] is equivalent to [[com.avsystem.commons.serialization.HasGenCodec HasGenCodec]] except
+  * that it automatically imports codecs from [[HoconGenCodecs]] - codecs for third party types often used in
+  * configuration.
   */
 abstract class DefaultConfigCompanion[T](implicit macroCodec: MacroInstances[HoconGenCodecs, ConfigObjectCodec[T]])
   extends AbstractConfigCompanion[HoconGenCodecs, T](DefaultHoconGenCodecs)

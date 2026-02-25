@@ -13,29 +13,30 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
   lazy val SeqHeadRef: Symbol = typeOf[scala.collection.Seq[Any]].member(TermName("head"))
   lazy val MapApplySym: Symbol = typeOf[scala.collection.Map[Any, Any]].member(TermName("apply"))
   lazy val TypedMapApplySym: Symbol = getType(tq"$MiscPkg.TypedMap[$ScalaPkg.Any]").member(TermName("apply"))
-  lazy val AdtAsSym: Symbol = getType(tq"$MongoTypedPkg.AbstractMongoDataCompanion[Any, Any]#macroDslExtensions").member(TermName("as"))
-  lazy val PolyAdtAsSym: Symbol = getType(tq"$MongoTypedPkg.AbstractMongoPolyDataCompanion[Any, Any]#macroDslExtensions").member(TermName("as"))
+  lazy val AdtAsSym: Symbol =
+    getType(tq"$MongoTypedPkg.AbstractMongoDataCompanion[Any, Any]#macroDslExtensions").member(TermName("as"))
+  lazy val PolyAdtAsSym: Symbol =
+    getType(tq"$MongoTypedPkg.AbstractMongoPolyDataCompanion[Any, Any]#macroDslExtensions").member(TermName("as"))
 
   // check if some symbol is an abstract method of a sealed trait/class implemented in every case class
   // by a field with exactly the same type
-  private def isSealedHierarchySharedField(ownerTpe: Type, sym: TermSymbol): Boolean = {
+  private def isSealedHierarchySharedField(ownerTpe: Type, sym: TermSymbol): Boolean =
     isSealedHierarchyRoot(ownerTpe.typeSymbol) && sym.isMethod && sym.isAbstract && {
       val sig = sym.typeSignatureIn(ownerTpe)
-      sig.typeParams.isEmpty && sig.paramLists.isEmpty &&
-        knownSubtypes(ownerTpe).exists { subtypes =>
-          subtypes.forall { subtype =>
-            alternatives(subtype.member(sym.name)).exists { subMember =>
-              subMember.asTerm.isCaseAccessor &&
-                subMember.typeSignatureIn(subtype).finalResultType =:= sig.finalResultType
-            }
+      sig.typeParams.isEmpty && sig.paramLists.isEmpty && knownSubtypes(ownerTpe).exists { subtypes =>
+        subtypes.forall { subtype =>
+          alternatives(subtype.member(sym.name)).exists { subMember =>
+            subMember.asTerm.isCaseAccessor &&
+            subMember.typeSignatureIn(subtype).finalResultType =:= sig.finalResultType
           }
         }
+      }
     }
-  }
 
   private def isTransparentUnwrap(prefixTpe: Type, fieldSym: Symbol): Boolean = {
     val sym = prefixTpe.typeSymbol
-    sym.isClass && sym.asClass.isCaseClass && (primaryConstructorOf(prefixTpe).asMethod.paramLists match {
+    sym.isClass && sym.asClass.isCaseClass &&
+    (primaryConstructorOf(prefixTpe).asMethod.paramLists match {
       case List(param) :: _ if param.name == fieldSym.name =>
         val paramTpe = fieldSym.typeSignatureIn(prefixTpe).finalResultType
         val wrappingTpe = getType(tq"$SerializationPkg.TransparentWrapping[$paramTpe, $prefixTpe]")
@@ -55,7 +56,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   def refImpl(fun: Tree): Tree = fun match {
     case Function(List(param), body) =>
-      //TODO: more detailed message
+      // TODO: more detailed message
       def invalid(tree: Tree): Nothing =
         c.abort(tree.pos, "invalid MongoDB field reference")
 
@@ -65,7 +66,7 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           c.prefix.tree
 
         case TypeApply(Select(Apply(_, List(prefix)), TermName("as")), List(subtpe))
-          if body.symbol == AdtAsSym || body.symbol == PolyAdtAsSym =>
+            if body.symbol == AdtAsSym || body.symbol == PolyAdtAsSym =>
           q"${extractRefStep(prefix)}.as[$subtpe]"
 
         case Select(prefix, name: TermName) =>
@@ -86,12 +87,12 @@ class MongoMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
             invalid(body)
 
         case Apply(Select(prefix, TermName("apply")), List(argument))
-          if overridesAnyOf(body.symbol, SeqApplySym, MapApplySym) =>
+            if overridesAnyOf(body.symbol, SeqApplySym, MapApplySym) =>
 
           q"${extractRefStep(prefix)}.apply($argument)"
 
         case Apply(TypeApply(Select(prefix, TermName("apply")), List(valueTpeTree)), List(argument))
-          if overridesAnyOf(body.symbol, TypedMapApplySym) =>
+            if overridesAnyOf(body.symbol, TypedMapApplySym) =>
 
           q"${extractRefStep(prefix)}.apply[$valueTpeTree]($argument)"
 

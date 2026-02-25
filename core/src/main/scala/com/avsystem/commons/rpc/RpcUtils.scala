@@ -5,8 +5,7 @@ import com.avsystem.commons.macros.misc.MiscMacros
 
 import scala.collection.Factory
 
-class InvalidRpcCall(msg: String, cause: Throwable = null)
-  extends RuntimeException(msg, cause)
+class InvalidRpcCall(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
 
 class InvalidRpcArgument(val rpcName: String, val argName: String, cause: Throwable)
   extends InvalidRpcCall(s"Argument $argName of RPC $rpcName is invalid: ${cause.getMessage}", cause)
@@ -31,7 +30,8 @@ object RpcUtils {
   }
 
   def readArg[Raw, Real](rpcName: String, argName: String, asReal: AsReal[Raw, Real], raw: Raw): Real =
-    try asReal.asReal(raw) catch {
+    try asReal.asReal(raw)
+    catch {
       case NonFatal(cause) => invalidArg(rpcName, argName, cause)
     }
 
@@ -47,10 +47,12 @@ object RpcUtils {
   def missingOptionalRpc(rawMethodName: String): Nothing =
     throw new MissingOptionalRpc(rawMethodName)
 
-  def interceptEnc[NewRaw, Raw, Real](asRaw: AsRaw[NewRaw, Real], interceptor: EncodingInterceptor[NewRaw, Raw]): AsRaw[Raw, Real] =
+  def interceptEnc[NewRaw, Raw, Real](asRaw: AsRaw[NewRaw, Real], interceptor: EncodingInterceptor[NewRaw, Raw])
+    : AsRaw[Raw, Real] =
     real => interceptor.toOriginalRaw(asRaw.asRaw(real))
 
-  def interceptDec[NewRaw, Raw, Real](asReal: AsReal[NewRaw, Real], interceptor: DecodingInterceptor[NewRaw, Raw]): AsReal[Raw, Real] =
+  def interceptDec[NewRaw, Raw, Real](asReal: AsReal[NewRaw, Real], interceptor: DecodingInterceptor[NewRaw, Raw])
+    : AsReal[Raw, Real] =
     raw => asReal.asReal(interceptor.toNewRaw(raw))
 
   def compilationError(error: String): Nothing = macro MiscMacros.compilationError

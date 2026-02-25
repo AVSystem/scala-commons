@@ -11,6 +11,7 @@ import scala.annotation.tailrec
 import scala.beans.BeanProperty
 import scala.reflect.{ScalaLongSignature, ScalaSignature}
 
+@deprecated(spring.DeprecatedMessage, spring.DeprecatedSince)
 class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
   @BeanProperty var paramNameDiscoverer: ParameterNameDiscoverer =
     new StandardReflectionParameterNameDiscoverer
@@ -36,29 +37,26 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
       case ms: ManagedSet[_] =>
         ms.asScala.foreach(traverse)
       case mm: ManagedMap[_, _] =>
-        mm.asScala.foreach {
-          case (k, v) =>
-            traverse(k)
-            traverse(v)
+        mm.asScala.foreach { case (k, v) =>
+          traverse(k)
+          traverse(v)
         }
       case _ =>
     }
 
-    registry.getBeanDefinitionNames
-      .foreach(n => traverse(registry.getBeanDefinition(n)))
+    registry.getBeanDefinitionNames.foreach(n => traverse(registry.getBeanDefinition(n)))
   }
 
   @tailrec
   private def isScalaClass(cls: Class[_]): Boolean = cls.getEnclosingClass match {
-    case null => cls.getAnnotation(classOf[ScalaSignature]) != null ||
-      cls.getAnnotation(classOf[ScalaLongSignature]) != null
+    case null =>
+      cls.getAnnotation(classOf[ScalaSignature]) != null || cls.getAnnotation(classOf[ScalaLongSignature]) != null
     case encls => isScalaClass(encls)
   }
 
   private def injectDefaultValues(bd: BeanDefinition): Unit =
-    bd.getBeanClassName.opt.map(loadClass)
-      .recoverToOpt[ClassNotFoundException].flatten.filter(isScalaClass)
-      .foreach { clazz =>
+    bd.getBeanClassName.opt.map(loadClass).recoverToOpt[ClassNotFoundException].flatten.filter(isScalaClass).foreach {
+      clazz =>
         val usingConstructor = bd.getFactoryMethodName == null
         val factoryExecs =
           if (usingConstructor) clazz.getConstructors.toVector
@@ -74,8 +72,10 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
             case m: Method => paramNameDiscoverer.getParameterNames(m)
           }
           (0 until factoryExec.getParameterCount).foreach { i =>
-            def defaultValueMethod = clazz.getMethod(s"$factorySymbolName$$default$$${i + 1}")
-              .recoverToOpt[NoSuchMethodException].filter(m => Modifier.isStatic(m.getModifiers))
+            def defaultValueMethod = clazz
+              .getMethod(s"$factorySymbolName$$default$$${i + 1}")
+              .recoverToOpt[NoSuchMethodException]
+              .filter(m => Modifier.isStatic(m.getModifiers))
             def specifiedNamed = paramNames != null &&
               constrVals.getGenericArgumentValues.asScala.exists(_.getName == paramNames(i))
             def specifiedIndexed =
@@ -87,7 +87,6 @@ class ScalaDefaultValuesInjector extends BeanDefinitionRegistryPostProcessor {
             }
           }
         }
-      }
+    }
 
-  def postProcessBeanFactory(beanFactory: ConfigurableListableBeanFactory): Unit = ()
 }

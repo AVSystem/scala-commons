@@ -26,7 +26,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
 
   private implicit val rawValueCodec: GenCodec[RawValue] = GenCodec.create(
     i => new RawValue(i.readCustom(RawJson).getOrElse(i.readSimple().readString())),
-    (o, v) => if (!o.writeCustom(RawJson, v.s)) o.writeSimple().writeString(v.s)
+    (o, v) => if (!o.writeCustom(RawJson, v.s)) o.writeSimple().writeString(v.s),
   )
 
   override def read[T: Reader](raw: RawValue): T = JsonStringInput.read[T](raw.s)
@@ -70,13 +70,10 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
       val content = new StringRequestContent(
         MimeTypes.Type.APPLICATION_JSON.asString(),
         write(call).s,
-        StandardCharsets.UTF_8
+        StandardCharsets.UTF_8,
       )
 
-      httpClient.newRequest(uri)
-        .method(method)
-        .body(content)
-        .send(listener)
+      httpClient.newRequest(uri).method(method).body(content).send(listener)
 
       promise.future
     }
@@ -92,9 +89,7 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
     override def service(request: HttpServletRequest, response: HttpServletResponse): Unit = {
       // readRequest must execute in request thread but we want exceptions to be handled uniformly, hence the Try
       val content =
-        Using(request.getReader)(reader =>
-          Iterator.continually(reader.readLine()).takeWhile(_ != null).mkString("\n")
-        )
+        Using(request.getReader)(reader => Iterator.continually(reader.readLine()).takeWhile(_ != null).mkString("\n"))
       val call = content.map(content => read[Call](new RawValue(content)))
 
       HttpMethod.fromString(request.getMethod) match {
@@ -123,7 +118,9 @@ object JettyRPCFramework extends StandardRPCFramework with LazyLogging {
         case HttpMethod.PUT =>
           call.map(handlePut).get
         case _ =>
-          throw new IllegalArgumentException(s"Request HTTP method is ${request.getMethod}, only POST or PUT are supported")
+          throw new IllegalArgumentException(
+            s"Request HTTP method is ${request.getMethod}, only POST or PUT are supported"
+          )
       }
     }
 

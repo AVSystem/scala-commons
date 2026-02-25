@@ -29,10 +29,23 @@ trait SerializationTestUtils {
   object DeepNestedTestCC extends HasGenCodec[DeepNestedTestCC]
 
   case class CompleteItem(
-    unit: Unit, string: String, char: Char,
-    boolean: Boolean, byte: Byte, short: Short, int: Int,
-    long: Long, float: Float, double: Double, bigInt: BigInt, bigDecimal: BigDecimal,
-    binary: Array[Byte], list: List[String], set: Set[String], obj: TestCC, map: Map[String, Int]
+    unit: Unit,
+    string: String,
+    char: Char,
+    boolean: Boolean,
+    byte: Byte,
+    short: Short,
+    int: Int,
+    long: Long,
+    float: Float,
+    double: Double,
+    bigInt: BigInt,
+    bigDecimal: BigDecimal,
+    binary: Array[Byte],
+    list: List[String],
+    set: Set[String],
+    obj: TestCC,
+    map: Map[String, Int],
   )
   object CompleteItem extends HasGenCodec[CompleteItem] {
     implicit val arb: Arbitrary[CompleteItem] = Arbitrary(for {

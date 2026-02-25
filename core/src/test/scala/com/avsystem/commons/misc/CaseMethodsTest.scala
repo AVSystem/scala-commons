@@ -11,14 +11,14 @@ class CaseMethodsTest extends AnyFunSuite {
   val other = Whatever("lol", 41)
 
   test("equality") {
-    assert(first canEqual second)
+    assert(first.canEqual(second))
     assert(first == second)
-    assert(first equals second)
+    assert(first.equals(second))
   }
 
   test("inequality") {
     assert(first != other)
-    assert(!(first equals other))
+    assert(!first.equals(other))
   }
 
   test("hashCode") {

@@ -5,9 +5,8 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
 import com.mongodb.client.model.IndexOptions
 import org.bson.{BsonDocument, BsonValue}
 
-/**
-  * Represents a MongoDB index, expressed as sequence of fields associated with index type.
-  * Note: additional index options are passed separately into methods like [[TypedMongoCollection.createIndex]].
+/** Represents a MongoDB index, expressed as sequence of fields associated with index type. Note: additional index
+  * options are passed separately into methods like [[TypedMongoCollection.createIndex]].
   *
   * Examples:
   *
@@ -33,11 +32,12 @@ import org.bson.{BsonDocument, BsonValue}
   *   )
   * }}}
   *
-  * @tparam E type of the MongoDB entity
+  * @tparam E
+  *   type of the MongoDB entity
   */
 case class MongoIndex[E](
   fields: Vector[(MongoPropertyRef[E, _], MongoIndexType)],
-  setupOptions: IndexOptions => IndexOptions = identity
+  setupOptions: IndexOptions => IndexOptions = identity,
 ) {
   require(fields.nonEmpty, "MongoDB index cannot be empty")
 

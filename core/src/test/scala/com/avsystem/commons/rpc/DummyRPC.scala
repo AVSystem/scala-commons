@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta.{MacroInstances, TypedMetadata, annotated, checked, composite, infer, multi, reifyAnnot, reifyName}
+import com.avsystem.commons.meta.{annotated, checked, composite, infer, multi, reifyAnnot, reifyName, MacroInstances, TypedMetadata}
 import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.serialization.GenCodec
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
@@ -13,16 +13,21 @@ object DummyRPC {
   case class RawNamedInvocation(@methodName rpcName: String, @multi args: IListMap[String, String])
 
   trait RawRPC {
-    @multi @verbatim @annotated[namedArgs]
+    @multi
+    @verbatim
+    @annotated[namedArgs]
     def fireNamed(@composite invocation: RawNamedInvocation): Unit
 
-    @multi @verbatim
+    @multi
+    @verbatim
     def fire(@composite invocation: RawInvocation): Unit
 
-    @multi @encoded
+    @multi
+    @encoded
     def call(@composite invocation: RawInvocation): Future[String]
 
-    @multi @encoded
+    @multi
+    @encoded
     def get(@composite invocation: RawInvocation): RawRPC
 
     def resolveGetterChain(getters: Seq[RawInvocation]): RawRPC =
@@ -59,14 +64,16 @@ object DummyRPC {
   case class ParamMetadata[T](
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
-    @infer typeMetadata: TypeString[T]
-  ) extends ParamSignature with TypedMetadata[T]
+    @infer typeMetadata: TypeString[T],
+  ) extends ParamSignature
+      with TypedMetadata[T]
 
   case class GenericParamMetadata[T](
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
-    @forTypeParams @infer typeMetadata: List[TypeString[_]] => TypeString[T]
-  ) extends ParamSignature with TypedMetadata[T]
+    @forTypeParams @infer typeMetadata: List[TypeString[_]] => TypeString[T],
+  ) extends ParamSignature
+      with TypedMetadata[T]
 
   case class TypeParamMetadata(
     @reifyName name: String
@@ -75,30 +82,33 @@ object DummyRPC {
   case class ProcedureSignature(
     @reifyName name: String,
     @multi @rpcParamMetadata paramMetadata: List[ParamMetadata[_]],
-    @reifyAnnot @multi annotations: List[MetadataAnnotation]
-  ) extends Signature with TypedMetadata[Unit]
+    @reifyAnnot @multi annotations: List[MetadataAnnotation],
+  ) extends Signature
+      with TypedMetadata[Unit]
 
   case class FunctionSignature[T](
     @reifyName name: String,
     @multi @rpcTypeParamMetadata typeParamMetadata: List[TypeParamMetadata],
     @multi @rpcParamMetadata paramMetadata: List[GenericParamMetadata[_]],
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
-    @forTypeParams @infer resultTypeMetadata: List[ClassTag[_]] => ClassTag[T]
-  ) extends Signature with TypedMetadata[Future[T]]
+    @forTypeParams @infer resultTypeMetadata: List[ClassTag[_]] => ClassTag[T],
+  ) extends Signature
+      with TypedMetadata[Future[T]]
 
   case class GetterSignature[T](
     @reifyName name: String,
     @multi @rpcParamMetadata paramMetadata: List[ParamMetadata[_]],
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
-    @infer @checked resultMetadata: RPCMetadata.Lazy[T]
-  ) extends Signature with TypedMetadata[T]
+    @infer @checked resultMetadata: RPCMetadata.Lazy[T],
+  ) extends Signature
+      with TypedMetadata[T]
 
   case class RPCMetadata[T](
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @multi @verbatim @rpcMethodMetadata procedureSignatures: Map[String, ProcedureSignature],
     @multi @rpcMethodMetadata functionSignatures: Map[String, FunctionSignature[_]],
-    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]]
+    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]],
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 

@@ -3,52 +3,45 @@ package concurrent
 
 import scala.concurrent.duration._
 
-/**
-  * A `RetryStrategy` is conceptually a lazy sequence of delays, possibly infinite.
+/** A `RetryStrategy` is conceptually a lazy sequence of delays, possibly infinite.
   */
 trait RetryStrategy { self =>
-  /**
-    * Determines a delay that will be waited before retrying some operation that failed (e.g. Redis connection attempt)
-    * and also returns next retry strategy that should be used if that retry itself also fails.
-    * If this method returns `Opt.Empty`, the operation will not be retried and failure should be reported.
+
+  /** Determines a delay that will be waited before retrying some operation that failed (e.g. Redis connection attempt)
+    * and also returns next retry strategy that should be used if that retry itself also fails. If this method returns
+    * `Opt.Empty`, the operation will not be retried and failure should be reported.
     */
   def nextRetry: Opt[(FiniteDuration, RetryStrategy)]
 
-  /**
-    * Concatenates two retry strategies, understood as lazy sequences of delays.
+  /** Concatenates two retry strategies, understood as lazy sequences of delays.
     */
   def andThen(otherStrategy: RetryStrategy): RetryStrategy =
     RetryStrategy(self.nextRetry match {
-      case Opt((delay, nextStrat)) => Opt((delay, nextStrat andThen otherStrategy))
+      case Opt((delay, nextStrat)) => Opt((delay, nextStrat.andThen(otherStrategy)))
       case Opt.Empty => otherStrategy.nextRetry
     })
 
-  /**
-    * Limits the maximum delay between retries to some specified duration.
+  /** Limits the maximum delay between retries to some specified duration.
     */
   def maxDelay(duration: FiniteDuration): RetryStrategy =
-    RetryStrategy(self.nextRetry.map { case (delay, retry) => (delay min duration, retry.maxDelay(duration)) })
+    RetryStrategy(self.nextRetry.map { case (delay, retry) => (delay.min(duration), retry.maxDelay(duration)) })
 
-  /**
-    * Limits the maximum total duration (sum of retry delays) to some specified duration.
+  /** Limits the maximum total duration (sum of retry delays) to some specified duration.
     */
   def maxTotal(duration: FiniteDuration): RetryStrategy =
-    RetryStrategy(self.nextRetry.collect {
-      case (delay, nextStrat) =>
-        if (delay <= duration) (delay, nextStrat.maxTotal(duration - delay))
-        else (duration, RetryStrategy.never)
+    RetryStrategy(self.nextRetry.collect { case (delay, nextStrat) =>
+      if (delay <= duration) (delay, nextStrat.maxTotal(duration - delay))
+      else (duration, RetryStrategy.never)
     })
 
-  /**
-    * Limits the maximum number of retries to some specified number.
+  /** Limits the maximum number of retries to some specified number.
     */
   def maxRetries(retries: Int): RetryStrategy =
     if (retries <= 0) RetryStrategy.never
     else RetryStrategy(self.nextRetry.map { case (delay, nextStrat) => (delay, nextStrat.maxRetries(retries - 1)) })
 
-  /**
-    * Randomizes delays. Each delay is multiplied by a factor which is randomly and uniformly choosen from
-    * specified segment `[minFactor, maxFactor)` (e.g. 0.9 to 1.1)
+  /** Randomizes delays. Each delay is multiplied by a factor which is randomly and uniformly choosen from specified
+    * segment `[minFactor, maxFactor)` (e.g. 0.9 to 1.1)
     */
   def randomized(minFactor: Double, maxFactor: Double): RetryStrategy =
     RetryStrategy(self.nextRetry.flatMap { case (delay, nextStrat) =>

@@ -4,15 +4,14 @@ package analyzer
 import org.scalatest.funsuite.AnyFunSuite
 
 final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
-  private val DummyDefinition = {
-    //language=Scala
+  private val DummyDefinition =
+    // language=Scala
     """
       |class Scheduler
       |object Scheduler {
       | val global = new Scheduler
       |}
       |""".stripMargin
-  }
 
   test("implicit parameter without default value should pass") {
     assertNoErrors(scala"$DummyDefinition def goodMethod1(implicit s: Scheduler): Unit = ???")
@@ -27,7 +26,10 @@ final class ImplicitParamDefaultsTest extends AnyFunSuite with AnalyzerTest {
   }
 
   test("implicit parameter with default value in second parameter list should fail") {
-    assertErrors(1, scala"$DummyDefinition def badMethod(sth: Int)(implicit s: Scheduler = Scheduler.global): Unit = ???")
+    assertErrors(
+      1,
+      scala"$DummyDefinition def badMethod(sth: Int)(implicit s: Scheduler = Scheduler.global): Unit = ???",
+    )
   }
 
   test("generic method with implicit parameter with default value should fail") {

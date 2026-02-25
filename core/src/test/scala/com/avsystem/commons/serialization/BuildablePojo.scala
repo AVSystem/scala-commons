@@ -35,11 +35,11 @@ object BuildablePojo {
       new BuildablePojo(str, num, flags, cool)
   }
 }
-final class BuildablePojo private(
+final class BuildablePojo private (
   private val str: String,
   private val num: Int,
   private val flags: JList[Boolean],
-  private val cool: Boolean
+  private val cool: Boolean,
 ) {
   def getStr(): String = str
   def getNum(): Int = num

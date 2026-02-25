@@ -15,12 +15,11 @@ trait TypedMongoUtils {
   protected final def singleOpt[T](publisher: Publisher[T]): Task[Option[T]] = publisher.headOptionL
   protected final def multi[T](publisher: Publisher[T]): Observable[T] = publisher.asMonix
 
-  /**
-    * Transforms an expression `method(nullableArg, moreArgs)` into
+  /** Transforms an expression `method(nullableArg, moreArgs)` into
     * `if(nullableArg ne null) method(nullableArg, moreArgs) else method(moreArgs)`.
     *
-    * Reduces boilerplate associated with calling overloaded methods from Mongo ReactiveStreams driver that
-    * may or may not take `ClientSession` as its first argument (non-nullable).
+    * Reduces boilerplate associated with calling overloaded methods from Mongo ReactiveStreams driver that may or may
+    * not take `ClientSession` as its first argument (non-nullable).
     */
   protected def optionalizeFirstArg[T](expr: T): T = macro MiscMacros.optionalizeFirstArg
 }

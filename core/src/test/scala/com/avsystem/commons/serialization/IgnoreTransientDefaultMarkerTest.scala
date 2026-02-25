@@ -43,7 +43,7 @@ class IgnoreTransientDefaultMarkerTest extends AbstractCodecTest {
     testWrite(HasDefaults(str = "dafuq"), Map("str" -> "dafuq", "int" -> 42))
   }
 
-  //noinspection RedundantDefaultArgument
+  // noinspection RedundantDefaultArgument
   test("read case class with default values") {
     testRead(Map("str" -> "lol", "int" -> 42), HasDefaults(str = "lol", int = 42))
     testRead(Map("str" -> "lol"), HasDefaults(str = "lol", int = 42))
@@ -58,7 +58,7 @@ class IgnoreTransientDefaultMarkerTest extends AbstractCodecTest {
     testWrite(HasOptParam(), Map("flag" -> false))
   }
 
-  //noinspection RedundantDefaultArgument
+  // noinspection RedundantDefaultArgument
   test("write nested case class with default values") {
     testWrite(
       value = NestedHasDefaults(

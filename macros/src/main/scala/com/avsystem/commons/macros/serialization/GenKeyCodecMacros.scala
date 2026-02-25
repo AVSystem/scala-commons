@@ -12,15 +12,16 @@ class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
   def forSealedEnum[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T]
-    knownSubtypes(tpe).map { subtypes =>
-      def singleValue(st: Type): Tree = singleValueFor(st).getOrElse(abort(s"$st is not an object"))
-      val nameBySym = subtypes.groupBy(st => targetName(st.typeSymbol)).map {
-        case (name, List(subtype)) => (subtype.typeSymbol, name)
-        case (name, kst) =>
-          abort(s"Objects ${kst.map(_.typeSymbol.name).mkString(", ")} have the same @name: $name")
-      }
+    knownSubtypes(tpe)
+      .map { subtypes =>
+        def singleValue(st: Type): Tree = singleValueFor(st).getOrElse(abort(s"$st is not an object"))
+        val nameBySym = subtypes.groupBy(st => targetName(st.typeSymbol)).map {
+          case (name, List(subtype)) => (subtype.typeSymbol, name)
+          case (name, kst) =>
+            abort(s"Objects ${kst.map(_.typeSymbol.name).mkString(", ")} have the same @name: $name")
+        }
 
-      q"""
+        q"""
         new $GenKeyCodecCls[$tpe] {
           def tpeString = ${tpe.toString}
           def read(key: $StringCls): $tpe = key match {
@@ -32,14 +33,15 @@ class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
           }
         }
       """
-    }.getOrElse(abort(s"$tpe is not a sealed trait or class"))
+      }
+      .getOrElse(abort(s"$tpe is not a sealed trait or class"))
   }
 
   def forTransparentWrapper[T: WeakTypeTag]: Tree = {
     val tpe = weakTypeOf[T].dealias
     val codecTpe = getType(tq"$GenKeyCodecCls[$tpe]")
     val (applyUnapply, param) = applyUnapplyFor(tpe) match {
-      case Some(au@ApplyUnapply(_, _, _, _, List(soleParam))) => (au, soleParam)
+      case Some(au @ ApplyUnapply(_, _, _, _, List(soleParam))) => (au, soleParam)
       case _ => abort(s"$tpe is not a case class (or case class-like type) with exactly one field")
     }
 

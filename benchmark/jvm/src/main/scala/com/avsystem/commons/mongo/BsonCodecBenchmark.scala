@@ -31,9 +31,8 @@ class BsonCodecBenchmark {
   }
 
   @Benchmark
-  def binaryEncoding(): Array[Byte] = {
+  def binaryEncoding(): Array[Byte] =
     binaryEncode(something)
-  }
 
   @Benchmark
   def binaryDecoding(): Toplevel = {
@@ -43,14 +42,12 @@ class BsonCodecBenchmark {
   }
 
   @Benchmark
-  def encoding(): Doc = {
+  def encoding(): Doc =
     somethingCodec.toDocument(something)
-  }
 
   @Benchmark
-  def decoding(): Toplevel = {
+  def decoding(): Toplevel =
     somethingCodec.fromDocument(doc)
-  }
 }
 
 object BsonCodecBenchmark {
@@ -64,28 +61,23 @@ object BsonCodecBenchmark {
   val listKey: DocKey[List[Int], BsonArray] = int32.collection[List].key("list")
 
   val nestedCodec = new DocumentCodec[Nested] {
-    override def toDocument(t: Nested): Doc = Doc()
-      .put(listKey, t.list)
-      .put(intKey, t.int)
+    override def toDocument(t: Nested): Doc = Doc().put(listKey, t.list).put(intKey, t.int)
 
     override def fromDocument(doc: Doc) = Nested(
       list = doc.require(listKey),
-      int = doc.require(intKey)
+      int = doc.require(intKey),
     )
   }
 
   val nestedKey: DocKey[Nested, BsonDocument] = nestedCodec.bsonCodec.key("nested")
 
   val somethingCodec = new DocumentCodec[Toplevel] {
-    override def toDocument(t: Toplevel): Doc = Doc()
-      .put(intKey, t.int)
-      .put(nestedKey, t.nested)
-      .put(strKey, t.str)
+    override def toDocument(t: Toplevel): Doc = Doc().put(intKey, t.int).put(nestedKey, t.nested).put(strKey, t.str)
 
     override def fromDocument(doc: Doc): Toplevel = Toplevel(
       int = doc.require(intKey),
       nested = doc.require(nestedKey),
-      str = doc.require(strKey)
+      str = doc.require(strKey),
     )
   }
 }

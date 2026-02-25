@@ -1,8 +1,8 @@
 package com.avsystem.commons.misc
 
 object OptArg {
-  /**
-    * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
+
+  /** This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
     */
   implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
 
@@ -13,7 +13,7 @@ object OptArg {
   private object EmptyMarker extends Serializable
 
   def apply[A](value: A): OptArg[A] = new OptArg[A](if (value != null) value else EmptyMarker)
-  def unapply[A](opt: OptArg[A]): OptArg[A] = opt //name-based extractor
+  def unapply[A](opt: OptArg[A]): OptArg[A] = opt // name-based extractor
 
   def some[A](value: A): OptArg[A] =
     if (value != null) new OptArg[A](value)
@@ -23,10 +23,9 @@ object OptArg {
   def empty[A]: OptArg[A] = Empty
 }
 
-/**
-  * [[OptArg]] is like [[Opt]] except it's intended to be used to type-safely express optional method/constructor
-  * parameters while at the same time avoiding having to explicitly wrap arguments when passing them
-  * (thanks to the implicit conversion from `A` to `OptArg[A]`). For example:
+/** [[OptArg]] is like [[Opt]] except it's intended to be used to type-safely express optional method/constructor
+  * parameters while at the same time avoiding having to explicitly wrap arguments when passing them (thanks to the
+  * implicit conversion from `A` to `OptArg[A]`). For example:
   *
   * {{{
   *   def takesMaybeString(str: OptArg[String] = OptArg.Empty) = ???
@@ -35,15 +34,15 @@ object OptArg {
   *   takesMaybeString("string") // no explicit wrapping into OptArg required
   * }}}
   *
-  * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into `OptArg.Empty`.
-  * <br/>
-  * It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit conversion `A => OptArg[A]`
-  * is intended to work. You should not use [[OptArg]] as a general-purpose "optional value" type - other types like
-  * [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately does not have any "transforming"
-  * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
-  * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
+  * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into
+  * `OptArg.Empty`. <br/> It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit
+  * conversion `A => OptArg[A]` is intended to work. You should not use [[OptArg]] as a general-purpose "optional value"
+  * type - other types like [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately
+  * does not have any "transforming" methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that
+  * [[OptArg]] is converted to [[Opt]], [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption`
+  * methods).
   */
-final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class OptArg[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
   import OptArg._
 
   private def value: A = rawValue.asInstanceOf[A]
@@ -78,8 +77,7 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
   @inline def fold[B](ifEmpty: => B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  /**
-    * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+  /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
     */
   @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
@@ -109,8 +107,7 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
   @inline def toLeft[X](right: => X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  /**
-    * Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
+  /** Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
     *
     * @param sideEffect - code to be executed if optArg is empty
     * @return the same optArg

@@ -24,7 +24,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   }
 
   test("NoState") {
-    type NoState = Nothing {type Dummy = Nothing}
+    type NoState = Nothing { type Dummy = Nothing }
     assert(implicitly[GenCodec[NoState]] == GenCodec.NothingCodec)
   }
 
@@ -167,7 +167,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip[Expr[String]](StringExpr("stringzor"))
     testRoundtrip[Expr[Int]](IntExpr(42))
     testRoundtrip[BaseExpr](StringExpr("stringzor"))
-    testRoundtrip[BaseExpr {type Value = String}](StringExpr("stringzor"))
+    testRoundtrip[BaseExpr { type Value = String }](StringExpr("stringzor"))
   }
 
   test("recursive GADT") {
@@ -217,9 +217,30 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
 
   test("case class with more than 22 fields") {
     val inst = ItsOverTwentyTwo(
-      "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
-      "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20",
-      "v21", "v22", "v23")
+      "v1",
+      "v2",
+      "v3",
+      "v4",
+      "v5",
+      "v6",
+      "v7",
+      "v8",
+      "v9",
+      "v10",
+      "v11",
+      "v12",
+      "v13",
+      "v14",
+      "v15",
+      "v16",
+      "v17",
+      "v18",
+      "v19",
+      "v20",
+      "v21",
+      "v22",
+      "v23",
+    )
     testRoundtrip[ItsOverTwentyTwo](inst)
   }
 
@@ -228,7 +249,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   }
 
   test("refined sealed type with type member") {
-    testRoundtrip[SealedRefined {type X = Int}](SealedRefined.First(42))
+    testRoundtrip[SealedRefined { type X = Int }](SealedRefined.First(42))
   }
 
   test("recursive materialization of indirectly recursive type") {

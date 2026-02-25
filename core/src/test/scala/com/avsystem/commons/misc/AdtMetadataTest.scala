@@ -3,7 +3,7 @@ package misc
 
 import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta._
-import com.avsystem.commons.serialization.{GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo, name}
+import com.avsystem.commons.serialization.{name, GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo}
 
 trait GenCodecStructure[T] {
   def codec: GenCodec[T]
@@ -11,7 +11,8 @@ trait GenCodecStructure[T] {
 }
 
 abstract class HasGenCodecStructure[T](
-  implicit macroInstances: MacroInstances[Unit, GenCodecStructure[T]]) {
+  implicit macroInstances: MacroInstances[Unit, GenCodecStructure[T]]
+) {
   implicit val genCodec: GenCodec[T] = macroInstances((), this).codec
   implicit val genStructure: GenStructure[T] = macroInstances((), this).structure
 }
@@ -24,7 +25,7 @@ object GenStructure extends AdtMetadataCompanion[GenStructure]
 case class GenField[T](
   @infer ts: TypeString[T],
   @infer codec: GenCodec[T],
-  @composite info: GenParamInfo[T]
+  @composite info: GenParamInfo[T],
 ) extends TypedMetadata[T] {
   def rawName: String = info.rawName
   def repr: String = s"[$info.flags]${info.annotName.fold("")(n => s"<${n.name}> ")}$ts"
@@ -32,11 +33,13 @@ case class GenField[T](
 
 @positioned(positioned.here) case class GenUnion[T](
   @composite info: GenUnionInfo[T],
-  @multi @adtCaseMetadata cases: Map[String, GenCase[_]]
+  @multi @adtCaseMetadata cases: Map[String, GenCase[_]],
 ) extends GenStructure[T] {
-  def repr: String = cases.iterator.map {
-    case (name, gr) => s"case $name:${gr.repr}"
-  }.mkString(s"[${info.flags}]\n", "\n", "")
+  def repr: String = cases.iterator
+    .map { case (name, gr) =>
+      s"case $name:${gr.repr}"
+    }
+    .mkString(s"[${info.flags}]\n", "\n", "")
 }
 
 sealed trait GenCase[T] extends TypedMetadata[T] {
@@ -52,7 +55,7 @@ case class GenSealedParent[T](
 @positioned(positioned.here) case class GenCustomCase[T](
   @composite info: GenCaseInfo[T],
   @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
-  @checked @infer structure: GenStructure.Lazy[T]
+  @checked @infer structure: GenStructure.Lazy[T],
 ) extends GenCase[T] {
   def repr: String = structure.value.repr
 }
@@ -60,12 +63,15 @@ case class GenSealedParent[T](
 @positioned(positioned.here) case class GenRecord[T](
   @composite info: GenCaseInfo[T],
   @multi @adtParamMetadata fields: Map[String, GenField[_]],
-  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]]
-) extends GenCase[T] with GenStructure[T] {
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
+) extends GenCase[T]
+    with GenStructure[T] {
 
-  def repr(indent: Int): String = fields.iterator.map {
-    case (name, gf) => s"${" " * indent}$name: ${gf.repr}"
-  }.mkString(s"[${info.flags}]\n", "\n", "")
+  def repr(indent: Int): String = fields.iterator
+    .map { case (name, gf) =>
+      s"${" " * indent}$name: ${gf.repr}"
+    }
+    .mkString(s"[${info.flags}]\n", "\n", "")
 
   def repr: String = repr(0)
 }
@@ -73,15 +79,16 @@ case class GenSealedParent[T](
 @positioned(positioned.here) case class GenSingleton[T](
   @composite info: GenCaseInfo[T],
   @checked @infer valueOf: ValueOf[T],
-  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]]
-) extends GenCase[T] with GenStructure[T] {
+  @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
+) extends GenCase[T]
+    with GenStructure[T] {
   def repr: String = valueOf.value.toString
 }
 
 @allowUnorderedSubtypes
 case class GenUnorderedUnion[T](
   @composite info: GenUnionInfo[T],
-  @multi @adtCaseMetadata cases: Map[String, GenCase[_]]
+  @multi @adtCaseMetadata cases: Map[String, GenCase[_]],
 ) extends TypedMetadata[T]
 object GenUnorderedUnion extends AdtMetadataCompanion[GenUnorderedUnion] {
   materialize[Option[String]]

@@ -5,7 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 final case class RecordWithDefaults(
   @transientDefault a: String = "",
-  b: Int = 42
+  b: Int = 42,
 ) {
   @generated def c: String = s"$a-$b"
 }
@@ -60,7 +60,7 @@ class ObjectSizeTest extends AnyFunSuite {
       override def customEvent[T](marker: CustomEventMarker[T], event: T): Boolean =
         marker match {
           case IgnoreTransientDefaultMarker => true
-          case _ =>  super.customEvent(marker, event)
+          case _ => super.customEvent(marker, event)
         }
       override def finish(): Unit = ()
     }
@@ -69,9 +69,13 @@ class ObjectSizeTest extends AnyFunSuite {
     assert(RecordWithOpts.codec.size(RecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 3)
     assert(RecordWithOpts.codec.size(RecordWithOpts("abc".opt, true.opt), defaultIgnoringOutput.opt) == 3)
     assert(RecordWithOpts.codec.size(RecordWithOpts(), defaultIgnoringOutput.opt) == 2)
-    assert(SingleFieldRecordWithOpts.codec.size(SingleFieldRecordWithOpts(), defaultIgnoringOutput.opt) == 0) // @optionalParam field should NOT be counted
+    assert(
+      SingleFieldRecordWithOpts.codec.size(SingleFieldRecordWithOpts(), defaultIgnoringOutput.opt) == 0
+    ) // @optionalParam field should NOT be counted
     assert(SingleFieldRecordWithOpts.codec.size(SingleFieldRecordWithOpts("abc".opt), defaultIgnoringOutput.opt) == 1)
-    assert(SingleFieldRecordWithTD.codec.size(SingleFieldRecordWithTD(), defaultIgnoringOutput.opt) == 1) // @transientDefault field should be counted
+    assert(
+      SingleFieldRecordWithTD.codec.size(SingleFieldRecordWithTD(), defaultIgnoringOutput.opt) == 1
+    ) // @transientDefault field should be counted
     assert(SingleFieldRecordWithTD.codec.size(SingleFieldRecordWithTD("haha"), defaultIgnoringOutput.opt) == 1)
     assert(CustomRecordWithDefaults.codec.size(CustomRecordWithDefaults(), defaultIgnoringOutput.opt) == 2)
     assert(CustomRecordWithDefaults.codec.size(CustomRecordWithDefaults("fuu"), defaultIgnoringOutput.opt) == 2)

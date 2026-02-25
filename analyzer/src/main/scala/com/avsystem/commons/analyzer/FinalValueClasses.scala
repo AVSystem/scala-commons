@@ -13,7 +13,7 @@ class FinalValueClasses(g: Global) extends AnalyzerRule(g, "finalValueClasses", 
     case cd: ClassDef if !cd.mods.hasFlag(Flag.FINAL) =>
       val tpe = cd.symbol.typeSignature
 
-      if (tpe.baseClasses.contains(anyValTpe.typeSymbol) ) {
+      if (tpe.baseClasses.contains(anyValTpe.typeSymbol)) {
         report(cd.pos, "Value classes should be marked as final")
       }
     case _ =>

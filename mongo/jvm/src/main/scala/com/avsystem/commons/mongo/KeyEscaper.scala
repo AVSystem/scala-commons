@@ -27,7 +27,7 @@ object KeyEscaper {
     }
   }
 
-  def escape(key: String): String = {
+  def escape(key: String): String =
     if (key.isEmpty) {
       key
     } else {
@@ -58,7 +58,6 @@ object KeyEscaper {
         }
       }
     }
-  }
 
   private def unescapeSpecials(str: String, sb: JStringBuilder): Unit = {
     var i = 0

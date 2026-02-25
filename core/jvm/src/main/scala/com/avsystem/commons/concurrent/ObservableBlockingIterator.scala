@@ -9,21 +9,19 @@ import monix.reactive.observers.Subscriber
 import java.util.concurrent.ArrayBlockingQueue
 import scala.annotation.nowarn
 import scala.concurrent.duration.{FiniteDuration, TimeUnit}
-import scala.concurrent.{TimeoutException, blocking}
+import scala.concurrent.{blocking, TimeoutException}
 
-/**
-  * An `Iterator` backed by a `BlockingQueue` backed by an `Observable`.
-  * This essentially turns an `Observable` into an `Iterator`
-  * (which requires blocking so use this only as a last resort).
+/** An `Iterator` backed by a `BlockingQueue` backed by an `Observable`. This essentially turns an `Observable` into an
+  * `Iterator` (which requires blocking so use this only as a last resort).
   */
 class ObservableBlockingIterator[T](
   observable: Observable[T],
   timeout: Long,
   unit: TimeUnit,
-  bufferSize: Int
-)(implicit
-  val scheduler: Scheduler
-) extends CloseableIterator[T] with Subscriber[T] {
+  bufferSize: Int,
+)(implicit val scheduler: Scheduler
+) extends CloseableIterator[T]
+    with Subscriber[T] {
 
   import ObservableBlockingIterator._
 
@@ -90,7 +88,7 @@ class ObservableBlockingIterator[T](
     case Null =>
       last = Empty
       null.asInstanceOf[T]
-    case value: T@unchecked =>
+    case value: T @unchecked =>
       last = Empty
       value
   }

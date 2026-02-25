@@ -3,8 +3,7 @@ package misc
 
 import scala.concurrent.duration.{DoubleMult, DurationDouble, DurationInt, DurationLong, IntMult, LongMult}
 
-/**
-  * Gathers all extensions from [[scala.concurrent.duration]] into one trait that can be mixed in with package object.
+/** Gathers all extensions from [[scala.concurrent.duration]] into one trait that can be mixed in with package object.
   */
 trait ScalaDurationExtensions {
   implicit def durationIntOps(n: Int): DurationInt = new DurationInt(n)

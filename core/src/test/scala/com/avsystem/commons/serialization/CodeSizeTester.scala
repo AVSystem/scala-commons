@@ -8,7 +8,7 @@ case class CodeSizeTester00(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester00 {
   implicit val codec: GenCodec[CodeSizeTester00] = GenCodec.materialize[CodeSizeTester00]
@@ -19,7 +19,7 @@ case class CodeSizeTester01(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester01 {
   implicit val codec: GenCodec[CodeSizeTester01] = GenCodec.materialize
@@ -30,7 +30,7 @@ case class CodeSizeTester02(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester02 {
   implicit val codec: GenCodec[CodeSizeTester02] = GenCodec.materialize
@@ -41,7 +41,7 @@ case class CodeSizeTester03(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester03 {
   implicit val codec: GenCodec[CodeSizeTester03] = GenCodec.materialize
@@ -52,7 +52,7 @@ case class CodeSizeTester04(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester04 {
   implicit val codec: GenCodec[CodeSizeTester04] = GenCodec.materialize
@@ -63,7 +63,7 @@ case class CodeSizeTester05(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester05 {
   implicit val codec: GenCodec[CodeSizeTester05] = GenCodec.materialize
@@ -74,7 +74,7 @@ case class CodeSizeTester06(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester06 {
   implicit val codec: GenCodec[CodeSizeTester06] = GenCodec.materialize
@@ -85,7 +85,7 @@ case class CodeSizeTester07(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester07 {
   implicit val codec: GenCodec[CodeSizeTester07] = GenCodec.materialize
@@ -96,7 +96,7 @@ case class CodeSizeTester08(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester08 {
   implicit val codec: GenCodec[CodeSizeTester08] = GenCodec.materialize
@@ -107,7 +107,7 @@ case class CodeSizeTester09(
   string: String,
   double: Double,
   map: Map[String, List[Boolean]],
-  people: Set[Person]
+  people: Set[Person],
 )
 object CodeSizeTester09 {
   implicit val codec: GenCodec[CodeSizeTester09] = GenCodec.materialize

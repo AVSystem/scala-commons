@@ -36,8 +36,12 @@ trait BaseFiltering[T] extends Any with KeyValueHandling[T] {
   def regex(patternStr: String): Bson = Filters.regex(key, patternStr)
   def regex(patternStr: String, options: String): Bson = Filters.regex(key, patternStr, options)
 
-  def text(str: String, caseSensitive: OptArg[Boolean] = OptArg.Empty,
-    language: OptArg[TextSearchLanguage] = OptArg.Empty, diacriticSensitive: OptArg[Boolean] = OptArg.Empty): Bson = {
+  def text(
+    str: String,
+    caseSensitive: OptArg[Boolean] = OptArg.Empty,
+    language: OptArg[TextSearchLanguage] = OptArg.Empty,
+    diacriticSensitive: OptArg[Boolean] = OptArg.Empty,
+  ): Bson = {
     val searchOptions = new TextSearchOptions().setup { options =>
       caseSensitive.foreach(b => options.caseSensitive(b))
       language.foreach(l => options.language(l.code))
@@ -53,43 +57,38 @@ trait BaseFiltering[T] extends Any with KeyValueHandling[T] {
 
   def geoWithinBson(geometryBson: Bson): Bson = Filters.geoWithin(key, geometryBson)
   def geoWithin(geometry: Geometry): Bson = Filters.geoWithin(key, geometry)
-  def geoWithinBox(lowerLeftX: Double, lowerLeftY: Double, upperRightX: Double, upperRightY: Double): Bson = {
+  def geoWithinBox(lowerLeftX: Double, lowerLeftY: Double, upperRightX: Double, upperRightY: Double): Bson =
     Filters.geoWithinBox(key, lowerLeftX, lowerLeftY, upperRightX, upperRightY)
-  }
   def geoWithinPolygon(points: (Double, Double)*): Bson = {
-    val javaPoints = points.map {
-      case (x, y) => ImmutableList.of(x: JDouble, y: JDouble): JList[JDouble]
+    val javaPoints = points.map { case (x, y) =>
+      ImmutableList.of(x: JDouble, y: JDouble): JList[JDouble]
     }.asJava
     Filters.geoWithinPolygon(key, javaPoints)
   }
   def geoWithinCenter(x: Double, y: Double, radius: Double): Bson = Filters.geoWithinCenter(key, x, y, radius)
-  def geoWithinCenterSphere(x: Double, y: Double, radius: Double): Bson = Filters.geoWithinCenterSphere(key, x, y, radius)
+  def geoWithinCenterSphere(x: Double, y: Double, radius: Double): Bson =
+    Filters.geoWithinCenterSphere(key, x, y, radius)
 
   def geoIntersectsBson(geometryBson: Bson): Bson = Filters.geoIntersects(key, geometryBson)
   def geoIntersects(geometry: Geometry): Bson = Filters.geoIntersects(key, geometry)
 
   private def jDouble(doubleOpt: Opt[Double]): JDouble = doubleOpt.map(d => d: JDouble).orNull
-  private def useMinMax(min: Opt[Double], max: Opt[Double])(f: (JDouble, JDouble) => Bson): Bson = {
+  private def useMinMax(min: Opt[Double], max: Opt[Double])(f: (JDouble, JDouble) => Bson): Bson =
     f(jDouble(min), jDouble(max))
-  }
 
-  def nearBson(geometryBson: Bson, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson = {
+  def nearBson(geometryBson: Bson, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson =
     useMinMax(minDistance, maxDistance)(Filters.near(key, geometryBson, _, _))
-  }
-  def nearPoint(point: Point, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson = {
+  def nearPoint(point: Point, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson =
     useMinMax(minDistance, maxDistance)(Filters.near(key, point, _, _))
-  }
-  def nearXY(x: Double, y: Double, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson = {
+  def nearXY(x: Double, y: Double, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson =
     useMinMax(minDistance, maxDistance)(Filters.near(key, x, y, _, _))
-  }
 
-  def nearSphereBson(geometryBson: Bson, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson = {
+  def nearSphereBson(geometryBson: Bson, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty)
+    : Bson =
     useMinMax(minDistance, maxDistance)(Filters.nearSphere(key, geometryBson, _, _))
-  }
-  def nearSpherePoint(point: Point, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson = {
+  def nearSpherePoint(point: Point, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson =
     useMinMax(minDistance, maxDistance)(Filters.nearSphere(key, point, _, _))
-  }
-  def nearSphereXY(x: Double, y: Double, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty): Bson = {
+  def nearSphereXY(x: Double, y: Double, maxDistance: Opt[Double] = Opt.empty, minDistance: Opt[Double] = Opt.empty)
+    : Bson =
     useMinMax(minDistance, maxDistance)(Filters.nearSphere(key, x, y, _, _))
-  }
 }

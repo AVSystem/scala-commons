@@ -39,7 +39,8 @@ private[commons] trait MacroSymbols extends MacroCommons {
   final lazy val UnmatchedParamErrorArg: Symbol = UnmatchedParamAT.member(TermName("error"))
 
   def isOptionalParam(param: Symbol, tpe: Type): Boolean =
-    findAnnotation(param, OptionalParamAT).isDefined || inferImplicitValue(getType(tq"$AutoOptionalParamCls[$tpe]")) != EmptyTree
+    findAnnotation(param, OptionalParamAT).isDefined ||
+      inferImplicitValue(getType(tq"$AutoOptionalParamCls[$tpe]")) != EmptyTree
 
   def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
     primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}:\n"))
@@ -48,8 +49,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
     val optionLikeType = optionLike.actualType
     val valueMember = optionLikeType.member(TypeName("Value"))
     if (valueMember.isAbstract)
-      subject.reportProblem("could not determine actual value of optional parameter type;" +
-        "optional parameters must be typed as Option/Opt/OptArg etc.")
+      subject.reportProblem(
+        "could not determine actual value of optional parameter type;" +
+          "optional parameters must be typed as Option/Opt/OptArg etc."
+      )
     else
       valueMember.typeSignatureIn(optionLikeType)
   }
@@ -87,14 +90,15 @@ private[commons] trait MacroSymbols extends MacroCommons {
         else if (param.allowListedMulti && param.actualType <:< BIterableTpe)
           Multi(param.actualType.baseType(BIterableClass).typeArgs.head, named = false)
         else if (param.allowNamedMulti && param.allowListedMulti)
-          param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String " +
-            s"(for by-name mapping) or Iterable (for sequence)")
+          param.reportProblem(
+            s"@multi ${param.shortDescription} must be a PartialFunction of String " +
+              s"(for by-name mapping) or Iterable (for sequence)"
+          )
         else if (param.allowListedMulti)
           param.reportProblem(s"@multi ${param.shortDescription} must be an Iterable")
         else
           param.reportProblem(s"@multi ${param.shortDescription} must be a PartialFunction of String")
-      }
-      else param.reportProblem(s"forbidden RPC arity annotation: $at")
+      } else param.reportProblem(s"forbidden RPC arity annotation: $at")
     }
 
     case class Single(collectedType: Type) extends ParamArity(verbatimByDefault = true) with Arity.Single
@@ -130,10 +134,12 @@ private[commons] trait MacroSymbols extends MacroCommons {
     def reportProblem(msg: String, detailPos: Position = NoPosition): Nothing =
       abortAt(s"$problemStr: $msg", if (detailPos != NoPosition) detailPos else pos)
 
-    def annot(tpe: Type, fallback: List[Tree] = Nil, paramMaterializer: Symbol => Option[Res[Tree]] = _ => None): Option[Annot] =
+    def annot(tpe: Type, fallback: List[Tree] = Nil, paramMaterializer: Symbol => Option[Res[Tree]] = _ => None)
+      : Option[Annot] =
       findAnnotation(symbol, tpe, seenFrom, withInherited = true, fallback, paramMaterializer)
 
-    def annots(tpe: Type, fallback: List[Tree] = Nil, paramMaterializer: Symbol => Option[Res[Tree]] = _ => None): List[Annot] =
+    def annots(tpe: Type, fallback: List[Tree] = Nil, paramMaterializer: Symbol => Option[Res[Tree]] = _ => None)
+      : List[Annot] =
       allAnnotations(symbol, tpe, seenFrom, withInherited = true, fallback, paramMaterializer)
 
     def infer(tpt: Tree): CachedImplicit =
@@ -144,7 +150,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
       typeParams: List[Symbol] = Nil,
       availableImplicits: List[Type] = Nil,
       forSym: MacroSymbol = this,
-      clue: String = ""
+      clue: String = "",
     ): CachedImplicit =
       inferCachedImplicit(tpe, ErrorCtx(s"${forSym.problemStr}:\n$clue", forSym.pos), typeParams, availableImplicits)
 
@@ -240,7 +246,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     // @unchecked because "The outer reference in this type test cannot be checked at runtime"
     // Srsly scalac, from static types it should be obvious that outer references are the same
     def matchName(shortDescr: String, name: String): Res[Unit] = arity match {
-      case _: Arity.Single@unchecked | _: Arity.Optional@unchecked =>
+      case _: Arity.Single @unchecked | _: Arity.Optional @unchecked =>
         if (name == nameStr) Ok(())
         else Fail
       case _ => Ok(())
@@ -260,11 +266,13 @@ private[commons] trait MacroSymbols extends MacroCommons {
       annot(UnmatchedAT).map(_.findArg[String](UnmatchedErrorArg)) orElse inheritFrom.flatMap(_.unmatchedError)
 
     private def checkAnnots(realSymbol: MatchedSymbol, annots: List[Type], required: Boolean): Res[Unit] =
-      Res.traverse(annots) { annotTpe =>
-        val annot = realSymbol.annot(annotTpe)
-        if (required && annot.isDefined || !required && annot.isEmpty) Ok(())
-        else Fail
-      }.map(_ => ())
+      Res
+        .traverse(annots) { annotTpe =>
+          val annot = realSymbol.annot(annotTpe)
+          if (required && annot.isDefined || !required && annot.isEmpty) Ok(())
+          else Fail
+        }
+        .map(_ => ())
 
     def matchFilters(realSymbol: MatchedSymbol): Res[Unit] = for {
       _ <- checkAnnots(realSymbol, requiredAnnots, required = true)
@@ -299,8 +307,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
     private val tagSpecsCache = new mutable.HashMap[TypeKey, List[BaseTagSpec]]
 
     def tagSpecs(baseTagAnnot: Type): List[BaseTagSpec] =
-      tagSpecsCache.getOrElseUpdate(TypeKey(baseTagAnnot),
-        annots(baseTagAnnot).map(BaseTagSpec.apply) ++ tagSpecifyingOwner.map(_.tagSpecs(baseTagAnnot)).getOrElse(Nil))
+      tagSpecsCache.getOrElseUpdate(
+        TypeKey(baseTagAnnot),
+        annots(baseTagAnnot).map(BaseTagSpec.apply) ++ tagSpecifyingOwner.map(_.tagSpecs(baseTagAnnot)).getOrElse(Nil),
+      )
   }
 
   trait TagMatchingSymbol extends MacroSymbol with FilteringSymbol {
@@ -418,10 +428,10 @@ private[commons] trait MacroSymbols extends MacroCommons {
   def collectParamMappings[Real, Raw, M](
     reals: List[Real],
     raws: List[Raw],
-    allowIncomplete: Boolean
+    allowIncomplete: Boolean,
   )(
     createMapping: (Raw, ParamsParser[Real]) => Res[M],
-    unmatchedMsg: Real => String
+    unmatchedMsg: Real => String,
   ): Res[List[M]] = {
 
     val parser = new ParamsParser(reals)

@@ -31,7 +31,6 @@
     [`OptRef`](http://avsystem.github.io/scala-commons/api/com/avsystem/commons/misc/OptRef.html) (implemented as value
     classes)
   * [Components](docs/Components.md) and Dependency Injection library
-* `commons-redis` (DEPRECATED) - [Scala driver for Redis](docs/RedisDriver.md)
 * `commons-macros` contains implementations of macros used in other modules and reusable macro utilities:
   * `MacroCommons` trait with several convenience functions for implementing macros
   * `TypeClassDerivation` - implements infrastructure for automatic type class derivation
@@ -41,6 +40,6 @@
 * `commons-hocon` - Utilities for working with [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md)
   * `HoconInput` - an `Input` implementation for `GenCodec` that can read Lightbend Config (`com.typesafe.config.Config`)
   * An AST (`HTree`) and a lexer/parser for HOCON (`HLexer`, `HParser`)
-* `commons-spring` - Spring framework utilities:
+* `commons-spring` (DEPRECATED) - Spring framework utilities:
   * `HoconBeanDefinitionReader` - an utility that allows you to define Spring application context using 
   [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md) format

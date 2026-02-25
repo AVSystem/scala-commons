@@ -25,10 +25,10 @@ class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
   "rpc caller" should {
     "should properly deserialize RPC calls" in {
       val invocations = new ArrayBuffer[RawInvocation]
-      val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl((inv, _) => {
+      val rawRpc = AsRawRPC[TestRPC].asRaw(TestRPC.rpcImpl { (inv, _) =>
         invocations += inv
         inv.rpcName
-      }))
+      })
 
       rawRpc.fire(RawInvocation("handleMore", Nil))
       rawRpc.fire(RawInvocation("doStuff", List("42", js"omgsrsly", "true")))
@@ -42,29 +42,35 @@ class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
       rawRpc.fire(RawInvocation("takeCC", Nil))
       rawRpc.fire(RawInvocation("srslyDude", Nil))
       rawRpc.get(RawInvocation("innerRpc", List(js"innerName"))).fire(RawInvocation("proc", Nil))
-      assert(js"innerRpc.funcResult" == get(rawRpc.get(RawInvocation("innerRpc", List(js"innerName")))
-        .call(RawInvocation("func", List("bul:42")))))
-      assert(js"generallyDoStuffResult" ==
-        get(rawRpc.call(RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]")))))
+      assert(
+        js"innerRpc.funcResult" ==
+          get(rawRpc.get(RawInvocation("innerRpc", List(js"innerName"))).call(RawInvocation("func", List("bul:42"))))
+      )
+      assert(
+        js"generallyDoStuffResult" ==
+          get(rawRpc.call(RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]"))))
+      )
 
-      assert(invocations.toList == List(
-        RawInvocation("handleMore", Nil),
-        RawInvocation("doStuff", List("42", js"omgsrsly", "true")),
-        RawInvocation("doStuffBoolean", List("true")),
-        RawInvocation("doStuffInt", List("5")),
-        RawInvocation("doStuffInt", List("42")),
-        RawInvocation("doStuffNamed", List("5")),
-        RawInvocation("doStuffNamed", List("42")),
-        RawInvocation("handleMore", Nil),
-        RawInvocation("handle", Nil),
-        RawInvocation("takeCC", List("""{"i":-1,"fuu":"_"}""")),
-        RawInvocation("srslyDude", Nil),
-        RawInvocation("innerRpc", List(js"innerName")),
-        RawInvocation("innerRpc.proc", Nil),
-        RawInvocation("innerRpc", List(js"innerName")),
-        RawInvocation("innerRpc.func", List("42")),
-        RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]"))
-      ))
+      assert(
+        invocations.toList == List(
+          RawInvocation("handleMore", Nil),
+          RawInvocation("doStuff", List("42", js"omgsrsly", "true")),
+          RawInvocation("doStuffBoolean", List("true")),
+          RawInvocation("doStuffInt", List("5")),
+          RawInvocation("doStuffInt", List("42")),
+          RawInvocation("doStuffNamed", List("5")),
+          RawInvocation("doStuffNamed", List("42")),
+          RawInvocation("handleMore", Nil),
+          RawInvocation("handle", Nil),
+          RawInvocation("takeCC", List("""{"i":-1,"fuu":"_"}""")),
+          RawInvocation("srslyDude", Nil),
+          RawInvocation("innerRpc", List(js"innerName")),
+          RawInvocation("innerRpc.proc", Nil),
+          RawInvocation("innerRpc", List(js"innerName")),
+          RawInvocation("innerRpc.func", List("42")),
+          RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]")),
+        )
+      )
     }
 
     "fail on bad input" in {
@@ -111,27 +117,27 @@ class RPCTest extends AnyWordSpec with Matchers with BeforeAndAfterAll {
       realRpc.innerRpc("innerName").moreInner("moreInner").moreInner("evenMoreInner").func(42)
       assert(get(realRpc.generallyDoStuff(List("generallyDoStuffResult"))).contains("generallyDoStuffResult"))
 
-      assert(invocations.toList == List(
-        RawInvocation("handleMore", Nil),
-        RawInvocation("doStuff", List("42", js"omgsrsly", "true")),
-        RawInvocation("doStuffBoolean", List("bul:true")),
-        RawInvocation("doStuffInt", List("5")),
-        RawInvocation("doStuffNamed", List("5")),
-        RawInvocation("doStuffNamed", List()),
-        RawInvocation("doStuffOptional", List("5")),
-        RawInvocation("doStuffOptional", List()),
-        RawInvocation("handleMore", Nil),
-        RawInvocation("handle", Nil),
-
-        RawInvocation("innerRpc", List(js"innerName")),
-        RawInvocation("proc", Nil),
-
-        RawInvocation("innerRpc", List(js"innerName")),
-        RawInvocation("moreInner", List(js"moreInner")),
-        RawInvocation("moreInner", List(js"evenMoreInner")),
-        RawInvocation("func", List("bul:42")),
-        RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]"))
-      ))
+      assert(
+        invocations.toList == List(
+          RawInvocation("handleMore", Nil),
+          RawInvocation("doStuff", List("42", js"omgsrsly", "true")),
+          RawInvocation("doStuffBoolean", List("bul:true")),
+          RawInvocation("doStuffInt", List("5")),
+          RawInvocation("doStuffNamed", List("5")),
+          RawInvocation("doStuffNamed", List()),
+          RawInvocation("doStuffOptional", List("5")),
+          RawInvocation("doStuffOptional", List()),
+          RawInvocation("handleMore", Nil),
+          RawInvocation("handle", Nil),
+          RawInvocation("innerRpc", List(js"innerName")),
+          RawInvocation("proc", Nil),
+          RawInvocation("innerRpc", List(js"innerName")),
+          RawInvocation("moreInner", List(js"moreInner")),
+          RawInvocation("moreInner", List(js"evenMoreInner")),
+          RawInvocation("func", List("bul:42")),
+          RawInvocation("generallyDoStuff", List(js"String", "[\"generallyDoStuffResult\"]")),
+        )
+      )
     }
   }
 

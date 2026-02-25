@@ -3,11 +3,11 @@ package mongo.typed
 
 import org.bson.BsonDocument
 
-/**
-  * Represents an update of a MongoDB value. Usually, this is a [[MongoDocumentUpdate]].
-  * The base `MongoUpdate` type is used in rare situations where the value being updated may not be a document.
+/** Represents an update of a MongoDB value. Usually, this is a [[MongoDocumentUpdate]]. The base `MongoUpdate` type is
+  * used in rare situations where the value being updated may not be a document.
   *
-  * @tparam T type of the value being updated
+  * @tparam T
+  *   type of the value being updated
   */
 sealed trait MongoUpdate[T] {
 
@@ -16,57 +16,57 @@ sealed trait MongoUpdate[T] {
   def on[E](property: MongoPropertyRef[E, T]): MongoDocumentUpdate[E] =
     PropertyUpdate(property, this)
 
-  protected def fillUpdateDoc(pathOpt: Opt[String], doc: BsonDocument, arrayFilters: JList[BsonDocument]): Unit = this match {
-    case MultiUpdate(updates) =>
-      updates.foreach(_.fillUpdateDoc(pathOpt, doc, arrayFilters))
+  protected def fillUpdateDoc(pathOpt: Opt[String], doc: BsonDocument, arrayFilters: JList[BsonDocument]): Unit =
+    this match {
+      case MultiUpdate(updates) =>
+        updates.foreach(_.fillUpdateDoc(pathOpt, doc, arrayFilters))
 
-    case PropertyUpdate(property, update) =>
-      val propPath = property.rawPath
-      val newPath = pathOpt.fold(propPath)(_ + MongoPropertyRef.Separator + propPath)
-      update.fillUpdateDoc(newPath.opt, doc, arrayFilters)
+      case PropertyUpdate(property, update) =>
+        val propPath = property.rawPath
+        val newPath = pathOpt.fold(propPath)(_ + MongoPropertyRef.Separator + propPath)
+        update.fillUpdateDoc(newPath.opt, doc, arrayFilters)
 
-    case OperatorUpdate(op) =>
-      // the way MongoDocumentUpdate uses fillUpdateDoc makes this safe
-      val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
-      if (!doc.containsKey(op.rawOperator)) {
-        doc.put(op.rawOperator, new BsonDocument)
-      }
-      val opDoc = doc.get(op.rawOperator).asDocument
-      if (!opDoc.containsKey(path)) {
-        opDoc.put(path, op.toBson)
-      } else {
-        throw new IllegalArgumentException(s"duplicate update operator ${op.rawOperator} on field $path")
-      }
+      case OperatorUpdate(op) =>
+        // the way MongoDocumentUpdate uses fillUpdateDoc makes this safe
+        val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
+        if (!doc.containsKey(op.rawOperator)) {
+          doc.put(op.rawOperator, new BsonDocument)
+        }
+        val opDoc = doc.get(op.rawOperator).asDocument
+        if (!opDoc.containsKey(path)) {
+          opDoc.put(path, op.toBson)
+        } else {
+          throw new IllegalArgumentException(s"duplicate update operator ${op.rawOperator} on field $path")
+        }
 
-    case uae: UpdateArrayElements[_, _] =>
-      val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
+      case uae: UpdateArrayElements[_, _] =>
+        val path = pathOpt.getOrElse(throw new IllegalArgumentException("update document without prefix path"))
 
-      val rawQualifier = uae.qualifier match {
-        case ArrayElementsQualifier.FirstMatching() => "$"
-        case ArrayElementsQualifier.Each() => "$[]"
-        case ArrayElementsQualifier.Filtered(filter) =>
-          val identifier = s"filter${arrayFilters.size}"
-          val (name, query) = filter match {
-            case MongoFilter.PropertyValueFilter(prop, propertyFilter) =>
-              // https://www.mongodb.com/docs/manual/reference/operator/update/positional-filtered/#update-all-documents-that-match-arrayfilters-in-an-array
-              identifier + MongoPropertyRef.Separator + prop.rawPath -> propertyFilter
-            case filter =>
-              identifier -> filter
-          }
-          arrayFilters.add(Bson.document(name, query.toBson))
-          s"$$[$identifier]"
-      }
+        val rawQualifier = uae.qualifier match {
+          case ArrayElementsQualifier.FirstMatching() => "$"
+          case ArrayElementsQualifier.Each() => "$[]"
+          case ArrayElementsQualifier.Filtered(filter) =>
+            val identifier = s"filter${arrayFilters.size}"
+            val (name, query) = filter match {
+              case MongoFilter.PropertyValueFilter(prop, propertyFilter) =>
+                // https://www.mongodb.com/docs/manual/reference/operator/update/positional-filtered/#update-all-documents-that-match-arrayfilters-in-an-array
+                identifier + MongoPropertyRef.Separator + prop.rawPath -> propertyFilter
+              case filter =>
+                identifier -> filter
+            }
+            arrayFilters.add(Bson.document(name, query.toBson))
+            s"$$[$identifier]"
+        }
 
-      val newPath = path + MongoPropertyRef.Separator + rawQualifier
-      uae.update.fillUpdateDoc(newPath.opt, doc, arrayFilters)
-  }
+        val newPath = path + MongoPropertyRef.Separator + rawQualifier
+        uae.update.fillUpdateDoc(newPath.opt, doc, arrayFilters)
+    }
 }
 
 object MongoUpdate {
   def creator[T: MongoFormat]: Creator[T] = new Creator(MongoFormat[T])
 
-  class Creator[T](val format: MongoFormat[T])
-    extends UpdateOperatorsDsl[T, MongoUpdate[T]] with DataTypeDsl[T] {
+  class Creator[T](val format: MongoFormat[T]) extends UpdateOperatorsDsl[T, MongoUpdate[T]] with DataTypeDsl[T] {
 
     def SelfRef: MongoRef[T, T] =
       MongoRef.RootRef(format.assumeAdt)
@@ -86,12 +86,12 @@ object MongoUpdate {
 
   final case class PropertyUpdate[E, T](
     property: MongoPropertyRef[E, T],
-    update: MongoUpdate[T]
+    update: MongoUpdate[T],
   ) extends MongoDocumentUpdate[E]
 
   final case class UpdateArrayElements[C[X] <: Iterable[X], T](
     update: MongoUpdate[T],
-    qualifier: ArrayElementsQualifier[T]
+    qualifier: ArrayElementsQualifier[T],
   ) extends MongoUpdate[C[T]]
 
   sealed abstract class ArrayElementsQualifier[T]
@@ -102,8 +102,7 @@ object MongoUpdate {
   }
 }
 
-/**
-  * Represents a [[https://docs.mongodb.com/manual/tutorial/update-documents/ MongoDB update document]].
+/** Represents a [[https://docs.mongodb.com/manual/tutorial/update-documents/ MongoDB update document]].
   *
   * Examples:
   * {{{
@@ -129,7 +128,8 @@ object MongoUpdate {
   *
   * }}}
   *
-  * @tparam E type of the document being updated
+  * @tparam E
+  *   type of the document being updated
   */
 sealed trait MongoDocumentUpdate[E] extends MongoUpdate[E] {
 
