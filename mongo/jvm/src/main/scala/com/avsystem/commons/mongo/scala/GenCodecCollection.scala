@@ -5,7 +5,7 @@ import com.avsystem.commons.mongo.core.GenCodecRegistry
 import com.avsystem.commons.serialization.GenCodec
 import org.mongodb.scala.{MongoCollection, MongoDatabase}
 
-@deprecated("Dependency on org.mongodb.scala will be removed", "2.27.0")
+@deprecated("Support for the MongoDB Scala Driver will be removed.\nWe recommend switching to the Java Reactive Streams driver, which we will continue supporting", "2.27.0")
 object GenCodecCollection {
 
   def create[T: ClassTag: GenCodec](
