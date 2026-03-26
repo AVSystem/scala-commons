@@ -10,14 +10,21 @@ case class genagg[T](value: T) extends AnnotationAggregate {
   final def aggregated: List[StaticAnnotation] = reifyAggregated
 }
 
+case class varargann(value: Int, varValue: String*) extends StaticAnnotation
+
 @genagg(42)
+@varargann(1, "test", "foo", "bar")
 class Subject
 
 abstract class SelfAnnots(implicit val annots: SelfAnnotations[genann[_]])
+
 @genagg(42)
-@genann("fuu") class Klass extends SelfAnnots
+@genann("fuu")
+class Klass extends SelfAnnots
+
 @genagg(42)
-@genann("fuu") object Objekt extends SelfAnnots
+@genann("fuu")
+object Objekt extends SelfAnnots
 
 class AnnotationOfTest extends AnyFunSuite {
   test("aggregate with generic") {
@@ -27,5 +34,11 @@ class AnnotationOfTest extends AnyFunSuite {
   test("self annotations") {
     assert(new Klass().annots.annots == List(genann(42), genann("fuu")))
     assert(Objekt.annots.annots == List(genann(42), genann("fuu")))
+  }
+
+  test("annotation with varargs") {
+    val annot = AnnotationOf.materialize[varargann, Subject].annot
+    assert(annot.value == 1)
+    assert(annot.varValue == Seq("test", "foo", "bar"))
   }
 }
