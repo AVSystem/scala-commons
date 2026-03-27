@@ -6,7 +6,7 @@ import com.avsystem.commons.macros.misc.{Ok, Res}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.reflect.macros.{blackbox, TypecheckException}
+import scala.reflect.macros.{TypecheckException, blackbox}
 import scala.util.control.NoStackTrace
 import scala.util.matching.Regex
 
@@ -243,17 +243,26 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
 
     lazy val treeRes: Res[Tree] = annotTree match {
       case Apply(constr, args) =>
-        val newArgs = (args zip constructorSig.paramLists.head) map {
-          case (arg, param) if param.asTerm.isParamWithDefault && isDefaultAnnotArg(arg) =>
-            if (findAnnotation(param, DefaultsToNameAT).nonEmpty)
-              Ok(q"${subject.name.decodedName.toString}")
-            else
-              paramMaterializer(param).getOrElse(Ok(arg))
-          case (arg, _) =>
-            Ok(arg)
-        }
+        val newArgs: List[Res[List[Tree]]] = constructorSig.paramLists.head
+          .take(args.size)
+          .zipWithIndex
+          .map { case (param, idx) =>
+            if (isRepeated(param))
+              Ok(args.slice(idx, args.size))
+            else {
+              val arg = args(idx)
+              if (param.asTerm.isParamWithDefault && isDefaultAnnotArg(arg)) {
+                if (findAnnotation(param, DefaultsToNameAT).nonEmpty)
+                  Ok(List(q"${subject.name.decodedName.toString}"))
+                else
+                  paramMaterializer(param).map(_.map(List(_))).getOrElse(Ok(List(arg)))
+              } else {
+                Ok(List(arg))
+              }
+            }
+          }
 
-        Res.sequence(newArgs).map(treeCopy.Apply(annotTree, constr, _))
+        Res.sequence(newArgs).map(_.flatten).map(treeCopy.Apply(annotTree, constr, _))
       case _ =>
         Ok(annotTree)
     }
