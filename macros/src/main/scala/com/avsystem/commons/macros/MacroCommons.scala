@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros
 
-import com.avsystem.commons.macros.misc.{FailMsg, Ok, Res}
+import com.avsystem.commons.macros.misc.{Ok, Res}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -244,21 +244,20 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
     lazy val treeRes: Res[Tree] = annotTree match {
       case Apply(constr, args) =>
         val newArgs: List[Res[List[Tree]]] = constructorSig.paramLists.head
-          .take(args.size).zipWithIndex
+          .take(args.size)
+          .zipWithIndex
           .map { case (param, idx) =>
-            if (param.typeSignature.typeSymbol == definitions.RepeatedParamClass) {
-              val remainingArgs = args.slice(idx, args.size)
-              Ok(remainingArgs)
-            } else {
+            if (isRepeated(param))
+              Ok(args.slice(idx, args.size))
+            else {
               val arg = args(idx)
-              (arg, param) match {
-                case (arg, param) if param.asTerm.isParamWithDefault && isDefaultAnnotArg(arg) =>
-                  if (findAnnotation(param, DefaultsToNameAT).nonEmpty)
-                    Ok(List(q"${subject.name.decodedName.toString}"))
-                  else
-                    paramMaterializer(param).map(_.map(List(_))).getOrElse(Ok(List(arg)))
-                case (arg, _) =>
-                  Ok(List(arg))
+              if (param.asTerm.isParamWithDefault && isDefaultAnnotArg(arg)) {
+                if (findAnnotation(param, DefaultsToNameAT).nonEmpty)
+                  Ok(List(q"${subject.name.decodedName.toString}"))
+                else
+                  paramMaterializer(param).map(_.map(List(_))).getOrElse(Ok(List(arg)))
+              } else {
+                Ok(List(arg))
               }
             }
           }

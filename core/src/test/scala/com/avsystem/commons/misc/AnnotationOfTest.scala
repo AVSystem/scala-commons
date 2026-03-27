@@ -16,6 +16,9 @@ case class varargann(value: Int, varValue: String*) extends StaticAnnotation
 @varargann(1, "test", "foo", "bar")
 class Subject
 
+@varargann(42)
+class Subject2
+
 abstract class SelfAnnots(implicit val annots: SelfAnnotations[genann[_]])
 
 @genagg(42)
@@ -27,6 +30,7 @@ class Klass extends SelfAnnots
 object Objekt extends SelfAnnots
 
 class AnnotationOfTest extends AnyFunSuite {
+
   test("aggregate with generic") {
     assert(AnnotationOf.materialize[genann[Int], Subject].annot.value == 42)
   }
@@ -37,8 +41,12 @@ class AnnotationOfTest extends AnyFunSuite {
   }
 
   test("annotation with varargs") {
-    val annot = AnnotationOf.materialize[varargann, Subject].annot
-    assert(annot.value == 1)
-    assert(annot.varValue == Seq("test", "foo", "bar"))
+    val annot1 = AnnotationOf.materialize[varargann, Subject].annot
+    assert(annot1.value == 1)
+    assert(annot1.varValue == Seq("test", "foo", "bar"))
+
+    val annot2 = AnnotationOf.materialize[varargann, Subject2].annot
+    assert(annot2.value == 42)
+    assert(annot2.varValue == Seq.empty)
   }
 }
