@@ -282,7 +282,6 @@ object Commons extends ProjectGroup("commons") {
         "org.mongodb" % "mongodb-driver-core" % mongoVersion,
         "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
         "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
-        "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
       ),
     )
 
