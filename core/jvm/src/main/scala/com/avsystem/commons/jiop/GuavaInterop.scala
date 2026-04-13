@@ -1,13 +1,11 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.concurrent.{Executor, TimeUnit}
-
-import com.avsystem.commons.jiop.GuavaInterop._
-import com.avsystem.commons.misc.Sam
+import com.avsystem.commons.jiop.GuavaInterop.*
+import com.google.common.base as gbase
 import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture, SettableFuture}
-import com.google.common.{base => gbase}
 
+import java.util.concurrent.{Executor, TimeUnit}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, CanAwait, ExecutionException, TimeoutException}
@@ -17,9 +15,9 @@ trait GuavaInterop {
   type GSupplier[T] = gbase.Supplier[T]
   type GPredicate[T] = gbase.Predicate[T]
 
-  def gFunction[F, T](fun: F => T) = Sam[GFunction[F, T]](fun)
-  def gSupplier[T](expr: => T) = Sam[GSupplier[T]](expr)
-  def gPredicate[T](pred: T => Boolean) = Sam[GPredicate[T]](pred)
+  def gFunction[F, T](fun: F => T): GFunction[F, T] = fun(_)
+  def gSupplier[T](expr: => T): GSupplier[T] = () => expr
+  def gPredicate[T](pred: T => Boolean): GPredicate[T] = pred(_)
 
   implicit def toDecorateAsScala[T](gfut: ListenableFuture[T]): DecorateFutureAsScala[T] =
     new DecorateFutureAsScala(gfut)
