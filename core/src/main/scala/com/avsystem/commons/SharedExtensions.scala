@@ -53,6 +53,7 @@ trait SharedExtensions {
 
   implicit def iteratorCompanionOps(it: Iterator.type): IteratorCompanionOps.type = IteratorCompanionOps
 
+  @deprecated("Scala 2.13 has native implementation for these utils", "2.27.0")
   implicit def orderingOps[A](ordering: Ordering[A]): OrderingOps[A] = new OrderingOps(ordering)
 }
 object SharedExtensions extends SharedExtensions
@@ -747,6 +748,7 @@ object SharedExtensionsUtils extends SharedExtensions {
         }
       }
 
+    @deprecated("Scala 2.13 has native scala.collection.Iterator.distinctBy implementation", "2.27.0")
     def distinctBy[B](f: A => B): Iterator[A] =
       new AbstractIterator[A] {
         private[this] val seen = new MHashSet[B]
@@ -765,6 +767,7 @@ object SharedExtensionsUtils extends SharedExtensions {
           } else throw new NoSuchElementException
       }
 
+    @deprecated("Scala 2.13 has native scala.collection.Iterator.distinct implementation", "2.27.0")
     def distinct: Iterator[A] = distinctBy(identity)
   }
 
@@ -825,6 +828,7 @@ object SharedExtensionsUtils extends SharedExtensions {
   }
 
   final class OrderingOps[A](private val ordering: Ordering[A]) extends AnyVal {
+    @deprecated("Scala 2.13 has native scala.math.Ordering.orElse implementation", "2.27.0")
     def orElse(whenEqual: Ordering[A]): Ordering[A] =
       (x, y) =>
         ordering.compare(x, y) match {
@@ -832,6 +836,7 @@ object SharedExtensionsUtils extends SharedExtensions {
           case res => res
         }
 
+    @deprecated("Scala 2.13 has native scala.math.Ordering.orElseBy implementation", "2.27.0")
     def orElseBy[B: Ordering](f: A => B): Ordering[A] =
       orElse(Ordering.by(f))
   }
