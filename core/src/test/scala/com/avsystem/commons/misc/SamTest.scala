@@ -5,6 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import scala.annotation.nowarn
 
+@nowarn("msg=deprecated")
 class SamTest extends AnyFunSuite {
 
   test("no arg lists by name") {
