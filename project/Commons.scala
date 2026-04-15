@@ -1,4 +1,7 @@
 import com.github.ghik.sbt.nosbt.ProjectGroup
+import com.typesafe.tools.mima.core.*
+import com.typesafe.tools.mima.core.ProblemFilters.*
+import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport.*
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
 import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
 import org.scalajs.jsenv.nodejs.NodeJSEnv
@@ -40,7 +43,8 @@ object Commons extends ProjectGroup("commons") {
   val slf4jVersion = "2.0.17" // test only
 
   // for binary compatibility checking
-  val previousCompatibleVersions: Set[String] = Set("2.2.4")
+  val previousCompatibleVersions: Set[String] =
+    Set("2.21.0", "2.22.0", "2.23.1", "2.24.0", "2.25.0", "2.26.0", "2.27.1")
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(
     cancelable := true,
@@ -70,6 +74,9 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
     githubWorkflowEnv += "JAVA_OPTS" -> "-Dfile.encoding=UTF-8 -Xmx4G",
     githubWorkflowBuildMatrixFailFast := Some(false),
+    githubWorkflowBuild := Seq(
+      WorkflowStep.Sbt(List("mimaReportBinaryIssues"), name = Some("Binary compatibility check"))
+    ) ++ githubWorkflowBuild.value,
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
         UseRef.Public("actions", "setup-node", "v4"),
@@ -140,6 +147,7 @@ object Commons extends ProjectGroup("commons") {
     Compile / ideOutputDirectory := Some(target.value.getParentFile / "out/production"),
     Test / ideOutputDirectory := Some(target.value.getParentFile / "out/test"),
     Test / fork := true,
+    mimaPreviousArtifacts := previousCompatibleVersions.map(v => organization.value %%% moduleName.value % v),
   )
 
   val jvmCommonSettings = Seq(
@@ -162,7 +170,8 @@ object Commons extends ProjectGroup("commons") {
   )
 
   val noPublishSettings = Seq(
-    publish / skip := true
+    publish / skip := true,
+    mimaPreviousArtifacts := Set.empty,
   )
 
   val aggregateProjectSettings =
@@ -221,6 +230,10 @@ object Commons extends ProjectGroup("commons") {
       libraryDependencies ++= Seq(
         "org.scala-lang" % "scala-compiler" % scalaVersion.value,
         "io.monix" %% "monix" % monixVersion % Test,
+      ),
+      mimaBinaryIssueFilters ++= Seq(
+        // Internal compiler-plugin helper removed; not part of the public API.
+        exclude[DirectMissingMethodProblem]("com.avsystem.commons.analyzer.AnalyzerRule.report"),
       ),
     )
 
@@ -282,6 +295,22 @@ object Commons extends ProjectGroup("commons") {
         "org.mongodb" % "mongodb-driver-core" % mongoVersion,
         "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
         "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
+      ),
+      mimaBinaryIssueFilters ++= Seq(
+        // PR #827 (commit 09c12e2d): dropped the deprecated `mongo-scala-driver`
+        // dependency along with the helpers under `com.avsystem.commons.mongo.scala`.
+        exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.GenCodecCollection"),
+        exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.GenCodecCollection$"),
+        exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions"),
+        exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions$"),
+        exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions$MongoObservableOps"),
+        exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions$MongoObservableOps$"),
+        // Commit 11e6d7ef (released in 2.25.0): listDatabases/listCollections were
+        // split into listRaw* / listTyped* variants. Document-returning overloads
+        // got deprecated stubs but the typed (`[T: GenCodec]`) overloads were
+        // removed outright; this is an intentional API change.
+        exclude[DirectMissingMethodProblem]("com.avsystem.commons.mongo.typed.TypedMongoClient.listDatabases"),
+        exclude[DirectMissingMethodProblem]("com.avsystem.commons.mongo.typed.TypedMongoDatabase.listCollections"),
       ),
     )
 
