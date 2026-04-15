@@ -3,8 +3,11 @@ package serialization.cbor
 
 import com.avsystem.commons.annotation.{positioned, AnnotationAggregate}
 import com.avsystem.commons.meta.*
-import com.avsystem.commons.serialization.*
+import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
+import com.avsystem.commons.serialization.*
+
+import scala.annotation.nowarn
 
 /** Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
   * [[CborInput]]. The differences between this codec and regular codec are: <ul> <li>case class fields that are `Map`s
@@ -19,6 +22,7 @@ abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedC
 
 /** Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
   */
+@nowarn("msg=deprecated")
 abstract class HasCborCodecWithDeps[D, T](
   implicit deps: ValueOf[D],
   instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
@@ -202,6 +206,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
     @composite val keyInfo: CborKeyInfo[T]
   ) extends TypedMetadata[T]
 
+  @nowarn("msg=deprecated")
   @positioned(positioned.here)
   final class Singleton[T](
     @infer @checked val value: ValueOf[T],
