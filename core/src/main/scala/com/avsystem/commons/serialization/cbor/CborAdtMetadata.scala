@@ -2,10 +2,9 @@ package com.avsystem.commons
 package serialization.cbor
 
 import com.avsystem.commons.annotation.{positioned, AnnotationAggregate}
-import com.avsystem.commons.meta._
-import com.avsystem.commons.misc.ValueOf
+import com.avsystem.commons.meta.*
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
-import com.avsystem.commons.serialization._
 
 /** Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
   * [[CborInput]]. The differences between this codec and regular codec are: <ul> <li>case class fields that are `Map`s

@@ -3,7 +3,6 @@ package serialization
 
 import com.avsystem.commons.meta.MacroInstances
 import com.avsystem.commons.meta.MacroInstances.materializeWith
-import com.avsystem.commons.misc.ValueOf
 
 /** Convenience abstract class for companion objects of types that have a [[GenCodec]]. There are many other flavors of
   * this base companion class. For example, if you want to inject additional implicits into [[GenCodec]]
