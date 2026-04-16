@@ -256,6 +256,7 @@ object Commons extends ProjectGroup("commons") {
   lazy val macros = mkSubProject.settings(
     jvmCommonSettings,
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    mimaPreviousArtifacts := Set.empty, // no need for MiMa checks
   )
 
   lazy val core = mkSubProject
