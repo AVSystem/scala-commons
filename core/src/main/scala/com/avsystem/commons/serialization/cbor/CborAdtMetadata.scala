@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import com.avsystem.commons.annotation.{positioned, AnnotationAggregate}
+import com.avsystem.commons.annotation.{bincompat, positioned, AnnotationAggregate}
 import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
@@ -22,11 +22,17 @@ abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedC
 
 /** Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
   */
-@nowarn("msg=deprecated")
 abstract class HasCborCodecWithDeps[D, T](
-  implicit deps: ValueOf[D],
-  instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
+  implicit instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
+  deps: scala.ValueOf[D],
 ) {
+  @bincompat
+  @nowarn("msg=deprecated")
+  private[serialization] def this(
+    applyUnapplyProvider: ValueOf[D],
+    instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
+  ) = this()(using instances, applyUnapplyProvider.toScala)
+
   implicit lazy val codec: GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
 }
 
@@ -206,12 +212,12 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
     @composite val keyInfo: CborKeyInfo[T]
   ) extends TypedMetadata[T]
 
-  @nowarn("msg=deprecated")
   @positioned(positioned.here)
   final class Singleton[T](
-    @infer @checked val value: ValueOf[T],
+    @infer @checked val value: scala.ValueOf[T],
     @composite val keyInfo: CborKeyInfo[T],
   ) extends Case[T] {
+
     def adjustCodec(codec: GenObjectCodec[T]): GenObjectCodec[T] = codec
     def ensureUniqueKeys(discriminatorKey: Opt[RawCbor]): Unit = ()
     def validate(): Unit = ()

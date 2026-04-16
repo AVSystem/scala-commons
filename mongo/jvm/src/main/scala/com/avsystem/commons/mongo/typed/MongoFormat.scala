@@ -3,12 +3,12 @@ package mongo.typed
 
 import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta.*
-import com.avsystem.commons.misc.{TypedMap, ValueOf}
+import com.avsystem.commons.misc.TypedMap
 import com.avsystem.commons.mongo.{BsonValueInput, BsonValueOutput}
 import com.avsystem.commons.serialization.*
 import org.bson.{BsonNull, BsonValue}
 
-import scala.annotation.{nowarn, tailrec}
+import scala.annotation.tailrec
 
 /** Typeclass that captures internal structure of a type that can be saved to MongoDB (directly as a toplevel entity or
   * indirectly as an embedded value).
@@ -319,13 +319,12 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     }
   }
 
-  @nowarn("msg=deprecated")
   @positioned(positioned.here)
   final class SingletonCase[T](
     @composite val info: GenCaseInfo[T],
     @infer val classTag: ClassTag[T],
     @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[_]],
-    @infer @checked val value: ValueOf[T],
+    @infer @checked val value: scala.ValueOf[T],
   ) extends Case[T] {
     def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =
       new SingletonFormat(this, codec)
