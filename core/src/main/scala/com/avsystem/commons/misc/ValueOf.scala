@@ -18,4 +18,7 @@ class ValueOf[T](val value: T) extends AnyVal {
 object ValueOf {
   @deprecated("Use scala.valueOf[T] from the standard library (available since Scala 2.13)", "2.28.0")
   def apply[T](implicit vof: ValueOf[T]): T = vof.value
+
+  @deprecated("Use scala.ValueOf[T] from the standard library (available since Scala 2.13)", "2.28.0")
+  implicit def fromScala[T](implicit vof: scala.ValueOf[T]): ValueOf[T] = new ValueOf[T](vof.value)
 }
