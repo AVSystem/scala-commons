@@ -1,11 +1,13 @@
 package com.avsystem.commons
 package serialization.cbor
 
-import com.avsystem.commons.annotation.{positioned, AnnotationAggregate}
-import com.avsystem.commons.meta._
+import com.avsystem.commons.annotation.{bincompat, positioned, AnnotationAggregate}
+import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.serialization.GenCodec.OOOFieldsObjectCodec
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
+
+import scala.annotation.nowarn
 
 /** Like [[HasGenCodec]] but generates a codec optimized for writing and reading CBOR via [[CborOutput]] and
   * [[CborInput]]. The differences between this codec and regular codec are: <ul> <li>case class fields that are `Map`s
@@ -21,9 +23,16 @@ abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedC
 /** Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
   */
 abstract class HasCborCodecWithDeps[D, T](
-  implicit deps: ValueOf[D],
-  instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
+  implicit instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
+  deps: scala.ValueOf[D],
 ) {
+  @bincompat
+  @nowarn("msg=deprecated")
+  private[serialization] def this(
+    applyUnapplyProvider: ValueOf[D],
+    instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
+  ) = this()(using instances, applyUnapplyProvider.toScala)
+
   implicit lazy val codec: GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
 }
 
@@ -205,9 +214,10 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
 
   @positioned(positioned.here)
   final class Singleton[T](
-    @infer @checked val value: ValueOf[T],
+    @infer @checked val value: scala.ValueOf[T],
     @composite val keyInfo: CborKeyInfo[T],
   ) extends Case[T] {
+
     def adjustCodec(codec: GenObjectCodec[T]): GenObjectCodec[T] = codec
     def ensureUniqueKeys(discriminatorKey: Opt[RawCbor]): Unit = ()
     def validate(): Unit = ()
