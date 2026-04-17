@@ -23,7 +23,7 @@ object Commons extends ProjectGroup("commons") {
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean &&
     System.getProperty("idea.runid") == null
 
-  val guavaVersion = "33.5.0-jre"
+  val guavaVersion = "33.6.0-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.20"
   val scalatestplusScalacheckVersion = "3.2.14.0"
