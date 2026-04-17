@@ -42,10 +42,6 @@ object Commons extends ProjectGroup("commons") {
   val scalajsBenchmarkVersion = "0.10.0"
   val slf4jVersion = "2.0.17" // test only
 
-  // MiMa baseline: every released 2.x version we still promise binary compat with.
-  // We include every individual release (not just the last patch of each minor) because
-  // the project didn't have MiMa before — we can't rely on "semver was honored in patches"
-  // being mechanically verified, so we check each release explicitly.
   val previousCompatibleVersions: Set[String] =
     Set("2.21.0", "2.22.0", "2.23.0", "2.23.1", "2.24.0", "2.25.0", "2.26.0", "2.27.0", "2.27.1")
 
