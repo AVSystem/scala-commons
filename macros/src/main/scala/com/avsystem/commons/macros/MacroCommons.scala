@@ -6,7 +6,7 @@ import com.avsystem.commons.macros.misc.{Ok, Res}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.reflect.macros.{TypecheckException, blackbox}
+import scala.reflect.macros.{blackbox, TypecheckException}
 import scala.util.control.NoStackTrace
 import scala.util.matching.Regex
 
@@ -243,10 +243,8 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
 
     lazy val treeRes: Res[Tree] = annotTree match {
       case Apply(constr, args) =>
-        val newArgs: List[Res[List[Tree]]] = constructorSig.paramLists.head
-          .take(args.size)
-          .zipWithIndex
-          .map { case (param, idx) =>
+        val newArgs: List[Res[List[Tree]]] =
+          constructorSig.paramLists.head.take(args.size).zipWithIndex.map { case (param, idx) =>
             if (isRepeated(param))
               Ok(args.slice(idx, args.size))
             else {
