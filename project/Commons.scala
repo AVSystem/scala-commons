@@ -42,9 +42,12 @@ object Commons extends ProjectGroup("commons") {
   val scalajsBenchmarkVersion = "0.10.0"
   val slf4jVersion = "2.0.17" // test only
 
-  // for binary compatibility checking
+  // MiMa baseline: every released 2.x version we still promise binary compat with.
+  // We include every individual release (not just the last patch of each minor) because
+  // the project didn't have MiMa before — we can't rely on "semver was honored in patches"
+  // being mechanically verified, so we check each release explicitly.
   val previousCompatibleVersions: Set[String] =
-    Set("2.21.0", "2.22.0", "2.23.1", "2.24.0", "2.25.0", "2.26.0", "2.27.1")
+    Set("2.21.0", "2.22.0", "2.23.0", "2.23.1", "2.24.0", "2.25.0", "2.26.0", "2.27.0", "2.27.1")
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(
     cancelable := true,
@@ -74,9 +77,18 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
     githubWorkflowEnv += "JAVA_OPTS" -> "-Dfile.encoding=UTF-8 -Xmx4G",
     githubWorkflowBuildMatrixFailFast := Some(false),
-    githubWorkflowBuild := Seq(
-      WorkflowStep.Sbt(List("mimaReportBinaryIssues"), name = Some("Binary compatibility check"))
-    ) ++ githubWorkflowBuild.value,
+    // MiMa only compares bytecode — result is JDK-agnostic, so we run it in a dedicated
+    // single-JDK job instead of multiplying the work across the build matrix.
+    githubWorkflowAddedJobs += WorkflowJob(
+      id = "mima",
+      name = "Binary Compatibility Check",
+      scalas = List(scalaVersion.value),
+      javas = List(JavaSpec.temurin("21")),
+      steps = githubWorkflowJobSetup.value.toList :+ WorkflowStep.Sbt(
+        List("mimaReportBinaryIssues"),
+        name = Some("Check binary compatibility"),
+      ),
+    ),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
         UseRef.Public("actions", "setup-node", "v4"),
