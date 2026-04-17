@@ -1,6 +1,10 @@
 package com.avsystem.commons
 package misc
 
+@deprecated(
+  "Use native SAM conversion instead, e.g. `val r: Runnable = () => doStuff()` or `val c: JConsumer[T] = t => ...`",
+  "2.28.0",
+)
 object Sam {
 
   /** Implements a single abstract method trait/class `T` using passed function or expression as implementation of the
