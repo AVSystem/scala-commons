@@ -267,6 +267,18 @@ object Commons extends ProjectGroup("commons") {
     mimaPreviousArtifacts := Set.empty, // no need for MiMa checks
   )
 
+  val coreMimaFilters: Seq[ProblemFilter] = Seq(
+    // Commit ade8d4a8: OrderingOps removed (superseded by stdlib equivalents).
+    exclude[DirectMissingMethodProblem]("com.avsystem.commons.SharedExtensions.orderingOps"),
+    exclude[DirectMissingMethodProblem]("com.avsystem.commons.SharedExtensionsUtils.orderingOps"),
+    exclude[DirectMissingMethodProblem]("com.avsystem.commons.package.orderingOps"),
+    // Commit ade8d4a8: IteratorOps.distinct / distinctBy removed (superseded by stdlib equivalents).
+    exclude[DirectMissingMethodProblem]("com.avsystem.commons.SharedExtensionsUtils#IteratorOps.distinct"),
+    exclude[DirectMissingMethodProblem]("com.avsystem.commons.SharedExtensionsUtils#IteratorOps.distinctBy"),
+    exclude[DirectMissingMethodProblem]("com.avsystem.commons.SharedExtensionsUtils#IteratorOps.distinct$extension"),
+    exclude[DirectMissingMethodProblem]("com.avsystem.commons.SharedExtensionsUtils#IteratorOps.distinctBy$extension"),
+  )
+
   lazy val core = mkSubProject
     .dependsOn(macros)
     .settings(
@@ -276,6 +288,7 @@ object Commons extends ProjectGroup("commons") {
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
       ),
+      mimaBinaryIssueFilters ++= coreMimaFilters,
     )
 
   lazy val `core-js` = mkSubProject
@@ -290,6 +303,7 @@ object Commons extends ProjectGroup("commons") {
       libraryDependencies ++= Seq(
         "io.monix" %%% "monix" % monixVersion % Optional
       ),
+      mimaBinaryIssueFilters ++= coreMimaFilters,
     )
 
   lazy val mongo = mkSubProject
