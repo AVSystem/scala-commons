@@ -3,6 +3,9 @@ package misc
 
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.annotation.nowarn
+
+@nowarn("cat=deprecation")
 object Obj {
   val x: String = "fuu"
 
@@ -14,6 +17,7 @@ object Obj {
   }
 }
 
+@nowarn("cat=deprecation")
 class ValueOfTest extends AnyFunSuite {
   test("object") {
     assert(ValueOf[Obj.type] == Obj)

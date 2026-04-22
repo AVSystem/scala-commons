@@ -2,7 +2,7 @@ package com.avsystem.commons
 package misc
 
 import com.avsystem.commons.annotation.positioned
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.{adtCaseMetadata, adtCaseSealedParentMetadata, adtParamMetadata, allowUnorderedSubtypes, checked, composite, infer, multi, AdtMetadataCompanion, MacroInstances, TypedMetadata}
 import com.avsystem.commons.serialization.{name, GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo}
 
 trait GenCodecStructure[T] {
@@ -78,7 +78,7 @@ case class GenSealedParent[T](
 
 @positioned(positioned.here) case class GenSingleton[T](
   @composite info: GenCaseInfo[T],
-  @checked @infer valueOf: ValueOf[T],
+  @checked @infer valueOf: scala.ValueOf[T],
   @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[_]],
 ) extends GenCase[T]
     with GenStructure[T] {

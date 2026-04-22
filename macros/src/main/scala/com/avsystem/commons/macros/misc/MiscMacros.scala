@@ -352,14 +352,6 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
   def lazyMetadata(metadata: Tree): Tree =
     q"${c.prefix}($metadata)"
 
-  def mkValueOf[T: WeakTypeTag]: Tree = instrument {
-    val tpe = weakTypeOf[T].dealias
-    singleValueFor(tpe) match {
-      case Some(sv) => q"new $MiscPkg.ValueOf[$tpe]($sv)"
-      case None => abort(s"$tpe is not a singleton type")
-    }
-  }
-
   def macroInstances: Tree = {
     val resultTpe = c.macroApplication.tpe
     val applySig = resultTpe.member(TermName("apply")).typeSignatureIn(resultTpe)

@@ -3,8 +3,8 @@ package com.avsystem.commons
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.*
 
-import scala.annotation.{nowarn, tailrec}
-import scala.collection.{mutable, AbstractIterator, BuildFrom, Factory}
+import scala.annotation.nowarn
+import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
 
 trait SharedExtensions {
 
@@ -53,7 +53,6 @@ trait SharedExtensions {
 
   implicit def iteratorCompanionOps(it: Iterator.type): IteratorCompanionOps.type = IteratorCompanionOps
 
-  implicit def orderingOps[A](ordering: Ordering[A]): OrderingOps[A] = new OrderingOps(ordering)
 }
 object SharedExtensions extends SharedExtensions
 
@@ -747,25 +746,6 @@ object SharedExtensionsUtils extends SharedExtensions {
         }
       }
 
-    def distinctBy[B](f: A => B): Iterator[A] =
-      new AbstractIterator[A] {
-        private[this] val seen = new MHashSet[B]
-        private[this] var nextDistinct = NOpt.empty[A]
-
-        @tailrec override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
-          nextDistinct = NOpt.some(it.next()).filter(a => seen.add(f(a)))
-          hasNext
-        }
-
-        override def next(): A =
-          if (hasNext) {
-            val result = nextDistinct.get
-            nextDistinct = NOpt.Empty
-            result
-          } else throw new NoSuchElementException
-      }
-
-    def distinct: Iterator[A] = distinctBy(identity)
   }
 
   object IteratorCompanionOps {
@@ -825,6 +805,7 @@ object SharedExtensionsUtils extends SharedExtensions {
   }
 
   final class OrderingOps[A](private val ordering: Ordering[A]) extends AnyVal {
+    @deprecated("Scala 2.13 has native scala.math.Ordering.orElse implementation", "2.27.0")
     def orElse(whenEqual: Ordering[A]): Ordering[A] =
       (x, y) =>
         ordering.compare(x, y) match {
@@ -832,6 +813,7 @@ object SharedExtensionsUtils extends SharedExtensions {
           case res => res
         }
 
+    @deprecated("Scala 2.13 has native scala.math.Ordering.orElseBy implementation", "2.27.0")
     def orElseBy[B: Ordering](f: A => B): Ordering[A] =
       orElse(Ordering.by(f))
   }
