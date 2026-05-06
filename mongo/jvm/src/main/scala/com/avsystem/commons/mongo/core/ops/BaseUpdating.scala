@@ -5,7 +5,7 @@ import com.mongodb.client.model.Updates
 import org.bson.conversions.Bson
 
 trait BaseUpdating[T] extends Any with KeyValueHandling[T] {
-  def set(t: T): Bson = use(t)(Updates.set)
+  def set(t: T): Bson = use(t)(Updates.set(_, _))
   def setOnInsert(t: T): Bson = use(t)(Updates.setOnInsert(_, _))
   def unset(): Bson = Updates.unset(key)
 
