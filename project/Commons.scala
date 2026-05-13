@@ -40,7 +40,7 @@ object Commons extends ProjectGroup("commons") {
   val pekkoVersion = "1.4.0"
   val monixVersion = "3.4.1"
   val scalajsBenchmarkVersion = "0.10.0"
-  val slf4jVersion = "2.0.17" // test only
+  val slf4jVersion = "2.0.18" // test only
 
   val previousCompatibleVersions: Set[String] =
     Set("2.21.0", "2.22.0", "2.23.0", "2.23.1", "2.24.0", "2.25.0", "2.26.0", "2.27.0", "2.27.1")
@@ -241,7 +241,7 @@ object Commons extends ProjectGroup("commons") {
       ),
       mimaBinaryIssueFilters ++= Seq(
         // Internal compiler-plugin helper removed; not part of the public API.
-        exclude[DirectMissingMethodProblem]("com.avsystem.commons.analyzer.AnalyzerRule.report"),
+        exclude[DirectMissingMethodProblem]("com.avsystem.commons.analyzer.AnalyzerRule.report")
       ),
     )
 
@@ -326,8 +326,12 @@ object Commons extends ProjectGroup("commons") {
         exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.GenCodecCollection$"),
         exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions"),
         exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions$"),
-        exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions$MongoObservableOps"),
-        exclude[MissingClassProblem]("com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions$MongoObservableOps$"),
+        exclude[MissingClassProblem](
+          "com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions$MongoObservableOps"
+        ),
+        exclude[MissingClassProblem](
+          "com.avsystem.commons.mongo.scala.MongoScalaObservableExtensions$MongoObservableOps$"
+        ),
         // Commit 11e6d7ef (released in 2.25.0): listDatabases/listCollections were
         // split into listRaw* / listTyped* variants. Document-returning overloads
         // got deprecated stubs but the typed (`[T: GenCodec]`) overloads were
