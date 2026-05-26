@@ -85,6 +85,16 @@ object Commons extends ProjectGroup("commons") {
         name = Some("Check binary compatibility"),
       ),
     ),
+    githubWorkflowAddedJobs += WorkflowJob(
+      id = "scalafmt",
+      name = "Scalafmt Check",
+      scalas = List(scalaVersion.value),
+      javas = List(JavaSpec.temurin("21")),
+      steps = githubWorkflowJobSetup.value.toList :+ WorkflowStep.Sbt(
+        List("scalafmtCheckAll", "scalafmtSbtCheck"),
+        name = Some("Check Scala formatting"),
+      ),
+    ),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
         UseRef.Public("actions", "setup-node", "v4"),
