@@ -4,7 +4,7 @@ import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.*
 
 import scala.annotation.nowarn
-import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
+import scala.collection.{mutable, AbstractIterator, BuildFrom, Factory}
 
 trait SharedExtensions {
 

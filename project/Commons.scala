@@ -31,16 +31,16 @@ object Commons extends ProjectGroup("commons") {
   val scalatestVersion = "3.2.20"
   val scalatestplusScalacheckVersion = "3.2.14.0"
   val scalacheckVersion = "1.19.0"
-  val jettyVersion = "12.1.8"
   val mongoVersion = "5.7.0"
+  val jettyVersion = "12.1.9"
   val springVersion = "6.2.18"
-  val typesafeConfigVersion = "1.4.6"
+  val typesafeConfigVersion = "1.4.8"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.6"
   val pekkoVersion = "1.4.0"
   val monixVersion = "3.4.1"
   val scalajsBenchmarkVersion = "0.10.0"
-  val slf4jVersion = "2.0.17" // test only
+  val slf4jVersion = "2.0.18" // test only
 
   val previousCompatibleVersions: Set[String] =
     Set("2.21.0", "2.22.0", "2.23.0", "2.23.1", "2.24.0", "2.25.0", "2.26.0", "2.27.0", "2.27.1")
