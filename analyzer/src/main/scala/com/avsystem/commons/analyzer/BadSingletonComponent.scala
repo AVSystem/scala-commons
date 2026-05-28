@@ -25,6 +25,13 @@ class BadSingletonComponent(g: Global) extends AnalyzerRule(g, "badSingletonComp
       case Typed(expr, _) => unapply(expr)
       case Annotated(_, expr) => unapply(expr)
       case UnwrapApply(Select(prefix, _)) if prefix.tpe =:= t.tpe => unapply(prefix)
+      // Peel a method call that arrives via a single-argument adapter (typically an implicit conversion
+      // used to add extension methods, e.g. `componentExt(c).chain(...)` desugared from `c.chain(...)`).
+      // We require the adapter's converted argument to share its type with the whole expression -
+      // this preserves the rule's "shape-preserving chain" invariant: whatever the adapter does, the
+      // chain is still rooted in the same `Component[T]`, so the underlying `cached(...)` call is
+      // structurally reachable.
+      case UnwrapApply(Select(Apply(_, List(orig)), _)) if orig.tpe =:= t.tpe => unapply(orig)
       case _ => Some(t)
     }
   }
