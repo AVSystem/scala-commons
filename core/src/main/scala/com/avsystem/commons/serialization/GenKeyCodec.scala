@@ -87,7 +87,7 @@ object GenKeyCodec {
   implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
     GenKeyCodec.create(
       string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
-      enum => enum.name(),
+      e => e.name(),
     )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
