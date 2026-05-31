@@ -73,8 +73,19 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
-      - name: Build project
-        run: sbt '++ ${{ matrix.scala }}' test
+      - name: CI gate
+        run: |
+          if [ "${{ matrix.scala }}" = "2.13.18" ]; then
+            sbt '++ ${{ matrix.scala }}' \
+              'commons-jvm/test' \
+              'commons-jvm2/test' \
+              'commons-js/test' \
+              mimaReportBinaryIssues \
+              scalafmtCheckAll \
+              scalafmtSbtCheck
+          else
+            sbt '++ ${{ matrix.scala }}' scalafmtCheckAll scalafmtSbtCheck
+          fi
 
   publish:
     name: Publish Artifacts
@@ -125,47 +136,3 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         run: sbt ci-release
-
-  scalafmt:
-    name: Scalafmt Check
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        scala: [3.8.2]
-        java: [temurin@21]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout current branch (full)
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Setup Java (temurin@17)
-        if: matrix.java == 'temurin@17'
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: sbt
-
-      - name: Setup Java (temurin@21)
-        if: matrix.java == 'temurin@21'
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 21
-          cache: sbt
-
-      - name: Setup Java (temurin@25)
-        if: matrix.java == 'temurin@25'
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 25
-          cache: sbt
-
-      - name: Setup sbt
-        uses: sbt/setup-sbt@v1
-
-      - name: Check Scala formatting
-        run: sbt scalafmtCheckAll scalafmtSbtCheck
