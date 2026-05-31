@@ -2,8 +2,8 @@ package com.avsystem.commons
 package serialization
 
 trait TupleGenCodecs { this: GenCodec.type =>
-  private def mkTupleCodec[T](elementCodecs: GenCodec[_]*): GenCodec[T] =
-    macro macros.serialization.GenCodecMacros.mkTupleCodec[T]
+  private def mkTupleCodec[T](elementCodecs: GenCodec[_]*): GenCodec[T] = macro
+    macros.serialization.GenCodecMacros.mkTupleCodec[T]
 
   implicit def tuple2Codec[T1, T2](implicit r1: GenCodec[T1], r2: GenCodec[T2]): GenCodec[(T1, T2)] =
     mkTupleCodec(r1, r2)

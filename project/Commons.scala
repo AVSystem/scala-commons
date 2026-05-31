@@ -42,10 +42,6 @@ object Commons extends ProjectGroup("commons") {
   val scalajsBenchmarkVersion = "0.10.0"
   val slf4jVersion = "2.0.18" // test only
 
-  val scala2Version = "2.13.18"
-  val scala3Version = "3.8.2"
-  val madeVersion = "0.1.0" // pinned release on Sonatype Central; NOT 0.1.1-SNAPSHOT
-
   val previousCompatibleVersions: Set[String] =
     Set("2.21.0", "2.22.0", "2.23.0", "2.23.1", "2.24.0", "2.25.0", "2.26.0", "2.27.0", "2.27.1")
 
@@ -71,8 +67,7 @@ object Commons extends ProjectGroup("commons") {
     developers := List(
       Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak"))
     ),
-    scalaVersion := scala3Version,
-    crossScalaVersions := Seq(scala3Version, scala2Version),
+    scalaVersion := "2.13.18",
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
@@ -198,7 +193,6 @@ object Commons extends ProjectGroup("commons") {
     .enablePlugins(ScalaUnidocPlugin)
     .aggregate(
       jvm,
-      jvm2,
       js,
     )
     .settings(
@@ -217,10 +211,13 @@ object Commons extends ProjectGroup("commons") {
   lazy val jvm = mkSubProject
     .in(file(".jvm"))
     .aggregate(
+      analyzer,
       macros,
       core,
+      jetty,
       mongo,
       hocon,
+      spring,
     )
     .settings(aggregateProjectSettings)
 
@@ -264,13 +261,7 @@ object Commons extends ProjectGroup("commons") {
 
   lazy val macros = mkSubProject.settings(
     jvmCommonSettings,
-    crossScalaVersions := Seq(scala3Version, scala2Version),
-    scalaVersion := scala3Version,
-    libraryDependencies ++= {
-      if (scalaBinaryVersion.value == "2.13")
-        Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
-      else Seq.empty
-    },
+    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     mimaPreviousArtifacts := Set.empty, // no need for MiMa checks
   )
 
@@ -290,18 +281,11 @@ object Commons extends ProjectGroup("commons") {
     .dependsOn(macros)
     .settings(
       jvmCommonSettings,
-      crossScalaVersions := Seq(scala3Version, scala2Version),
-      scalaVersion := scala3Version,
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
       ),
-      libraryDependencies ++= {
-        if (scalaBinaryVersion.value == "3")
-          Seq("io.github.halotukozak" %% "made" % madeVersion)
-        else Seq.empty
-      },
       mimaBinaryIssueFilters ++= coreMimaFilters,
     )
 
@@ -312,8 +296,6 @@ object Commons extends ProjectGroup("commons") {
     .dependsOn(macros)
     .settings(
       jsCommonSettings,
-      crossScalaVersions := Seq(scala3Version, scala2Version),
-      scalaVersion := scala3Version,
       sameNameAs(core),
       sourceDirsSettings(_.getParentFile),
       libraryDependencies ++= Seq(
@@ -326,8 +308,6 @@ object Commons extends ProjectGroup("commons") {
     .dependsOn(core % CompileAndTest)
     .settings(
       jvmCommonSettings,
-      crossScalaVersions := Seq(scala3Version, scala2Version),
-      scalaVersion := scala3Version,
       sourceDirsSettings(_ / "jvm"),
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion,
@@ -367,8 +347,6 @@ object Commons extends ProjectGroup("commons") {
     .dependsOn(`core-js`)
     .settings(
       jsCommonSettings,
-      crossScalaVersions := Seq(scala3Version, scala2Version),
-      scalaVersion := scala3Version,
       sameNameAs(mongo),
       sourceDirsSettings(_.getParentFile),
     )
@@ -377,8 +355,6 @@ object Commons extends ProjectGroup("commons") {
     .dependsOn(core % CompileAndTest)
     .settings(
       jvmCommonSettings,
-      crossScalaVersions := Seq(scala3Version, scala2Version),
-      scalaVersion := scala3Version,
       libraryDependencies ++= Seq(
         "com.typesafe" % "config" % typesafeConfigVersion
       ),
@@ -424,8 +400,6 @@ object Commons extends ProjectGroup("commons") {
     .enablePlugins(JmhPlugin)
     .settings(
       jvmCommonSettings,
-      crossScalaVersions := Seq(scala3Version, scala2Version),
-      scalaVersion := scala3Version,
       noPublishSettings,
       sourceDirsSettings(_ / "jvm"),
       ideExcludedDirectories := (Jmh / managedSourceDirectories).value,
@@ -438,8 +412,6 @@ object Commons extends ProjectGroup("commons") {
     .dependsOn(`core-js`)
     .settings(
       jsCommonSettings,
-      crossScalaVersions := Seq(scala3Version, scala2Version),
-      scalaVersion := scala3Version,
       noPublishSettings,
       sameNameAs(benchmark),
       sourceDirsSettings(_.getParentFile),
@@ -454,8 +426,6 @@ object Commons extends ProjectGroup("commons") {
     .dependsOn(core)
     .settings(
       jvmCommonSettings,
-      crossScalaVersions := Seq(scala3Version, scala2Version),
-      scalaVersion := scala3Version,
       noPublishSettings,
       ideSkipProject := true,
       addCompilerPlugin("ch.epfl.scala" %% "scalac-profiling" % "1.0.0"),
