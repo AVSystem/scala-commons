@@ -78,26 +78,16 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
     githubWorkflowEnv += "JAVA_OPTS" -> "-Dfile.encoding=UTF-8 -Xmx4G",
     githubWorkflowBuildMatrixFailFast := Some(false),
-    // MiMa only compares bytecode — result is JDK-agnostic, so we run it in a dedicated
-    // single-JDK job instead of multiplying the work across the build matrix.
-    githubWorkflowAddedJobs += WorkflowJob(
-      id = "mima",
-      name = "Binary Compatibility Check",
-      scalas = List(scalaVersion.value),
-      javas = List(JavaSpec.temurin("21")),
-      steps = githubWorkflowJobSetup.value.toList :+ WorkflowStep.Sbt(
-        List("mimaReportBinaryIssues"),
-        name = Some("Check binary compatibility"),
-      ),
-    ),
-    githubWorkflowAddedJobs += WorkflowJob(
-      id = "scalafmt",
-      name = "Scalafmt Check",
-      scalas = List(scalaVersion.value),
-      javas = List(JavaSpec.temurin("21")),
-      steps = githubWorkflowJobSetup.value.toList :+ WorkflowStep.Sbt(
-        List("scalafmtCheckAll", "scalafmtSbtCheck"),
-        name = Some("Check Scala formatting"),
+    githubWorkflowBuild := Seq(
+      WorkflowStep.Sbt(
+        List(
+          "++2.13 commons-jvm/test",
+          "++2.13 commons-jvm2/test",
+          "++2.13 commons-js/test",
+          "++2.13 mimaReportBinaryIssues",
+          "scalafmtCheckAll",
+        ),
+        name = Some("Run CI gate"),
       ),
     ),
     githubWorkflowBuildPreamble ++= Seq(

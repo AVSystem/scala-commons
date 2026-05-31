@@ -61,8 +61,8 @@ object TypeClassDerivationTest {
     implicit def forList[T](implicit tct: TC[T]): TC[List[T]] = ForList(tct)
   }
   trait ImplicitMaterializers { this: TC.type =>
-    implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[TC[T]]): TC[T] = macro
-      macros.TestMacros.materializeImplicitly[T]
+    implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[TC[T]]): TC[T] =
+      macro macros.TestMacros.materializeImplicitly[T]
   }
 }
 
