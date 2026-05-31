@@ -235,8 +235,6 @@ object Commons extends ProjectGroup("commons") {
     )
     .settings(aggregateProjectSettings)
 
-  lazy val jvm2 = mkSubProject.in(file(".jvm2")).aggregate(jetty).settings(aggregateProjectSettings)
-
   lazy val js = mkSubProject
     .in(file(".js"))
     .aggregate(
@@ -407,14 +405,19 @@ object Commons extends ProjectGroup("commons") {
       ),
     )
 
-  lazy val jetty = mkSubProject
+  // jetty is a plain subproject (no separate aggregate): its id is `commons-jvm2`
+  // so the CI gate's `++2.13 commons-jvm2/test` keeps working unchanged, while
+  // `name` pins the published artifact + MiMa baseline to `commons-jetty`.
+  lazy val jvm2 = mkSubProject
+    .in(file("jetty"))
     .dependsOn(core % CompileAndTest)
     .settings(
       jvmCommonSettings,
+      name := "commons-jetty",
       crossScalaVersions := Seq(scala2Version),
       scalaVersion := scala2Version,
       // jetty is Scala 2.13-only (jetty-ee10-servlet has no Scala 3 build).
-      // Skip all phases on Scala 3 so `++3.8.2 jvm2/...` is a no-op rather than
+      // Skip all phases on Scala 3 so `++3.8.2 commons-jvm2/...` is a no-op rather than
       // a coursier resolution failure for missing _3 artifacts.
       update / skip := scalaBinaryVersion.value != "2.13",
       Compile / skip := scalaBinaryVersion.value != "2.13",
