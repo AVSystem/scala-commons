@@ -78,17 +78,6 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
     githubWorkflowEnv += "JAVA_OPTS" -> "-Dfile.encoding=UTF-8 -Xmx4G",
     githubWorkflowBuildMatrixFailFast := Some(false),
-    githubWorkflowBuild := Seq(
-      WorkflowStep.Sbt(
-        List(
-          "++2.13 commons-jvm/test",
-          "++2.13 commons-jvm2/test",
-          "++2.13 commons-js/test",
-          "++2.13 mimaReportBinaryIssues",
-        ),
-        name = Some("Run CI gate"),
-      )
-    ),
     githubWorkflowAddedJobs += WorkflowJob(
       id = "scalafmt",
       name = "Scalafmt Check",

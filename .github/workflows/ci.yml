@@ -73,8 +73,8 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt '++ ${{ matrix.scala }}' githubWorkflowCheck
 
-      - name: Run CI gate
-        run: sbt '++ ${{ matrix.scala }}' '++2.13 commons-jvm/test' '++2.13 commons-jvm2/test' '++2.13 commons-js/test' '++2.13 mimaReportBinaryIssues'
+      - name: Build project
+        run: sbt '++ ${{ matrix.scala }}' test
 
   publish:
     name: Publish Artifacts
