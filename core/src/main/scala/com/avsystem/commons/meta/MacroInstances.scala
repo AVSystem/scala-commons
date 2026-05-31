@@ -78,6 +78,8 @@ object MacroInstances {
     *   }
     * }}}
     */
-  implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] = macro
-    macros.misc.MiscMacros.macroInstances
+  // format: off
+  implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] =
+    macro macros.misc.MiscMacros.macroInstances
+  // format: on
 }
