@@ -85,9 +85,18 @@ object Commons extends ProjectGroup("commons") {
           "++2.13 commons-jvm2/test",
           "++2.13 commons-js/test",
           "++2.13 mimaReportBinaryIssues",
-          "scalafmtCheckAll",
         ),
         name = Some("Run CI gate"),
+      )
+    ),
+    githubWorkflowAddedJobs += WorkflowJob(
+      id = "scalafmt",
+      name = "Scalafmt Check",
+      scalas = List(scalaVersion.value),
+      javas = List(JavaSpec.temurin("21")),
+      steps = githubWorkflowJobSetup.value.toList :+ WorkflowStep.Sbt(
+        List("scalafmtCheckAll", "scalafmtSbtCheck"),
+        name = Some("Check Scala formatting"),
       ),
     ),
     githubWorkflowBuildPreamble ++= Seq(
@@ -226,10 +235,7 @@ object Commons extends ProjectGroup("commons") {
     )
     .settings(aggregateProjectSettings)
 
-  lazy val jvm2 = mkSubProject
-    .in(file(".jvm2"))
-    .aggregate(jetty)
-    .settings(aggregateProjectSettings)
+  lazy val jvm2 = mkSubProject.in(file(".jvm2")).aggregate(jetty).settings(aggregateProjectSettings)
 
   lazy val js = mkSubProject
     .in(file(".js"))
