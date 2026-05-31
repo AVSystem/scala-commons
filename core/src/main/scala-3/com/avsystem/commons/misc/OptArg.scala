@@ -7,11 +7,10 @@ import scala.language.implicitConversions
 
 object OptArg {
 
-  /**
-   * This conversion allows you to pass unwrapped values where `OptArg` is required. Kept as `implicit def` (not a
-   * `given Conversion`) because a polymorphic `Conversion[A, OptArg[A]]` generates a clashing bridge: both `A` and the
-   * `OptArg` value class erase to `Object`.
-   */
+  /** This conversion allows you to pass unwrapped values where `OptArg` is required. Kept as `implicit def` (not a
+    * `given Conversion`) because a polymorphic `Conversion[A, OptArg[A]]` generates a clashing bridge: both `A` and the
+    * `OptArg` value class erase to `Object`.
+    */
   implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
 
   // additional implicits to cover most common, safe numeric promotions
@@ -37,26 +36,25 @@ object OptArg {
   given [A] => Default[OptArg[A]] = emptyDefault.asInstanceOf[Default[OptArg[A]]]
 }
 
-/**
- * [[OptArg]] is like [[Opt]] except it's intended to be used to type-safely express optional method/constructor
- * parameters while at the same time avoiding having to explicitly wrap arguments when passing them (thanks to the
- * implicit conversion from `A` to `OptArg[A]`). For example:
- *
- * {{{
- *   def takesMaybeString(str: OptArg[String] = OptArg.Empty) = ???
- *
- *   takesMaybeString()         // default empty value is used
- *   takesMaybeString("string") // no explicit wrapping into OptArg required
- * }}}
- *
- * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into
- * `OptArg.Empty`. <br/> It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit
- * conversion `A => OptArg[A]` is intended to work. You should not use [[OptArg]] as a general-purpose "optional value"
- * type - other types like [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately
- * does not have any "transforming" methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that
- * [[OptArg]] is converted to [[Opt]], [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption`
- * methods).
- */
+/** [[OptArg]] is like [[Opt]] except it's intended to be used to type-safely express optional method/constructor
+  * parameters while at the same time avoiding having to explicitly wrap arguments when passing them (thanks to the
+  * implicit conversion from `A` to `OptArg[A]`). For example:
+  *
+  * {{{
+  *   def takesMaybeString(str: OptArg[String] = OptArg.Empty) = ???
+  *
+  *   takesMaybeString()         // default empty value is used
+  *   takesMaybeString("string") // no explicit wrapping into OptArg required
+  * }}}
+  *
+  * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into
+  * `OptArg.Empty`. <br/> It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit
+  * conversion `A => OptArg[A]` is intended to work. You should not use [[OptArg]] as a general-purpose "optional value"
+  * type - other types like [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately
+  * does not have any "transforming" methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that
+  * [[OptArg]] is converted to [[Opt]], [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption`
+  * methods).
+  */
 final class OptArg[+A] @publicInBinary private[misc] (@publicInBinary private[misc] val rawValue: Any)
   extends AnyVal with OptBase[A] with Serializable {
   import OptArg.*
@@ -93,9 +91,8 @@ final class OptArg[+A] @publicInBinary private[misc] (@publicInBinary private[mi
   inline def fold[B](inline ifEmpty: => B)(inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  /**
-   * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
-   */
+  /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+    */
   inline def mapOr[B](inline ifEmpty: => B, inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
@@ -124,13 +121,12 @@ final class OptArg[+A] @publicInBinary private[misc] (@publicInBinary private[mi
   inline def toLeft[X](inline right: => X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  /**
-   * Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
-   *
-   * @param sideEffect - code to be executed if optArg is empty
-   * @return the same optArg
-   * @example {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
-   */
+  /** Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
+    *
+    * @param sideEffect - code to be executed if optArg is empty
+    * @return the same optArg
+    * @example {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+    */
   inline def forEmpty(inline sideEffect: => Unit): OptArg[A] = {
     if (isEmpty) {
       sideEffect

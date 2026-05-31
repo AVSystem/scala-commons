@@ -33,16 +33,14 @@ object Opt {
 
   extension [A](opt: => Opt[A]) {
 
-    /**
-     * When a given condition is true, evaluates the `opt` argument and returns it. When the condition is false, `opt`
-     * is not evaluated and [[Opt.Empty]] is returned.
-     */
+    /** When a given condition is true, evaluates the `opt` argument and returns it. When the condition is false, `opt`
+      * is not evaluated and [[Opt.Empty]] is returned.
+      */
     inline def when(inline cond: Boolean): Opt[A] = if (cond) opt else Opt.Empty
 
-    /**
-     * Unless a given condition is true, this will evaluate the `opt` argument and return it. Otherwise, `opt` is not
-     * evaluated and [[Opt.Empty]] is returned.
-     */
+    /** Unless a given condition is true, this will evaluate the `opt` argument and return it. Otherwise, `opt` is not
+      * evaluated and [[Opt.Empty]] is returned.
+      */
     inline def unless(inline cond: Boolean): Opt[A] = when(!cond)
   }
 
@@ -51,16 +49,15 @@ object Opt {
   given [A] => Default[Opt[A]] = emptyDefault.asInstanceOf[Default[Opt[A]]]
 }
 
-/**
- * Like [[Option]] but implemented as value class (avoids boxing) and treats `null` as no value. Therefore, there is no
- * equivalent for `Some(null)`.
- *
- * If you need a value-class version of [[Option]] which differentiates between no value and `null` value, use
- * [[NOpt]].
- *
- * WARNING: Unfortunately, using `Opt` in pattern matches turns off the exhaustivity checking. Please be aware of that
- * tradeoff.
- */
+/** Like [[Option]] but implemented as value class (avoids boxing) and treats `null` as no value. Therefore, there is no
+  * equivalent for `Some(null)`.
+  *
+  * If you need a value-class version of [[Option]] which differentiates between no value and `null` value, use
+  * [[NOpt]].
+  *
+  * WARNING: Unfortunately, using `Opt` in pattern matches turns off the exhaustivity checking. Please be aware of that
+  * tradeoff.
+  */
 final class Opt[+A] @publicInBinary private[misc] (@publicInBinary private[misc] val rawValue: Any)
   extends AnyVal with OptBase[A] with Serializable {
 
@@ -102,18 +99,16 @@ final class Opt[+A] @publicInBinary private[misc] (@publicInBinary private[misc]
   inline def orNull[B >: A](using ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
 
-  /**
-   * Analogous to `Option.map` except that when mapping function returns `null`, empty `Opt` is returned as a result.
-   */
+  /** Analogous to `Option.map` except that when mapping function returns `null`, empty `Opt` is returned as a result.
+    */
   inline def map[B](inline f: A => B): Opt[B] =
     if (isEmpty) Opt.Empty else Opt(f(value))
 
   inline def fold[B](inline ifEmpty: => B)(inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  /**
-   * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
-   */
+  /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+    */
   inline def mapOr[B](inline ifEmpty: => B, inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
@@ -145,9 +140,8 @@ final class Opt[+A] @publicInBinary private[misc] (@publicInBinary private[misc]
     if (!isEmpty) f(value)
   }
 
-  /**
-   * Analogous to `Option.collect` except that when the function returns `null`, empty `Opt` is returned as a result.
-   */
+  /** Analogous to `Option.collect` except that when the function returns `null`, empty `Opt` is returned as a result.
+    */
   inline def collect[B](inline pf: PartialFunction[A, B]): Opt[B] =
     if (!isEmpty) {
       val res = pf.applyOrElse(value, Opt.emptyMarkerFunc)
@@ -172,13 +166,12 @@ final class Opt[+A] @publicInBinary private[misc] (@publicInBinary private[misc]
   inline def zip[B](that: Opt[B]): Opt[(A, B)] =
     if (isEmpty || that.isEmpty) Opt.Empty else Opt((this.get, that.get))
 
-  /**
-   * Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
-   *
-   * @param sideEffect - code to be executed if opt is empty
-   * @return the same opt
-   * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
-   */
+  /** Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
+    *
+    * @param sideEffect - code to be executed if opt is empty
+    * @return the same opt
+    * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+    */
   inline def forEmpty(inline sideEffect: => Unit): Opt[A] = {
     if (isEmpty) {
       sideEffect
