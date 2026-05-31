@@ -17,8 +17,8 @@ Status tokens: `cross` (cross-builds on both versions), `stub` (Scala 3 wired wi
 | Module | 2.13 | 3.x | MiMa | Tasty-MiMa | Notes |
 |--------|------|-----|------|------------|-------|
 | macros | cross | stub | n/a | n/a | Empty scala-3 dir; whitebox impls remain 2.13-only. |
-| made | n/a | pending | n/a | n/a | Scala-3-only dep, pinned to `io.github.halotukozak:made_3:0.1.0`. |
-| core | cross | pending | green | pending | Cross-compile target; tests still pending on Scala 3. |
+| made | n/a | cross | n/a | n/a | external dep at 0.1.0, Scala 3 only |
+| core | cross | pending | green | pending | Cross-compile target; tests still pending on Scala 3. made wiring primitives ported; full derivation pending. |
 | hocon | cross | pending | green | pending | Pure-Scala; first downstream port after `core`. |
 | mongo | cross | pending | green | pending | Uses `CrossVersion.for3Use2_13` wrapper on Scala 3. |
 | mongo-js | cross | pending | n/a | n/a | ScalaJS variant of `mongo`. |
