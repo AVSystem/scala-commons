@@ -71,11 +71,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     *     GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
     * }}}
     */
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] =
+    macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
 
-  def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = macro
-    macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
+  def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] =
+    macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
 
   /** Materializes a [[GenCodec]] for a POJO that has a fluent builder. The fluent builder must have setters
     * corresponding to the POJO's getters. Each setter must return the builder itself (because it's fluent). The builder
@@ -87,8 +87,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     * @param build
     *   a function that builds the final value (typically `_.build()` or `_.get()`)
     */
-  def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.fromJavaBuilder[T, B]
+  def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] =
+    macro macros.serialization.GenCodecMacros.fromJavaBuilder[T, B]
 
   @explicitGenerics
   def read[T: GenCodec](input: Input): T =
@@ -644,11 +644,11 @@ trait RecursiveAutoCodecs { this: GenCodec.type =>
 
   /** Like `materialize`, but descends into types that `T` is made of (e.g. case class field types).
     */
-  def materializeRecursively[T]: GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.materializeRecursively[T]
+  def materializeRecursively[T]: GenCodec[T] =
+    macro macros.serialization.GenCodecMacros.materializeRecursively[T]
 
   /** INTERNAL API. Should not be used directly.
     */
-  implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.materializeImplicitly[T]
+  implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] =
+    macro macros.serialization.GenCodecMacros.materializeImplicitly[T]
 }

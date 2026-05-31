@@ -8,8 +8,8 @@ trait Delegation[A, B] {
 }
 
 object Delegation {
-  implicit def materializeDelegation[A, B]: Delegation[A, B] = macro
-    com.avsystem.commons.macros.misc.DelegationMacros.materializeDelegation[A, B]
+  implicit def materializeDelegation[A, B]: Delegation[A, B] =
+    macro com.avsystem.commons.macros.misc.DelegationMacros.materializeDelegation[A, B]
 
   /** Provides following syntax:
     *

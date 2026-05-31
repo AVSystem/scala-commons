@@ -20,8 +20,8 @@ trait Components extends ComponentsLowPrio {
     * components as dependencies using `.ref`. This macro will transform the definition by extracting dependencies in a
     * way that allows them to be initialized in parallel, before initializing the current component itself.
     */
-  protected def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro
-    ComponentMacros.component[T]
+  protected def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] =
+    macro ComponentMacros.component[T]
 
   /** Asynchronous version of [[component]] macro.
     */
@@ -34,8 +34,8 @@ trait Components extends ComponentsLowPrio {
     * instance. The cache key is based on source position so overriding a method that returns `singleton` will create
     * separate [[Component]] with different cache key.
     */
-  protected def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = macro
-    ComponentMacros.singleton[T]
+  protected def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] =
+    macro ComponentMacros.singleton[T]
 
   /** Asynchronous version of [[singleton]] macro.
     */
@@ -58,8 +58,8 @@ trait Components extends ComponentsLowPrio {
   implicit def ambiguousArbitraryComponent1[T]: Component[T] = null
   implicit def ambiguousArbitraryComponent2[T]: Component[T] = null
 
-  implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] = macro
-    ComponentMacros.autoComponent[T]
+  implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] =
+    macro ComponentMacros.autoComponent[T]
 
   protected def optEmptyComponent: Component[Opt[Nothing]] =
     singleton(Opt.Empty)
