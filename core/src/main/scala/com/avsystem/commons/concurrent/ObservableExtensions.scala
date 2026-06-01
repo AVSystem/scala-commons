@@ -24,7 +24,7 @@ object ObservableExtensions extends ObservableExtensions {
 
     /** Returns a [[monix.eval.Task Task]] which emits the first <b>non-null</b> item for which the predicate holds.
       */
-    def findOptL(p: T => Boolean): Task[Opt[T]] = obs.findL(e => e != null && p(e)).map(_.toOpt)
+    inline def findOptL(inline p: T => Boolean): Task[Opt[T]] = obs.findL(e => e != null && p(e)).map(_.toOpt)
 
     /** Suppress the duplicate elements emitted by the source Observable.
       *
@@ -37,7 +37,7 @@ object ObservableExtensions extends ObservableExtensions {
       *
       * WARNING: this requires unbounded buffering.
       */
-    def distinctBy[K](key: T => K): Observable[T] =
+    inline def distinctBy[K](inline key: T => K): Observable[T] =
       obs
         .scan((MSet.empty[K], Opt.empty[T])) { case ((seenElems, _), elem) =>
           (seenElems, elem.optIf(seenElems.add(key(elem))))
@@ -61,7 +61,7 @@ object ObservableExtensions extends ObservableExtensions {
       *
       * WARNING: this requires unbounded buffering.
       */
-    def sortedByL[R](f: T => R)(implicit ord: Ordering[R], ct: ClassTag[T]): Task[ISeq[T]] =
+    inline def sortedByL[R](inline f: T => R)(implicit ord: Ordering[R], ct: ClassTag[T]): Task[ISeq[T]] =
       sortedL(ord.on(f), ct)
 
     /** Given a collection factory `factory`, returns a [[monix.eval.Task Task]] that upon evaluation will collect all
@@ -84,7 +84,7 @@ object ObservableExtensions extends ObservableExtensions {
       *
       * WARNING: for infinite streams the process will eventually blow up with an out of memory error.
       */
-    def mkMapL[K, V](keyFun: T => K, valueFun: T => V): Task[Map[K, V]] =
+    inline def mkMapL[K, V](inline keyFun: T => K, inline valueFun: T => V): Task[Map[K, V]] =
       obs.map(v => (keyFun(v), valueFun(v))).toL(Map)
   }
 }
