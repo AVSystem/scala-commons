@@ -57,6 +57,36 @@ the bottom of this file. Restoration ships incrementally per feature area.
 - `GenCodec` internal value-class wrappers (`IterableOps`, `PairIterableOps`, `ListInputOps`, `ObjectInputOps`)
   converted from `private implicit class … extends AnyVal` to Scala 3 `extension` blocks. All four are package-private
   internal helpers — call-site transparent (no downstream API impact).
+- De-facto-implicit-class pattern (`implicit def xOps(x: T): XOps = new XOps(x)` paired with
+  `class XOps(private val x: T) extends AnyVal { ... }`) swept to `extension` blocks across `core`:
+  - `SharedExtensions` — 18 wrapper pairs (UniversalOps, LazyUniversalOps, NullableOps, StringOps, IntOps, FutureOps,
+    LazyFutureOps, OptionOps, TryOps, LazyTryOps, PartialFunctionOps, SetOps, IterableOnceOps, IterableOps,
+    PairIterableOnceOps, MapOps, IteratorOps, plus the `Future.type`/`Try.type`/`Iterator.type` companion extensions).
+    `SharedExtensionsUtils` companion object eliminated. Helper singletons `FutureCompanionOps`, `TryCompanionOps`,
+    `IteratorCompanionOps`, `PartialFunctionOps`, `MapOps.Entry` promoted to `object SharedExtensions` companion.
+    `OrderingOps` and `IteratorOps.distinct/distinctBy` dropped per existing MiMa exclusions (already unreachable).
+  - `Opt.LazyOptOps` — by-name extension `extension [A](opt: => Opt[A])`.
+  - `concurrent/TaskExtensions` — `TaskOps` and `TaskCompanionOps` (`extension [T](task: Task[T])` and
+    `extension (task: Task.type)`). Inner `import ObservableExtensions.observableOps` hoisted above the trait
+    (Pitfall 6: extension body cannot contain imports).
+  - `jiop/Java8CollectionUtils`, `jiop/JOptionalUtils`, `jiop/JStreamUtils`, `jiop/JavaTimeInterop`, `jiop/GuavaInterop`,
+    `jiop/JCollectionUtils.pairIterableOps` — all wrapper pairs swept to `extension`. JOptionalUtils consolidates the
+    4 `O[T] → JOptional[T]` wrappers (Option/Opt/NOpt/OptArg) into ONE generic
+    `extension [O[_], T](opt: O[T])(using OptionLike.Aux[O[T], T])` per fork shape — avoids both the erasure clash
+    between value-class wrappers AND the `Seq.asJava` shadowing by an over-specific `extension (option: Option[T])`.
+    `JavaInteropTest` gained `import JavaInterop._` so JOptionalUtils' `asScala` extension on `JOptional` competes at
+    equal import-rank with GuavaInterop's `asScala` on `ListenableFuture` (Scala 3 prefers imported extensions over
+    package-object-mixed-in extensions and won't backtrack on first-tried mismatch).
+  - `jsiop/JsInterop` — `UndefOrOps` and `JsOptOps` swept (`jsDateTimestampConversions` left as `implicit def` —
+    slice 3.3 territory).
+  - `mongo/sync/MongoOps` — `DBOps`, `FindIterableOps` swept (`object MongoOps extends MongoOps` added for
+    `import MongoOps._` callers).
+  - `mongo/reactive/ReactiveMongoExtensions` — `PublisherOps` swept.
+
+  Public-API impact: the wrapper types (e.g. `SharedExtensions.UniversalOps`, `JOptionalUtils.optional2AsScala`,
+  `MongoOps.DBOps`) no longer exist as named types. Downstream code that referenced these by name (e.g.
+  `new UniversalOps(x)`) will not compile. Extension-method call sites (`x.opt`, `x.discard`, `optional.toOpt`,
+  `db.getCollection(...)`) remain transparent.
 
 ### mongo
 
