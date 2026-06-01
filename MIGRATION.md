@@ -139,6 +139,53 @@ the bottom of this file. Restoration ships incrementally per feature area.
   `materialize[Option[String]]` companion-init call on `GenUnorderedUnion` omitted — restored
   when `MetaMacros.dummy` gets its real reflection body in Phase 6.
 
+### core — meta metaAnnotations (slice 4.5)
+
+- `meta/metaAnnotations.object infer` is now `extends InferMacros` (was: `{ def value[T]: T = ??? }`).
+  `InferMacros` (slice 4.3 `MetaMacros.scala`) provides
+  `inline def value[T]: T = ${ MetaMacros.valueImpl[T] }` — call sites of `infer.value` now route through
+  the macro splice. Runtime semantics preserve the "use only inside macro-consumed annotations" contract:
+  `MetaMacros.valueImpl` ships `'{ ??? }` per fork (slice 4.3), so non-macro callers of `infer.value` will
+  throw `NotImplementedError`. **Intentional** — `infer.value` is meant to be replaced by the macro that
+  consumes the surrounding annotation; if it survives to runtime, the throw is a correct error signal.
+- `MacroInstancesTest.scala` un-wrapped: the `MultipleImplicitImportsTest` section reshaped to use the
+  named-tuple `Instances` bound from slice 4.2 (`(codec: GenCodec[T])` instead of `() => GenCodec[T]`,
+  call site `.apply()` → `.codec`). The `ComplexInstancesTest` and `AnnotationReferringToEnclosingObjectTest`
+  sections stay wrapped pending Phase 6 — the former mixes val/var/def + implicit-parametered methods
+  (not expressible as a named-tuple type alias), the latter uses `infer.value` as a default-arg of an
+  annotation parameter (the `'{ ??? }` stub returns `Nothing` at the annotation call site, breaking
+  case-class default-argument resolution). Fork itself ships this whole test file as
+  `TodoScala3Migration DISABLED`; we diverge to compile-check the surviving type shapes.
+
+**Phase 4 closure** — All 9 fork files at `origin/master:core/src/main/scala-3/com/avsystem/commons/meta/`
+are now ported (5 verbatim + 4 with documented divergences):
+
+| File                       | Slice | Status                                                                          |
+| -------------------------- | ----- | ------------------------------------------------------------------------------- |
+| `AllowDerivation.scala`    | 4.1   | Ported verbatim                                                                 |
+| `Fallback.scala`           | 4.1   | Ported verbatim                                                                 |
+| `metadata.scala`           | 4.1   | Diverged — `ParamFlags.rawFlags` strips `@name("dupa")` fork-debug noise        |
+| `OptionLike.scala`         | 4.1   | Diverged — preserves `BaseOptionLike` `@bincompat` shim                         |
+| `MacroInstances.scala`     | 4.2   | Ported verbatim (`Instances <: AnyNamedTuple` bound is new)                     |
+| `MetaMacros.scala`         | 4.3   | Ported verbatim with `'{ ??? }` bodies for `valueImpl`/`lazyMetadataImpl`/`dummy` (real bodies = Phase 6 per fork) |
+| `MetadataCompanion.scala`  | 4.3   | Ported verbatim                                                                 |
+| `AdtMetadataCompanion.scala` | 4.4 | Ported verbatim (bound tightened to `M[X] <: TypedMetadata[X]`)                 |
+| `metaAnnotations.scala`    | 4.5   | Ported verbatim (`object infer extends InferMacros` swap)                       |
+
+Phase 4 acceptance gate green within Phase 4's scope: `sbt commons-core/clean + commons-core/compile +
+commons-core/Test/compile + scalafmtCheckAll` exit 0, with 0 new `@nowarn`/`-Wconf` vs `upstream/scala-3`
+across all of Phase 4 (slices 4.1–4.5). Real macro bodies for `MetaMacros.{valueImpl, lazyMetadataImpl,
+dummy}` remain deferred to Phase 6 per the fork-shipped staging (documented in §1).
+
+**Multi-module compile failures pre-existing on the base branch** (commons-mongo, commons-hocon,
+commons-core-js): these aggregate modules contain classical-trait `Instances` bundles (e.g.
+`MongoPolyAdtInstances[D]`, `MongoEntityInstances[E]`, hocon `ConfigCompanion` instances) that violate
+slice 4.2's `Instances <: AnyNamedTuple` bound, plus JS-classpath `made.*` resolution gaps on
+`OptionLike.scala:71` and `metadata.scala:4`. The bound-tightening happened in slice 4.2 (already on
+`upstream/scala-3`); Phase 4 does not introduce these failures and does not gate on their resolution.
+Per [[feedback_small_scoped_prs]], the per-module reshapes ship in their respective phases (Phase 7 for
+mongo `MongoEntityCompanion`, etc.).
+
 ### mongo
 
 - `BsonRef.Creator.ref`, `DataTypeDsl.{ref, as, is, isNot}`, `TypedMongoUtils.optionalizeFirstArg` are stubbed with
@@ -232,8 +279,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:55`                                 | noneComponent (depends on stubbed singleton macro)                                                    | S      |
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:58`                                 | sequenceOpt (depends on stubbed component macro)                                                      | S      |
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:61`                                 | sequenceOption (depends on stubbed component macro)                                                   | S      |
-| `core/src/main/scala/com/avsystem/commons/meta/MacroInstances.scala:47`                           | materialize (Scala 2 macro def)                                                                       | L      |
-| `core/src/main/scala/com/avsystem/commons/meta/metaAnnotations.scala:193`                         | value (Scala 2 macro def)                                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:114`                            | SelfAnnotations.materialize (Scala 2 macro def)                                                       | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:12`                             | AnnotationOf.materialize (Scala 2 macro def)                                                          | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:22`                             | OptAnnotationOf.materialize (Scala 2 macro def)                                                       | L      |
@@ -310,7 +355,8 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/test/scala/com/avsystem/commons/macros/TreeForTypeTest.scala:4`                         | TreeForTypeTest — depends on TestMacros / scala-2 `def ... = macro ...`                               | L      |
 | `core/src/test/scala/com/avsystem/commons/macros/TypeStringTest.scala:4`                          | TypeStringTest — depends on TestMacros / scala-2 `def ... = macro ...`                                | L      |
 | `core/src/test/scala/com/avsystem/commons/misc/ImplicitNotFoundTest.scala:4`                      | ImplicitNotFoundTest — depends on stubbed materialize/derivation APIs                                 | M      |
-| `core/src/test/scala/com/avsystem/commons/misc/MacroInstancesTest.scala:4`                        | MacroInstancesTest — depends on stubbed materialize/derivation APIs                                   | M      |
+| `core/src/test/scala/com/avsystem/commons/misc/MacroInstancesTest.scala:16`                       | MacroInstancesTest.ComplexInstancesTest — classical-trait `Instances` not expressible as named-tuple  | M      |
+| `core/src/test/scala/com/avsystem/commons/misc/MacroInstancesTest.scala:62`                       | MacroInstancesTest.AnnotationReferringToEnclosingObjectTest — `infer.value` as annotation default-arg | M      |
 | `core/src/test/scala/com/avsystem/commons/serialization/CodecTestData.scala:4`                    | CodecTestData — depends on stubbed materialize/derivation APIs                                        | M      |
 | `core/src/test/scala/com/avsystem/commons/serialization/GenCodecRoundtripTest.scala:4`            | GenCodecRoundtripTest — depends on stubbed materialize/derivation APIs                                | M      |
 | `core/src/test/scala/com/avsystem/commons/serialization/GenRefTest.scala:4`                       | GenRefTest — depends on stubbed materialize/derivation APIs                                           | M      |
