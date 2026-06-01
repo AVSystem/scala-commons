@@ -16,7 +16,7 @@ trait ProcedureRPCFramework extends RPCFramework {
 
   case class ProcedureSignature(
     name: String,
-    paramMetadata: List[ParamMetadata[_]],
+    paramMetadata: List[ParamMetadata[?]],
     annotations: List[MetadataAnnotation],
   ) extends Signature
       with TypedMetadata[Unit]
@@ -34,7 +34,7 @@ trait FunctionRPCFramework extends RPCFramework {
 
   case class FunctionSignature[T](
     name: String,
-    paramMetadata: List[ParamMetadata[_]],
+    paramMetadata: List[ParamMetadata[?]],
     annotations: List[MetadataAnnotation],
     @infer resultTypeMetadata: ResultTypeMetadata[T],
   ) extends Signature
@@ -58,7 +58,7 @@ trait GetterRPCFramework extends RPCFramework {
 
   case class GetterSignature[T](
     name: String,
-    paramMetadata: List[ParamMetadata[_]],
+    paramMetadata: List[ParamMetadata[?]],
     annotations: List[MetadataAnnotation],
     @infer @checked resultMetadata: RPCMetadata.Lazy[T],
   ) extends Signature
@@ -75,8 +75,8 @@ trait StandardRPCFramework extends GetterRPCFramework with FunctionRPCFramework 
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @multi @verbatim @rpcMethodMetadata procedureSignatures: Map[String, ProcedureSignature],
-    @multi @rpcMethodMetadata functionSignatures: Map[String, FunctionSignature[_]],
-    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]],
+    @multi @rpcMethodMetadata functionSignatures: Map[String, FunctionSignature[?]],
+    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[?]],
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }
@@ -91,7 +91,7 @@ trait OneWayRPCFramework extends GetterRPCFramework with ProcedureRPCFramework {
     @reifyName name: String,
     @reifyAnnot @multi annotations: List[MetadataAnnotation],
     @multi @verbatim @rpcMethodMetadata procedureSignatures: Map[String, ProcedureSignature],
-    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[_]],
+    @multi @rpcMethodMetadata getterSignatures: Map[String, GetterSignature[?]],
   )
   object RPCMetadata extends RpcMetadataCompanion[RPCMetadata]
 }
