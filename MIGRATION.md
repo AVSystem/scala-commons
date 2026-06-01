@@ -12,7 +12,7 @@ the bottom of this file. Restoration ships incrementally per feature area.
 | `commons-macros` module                               | Pure Scala 2 macro infrastructure (`c.universe`, blackbox/whitebox). No Scala 3 surface worth porting; Scala 3 uses inline + quotes which is a structural redesign. Module deleted outright in Phase 1. |
 | `analyzer` module                                     | Scala 2 compiler plugin; would require a full Scala 3 compiler plugin rewrite. Restored only if downstream demand surfaces.                                                                             |
 | `jetty` module                                        | ee10 servlet wrapper; deprecated upstream. Out of scope until/unless restored.                                                                                                                          |
-| `spring` module                                       | spring-context wiring; deprecated upstream. Out of scope until/unless restored.                                                                                                                         |
+| `spring` module                                       | spring-context wiring; deprecated upstream. Module deleted outright in Phase 1.                                                                                                                         |
 | `comprof` module                                      | `scalac-profiling` plugin is Scala 2 only. Retire pending a Scala 3 alternative.                                                                                                                        |
 | `-Xsource:3` scalac flag                              | Obsolete — the codebase IS Scala 3 now.                                                                                                                                                                 |
 | `-Wconf` warning suppression blocks                   | Project rule: fix warnings at source, not via suppression.                                                                                                                                              |
@@ -81,7 +81,7 @@ the bottom of this file. Restoration ships incrementally per feature area.
 | `commons-macros` | Deleted outright — pure Scala 2 macro infrastructure with no Scala 3 analogue worth porting. | n/a (will-not-migrate) |
 | `analyzer`       | Scala 2 compiler plugin.                                                                     | L — dedicated phase    |
 | `jetty`          | ee10 servlet wrapper.                                                                        | M — dedicated phase    |
-| `spring`         | spring-context wiring.                                                                       | S — dedicated phase    |
+| `spring`         | Deleted outright — spring-context wiring deprecated upstream.                                | n/a (will-not-migrate) |
 | `comprof`        | `scalac-profiling` is Scala 2 only.                                                          | TBD                    |
 
 ### Test sources commented per-file
@@ -265,4 +265,3 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `project/Commons.scala:130`                                                                       | enable -Werror after warnings clean                                                                   |        |
 | `project/Commons.scala:203`                                                                       | Scala 2 compiler plugin; restore as Scala 3 plugin                                                    | L      |
 | `project/Commons.scala:206`                                                                       | ee10 servlet wrapper                                                                                  | M      |
-| `project/Commons.scala:210`                                                                       | spring-context wiring                                                                                 | S      |

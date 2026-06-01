@@ -36,7 +36,6 @@ object Commons extends ProjectGroup("commons") {
   val scalacheckVersion = "1.19.0"
   val mongoVersion = "5.7.1"
   val jettyVersion = "12.1.9"
-  val springVersion = "6.2.18"
   val typesafeConfigVersion = "1.4.8"
   val commonsIoVersion = "1.3.2" // test only
   val scalaLoggingVersion = "3.9.6"
@@ -207,8 +206,6 @@ object Commons extends ProjectGroup("commons") {
       // jetty,
       mongo,
       hocon,
-      // TODO[scala3-port]: spring-context wiring (S)
-      // spring,
     )
     .settings(aggregateProjectSettings)
 
@@ -338,16 +335,6 @@ object Commons extends ProjectGroup("commons") {
       jvmCommonSettings,
       libraryDependencies ++= Seq(
         "com.typesafe" % "config" % typesafeConfigVersion
-      ),
-    )
-
-  lazy val spring = mkSubProject
-    .dependsOn(hocon % CompileAndTest)
-    .settings(
-      jvmCommonSettings,
-      libraryDependencies ++= Seq(
-        "org.springframework" % "spring-context" % springVersion,
-        "com.google.code.findbugs" % "jsr305" % jsr305Version % Optional,
       ),
     )
 
