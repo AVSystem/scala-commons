@@ -126,26 +126,16 @@ object SharedExtensionsUtils extends SharedExtensions {
     def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
-    // TODO[scala3-port]: showAst (Scala 2 macro def) (L)
-    def showAst: A = ???
-    // TODO[scala3-port]: showRawAst (Scala 2 macro def) (L)
-    def showRawAst: A = ???
-    // TODO[scala3-port]: showSymbol (Scala 2 macro def) (L)
-    def showSymbol: A = ???
-    // TODO[scala3-port]: showSymbolFullName (Scala 2 macro def) (L)
-    def showSymbolFullName: A = ???
-    // TODO[scala3-port]: showType (Scala 2 macro def) (L)
-    def showType: A = ???
-    // TODO[scala3-port]: showRawType (Scala 2 macro def) (L)
-    def showRawType: A = ???
-    // TODO[scala3-port]: showTypeSymbol (Scala 2 macro def) (L)
-    def showTypeSymbol: A = ???
-    // TODO[scala3-port]: showTypeSymbolFullName (Scala 2 macro def) (L)
-    def showTypeSymbolFullName: A = ???
-    // TODO[scala3-port]: sourceCode (Scala 2 macro def) (L)
-    def sourceCode: String = ???
-    // TODO[scala3-port]: withSourceCode (Scala 2 macro def) (L)
-    def withSourceCode: (A, String) = ???
+    inline def showAst: A = ${ macros.ShowMacros.showAstImpl[A]('a) }
+    inline def showRawAst: A = ${ macros.ShowMacros.showRawAstImpl[A]('a) }
+    inline def showSymbol: A = ${ macros.ShowMacros.showSymbolImpl[A]('a) }
+    inline def showSymbolFullName: A = ${ macros.ShowMacros.showSymbolFullNameImpl[A]('a) }
+    inline def showType: A = ${ macros.ShowMacros.showTypeImpl[A]('a) }
+    inline def showRawType: A = ${ macros.ShowMacros.showRawTypeImpl[A]('a) }
+    inline def showTypeSymbol: A = ${ macros.ShowMacros.showTypeSymbolImpl[A]('a) }
+    inline def showTypeSymbolFullName: A = ${ macros.ShowMacros.showTypeSymbolFullNameImpl[A]('a) }
+    inline def sourceCode: String = ${ macros.ShowMacros.sourceCodeImpl[A]('a) }
+    inline def withSourceCode: (A, String) = ${ macros.ShowMacros.withSourceCodeImpl[A]('a) }
 
     def debugMacro: A = a
   }
