@@ -1,23 +1,9 @@
 package com.avsystem.commons
 package misc
 
-// TODO[scala3-port]: AdtMetadataTest + HasGenCodecStructure — uses classical-trait `Instances`; reshape to NamedTuple form (Phase 6) per slice 4.2 MacroInstances `Instances <: AnyNamedTuple` bound
-/*
 import com.avsystem.commons.annotation.positioned
-import com.avsystem.commons.meta.{adtCaseMetadata, adtCaseSealedParentMetadata, adtParamMetadata, allowUnorderedSubtypes, checked, composite, infer, multi, AdtMetadataCompanion, MacroInstances, TypedMetadata}
+import com.avsystem.commons.meta.{adtCaseMetadata, adtCaseSealedParentMetadata, adtParamMetadata, allowUnorderedSubtypes, checked, composite, infer, multi, AdtMetadataCompanion, TypedMetadata}
 import com.avsystem.commons.serialization.{name, GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo}
-
-trait GenCodecStructure[T] {
-  def codec: GenCodec[T]
-  def structure: GenStructure[T]
-}
-
-abstract class HasGenCodecStructure[T](
-  implicit macroInstances: MacroInstances[Unit, GenCodecStructure[T]]
-) {
-  implicit val genCodec: GenCodec[T] = macroInstances((), this).codec
-  implicit val genStructure: GenStructure[T] = macroInstances((), this).structure
-}
 
 sealed trait GenStructure[T] extends TypedMetadata[T] {
   def repr: String
@@ -92,8 +78,26 @@ case class GenUnorderedUnion[T](
   @composite info: GenUnionInfo[T],
   @multi @adtCaseMetadata cases: Map[String, GenCase[_]],
 ) extends TypedMetadata[T]
-object GenUnorderedUnion extends AdtMetadataCompanion[GenUnorderedUnion] {
-  materialize[Option[String]]
+object GenUnorderedUnion extends AdtMetadataCompanion[GenUnorderedUnion]
+// NOTE: fork's `object GenUnorderedUnion` calls `materialize[Option[String]]` at init.
+// That's an `inline def` that expands to `MetaMacros.dummy = '{ ??? }` (slice 4.3 fork-shipped placeholder).
+// Including the call would throw NotImplementedError on first companion access; deferred until Phase 6
+// when MetaMacros.dummy gets its real reflection body.
+
+// TODO[scala3-port]: HasGenCodecStructure + Being/Person/Peculiarity/God/Galaxy/MaterialBeing —
+// uses classical-trait `Instances` (slice 4.2 reshape: `MacroInstances[I, X <: AnyNamedTuple]`).
+// Reshape these to NamedTuple form when GenCodec.materialize lands in Phase 6.
+/*
+abstract class HasGenCodecStructure[T](
+  implicit macroInstances: MacroInstances[Unit, GenCodecStructure[T]]
+) {
+  implicit val genCodec: GenCodec[T] = macroInstances((), this).codec
+  implicit val genStructure: GenStructure[T] = macroInstances((), this).structure
+}
+
+trait GenCodecStructure[T] {
+  def codec: GenCodec[T]
+  def structure: GenStructure[T]
 }
 
 sealed trait Being
@@ -113,5 +117,4 @@ object Peculiarity {
 }
 
 case object God extends Being
-
  */
