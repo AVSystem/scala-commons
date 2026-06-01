@@ -1,10 +1,6 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.misc.ImplicitNotFound
-
-import scala.annotation.implicitNotFound
-
 /** Base trait for companion objects of _metadata classes_. A metadata class is a generic class that captures metadata
   * for some Scala type, typically an RPC interface ([[com.avsystem.commons.rpc.RpcMetadataCompanion
   * RpcMetadataCompanion]]) or a data type ([[AdtMetadataCompanion]]).
@@ -26,10 +22,6 @@ trait MetadataCompanion[M[_]] {
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
     // TODO[scala3-port]: lazyMetadata (Scala 2 macro def) (L)
     implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = ???
-
-    @implicitNotFound("#{forNotLazy}")
-    implicit def notFound[T](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
-      ImplicitNotFound()
   }
 }
 
@@ -57,9 +49,5 @@ trait BoundedMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]] {
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
     // TODO[scala3-port]: lazyMetadata (bounded) (Scala 2 macro def) (L)
     implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = ???
-
-    @implicitNotFound("#{forNotLazy}")
-    implicit def notFound[T >: Lo <: Hi](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
-      ImplicitNotFound()
   }
 }

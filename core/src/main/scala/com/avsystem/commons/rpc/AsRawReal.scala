@@ -2,7 +2,6 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.meta.Fallback
-import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.serialization.TransparentWrapping
 
 import scala.annotation.implicitNotFound
@@ -32,11 +31,6 @@ object AsRaw extends FallbackAsRaw {
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
     _.map(asRaw.asRaw)
-
-  @implicitNotFound("#{forPlain}")
-  implicit def notFoundForTry[Raw, Real](
-    implicit forPlain: ImplicitNotFound[AsRaw[Raw, Real]]
-  ): ImplicitNotFound[AsRaw[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 trait FallbackAsRaw { this: AsRaw.type =>
   implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsRaw[Raw, Real]]): AsRaw[Raw, Real] =
@@ -65,11 +59,6 @@ object AsReal extends FallbackAsReal {
   implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
     _.map(asReal.asReal)
-
-  @implicitNotFound("#{forPlain}")
-  implicit def notFoundForTry[Raw, Real](
-    implicit forPlain: ImplicitNotFound[AsReal[Raw, Real]]
-  ): ImplicitNotFound[AsReal[Try[Raw], Try[Real]]] = ImplicitNotFound()
 }
 trait FallbackAsReal { this: AsReal.type =>
   implicit def fromFallback[Raw, Real](implicit fallback: Fallback[AsReal[Raw, Real]]): AsReal[Raw, Real] =
