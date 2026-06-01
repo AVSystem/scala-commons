@@ -93,31 +93,31 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     wrappedFormat: MongoFormat[R],
   ) extends MongoFormat[T]
 
-  given collectionFormat[C[X] <: Iterable[X], T](using collectionCodec: GenCodec[C[T]], elementFormat: MongoFormat[T])
-    : MongoFormat[C[T]] = CollectionFormat(collectionCodec, elementFormat)
+  given collectionFormat: [C[X] <: Iterable[X], T] => (collectionCodec: GenCodec[C[T]]) => (elementFormat: MongoFormat[T])
+    => MongoFormat[C[T]] = CollectionFormat(collectionCodec, elementFormat)
 
-  given dictionaryFormat[M[X, Y] <: BMap[X, Y], K, V](
-    using mapCodec: GenCodec[M[K, V]],
+  given dictionaryFormat: [M[X, Y] <: BMap[X, Y], K, V] => (
+    mapCodec: GenCodec[M[K, V]],
     keyCodec: GenKeyCodec[K],
     valueFormat: MongoFormat[V],
-  ): MongoFormat[M[K, V]] = DictionaryFormat(mapCodec, keyCodec, valueFormat)
+  ) => MongoFormat[M[K, V]] = DictionaryFormat(mapCodec, keyCodec, valueFormat)
 
   // TODO[scala3-port]: K[_] → K[Any] workaround for Scala 3 wildcard-as-type-arg restriction (S)
-  given typedMapFormat[K[_]](using keyCodec: GenKeyCodec[K[Any]], valueFormats: MongoFormatMapping[K])
-    : MongoFormat[TypedMap[K]] =
+  given typedMapFormat: [K[_]] => (keyCodec: GenKeyCodec[K[Any]]) => (valueFormats: MongoFormatMapping[K])
+    => MongoFormat[TypedMap[K]] =
     TypedMapFormat[K](TypedMap.typedMapCodec, keyCodec, valueFormats)
 
-  given optionalFormat[O, T](
-    using optionLike: OptionLike.Aux[O, T],
+  given optionalFormat: [O, T] => (
+    optionLike: OptionLike.Aux[O, T],
     optionCodec: GenCodec[O],
     wrappedFormat: MongoFormat[T],
-  ): MongoFormat[O] = OptionalFormat(optionCodec, optionLike, wrappedFormat)
+  ) => MongoFormat[O] = OptionalFormat(optionCodec, optionLike, wrappedFormat)
 
-  given transparentFormat[R, T](
-    using codec: GenCodec[T],
+  given transparentFormat: [R, T] => (
+    codec: GenCodec[T],
     wrapping: TransparentWrapping[R, T],
     wrappedFormat: MongoFormat[R],
-  ): MongoFormat[T] = TransparentFormat(codec, wrapping, wrappedFormat)
+  ) => MongoFormat[T] = TransparentFormat(codec, wrapping, wrappedFormat)
 
   implicit class collectionFormatOps[C[X] <: Iterable[X], T](private val format: MongoFormat[C[T]]) extends AnyVal {
     def assumeCollection: CollectionFormat[C, T] = format match {
@@ -154,7 +154,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
   }
 }
 trait MongoFormatLowPriority { this: MongoFormat.type =>
-  given leafFormat[T: GenCodec]: MongoFormat[T] = Opaque(GenCodec[T])
+  given leafFormat: [T: GenCodec] => MongoFormat[T] = Opaque(GenCodec[T])
 }
 
 sealed trait MongoAdtFormat[T] extends MongoFormat[T] with TypedMetadata[T] {
