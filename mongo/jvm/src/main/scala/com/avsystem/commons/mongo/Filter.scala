@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package mongo
 
-import com.mongodb.client.model.{Filters => F}
+import com.mongodb.client.model.Filters as F
 import org.bson.conversions.Bson
-import org.bson._
+import org.bson.*
 
 import _root_.scala.collection.Factory
 
@@ -12,7 +12,7 @@ import _root_.scala.collection.Factory
   */
 object Filter {
 
-  import Limitations._
+  import Limitations.*
 
   def and(filters: Bson*): Bson = F.and(filters.asJava)
   def or(filters: Bson*): Bson = F.or(filters.asJava)

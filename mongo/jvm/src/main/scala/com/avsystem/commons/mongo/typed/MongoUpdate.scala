@@ -11,7 +11,7 @@ import org.bson.BsonDocument
   */
 sealed trait MongoUpdate[T] {
 
-  import MongoUpdate._
+  import MongoUpdate.*
 
   def on[E](property: MongoPropertyRef[E, T]): MongoDocumentUpdate[E] =
     PropertyUpdate(property, this)
@@ -133,7 +133,7 @@ object MongoUpdate {
   */
 sealed trait MongoDocumentUpdate[E] extends MongoUpdate[E] {
 
-  import MongoUpdate._
+  import MongoUpdate.*
 
   // distinction between MultiUpdate and PropertyUpdate is mostly to avoid creating too many Vectors
   def and(other: MongoDocumentUpdate[E]): MongoDocumentUpdate[E] = (this, other) match {

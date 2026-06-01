@@ -3,7 +3,7 @@ package mongo.typed
 
 import com.avsystem.commons.mongo.BsonValueInput
 import com.avsystem.commons.serialization.GenCodec
-import com.mongodb._
+import com.mongodb.*
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.reactivestreams.client.{MongoClient, MongoClients}
 import monix.eval.Task

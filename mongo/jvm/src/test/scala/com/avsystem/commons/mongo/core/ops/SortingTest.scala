@@ -9,7 +9,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class SortingTest extends AnyFunSuite {
 
-  import Sorting._
+  import Sorting.*
 
   val someKey = "someKey"
   val otherKey = "otherKey"

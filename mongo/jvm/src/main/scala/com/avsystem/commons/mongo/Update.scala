@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo
 
-import com.mongodb.client.model.{Updates => U}
+import com.mongodb.client.model.Updates as U
 import org.bson.conversions.Bson
 
 /** @author

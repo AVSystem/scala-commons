@@ -6,7 +6,7 @@ import monix.reactive.Observable
 import org.reactivestreams.Publisher
 
 trait ReactiveMongoExtensions {
-  import ReactiveMongoExtensions._
+  import ReactiveMongoExtensions.*
 
   implicit final def publisherOps[T](publisher: Publisher[T]): PublisherOps[T] = new PublisherOps(publisher)
 }

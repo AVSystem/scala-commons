@@ -4,7 +4,7 @@ package mongo.typed
 // TODO[scala3-port]: testEntities — depends on stubbed materialize / mongo entity companions (M)
 /*
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, Timestamp, TypedMap}
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import org.bson.types.ObjectId
 
 case class RecordId(id: String) extends AnyVal

@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ScalaFutures {
-  import com.avsystem.commons.concurrent.TaskExtensions._
+  import com.avsystem.commons.concurrent.TaskExtensions.*
 
   private implicit val scheduler: Scheduler = Scheduler.global
 

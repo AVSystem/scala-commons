@@ -9,7 +9,7 @@ import org.scalatest.funsuite.AnyFunSuite
   */
 class DocTest extends AnyFunSuite {
 
-  import DocTest._
+  import DocTest.*
 
   test("get variance") {
     val doc = Doc()

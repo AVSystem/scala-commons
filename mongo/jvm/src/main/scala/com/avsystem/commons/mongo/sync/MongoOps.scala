@@ -12,7 +12,7 @@ import org.bson.conversions.Bson
   */
 trait MongoOps {
 
-  import MongoOps._
+  import MongoOps.*
 
   implicit def dbOps(db: MongoDatabase): DBOps = new DBOps(db)
   implicit def findIterableOps[T](find: FindIterable[T]): FindIterableOps[T] = new FindIterableOps(find)

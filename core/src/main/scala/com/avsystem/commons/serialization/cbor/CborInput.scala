@@ -2,10 +2,10 @@ package com.avsystem.commons
 package serialization.cbor
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 
-import java.io.{ObjectInput => _, _}
+import java.io.{ObjectInput as _, *}
 import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
 
@@ -168,7 +168,7 @@ object CborInput {
   */
 class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimpleInput {
 
-  import reader._
+  import reader.*
 
   def readNull(): Boolean = peekInitial() match {
     case InitialByte.Null =>
@@ -374,7 +374,7 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
     }
 
   private def skip(initialByte: InitialByte): Unit = {
-    import MajorType._
+    import MajorType.*
     initialByte match {
       case InitialByte(Unsigned | Negative, info) =>
         advance(unsignedSize(info))
@@ -480,7 +480,7 @@ abstract class CborChunkedInput(reader: CborReader) {
   protected def majorType: MajorType
   protected def doReadChunk(info: Int): Chunk
 
-  import reader._
+  import reader.*
 
   private def byteOrText: String = majorType match {
     case MajorType.ByteString => "byte"

@@ -43,7 +43,7 @@ object OptArg {
   * methods).
   */
 final class OptArg[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
-  import OptArg._
+  import OptArg.*
 
   private def value: A = rawValue.asInstanceOf[A]
 

@@ -4,8 +4,8 @@ package serialization.json
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.misc.CrossUtils
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
-import com.avsystem.commons.serialization.json.JsonStringInput._
+import com.avsystem.commons.serialization.*
+import com.avsystem.commons.serialization.json.JsonStringInput.*
 
 import scala.annotation.tailrec
 import scala.collection.mutable

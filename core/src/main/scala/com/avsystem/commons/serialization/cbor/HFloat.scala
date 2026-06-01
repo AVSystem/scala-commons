@@ -78,7 +78,7 @@ object HFloat {
   */
 final class HFloat(val raw: Short) extends AnyVal {
 
-  import HFloat._
+  import HFloat.*
 
   private def bits: Int =
     raw.toInt & 0xffff

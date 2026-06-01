@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo
 
-import com.mongodb.client.model.{Sorts => S}
+import com.mongodb.client.model.Sorts as S
 import org.bson.conversions.Bson
 
 /** @author

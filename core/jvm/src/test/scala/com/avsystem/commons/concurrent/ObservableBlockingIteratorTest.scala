@@ -4,7 +4,7 @@ package concurrent
 import monix.reactive.Observable
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class ObservableBlockingIteratorTest extends AnyFunSuite {
   test("empty") {

@@ -4,7 +4,7 @@ package rpc
 import java.util.regex.Matcher
 
 import com.avsystem.commons.annotation.AnnotationAggregate
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 import com.avsystem.commons.misc.TypeString
 
 trait DummyParamTag extends RpcTag with AnnotationAggregate
@@ -79,7 +79,7 @@ object Utils {
   }
 }
 
-import com.avsystem.commons.rpc.Utils._
+import com.avsystem.commons.rpc.Utils.*
 
 case class DoSomethings(
   @rpcMethodMetadata doSomething: DoSomethingSignature,

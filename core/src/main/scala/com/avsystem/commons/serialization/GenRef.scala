@@ -3,7 +3,7 @@ package serialization
 
 sealed trait RawRef {
 
-  import RawRef._
+  import RawRef.*
 
   def normalize: Iterator[SimpleRawRef] = this match {
     case Identity => Iterator.empty

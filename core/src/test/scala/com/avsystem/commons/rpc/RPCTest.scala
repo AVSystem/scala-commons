@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.concurrent.{HasExecutionContext, RunNowEC}
-import com.avsystem.commons.rpc.DummyRPC._
+import com.avsystem.commons.rpc.DummyRPC.*
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

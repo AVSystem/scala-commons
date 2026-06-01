@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.nativejs
 
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.json.RawJson
 
 import scala.scalajs.js
@@ -48,7 +48,7 @@ final class NativeJsonOutput(
     new NativeJsonObjectOutput(valueConsumer, options)
 
   override def writeBinary(binary: Array[Byte]): Unit = {
-    import js.JSConverters._
+    import js.JSConverters.*
     valueConsumer(binary.toJSArray)
   }
 
