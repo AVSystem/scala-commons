@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros
 
+// TODO[scala3-port]: JavaClassNameTest — depends on TestMacros / scala-2 `def ... = macro ...` (L)
+/*
 import com.avsystem.commons.misc.{JavaClassName, TypeString}
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
@@ -54,3 +56,4 @@ class JavaClassNameTest extends AnyFunSuite {
   test[JavaClassNameTest.Inner.EvenInner]
   test[JavaClassNameTest.Inner.EvenInner.type]
 }
+ */

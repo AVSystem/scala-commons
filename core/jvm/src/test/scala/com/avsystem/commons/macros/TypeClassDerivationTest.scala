@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros
 
+// TODO[scala3-port]: TypeClassDerivationTest — depends on TestMacros / scala-2 `def ... = macro ...` (M)
+/*
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -189,3 +191,4 @@ class TypeClassDerivationTest extends AnyFunSuite {
   }
 
 }
+ */

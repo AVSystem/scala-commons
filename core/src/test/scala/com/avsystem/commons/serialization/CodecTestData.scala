@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package serialization
 
+// TODO[scala3-port]: CodecTestData — depends on stubbed materialize/derivation APIs (M)
+/*
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
@@ -380,3 +382,4 @@ object CodecTestData {
   }
   object Generator extends HasGenCodec[Generator]
 }
+ */

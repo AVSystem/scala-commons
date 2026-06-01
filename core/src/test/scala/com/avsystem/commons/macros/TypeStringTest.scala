@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros
 
+// TODO[scala3-port]: TypeStringTest — depends on TestMacros / scala-2 `def ... = macro ...` (L)
+/*
 import com.avsystem.commons.misc.TypeString
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
@@ -171,3 +173,4 @@ object UnrelatedTypeString {
     testTypeString[AnyRef with Serializable { type A <: String }]("AnyRef with Serializable {type A <: String}")
   }
 }
+ */

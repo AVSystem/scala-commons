@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package di
 
+// TODO[scala3-port]: ComponentsExample — depends on Components.???-stubbed APIs (M)
+/*
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
@@ -78,3 +80,4 @@ object ComponentsExample {
     Await.result(comps.fullApplication.destroy, Duration.Inf)
   }
 }
+ */

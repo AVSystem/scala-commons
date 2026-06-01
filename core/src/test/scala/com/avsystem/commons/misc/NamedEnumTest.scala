@@ -38,11 +38,11 @@ class NamedEnumTest extends AnyFunSuite with Matchers {
 
     case object FromWithName extends SomeNamedEnum with WithName
 
-    override val values: List[SomeNamedEnum] = caseObjects
+    override lazy val values: List[SomeNamedEnum] = caseObjects
   }
 
   object AnotherNamedEnum extends NamedEnumCompanion[AnotherNamedEnum] {
-    override val values: List[AnotherNamedEnum] = caseObjects
+    override lazy val values: List[AnotherNamedEnum] = caseObjects
   }
 
   test("all possible ways of `name` override") {
