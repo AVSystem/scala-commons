@@ -9,7 +9,7 @@ import com.avsystem.commons.mongo.{BsonValueInput, KeyEscaper}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.TransparentWrapping
 import org.bson.{BsonDocument, BsonValue}
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, targetName}
 
 /** Represents a reference to a particular "place" in a MongoDB document. The "place" may be an actual path inside the
   * document ([[MongoPropertyRef]]) or the whole document _itself_ (you can think of it as an empty path).
@@ -265,7 +265,7 @@ object MongoPropertyRef {
   }
 
   extension [E, K[_]](ref: MongoPropertyRef[E, TypedMap[K]]) {
-    @scala.annotation.targetName("typedMapApply")
+    @targetName("typedMapApply")
     def apply[T](key: K[T]): MongoPropertyRef[E, T] = {
       val tmFormat = ref.format.assumeTypedMap
       // TODO[scala3-port]: cast follows K[_] → K[Any] workaround in TypedMapFormat (S)
