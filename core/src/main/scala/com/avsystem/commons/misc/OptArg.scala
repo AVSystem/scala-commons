@@ -2,7 +2,9 @@ package com.avsystem.commons.misc
 
 object OptArg {
 
-  /** This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
+  /** This conversion allows you to pass unwrapped values where `OptArg` is required. Kept as `implicit def` (not a
+    * `given Conversion`) because a polymorphic `Conversion[A, OptArg[A]]` generates a clashing bridge: both `A` and the
+    * `OptArg` value class erase to `Object`.
     */
   implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
 
