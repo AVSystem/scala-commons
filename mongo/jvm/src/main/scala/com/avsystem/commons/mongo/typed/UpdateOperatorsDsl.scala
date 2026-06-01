@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package mongo.typed
 
+import scala.language.implicitConversions
+
 trait UpdateOperatorsDsl[T, R] {
 
   import MongoUpdateOperator._
@@ -23,9 +25,15 @@ trait UpdateOperatorsDsl[T, R] {
   def unset: R = wrapUpdateOperator(Unset())
 }
 object UpdateOperatorsDsl {
-  implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: UpdateOperatorsDsl[C[T], R]) extends AnyVal {
+  import MongoUpdateOperator._
 
-    import MongoUpdateOperator._
+  // A `given Conversion` (not an `extension`) is used here so the higher-kinded `C[T]` is unified once,
+  // at conversion time, against the receiver's `UpdateOperatorsDsl[C[T], R]` base type. Plain extension
+  // methods fail to infer `C`/`T` from the receiver for named-argument calls such as `push(sort = ...)`.
+  given [C[X] <: Iterable[X], T, R] => Conversion[UpdateOperatorsDsl[C[T], R], ForCollection[C, T, R]] =
+    ForCollection(_)
+
+  class ForCollection[C[X] <: Iterable[X], T, R](dsl: UpdateOperatorsDsl[C[T], R]) {
 
     private def format: MongoFormat[T] = dsl.format.assumeCollection.elementFormat
 
