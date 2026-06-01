@@ -192,7 +192,6 @@ object Commons extends ProjectGroup("commons") {
       ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
       ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(
         analyzer,
-        macros,
         `core-js`,
         comprof,
       ),
@@ -203,7 +202,6 @@ object Commons extends ProjectGroup("commons") {
     .aggregate(
       // TODO[scala3-port]: Scala 2 compiler plugin; restore as Scala 3 plugin (L)
       // analyzer,
-      macros,
       core,
       // TODO[scala3-port]: ee10 servlet wrapper (M)
       // jetty,
@@ -250,11 +248,6 @@ object Commons extends ProjectGroup("commons") {
     if (forIdeaImport) Seq.empty
     else Seq(name := (proj / name).value)
 
-  lazy val macros = mkSubProject.settings(
-    jvmCommonSettings,
-    mimaPreviousArtifacts := Set.empty, // no need for MiMa checks
-  )
-
   val coreMimaFilters: Seq[ProblemFilter] = Seq(
     // Commit ade8d4a8: OrderingOps removed (superseded by stdlib equivalents).
     exclude[DirectMissingMethodProblem]("com.avsystem.commons.SharedExtensions.orderingOps"),
@@ -268,7 +261,6 @@ object Commons extends ProjectGroup("commons") {
   )
 
   lazy val core = mkSubProject
-    .dependsOn(macros)
     .settings(
       jvmCommonSettings,
       sourceDirsSettings(_ / "jvm"),
@@ -284,7 +276,6 @@ object Commons extends ProjectGroup("commons") {
     .in(core.base / "js")
     .enablePlugins(ScalaJSPlugin)
     .configure(p => if (forIdeaImport) p.dependsOn(core) else p)
-    .dependsOn(macros)
     .settings(
       jsCommonSettings,
       sameNameAs(core),
