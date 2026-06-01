@@ -25,6 +25,7 @@ class BadSingletonComponent(g: Global) extends AnalyzerRule(g, "badSingletonComp
       case Typed(expr, _) => unapply(expr)
       case Annotated(_, expr) => unapply(expr)
       case UnwrapApply(Select(prefix, _)) if prefix.tpe =:= t.tpe => unapply(prefix)
+      case UnwrapApply(Select(Apply(_, List(orig)), _)) if orig.tpe =:= t.tpe => unapply(orig)
       case _ => Some(t)
     }
   }
