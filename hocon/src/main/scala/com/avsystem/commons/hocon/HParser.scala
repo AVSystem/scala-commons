@@ -19,7 +19,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
   import HTokenType._
   import HTree._
 
-  private[this] var idx = 0
+  private var idx = 0
 
   private def fail(): Nothing =
     if (eof) throw new EOFException
