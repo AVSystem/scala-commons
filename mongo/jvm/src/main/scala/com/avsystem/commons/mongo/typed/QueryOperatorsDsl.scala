@@ -59,20 +59,18 @@ trait VanillaQueryOperatorsDsl[T, R] {
     wrapQueryOperators(Raw(rawOperator, bson))
 }
 object VanillaQueryOperatorsDsl {
-  implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: VanillaQueryOperatorsDsl[C[T], R])
-    extends AnyVal {
+  import MongoQueryOperator._
 
-    import MongoQueryOperator._
-
-    private def format: MongoFormat[T] = dsl.format.assumeCollection.elementFormat
+  extension [C[X] <: Iterable[X], T, R](dsl: VanillaQueryOperatorsDsl[C[T], R]) {
+    private def elemFormat: MongoFormat[T] = dsl.format.assumeCollection.elementFormat
 
     def size(size: Int): R = dsl.wrapQueryOperators(Size(size))
 
     def elemMatch(filter: MongoFilter.Creator[T] => MongoFilter[T]): R =
-      dsl.wrapQueryOperators(ElemMatch(filter(new MongoFilter.Creator(format))))
+      dsl.wrapQueryOperators(ElemMatch(filter(new MongoFilter.Creator(elemFormat))))
 
     def all(values: T*): R = all(values)
-    def all(values: Iterable[T]): R = dsl.wrapQueryOperators(All(values, format))
+    def all(values: Iterable[T]): R = dsl.wrapQueryOperators(All(values, elemFormat))
   }
 }
 
@@ -92,7 +90,7 @@ trait QueryOperatorsDsl[T, R] extends VanillaQueryOperatorsDsl[T, R] {
     regex(SRegex.quote(infix), if (caseInsensitive) OptArg("i") else OptArg.Empty)
 }
 object QueryOperatorsDsl {
-  implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: QueryOperatorsDsl[C[T], R]) extends AnyVal {
+  extension [C[X] <: Iterable[X], T, R](dsl: QueryOperatorsDsl[C[T], R]) {
     def isEmpty: R = dsl.size(0)
     def contains(value: T): R = dsl.elemMatch(_.is(value))
     def containsAny(values: T*): R = containsAny(values)
