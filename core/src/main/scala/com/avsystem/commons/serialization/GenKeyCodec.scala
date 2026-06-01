@@ -60,75 +60,38 @@ object GenKeyCodec {
     }
   }
 
-  given GenKeyCodec[Boolean] = create(_.toBoolean, _.toString)
-  given GenKeyCodec[Char] = create(_.charAt(0), _.toString)
-  given GenKeyCodec[Byte] = create(_.toByte, _.toString)
-  given GenKeyCodec[Short] = create(_.toShort, _.toString)
-  given GenKeyCodec[Int] = create(_.toInt, _.toString)
-  given GenKeyCodec[Long] = create(_.toLong, _.toString)
-  given GenKeyCodec[BigInt] = create(BigInt(_), _.toString)
+  given BooleanKeyCodec: GenKeyCodec[Boolean] = create(_.toBoolean, _.toString)
+  given CharKeyCodec: GenKeyCodec[Char] = create(_.charAt(0), _.toString)
+  given ByteKeyCodec: GenKeyCodec[Byte] = create(_.toByte, _.toString)
+  given ShortKeyCodec: GenKeyCodec[Short] = create(_.toShort, _.toString)
+  given IntKeyCodec: GenKeyCodec[Int] = create(_.toInt, _.toString)
+  given LongKeyCodec: GenKeyCodec[Long] = create(_.toLong, _.toString)
+  given BigIntKeyCodec: GenKeyCodec[BigInt] = create(BigInt(_), _.toString)
 
-  given GenKeyCodec[JBoolean] = create(_.toBoolean, _.toString)
-  given GenKeyCodec[JCharacter] = create(_.charAt(0), _.toString)
-  given GenKeyCodec[JByte] = create(_.toByte, _.toString)
-  given GenKeyCodec[JShort] = create(_.toShort, _.toString)
-  given GenKeyCodec[JInteger] = create(_.toInt, _.toString)
-  given GenKeyCodec[JLong] = create(_.toLong, _.toString)
-  given GenKeyCodec[JBigInteger] = create(new JBigInteger(_), _.toString)
+  given JBooleanKeyCodec: GenKeyCodec[JBoolean] = create(_.toBoolean, _.toString)
+  given JCharacterKeyCodec: GenKeyCodec[JCharacter] = create(_.charAt(0), _.toString)
+  given JByteKeyCodec: GenKeyCodec[JByte] = create(_.toByte, _.toString)
+  given JShortKeyCodec: GenKeyCodec[JShort] = create(_.toShort, _.toString)
+  given JIntKeyCodec: GenKeyCodec[JInteger] = create(_.toInt, _.toString)
+  given JLongKeyCodec: GenKeyCodec[JLong] = create(_.toLong, _.toString)
+  given JBigIntegerKeyCodec: GenKeyCodec[JBigInteger] = create(new JBigInteger(_), _.toString)
 
-  given GenKeyCodec[String] = create(identity, identity)
-  given GenKeyCodec[Symbol] = create(Symbol(_), _.name)
-  given GenKeyCodec[UUID] = create(UUID.fromString, _.toString)
+  given StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
+  given SymbolKeyCodec: GenKeyCodec[Symbol] = create(Symbol(_), _.name)
+  given UUIDKeyCodec: GenKeyCodec[UUID] = create(UUID.fromString, _.toString)
 
-  given GenKeyCodec[Timestamp] = GenKeyCodec.create(Timestamp.parse, _.toString)
-  given GenKeyCodec[Bytes] = GenKeyCodec.create(Bytes.fromBase64(_), _.base64)
+  given TimestampKeyCodec: GenKeyCodec[Timestamp] = GenKeyCodec.create(Timestamp.parse, _.toString)
+  given BytesKeyCodec: GenKeyCodec[Bytes] = GenKeyCodec.create(Bytes.fromBase64(_), _.base64)
 
-  given jEnumKeyCodec[E <: Enum[E]](using ct: ClassTag[E]): GenKeyCodec[E] =
+  given jEnumKeyCodec: [E <: Enum[E]] => (ct: ClassTag[E]) => GenKeyCodec[E] =
     GenKeyCodec.create(
       string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
       e => e.name(),
     )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  given fromTransparentWrapping[R, T](using tw: TransparentWrapping[R, T], wrappedCodec: GenKeyCodec[R])
-    : GenKeyCodec[T] =
+  given fromTransparentWrapping
+    : [R, T] => (tw: TransparentWrapping[R, T]) => (wrappedCodec: GenKeyCodec[R]) => GenKeyCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 
-  // Source-compat aliases for callers that previously referenced these by name.
-  @deprecated("Use summon[GenKeyCodec[Boolean]]", since = "3.0.0")
-  def BooleanKeyCodec: GenKeyCodec[Boolean] = summon
-  @deprecated("Use summon[GenKeyCodec[Char]]", since = "3.0.0")
-  def CharKeyCodec: GenKeyCodec[Char] = summon
-  @deprecated("Use summon[GenKeyCodec[Byte]]", since = "3.0.0")
-  def ByteKeyCodec: GenKeyCodec[Byte] = summon
-  @deprecated("Use summon[GenKeyCodec[Short]]", since = "3.0.0")
-  def ShortKeyCodec: GenKeyCodec[Short] = summon
-  @deprecated("Use summon[GenKeyCodec[Int]]", since = "3.0.0")
-  def IntKeyCodec: GenKeyCodec[Int] = summon
-  @deprecated("Use summon[GenKeyCodec[Long]]", since = "3.0.0")
-  def LongKeyCodec: GenKeyCodec[Long] = summon
-  @deprecated("Use summon[GenKeyCodec[BigInt]]", since = "3.0.0")
-  def BigIntKeyCodec: GenKeyCodec[BigInt] = summon
-  @deprecated("Use summon[GenKeyCodec[JBoolean]]", since = "3.0.0")
-  def JBooleanKeyCodec: GenKeyCodec[JBoolean] = summon
-  @deprecated("Use summon[GenKeyCodec[JCharacter]]", since = "3.0.0")
-  def JCharacterKeyCodec: GenKeyCodec[JCharacter] = summon
-  @deprecated("Use summon[GenKeyCodec[JByte]]", since = "3.0.0")
-  def JByteKeyCodec: GenKeyCodec[JByte] = summon
-  @deprecated("Use summon[GenKeyCodec[JShort]]", since = "3.0.0")
-  def JShortKeyCodec: GenKeyCodec[JShort] = summon
-  @deprecated("Use summon[GenKeyCodec[JInteger]]", since = "3.0.0")
-  def JIntKeyCodec: GenKeyCodec[JInteger] = summon
-  @deprecated("Use summon[GenKeyCodec[JLong]]", since = "3.0.0")
-  def JLongKeyCodec: GenKeyCodec[JLong] = summon
-  @deprecated("Use summon[GenKeyCodec[JBigInteger]]", since = "3.0.0")
-  def JBigIntegerKeyCodec: GenKeyCodec[JBigInteger] = summon
-  @deprecated("Use summon[GenKeyCodec[String]]", since = "3.0.0")
-  def StringKeyCodec: GenKeyCodec[String] = summon
-  @deprecated("Use summon[GenKeyCodec[Symbol]]", since = "3.0.0")
-  def SymbolKeyCodec: GenKeyCodec[Symbol] = summon
-  @deprecated("Use summon[GenKeyCodec[Timestamp]]", since = "3.0.0")
-  def TimestampKeyCodec: GenKeyCodec[Timestamp] = summon
-  @deprecated("Use summon[GenKeyCodec[Bytes]]", since = "3.0.0")
-  def BytesKeyCodec: GenKeyCodec[Bytes] = summon
 }
