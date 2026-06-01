@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package mongo.typed
 
+import scala.language.implicitConversions
+
 trait UpdateOperatorsDsl[T, R] {
 
   import MongoUpdateOperator._
@@ -23,11 +25,11 @@ trait UpdateOperatorsDsl[T, R] {
   def unset: R = wrapUpdateOperator(Unset())
 }
 object UpdateOperatorsDsl {
-  implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: UpdateOperatorsDsl[C[T], R]) extends AnyVal {
+  import MongoUpdateOperator._
 
-    import MongoUpdateOperator._
+  extension [C[X] <: Iterable[X], T, R](dsl: UpdateOperatorsDsl[C[T], R]) {
 
-    private def format: MongoFormat[T] = dsl.format.assumeCollection.elementFormat
+    private def mongoFormat: MongoFormat[T] = dsl.format.assumeCollection.elementFormat
 
     def push(values: T*): R = push(values)
 
@@ -37,26 +39,26 @@ object UpdateOperatorsDsl {
       slice: OptArg[Int] = OptArg.Empty,
       sort: OptArg[MongoOrder[T]] = OptArg.Empty,
     ): R =
-      dsl.wrapUpdateOperator(Push(values, position.toOpt, slice.toOpt, sort.toOpt, format))
+      dsl.wrapUpdateOperator(Push(values, position.toOpt, slice.toOpt, sort.toOpt, mongoFormat))
 
     def addToSet(values: T*): R = addToSet(values)
-    def addToSet(values: Iterable[T]): R = dsl.wrapUpdateOperator(AddToSet(values, format))
+    def addToSet(values: Iterable[T]): R = dsl.wrapUpdateOperator(AddToSet(values, mongoFormat))
     def popFirst: R = pop(true)
     def popLast: R = pop(false)
     def pop(first: Boolean): R = dsl.wrapUpdateOperator(Pop(first))
 
     def pull(filter: MongoFilter.Creator[T] => MongoFilter[T]): R =
-      dsl.wrapUpdateOperator(Pull(filter(new MongoFilter.Creator(format))))
+      dsl.wrapUpdateOperator(Pull(filter(new MongoFilter.Creator(mongoFormat))))
 
     def pullAll(values: T*): R = pullAll(values)
-    def pullAll(values: Iterable[T]): R = dsl.wrapUpdateOperator(PullAll(values, format))
+    def pullAll(values: Iterable[T]): R = dsl.wrapUpdateOperator(PullAll(values, mongoFormat))
 
     /** Uses [[https://docs.mongodb.com/manual/reference/operator/update/positional/ the $$ positional operator]] to
       * update first element of an array field that matches the query document. The array field must appear as part of
       * the query document.
       */
     def updateFirstMatching(update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
-      val up = update(new MongoUpdate.Creator(format))
+      val up = update(new MongoUpdate.Creator(mongoFormat))
       dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.FirstMatching()))
     }
 
@@ -65,7 +67,7 @@ object UpdateOperatorsDsl {
       * to update all elements of an array field.
       */
     def updateAll(update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
-      val up = update(new MongoUpdate.Creator(format))
+      val up = update(new MongoUpdate.Creator(mongoFormat))
       dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.Each()))
     }
 
@@ -76,8 +78,8 @@ object UpdateOperatorsDsl {
       */
     def updateFiltered(filter: MongoFilter.Creator[T] => MongoFilter[T], update: MongoUpdate.Creator[T] => MongoUpdate[T])
       : R = {
-      val fil = filter(new MongoFilter.Creator(format))
-      val up = update(new MongoUpdate.Creator(format))
+      val fil = filter(new MongoFilter.Creator(mongoFormat))
+      val up = update(new MongoUpdate.Creator(mongoFormat))
       dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.Filtered(fil)))
     }
   }

@@ -397,8 +397,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   implicit lazy val BytesCodec: GenCodec[Bytes] =
     GenCodec.nullableSimple(i => Bytes(i.readBinary()), (o, b) => o.writeBinary(b.bytes))
 
-  private implicit class IterableOps[A](private val coll: BIterable[A]) extends AnyVal {
-    def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit = {
+  extension [A](coll: BIterable[A]) {
+    private def writeToList(lo: ListOutput)(implicit writer: GenCodec[A]): Unit = {
       lo.declareSizeOf(coll)
       coll.foreach(new (A => Unit) {
         private var idx = 0
@@ -413,8 +413,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
-  private implicit class PairIterableOps[A, B](private val coll: BIterable[(A, B)]) extends AnyVal {
-    def writeToObject(oo: ObjectOutput)(implicit keyWriter: GenKeyCodec[A], writer: GenCodec[B]): Unit = {
+  extension [A, B](coll: BIterable[(A, B)]) {
+    private def writeToObject(oo: ObjectOutput)(implicit keyWriter: GenKeyCodec[A], writer: GenCodec[B]): Unit = {
       oo.declareSizeOf(coll)
       coll.foreach { case (key, value) =>
         val fieldName = keyWriter.write(key)
@@ -426,8 +426,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
-  private implicit class ListInputOps(private val li: ListInput) extends AnyVal {
-    def collectTo[A: GenCodec, C](implicit fac: Factory[A, C]): C = {
+  extension (li: ListInput) {
+    private def collectTo[A: GenCodec, C](implicit fac: Factory[A, C]): C = {
       val b = fac.newBuilder
       li.knownSize match {
         case -1 =>
@@ -447,8 +447,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
-  private implicit class ObjectInputOps(private val oi: ObjectInput) extends AnyVal {
-    def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit fac: Factory[(K, V), C]): C = {
+  extension (oi: ObjectInput) {
+    private def collectTo[K: GenKeyCodec, V: GenCodec, C](implicit fac: Factory[(K, V), C]): C = {
       val b = fac.newBuilder
       oi.knownSize match {
         case -1 =>

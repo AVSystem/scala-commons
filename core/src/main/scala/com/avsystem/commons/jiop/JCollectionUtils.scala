@@ -213,13 +213,7 @@ trait JCollectionUtils extends JFactories {
     }
   }
 
-  import JCollectionUtils._
-
-  implicit def pairIterableOps[A, B](coll: IterableOnce[(A, B)]): pairIterableOps[A, B] = new pairIterableOps(coll)
-}
-
-object JCollectionUtils {
-  class pairIterableOps[A, B](private val coll: IterableOnce[(A, B)]) extends AnyVal {
+  extension [A, B](coll: IterableOnce[(A, B)]) {
     def toJMap[M[K, V] <: JMap[K, V]](implicit fac: Factory[(A, B), M[A, B]]): M[A, B] = {
       val b = fac.newBuilder
       coll.iterator.foreach(b += _)
