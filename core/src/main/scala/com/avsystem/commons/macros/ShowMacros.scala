@@ -46,8 +46,10 @@ object ShowMacros:
 
   def sourceCodeImpl[A: Type](a: Expr[A])(using Quotes): Expr[String] =
     import quotes.reflect.*
-    val txt = a.asTerm.pos.sourceCode.getOrElse {
-      report.errorAndAbort("source code unavailable at this position", a.asTerm.pos)
+    // Prefer the receiver expression's own position; fall back to macro-expansion site.
+    val pos = a.asTerm.pos
+    val txt = pos.sourceCode.orElse(Position.ofMacroExpansion.sourceCode).getOrElse {
+      report.errorAndAbort("source code unavailable at this position", pos)
     }
     Expr(txt)
 
