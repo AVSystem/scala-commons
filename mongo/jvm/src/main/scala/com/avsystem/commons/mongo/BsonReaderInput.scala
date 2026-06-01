@@ -97,7 +97,7 @@ final class BsonReaderListInput(it: BsonReaderIterator[BsonReaderInput]) extends
 }
 
 final class BsonReaderObjectInput(br: BsonReader, legacyOptionEncoding: Boolean) extends ObjectInput {
-  private[this] val it = new BsonReaderIterator(
+  private val it = new BsonReaderIterator(
     br,
     _.readEndDocument(),
     br =>
@@ -108,8 +108,8 @@ final class BsonReaderObjectInput(br: BsonReader, legacyOptionEncoding: Boolean)
       ),
   )
 
-  private[this] var peekMark: BsonReaderMark = br.getMark
-  private[this] var peekedFields: MHashMap[String, BsonValue] = _
+  private var peekMark: BsonReaderMark = br.getMark
+  private var peekedFields: MHashMap[String, BsonValue] = _
 
   override def peekField(name: String): Opt[BsonFieldInput] =
     br match {

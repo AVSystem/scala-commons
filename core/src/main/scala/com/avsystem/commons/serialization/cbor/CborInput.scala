@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets
 import scala.annotation.tailrec
 
 final class CborReader(val data: RawCbor) {
-  private[this] var idx = 0
+  private var idx = 0
 
   def index: Int = idx
 
@@ -87,7 +87,7 @@ final class CborReader(val data: RawCbor) {
     res
   }
 
-  private[this] var openIndefs = 0 // number of currently open values of indefinite length
+  private var openIndefs = 0 // number of currently open values of indefinite length
 
   def openIndefinites: Int =
     openIndefs
@@ -402,7 +402,7 @@ class CborInput(reader: CborReader, keyCodec: CborKeyCodec) extends InputAndSimp
 class CborFieldInput(val fieldName: String, reader: CborReader, keyCodec: CborKeyCodec)
   extends CborInput(reader, keyCodec) with FieldInput
 
-abstract class CborSequentialInput(reader: CborReader, private[this] var size: Int) extends SequentialInput {
+abstract class CborSequentialInput(reader: CborReader, private var size: Int) extends SequentialInput {
 
   private val indefDepth = reader.openIndefinites
 
@@ -440,8 +440,8 @@ class CborListInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
 class CborObjectInput(reader: CborReader, size: Int, keyCodec: CborKeyCodec)
   extends CborSequentialInput(reader, size) with ObjectInput {
 
-  private[this] var forcedKeyCodec: CborKeyCodec = _
-  private[this] def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
+  private var forcedKeyCodec: CborKeyCodec = _
+  private def currentKeyCodec = if (forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
   /** Returns a [[CborOutput]] for reading a raw CBOR field key. This is an extension over standard [[ObjectOutput]]
     * which only allows string-typed keys. If this method is used to read the key then value MUST be read with

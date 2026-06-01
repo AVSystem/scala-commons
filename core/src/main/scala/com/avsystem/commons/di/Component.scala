@@ -63,7 +63,7 @@ final class Component[+T](
     */
   lazy val dependencies: IndexedSeq[Component[_]] = deps
 
-  private[this] val storage: AtomicReference[Future[T]] =
+  private val storage: AtomicReference[Future[T]] =
     cachedStorage.getOrElse(new AtomicReference)
 
   private def sameStorage(otherStorage: AtomicReference[_]): Boolean =
@@ -183,7 +183,7 @@ object Component {
   def emptyDestroy[T]: DestroyFunction[T] =
     reusableEmptyDestroy.asInstanceOf[DestroyFunction[T]]
 
-  private[this] val reusableEmptyDestroy: DestroyFunction[Any] =
+  private val reusableEmptyDestroy: DestroyFunction[Any] =
     _ => _ => Future.unit
 
   def async[T](definition: => T): ExecutionContext => Future[T] =

@@ -42,7 +42,7 @@ object MongoFilter {
       MongoOperatorsFilter(operators(new MongoQueryOperator.Creator(format)))
   }
 
-  private[this] val reusableEmpty = Empty()
+  private val reusableEmpty = Empty()
 
   def empty[E]: MongoDocumentFilter[E] = reusableEmpty.asInstanceOf[MongoDocumentFilter[E]]
   def and[E](filters: MongoDocumentFilter[E]*): MongoDocumentFilter[E] = And(filters.toVector)

@@ -70,7 +70,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
 
   private val entities = (0 until 100).map(recordTestEntity)
 
-  private[this] var seq = 100
+  private var seq = 100
   private def nextSeq(): Int = {
     val res = seq
     seq += 1

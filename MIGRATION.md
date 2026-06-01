@@ -54,6 +54,11 @@ the bottom of this file. Restoration ships incrementally per feature area.
   compiles).
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
+- `private[this]` qualifier dropped on ~64 members across core / hocon / mongo. Plain
+  `private` has identical semantics in Scala 3 (the dialect deprecates `private[this]`
+  since 3.4.0). No access-level change for downstream callers; for `private[this] var`
+  fields the JVM-level accessor synthesis is now equivalent to a plain `private var`
+  (Scala 3 inlines `private` vars directly — no perf delta vs. the old qualifier).
 
 ### mongo
 
