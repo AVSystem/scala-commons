@@ -88,8 +88,8 @@ object TypedMap {
     def valueCodec[T](key: K[T]): GenCodec[T]
   }
 
-  given typedMapCodec[K[_]](using keyCodec: GenKeyCodec[K[Any]], codecMapping: GenCodecMapping[K])
-    : GenObjectCodec[TypedMap[K]] =
+  given typedMapCodec: [K[_]] => (keyCodec: GenKeyCodec[K[Any]], codecMapping: GenCodecMapping[K])
+    => GenObjectCodec[TypedMap[K]] =
     new GenCodec.ObjectCodec[TypedMap[K]] {
       def nullable = false
       def readObject(input: ObjectInput): TypedMap[K] = {
@@ -122,7 +122,7 @@ trait TypedKey[T] {
   def valueCodec: GenCodec[T]
 }
 object TypedKey {
-  given codecMapping[K[X] <: TypedKey[X]]: GenCodecMapping[K] =
+  given codecMapping: [K[X] <: TypedKey[X]] => GenCodecMapping[K] =
     new GenCodecMapping[K] {
       def valueCodec[T](key: K[T]): GenCodec[T] = key.valueCodec
     }
