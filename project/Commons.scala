@@ -160,7 +160,7 @@ object Commons extends ProjectGroup("commons") {
     scalacOptions += {
       val localDir = (ThisBuild / baseDirectory).value.toURI.toString
       val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
-      s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
+      s"-scalajs-mapSourceURI:$localDir->$githubDir/v${version.value}/"
     },
     jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
     Test / fork := false,
