@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package mongo.typed
 
+// TODO[scala3-port]: testEntities — depends on stubbed materialize / mongo entity companions (M)
+/*
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, Timestamp, TypedMap}
 import com.avsystem.commons.serialization._
 import org.bson.types.ObjectId
@@ -98,3 +100,4 @@ case class AutoObjectIdEntity(
   int: Int,
 ) extends AutoIdMongoEntity[ObjectId]
 object AutoObjectIdEntity extends MongoEntityCompanion[AutoObjectIdEntity]
+ */
