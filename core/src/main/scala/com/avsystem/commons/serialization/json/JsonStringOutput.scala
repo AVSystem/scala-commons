@@ -141,7 +141,7 @@ final class JsonListOutput(builder: JStringBuilder, options: JsonOptions, depth:
 
   override def sizePolicy: SizePolicy = SizePolicy.Ignored
 
-  private[this] var first = true
+  private var first = true
 
   def writeElement(): JsonStringOutput = {
     builder.append(if (first) '[' else ',')
@@ -165,7 +165,7 @@ final class JsonObjectOutput(builder: JStringBuilder, options: JsonOptions, dept
 
   override def sizePolicy: SizePolicy = SizePolicy.Ignored
 
-  private[this] var first = true
+  private var first = true
 
   def writeField(key: String): JsonStringOutput = {
     builder.append(if (first) '{' else ',')

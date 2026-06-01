@@ -77,10 +77,10 @@ sealed trait EnumCtx extends Any {
 trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { companion =>
   type Value = T
 
-  private[this] val registryBuilder = IIndexedSeq.newBuilder[T]
-  private[this] var currentOrdinal: Int = 0
-  private[this] var finished: Boolean = false
-  private[this] var awaitingRegister: Boolean = false
+  private val registryBuilder = IIndexedSeq.newBuilder[T]
+  private var currentOrdinal: Int = 0
+  private var finished: Boolean = false
+  private var awaitingRegister: Boolean = false
 
   /** Holds an indexed sequence of all enum values, ordered by their ordinal (`values(i).ordinal` is always equal to
     * `i`).
@@ -104,7 +104,7 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     }
     awaitingRegister = true
 
-    private[this] var registered = false
+    private var registered = false
 
     override def register(value: ValueEnum): Unit = companion.synchronized {
       if (finished)
