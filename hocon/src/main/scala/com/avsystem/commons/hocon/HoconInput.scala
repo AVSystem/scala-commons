@@ -6,8 +6,8 @@ import java.time.{Duration, Period}
 
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
-import com.typesafe.config._
+import com.avsystem.commons.serialization.*
+import com.typesafe.config.*
 
 object HoconInput {
   @explicitGenerics def read[T: GenCodec](value: ConfigValue): T =
