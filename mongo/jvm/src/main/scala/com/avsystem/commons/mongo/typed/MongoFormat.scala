@@ -123,7 +123,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     wrappedFormat: MongoFormat[R],
   ): MongoFormat[T] = TransparentFormat(codec, wrapping, wrappedFormat)
 
-  implicit class collectionFormatOps[C[X] <: Iterable[X], T](private val format: MongoFormat[C[T]]) extends AnyVal {
+  extension [C[X] <: Iterable[X], T](format: MongoFormat[C[T]]) {
     def assumeCollection: CollectionFormat[C, T] = format match {
       case coll: CollectionFormat[C @unchecked, T @unchecked] => coll
       case _ =>
@@ -134,8 +134,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     }
   }
 
-  implicit class dictionaryFormatOps[M[X, Y] <: BMap[X, Y], K, V](private val format: MongoFormat[M[K, V]])
-    extends AnyVal {
+  extension [M[X, Y] <: BMap[X, Y], K, V](format: MongoFormat[M[K, V]]) {
     def assumeDictionary: DictionaryFormat[M, K, V] = format match {
       case dict: DictionaryFormat[M @unchecked, K @unchecked, V @unchecked] => dict
       case _ =>
@@ -146,7 +145,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     }
   }
 
-  implicit class typedMapFormatOps[K[_]](private val format: MongoFormat[TypedMap[K]]) extends AnyVal {
+  extension [K[_]](format: MongoFormat[TypedMap[K]]) {
     def assumeTypedMap: TypedMapFormat[K] = format match {
       case typedMap: TypedMapFormat[K] => typedMap
       case _ =>
