@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package serialization.nativejs
 
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.json.RawJson
 
 import scala.scalajs.js

@@ -5,7 +5,7 @@ package serialization
 /*
 import com.avsystem.commons.misc.TypedMap
 import com.avsystem.commons.serialization.CodecTestData.{TransparentFlatSealedBase, _}
-import com.avsystem.commons.serialization.JavaCodecs._
+import com.avsystem.commons.serialization.JavaCodecs.*
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   test("java collections") {

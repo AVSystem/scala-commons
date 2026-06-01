@@ -32,7 +32,7 @@ private object FormatConstants {
   final val BigDecimalMarker: Byte = 15
 }
 
-import com.avsystem.commons.serialization.FormatConstants._
+import com.avsystem.commons.serialization.FormatConstants.*
 
 class StreamInput(is: DataInputStream) extends InputAndSimpleInput {
   private[serialization] val markerByte = is.readByte()

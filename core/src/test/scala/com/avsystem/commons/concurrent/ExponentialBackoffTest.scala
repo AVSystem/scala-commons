@@ -4,7 +4,7 @@ package concurrent
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /** Author: ghik Created: 31/08/16.
   */

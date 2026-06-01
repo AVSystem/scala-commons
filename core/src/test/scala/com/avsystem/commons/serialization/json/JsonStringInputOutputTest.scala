@@ -5,9 +5,9 @@ package serialization.json
 /*
 import com.avsystem.commons.serialization.CodecTestData.{CustomizedSeal, FlatSealedBase, OtherCustomCase}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck._
+import org.scalacheck.*
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers

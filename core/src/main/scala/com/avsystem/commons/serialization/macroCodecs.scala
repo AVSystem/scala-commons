@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import com.avsystem.commons.meta.OptionLike
-import com.avsystem.commons.serialization.GenCodec._
+import com.avsystem.commons.serialization.GenCodec.*
 
 import scala.annotation.tailrec
 

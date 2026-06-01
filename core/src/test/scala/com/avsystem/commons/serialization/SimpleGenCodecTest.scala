@@ -7,7 +7,7 @@ import com.avsystem.commons.misc.TypedMap
 import scala.annotation.nowarn
 
 import scala.collection.immutable.ListMap
-import JavaCodecs._
+import JavaCodecs.*
 
 trait SimpleIOCodecTest extends AbstractCodecTest {
   type Raw = Any

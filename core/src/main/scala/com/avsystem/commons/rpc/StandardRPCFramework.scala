@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 
 /** Mix in this trait into your RPC framework to support remote procedures, i.e. fire-and-forget methods with `Unit`
   * return type.

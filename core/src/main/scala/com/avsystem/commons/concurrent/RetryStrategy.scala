@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package concurrent
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /** A `RetryStrategy` is conceptually a lazy sequence of delays, possibly infinite.
   */

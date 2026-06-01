@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 
 /** You can use this annotation on overloaded RPC methods to give them unique identifiers for RPC serialization. You can
   * also subclass this annotation provided that you always override the `name` parameter with another constructor

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package concurrent
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 trait DurationPostfixConverters {
   implicit def durationInt(int: Int): DurationInt = new DurationInt(int)

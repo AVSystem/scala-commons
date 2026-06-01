@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization.cbor
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.cbor.InitialByte.IndefiniteLength
 
 import java.io.{ObjectInput => _, _}
