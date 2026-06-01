@@ -189,10 +189,7 @@ trait DirectMetadataParamStrategy extends MetadataParamStrategy
   * }}}
   */
 final class infer(val clue: String = "") extends DirectMetadataParamStrategy
-object infer {
-  // TODO[scala3-port]: value (Scala 2 macro def) (L)
-  def value[T]: T = ???
-}
+object infer extends InferMacros
 
 /** `@adtParamMetadata` applied on metadata parameter of metadata class for case class or object indicates that this
   * parameter holds metadata for ADT parameter(s) (one, some or all, depending on [[SymbolArity]], tagging, etc.).
