@@ -63,7 +63,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * avoiding intermediate variables.
       *
       * @example
-      *   {{{someVeryLongExpression() |> (v => if(condition(v)) something(v) else somethingElse(v))}}}
+      * {{{someVeryLongExpression() |> (v => if(condition(v)) something(v) else somethingElse(v))}}}
       */
     def |>[B](f: A => B): B = f(a)
 
@@ -96,14 +96,14 @@ object SharedExtensionsUtils extends SharedExtensions {
       * more clarity and avoids polluting outer scope.
       *
       * @example
-      *   {{{
+      * {{{
       * import javax.swing._
       * // this entire expression returns the panel
       * new JPanel().setup { p =>
       *   p.setEnabled(true)
       *   p.setSize(100, 100)
       * }
-      *   }}}
+      * }}}
       */
     def setup(code: A => Any): A = {
       code(a)
@@ -117,11 +117,11 @@ object SharedExtensionsUtils extends SharedExtensions {
       * checking.
       *
       * @example
-      *   {{{
+      * {{{
       *   Option(42) uncheckedMatch {
       *     case Some(int) => println(int)
       *   }
-      *   }}}
+      * }}}
       */
     def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
@@ -134,13 +134,14 @@ object SharedExtensionsUtils extends SharedExtensions {
     inline def showRawType: A = ${ UniversalOps.showRawTypeImpl[A]('a) }
     inline def showTypeSymbol: A = ${ UniversalOps.showTypeSymbolImpl[A]('a) }
     inline def showTypeSymbolFullName: A = ${ UniversalOps.showTypeSymbolFullNameImpl[A]('a) }
-    inline def sourceCode: String = ${ macros.UniversalOpsSourceMacros.sourceCodeImpl[A]('a) }
-    inline def withSourceCode: (A, String) = ${ macros.UniversalOpsSourceMacros.withSourceCodeImpl[A]('a) }
+    inline def sourceCode: String = ${ UniversalOps.sourceCodeImpl[A]('a) }
+    inline def withSourceCode: (A, String) = ${ UniversalOps.withSourceCodeImpl[A]('a) }
 
     def debugMacro: A = a
   }
 
   object UniversalOps {
+
     import scala.quoted.*
 
     def showAstImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
@@ -183,9 +184,19 @@ object SharedExtensionsUtils extends SharedExtensions {
       report.info(TypeRepr.of[A].typeSymbol.fullName, a)
       a
 
-    // sourceCode / withSourceCode impls live in `commons.macros.UniversalOpsSourceMacros`
-    // (must be in a different package to avoid `Position.sourceCode` resolving via the
-    // package-object auto-imported `universalOps` implicit conversion → infinite macro recursion)
+    def sourceCodeImpl[A: Type](a: Expr[A])(using quotes: Quotes): Expr[String] =
+      import quotes.reflect.*
+      import quotes.reflect.PositionMethods // to bypass package-object auto-import of `universalOps`,
+
+      val pos = a.asTerm.pos
+      val txt = PositionMethods.sourceCode(pos).orElse(PositionMethods.sourceCode(Position.ofMacroExpansion)).getOrElse(
+        report.errorAndAbort("source code unavailable at this position", a)
+      )
+      Expr(txt)
+
+    def withSourceCodeImpl[A: Type](a: Expr[A])(using Quotes): Expr[(A, String)] =
+      val src = sourceCodeImpl[A](a)
+      '{ ($a, $src) }
   }
 
   class LazyUniversalOps[A](private val a: () => A) extends AnyVal {
@@ -199,13 +210,13 @@ object SharedExtensionsUtils extends SharedExtensions {
     def optionIf(condition: Boolean): Option[A] =
       if (condition) Some(a()) else None
 
-    def recoverFrom[T <: Throwable: ClassTag](fallbackValue: => A): A =
+    def recoverFrom[T <: Throwable : ClassTag](fallbackValue: => A): A =
       try a()
       catch {
         case _: T => fallbackValue
       }
 
-    def recoverToOpt[T <: Throwable: ClassTag]: Opt[A] =
+    def recoverToOpt[T <: Throwable : ClassTag]: Opt[A] =
       try Opt(a())
       catch {
         case _: T => Opt.Empty
@@ -380,17 +391,17 @@ object SharedExtensionsUtils extends SharedExtensions {
       * useful for performing a parallel map. For example, to apply a function to all items of a list
       *
       * @tparam A
-      *   the type of the value inside the Futures in the `IterableOnce`
+      * the type of the value inside the Futures in the `IterableOnce`
       * @tparam B
-      *   the type of the value of the returned `Future`
+      * the type of the value of the returned `Future`
       * @tparam M
-      *   the type of the `IterableOnce` of Futures
+      * the type of the `IterableOnce` of Futures
       * @param in
-      *   the `IterableOnce` of Futures which will be sequenced
+      * the `IterableOnce` of Futures which will be sequenced
       * @param fn
-      *   the function to apply to the `IterableOnce` of Futures to produce the results
+      * the function to apply to the `IterableOnce` of Futures to produce the results
       * @return
-      *   the `Future` of the `IterableOnce` of results
+      * the `Future` of the `IterableOnce` of results
       */
     def traverseCompleted[A, B, M[X] <: IterableOnce[X]](
       in: M[A]
@@ -410,13 +421,13 @@ object SharedExtensionsUtils extends SharedExtensions {
       * which only completes after all `in` `Future`s are completed.
       *
       * @tparam A
-      *   the type of the value inside the Futures
+      * the type of the value inside the Futures
       * @tparam M
-      *   the type of the `IterableOnce` of Futures
+      * the type of the `IterableOnce` of Futures
       * @param in
-      *   the `IterableOnce` of Futures which will be sequenced
+      * the `IterableOnce` of Futures which will be sequenced
       * @return
-      *   the `Future` of the `IterableOnce` of results
+      * the `Future` of the `IterableOnce` of results
       */
     def sequenceCompleted[A, M[X] <: IterableOnce[X]](
       in: M[Future[A]]
@@ -530,7 +541,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     def sequence[A, M[X] <: IterableOnce[X]](in: M[Try[A]])(implicit bf: BuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] =
       in.iterator
         .foldLeft(Try(bf.newBuilder(in))) {
-          case (f @ Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
+          case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
           case (tr, tb) =>
             for {
               r <- tr
@@ -547,11 +558,11 @@ object SharedExtensionsUtils extends SharedExtensions {
       * }}}
       */
     def traverse[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Try[B])(implicit bf: BuildFrom[M[A], B, M[B]])
-      : Try[M[B]] =
+    : Try[M[B]] =
       in.iterator
         .map(fn)
         .foldLeft(Try(bf.newBuilder(in))) {
-          case (f @ Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
+          case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
           case (tr, tb) =>
             for {
               r <- tr
