@@ -84,7 +84,7 @@ object Commons extends ProjectGroup("commons") {
       WorkflowStep.Sbt(
         List("compile", "Test/compile"),
         name = Some("Build"),
-      ),
+      )
     ),
     githubWorkflowAddedJobs += WorkflowJob(
       id = "scalafmt",
