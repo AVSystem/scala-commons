@@ -5,6 +5,7 @@ import com.avsystem.commons.misc.*
 
 import scala.annotation.nowarn
 import scala.collection.{mutable, AbstractIterator, BuildFrom, Factory}
+import scala.quoted.Expr
 
 trait SharedExtensions {
 
@@ -126,28 +127,122 @@ object SharedExtensionsUtils extends SharedExtensions {
     def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
-    // TODO[scala3-port]: showAst (Scala 2 macro def) (L)
-    def showAst: A = ???
-    // TODO[scala3-port]: showRawAst (Scala 2 macro def) (L)
-    def showRawAst: A = ???
-    // TODO[scala3-port]: showSymbol (Scala 2 macro def) (L)
-    def showSymbol: A = ???
-    // TODO[scala3-port]: showSymbolFullName (Scala 2 macro def) (L)
-    def showSymbolFullName: A = ???
-    // TODO[scala3-port]: showType (Scala 2 macro def) (L)
-    def showType: A = ???
-    // TODO[scala3-port]: showRawType (Scala 2 macro def) (L)
-    def showRawType: A = ???
-    // TODO[scala3-port]: showTypeSymbol (Scala 2 macro def) (L)
-    def showTypeSymbol: A = ???
-    // TODO[scala3-port]: showTypeSymbolFullName (Scala 2 macro def) (L)
-    def showTypeSymbolFullName: A = ???
-    // TODO[scala3-port]: sourceCode (Scala 2 macro def) (L)
-    def sourceCode: String = ???
-    // TODO[scala3-port]: withSourceCode (Scala 2 macro def) (L)
-    def withSourceCode: (A, String) = ???
+    inline def showAst: A = ${ UniversalOps.showAstImpl[A]('a) }
+    inline def showSymbol: A = ${ UniversalOps.showSymbolImpl[A]('a) }
+    inline def showType: A = ${ UniversalOps.showTypeImpl[A]('a) }
+    inline def showRawType: A = ${ UniversalOps.showRawTypeImpl[A]('a) }
+    inline def showTypeSymbol: A = ${ UniversalOps.showTypeSymbolImpl[A]('a) }
+    inline def sourceCode: String = ${ UniversalOps.sourceCodeImpl[A]('a) }
+    inline def withSourceCode: (A, String) = ${ UniversalOps.withSourceCodeImpl[A]('a) }
+  }
 
-    def debugMacro: A = a
+  object UniversalOps {
+
+    import scala.quoted.*
+
+    /** Detailed multi-line dump of a `quotes.reflect.Symbol`. Inspired by the `made` library. */
+    private def symbolInfo(using quotes: Quotes)(symbol: quotes.reflect.Symbol): String =
+      import quotes.reflect.*
+      s"""
+         |$symbol
+         |maybeOwner: ${symbol.maybeOwner}
+         |flags: ${symbol.flags.show}
+         |privateWithin: ${symbol.privateWithin.map(_.show)}
+         |protectedWithin: ${symbol.protectedWithin.map(_.show)}
+         |name: ${symbol.name}
+         |fullName: ${symbol.fullName}
+         |pos: ${symbol.pos}
+         |docstring: ${symbol.docstring}
+         |tree: ${scala.util.Try(symbol.tree.show).getOrElse("no tree")}
+         |annotations: ${symbol.annotations.map(_.show)}
+         |isDefinedInCurrentRun: ${symbol.isDefinedInCurrentRun}
+         |isClassDef: ${symbol.isClassDef}
+         |isTypeDef: ${symbol.isTypeDef}
+         |isValDef: ${symbol.isValDef}
+         |isDefDef: ${symbol.isDefDef}
+         |isBind: ${symbol.isBind}
+         |isNoSymbol: ${symbol.isNoSymbol}
+         |exists: ${symbol.exists}
+         |declaredFields: ${symbol.declaredFields}
+         |declaredMethods: ${symbol.declaredMethods}
+         |declaredTypes: ${symbol.declaredTypes}
+         |paramSymss: ${symbol.paramSymss}
+         |primaryConstructor: ${symbol.primaryConstructor}
+         |caseFields: ${symbol.caseFields}
+         |signature: ${symbol.signature}
+         |companionClass: ${symbol.companionClass}
+         |companionModule: ${symbol.companionModule}
+         |children: ${symbol.children}
+         |typeRef: ${scala.util.Try(symbol.typeRef.show).getOrElse("no typeRef")}
+         |termRef: ${scala.util.Try(symbol.termRef.show).getOrElse("no termRef")}
+         |""".stripMargin
+
+    /** Detailed multi-line dump of a `quotes.reflect.TypeRepr`. Inspired by `made`. */
+    private def typeReprInfo(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): String =
+      s"""
+         |type: ${tpe.show}
+         |raw: $tpe
+         |widen: ${tpe.widen.show}
+         |dealias: ${tpe.dealias.show}
+         |simplified: ${tpe.simplified.show}
+         |classSymbol: ${tpe.classSymbol}
+         |typeSymbol: ${tpe.typeSymbol}
+         |termSymbol: ${tpe.termSymbol}
+         |isSingleton: ${tpe.isSingleton}
+         |baseClasses: ${tpe.baseClasses}
+         |isFunctionType: ${tpe.isFunctionType}
+         |isContextFunctionType: ${tpe.isContextFunctionType}
+         |isDependentFunctionType: ${tpe.isDependentFunctionType}
+         |isTupleN: ${tpe.isTupleN}
+         |typeArgs: ${tpe.typeArgs}
+         |""".stripMargin
+
+    /** Structure + short-code dump of a `quotes.reflect.Tree`. Inspired by `made`. */
+    private def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String =
+      import quotes.reflect.*
+      s"""
+         |Structure: ${Printer.TreeStructure.show(tree)}
+         |ShortCode: ${Printer.TreeShortCode.show(tree)}
+         |""".stripMargin
+
+    def showAstImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(treeInfo(a.asTerm), a)
+      a
+
+    def showSymbolImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(symbolInfo(a.asTerm.symbol), a)
+      a
+
+    def showTypeImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(typeReprInfo(TypeRepr.of[A]), a)
+      a
+
+    def showRawTypeImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(Printer.TypeReprStructure.show(TypeRepr.of[A].widen), a)
+      a
+
+    def showTypeSymbolImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(symbolInfo(TypeRepr.of[A].typeSymbol), a)
+      a
+
+    def sourceCodeImpl[A: Type](a: Expr[A])(using quotes: Quotes): Expr[String] =
+      import quotes.reflect.*
+      import quotes.reflect.PositionMethods // bypass package-object auto-import of `universalOps`
+      extension (pos: Position) def sourceCodeOption = PositionMethods.sourceCode(pos).filter(_.nonEmpty)
+
+      a.asTerm.underlyingArgument.pos.sourceCodeOption
+        .orElse(a.asTerm.pos.sourceCodeOption)
+        .orElse(Position.ofMacroExpansion.sourceCodeOption)
+        .getOrElse(report.errorAndAbort("source code unavailable at this position", a))
+        .|>(Expr.apply)
+
+    def withSourceCodeImpl[A: Type](a: Expr[A])(using Quotes): Expr[(A, String)] =
+      '{ ($a, ${ sourceCodeImpl[A](a) }) }
   }
 
   class LazyUniversalOps[A](private val a: () => A) extends AnyVal {
