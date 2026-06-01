@@ -118,6 +118,27 @@ the bottom of this file. Restoration ships incrementally per feature area.
     methods returning `???`; reshaped to match fork)
 - Backlog rows for `MetadataCompanion.scala:27` and `:58` are resolved (Phase-1 TODO tags removed).
 
+### core — meta AdtMetadataCompanion (slice 4.4)
+
+- `meta/AdtMetadataCompanion[M[_]]` → `meta/AdtMetadataCompanion[M[X] <: TypedMetadata[X]]` —
+  type parameter bound TIGHTENED. Downstream consumers that built `M` not extending `TypedMetadata`
+  will fail to compile. **Rationale (fork):** enables `inline given [T] => M[T] = materialize[T]`
+  in `AdtMetadataCompanionMacros[M]` — the bound is required for the inherited inline given to
+  resolve correctly.
+- File body collapses from 4-method stub (`materialize`, `fromApplyUnapplyProvider` × 2) to 2-line
+  trait composition. The 4 methods are now inherited from `AdtMetadataCompanionMacros[M]` (in
+  `MetaMacros.scala`, slice 4.3).
+- `BoundedAdtMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]]` mirror — same collapse, same
+  inheritance pattern. Fork's "cannot share code with AdtMetadataCompanion because of binary
+  compatibility problems, must copy" comment preserved verbatim.
+- Backlog rows for 4 `AdtMetadataCompanion.scala` Phase-1 TODOs (lines 15/18/33/36) removed —
+  methods now inherited from `AdtMetadataCompanionMacros` / `BoundedAdtMetadataCompanionMacros`.
+- `AdtMetadataTest.scala` selectively un-wrapped: GenStructure ADT hierarchy lives;
+  `HasGenCodecStructure` + `Being`/`Person`/`Peculiarity`/`God`/`Galaxy`/`MaterialBeing` remain
+  wrapped pending Phase 6 (classical-trait `Instances` reshape). Fork's
+  `materialize[Option[String]]` companion-init call on `GenUnorderedUnion` omitted — restored
+  when `MetaMacros.dummy` gets its real reflection body in Phase 6.
+
 ### mongo
 
 - `BsonRef.Creator.ref`, `DataTypeDsl.{ref, as, is, isNot}`, `TypedMongoUtils.optionalizeFirstArg` are stubbed with
@@ -133,7 +154,15 @@ the bottom of this file. Restoration ships incrementally per feature area.
 
 ## 4. Binary-compat breaks
 
-*Empty in Phase 1 — no Scala 3 baseline released yet. MiMa activation deferred to the first `_3` release tag.*
+*Empty in Phase 1 — no Scala 3 baseline released yet. MiMa activation deferred to the first `_3` release tag.
+Slice-level bincompat-narrowing entries below are pre-recorded for future MiMa runs.*
+
+### core — slice 4.4 bincompat-narrowing
+
+- `AdtMetadataCompanion[M[_]]` → `AdtMetadataCompanion[M[X] <: TypedMetadata[X]]` is a
+  **bound-tightening narrowing**. Old binaries compiled against `M extends TypedMetadata` keep
+  working; old binaries with `M` NOT extending `TypedMetadata` fail to resolve the trait. MiMa
+  will flag this once MiMa re-enables in Phase 11.
 
 ## 5. Disabled tests / modules
 
@@ -203,10 +232,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:55`                                 | noneComponent (depends on stubbed singleton macro)                                                    | S      |
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:58`                                 | sequenceOpt (depends on stubbed component macro)                                                      | S      |
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:61`                                 | sequenceOption (depends on stubbed component macro)                                                   | S      |
-| `core/src/main/scala/com/avsystem/commons/meta/AdtMetadataCompanion.scala:15`                     | materialize (Scala 2 macro def)                                                                       | L      |
-| `core/src/main/scala/com/avsystem/commons/meta/AdtMetadataCompanion.scala:18`                     | fromApplyUnapplyProvider (Scala 2 macro def)                                                          | L      |
-| `core/src/main/scala/com/avsystem/commons/meta/AdtMetadataCompanion.scala:33`                     | materialize (bounded) (Scala 2 macro def)                                                             | L      |
-| `core/src/main/scala/com/avsystem/commons/meta/AdtMetadataCompanion.scala:36`                     | fromApplyUnapplyProvider (bounded) (Scala 2 macro def)                                                | L      |
 | `core/src/main/scala/com/avsystem/commons/meta/MacroInstances.scala:47`                           | materialize (Scala 2 macro def)                                                                       | L      |
 | `core/src/main/scala/com/avsystem/commons/meta/metaAnnotations.scala:193`                         | value (Scala 2 macro def)                                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:114`                            | SelfAnnotations.materialize (Scala 2 macro def)                                                       | L      |
