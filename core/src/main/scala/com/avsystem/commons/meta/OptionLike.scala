@@ -67,6 +67,8 @@ object OptionLike {
 
   implicit def nOptOptionLike[A]: BaseOptionLike[NOpt[A], A] =
     new OptionLikeImpl(NOpt.Empty, NOpt.some, _.isDefined, _.get, ignoreNulls = false)
+
+  given [O] => (optionLike: OptionLike[O]) => made.Default[O] = () => optionLike.none
 }
 
 /** If there is an instance of [[AutoOptionalParam]] for some type `T` then all case class & RPC parameters of type `T`
