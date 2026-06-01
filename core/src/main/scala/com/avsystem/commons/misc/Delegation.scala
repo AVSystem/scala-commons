@@ -8,8 +8,8 @@ trait Delegation[A, B] {
 }
 
 object Delegation {
-  implicit def materializeDelegation[A, B]: Delegation[A, B] = macro
-    com.avsystem.commons.macros.misc.DelegationMacros.materializeDelegation[A, B]
+  // TODO[scala3-port]: materializeDelegation (Scala 2 macro def) (L)
+  implicit def materializeDelegation[A, B]: Delegation[A, B] = ???
 
   /** Provides following syntax:
     *
@@ -18,6 +18,7 @@ object Delegation {
   def apply[B] = new CurriedDelegation[B]
 
   class CurriedDelegation[B] {
-    def apply[A](source: A): B = macro com.avsystem.commons.macros.misc.DelegationMacros.delegate[A, B]
+    // TODO[scala3-port]: CurriedDelegation.apply (Scala 2 macro def) (L)
+    def apply[A](source: A): B = ???
   }
 }

@@ -28,7 +28,8 @@ object TypeString {
   def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
   def of[T: TypeString]: String = TypeString[T].value
 
-  implicit def materialize[T]: TypeString[T] = macro macros.misc.MiscMacros.typeString[T]
+  // TODO[scala3-port]: TypeString.materialize (Scala 2 macro def) (L)
+  implicit def materialize[T]: TypeString[T] = ???
 
   implicit val keyCodec: GenKeyCodec[TypeString[_]] =
     GenKeyCodec.create[TypeString[_]](new TypeString(_), _.value)
@@ -86,5 +87,6 @@ object JavaClassName extends JavaClassNameLowPrio {
     GenCodec.nonNullSimple[JavaClassName[_]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
 }
 trait JavaClassNameLowPrio { this: JavaClassName.type =>
-  implicit def materialize[T]: JavaClassName[T] = macro macros.misc.MiscMacros.javaClassName[T]
+  // TODO[scala3-port]: JavaClassName.materialize (Scala 2 macro def) (L)
+  implicit def materialize[T]: JavaClassName[T] = ???
 }

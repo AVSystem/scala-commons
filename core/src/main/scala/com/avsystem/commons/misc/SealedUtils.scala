@@ -5,18 +5,13 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 object SealedUtils {
-
-  /** A macro which reifies a list of all case objects of a sealed trait or class `T`. WARNING: the order of case
-    * objects in the resulting list is guaranteed to be consistent with declaration order ONLY for enums extending
-    * [[OrderedEnum]]. Otherwise, the order may be arbitrary.
-    */
+  // TODO[scala3-port]: caseObjectsFor (Scala 2 macro def) (L)
   @explicitGenerics
-  def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
+  def caseObjectsFor[T]: List[T] = ???
 
-  /** Infers a list of instances of given typeclass `TC` for all non-abstract subtypes of a sealed hierarchy root `T`.
-    */
+  // TODO[scala3-port]: instancesFor (Scala 2 macro def; return type widened to TC[T]) (L)
   @explicitGenerics
-  def instancesFor[TC[_], T]: List[TC[_ <: T]] = macro macros.misc.SealedMacros.instancesFor[TC[_], T]
+  def instancesFor[TC[_], T]: List[TC[T]] = ???
 }
 
 /** Base trait for companion objects of sealed traits that serve as enums, i.e. their only values are case objects. For
@@ -51,14 +46,11 @@ trait SealedEnumCompanion[T] {
     * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for
     * [[com.avsystem.commons.misc.OrderedEnum OrderedEnum]].
     */
-  val values: ISeq[T]
+  // lazy to allow lazy-val override in ValueEnumCompanion (Scala 3 disallows lazy overriding non-lazy)
+  lazy val values: ISeq[T]
 
-  /** A macro which reifies a list of all case objects of the sealed trait or class `T`. WARNING: the order of case
-    * objects in the resulting list is well defined only for enums that extend [[OrderedEnum]]. In such case, the order
-    * is consistent with declaration order in source file. However, if the enum is not an [[OrderedEnum]], the order may
-    * be arbitrary.
-    */
-  protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
+  // TODO[scala3-port]: caseObjects (Scala 2 macro def) (L)
+  protected def caseObjects: List[T] = ???
 }
 
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]
