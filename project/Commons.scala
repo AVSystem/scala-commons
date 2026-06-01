@@ -44,7 +44,7 @@ object Commons extends ProjectGroup("commons") {
 
   val scala2Version = "2.13.18"
   val scala3Version = "3.8.2"
-  val madeVersion = "0.1.0" // pinned release on Sonatype Central
+  val madeVersion = "0.1.1" // pinned release on Sonatype Central
 
   val previousCompatibleVersions: Set[String] =
     Set("2.21.0", "2.22.0", "2.23.0", "2.23.1", "2.24.0", "2.25.0", "2.26.0", "2.27.0", "2.27.1")
