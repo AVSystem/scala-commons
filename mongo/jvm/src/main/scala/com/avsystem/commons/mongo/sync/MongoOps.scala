@@ -29,11 +29,7 @@ trait MongoOps {
 
     def page(sort: Bson, offset: Int, maxItems: Int): Vector[T] = {
       val b = Vector.newBuilder[T]
-      find
-        .sort(sort)
-        .skip(offset)
-        .limit(maxItems)
-        .forEach(b += _)
+      find.sort(sort).skip(offset).limit(maxItems).forEach(b += _)
       b.result()
     }
   }

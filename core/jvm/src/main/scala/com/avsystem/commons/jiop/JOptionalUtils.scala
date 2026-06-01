@@ -78,6 +78,7 @@ trait JOptionalUtils {
   // option-like receivers, avoiding clash with `scala.collection.convert.AsJavaExtensions.asJava`
   // on `Seq`/`Iterable`.
   extension [O[_], T](opt: O[T])(using optionLike: OptionLike.Aux[O[T], T]) {
+
     /** Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
       * not able to hold null
       */
