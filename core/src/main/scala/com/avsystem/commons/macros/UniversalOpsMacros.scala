@@ -2,57 +2,59 @@ package com.avsystem.commons.macros
 
 import scala.quoted.*
 
-object ShowMacros:
-  // report.info: print + proceed (Scala 2 used c.error as a hack — Scala 3 has a proper info channel)
+object UniversalOpsMacros {
   def showAstImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
     import quotes.reflect.*
-    report.info(Printer.TreeCode.show(a.asTerm), a.asTerm.pos)
+    report.info(Printer.TreeCode.show(a.asTerm), a)
     a
 
   def showRawAstImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
     import quotes.reflect.*
-    report.info(Printer.TreeStructure.show(a.asTerm), a.asTerm.pos)
+    report.info(Printer.TreeStructure.show(a.asTerm), a)
     a
 
   def showSymbolImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
     import quotes.reflect.*
-    report.info(a.asTerm.symbol.toString, a.asTerm.pos)
+    report.info(a.asTerm.symbol.toString, a)
     a
 
   def showSymbolFullNameImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
     import quotes.reflect.*
-    report.info(a.asTerm.symbol.fullName, a.asTerm.pos)
+    report.info(a.asTerm.symbol.fullName, a)
     a
 
   def showTypeImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
     import quotes.reflect.*
-    report.info(TypeRepr.of[A].widen.show, a.asTerm.pos)
+    report.info(TypeRepr.of[A].widen.show, a)
     a
 
   def showRawTypeImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
     import quotes.reflect.*
-    report.info(Printer.TypeReprStructure.show(TypeRepr.of[A].widen), a.asTerm.pos)
+    report.info(Printer.TypeReprStructure.show(TypeRepr.of[A].widen), a)
     a
 
   def showTypeSymbolImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
     import quotes.reflect.*
-    report.info(TypeRepr.of[A].typeSymbol.toString, a.asTerm.pos)
+    report.info(TypeRepr.of[A].typeSymbol.toString, a)
     a
 
   def showTypeSymbolFullNameImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
     import quotes.reflect.*
-    report.info(TypeRepr.of[A].typeSymbol.fullName, a.asTerm.pos)
+    report.info(TypeRepr.of[A].typeSymbol.fullName, a)
     a
 
-  def sourceCodeImpl[A: Type](a: Expr[A])(using Quotes): Expr[String] =
+  private def captureSourceCode[A: Type](a: Expr[A])(using Quotes): Expr[String] =
     import quotes.reflect.*
-    // Prefer the receiver expression's own position; fall back to macro-expansion site.
-    val pos = a.asTerm.pos
-    val txt = pos.sourceCode.orElse(Position.ofMacroExpansion.sourceCode).getOrElse {
-      report.errorAndAbort("source code unavailable at this position", pos)
-    }
+    val src = Position.ofMacroExpansion.sourceCode
+    val txt: String = src match
+      case Some(s: String) => s
+      case _ => report.errorAndAbort("source code unavailable at this position", a)
     Expr(txt)
 
+  def sourceCodeImpl[A: Type](a: Expr[A])(using Quotes): Expr[String] =
+    captureSourceCode[A](a)
+
   def withSourceCodeImpl[A: Type](a: Expr[A])(using Quotes): Expr[(A, String)] =
-    val src = sourceCodeImpl[A](a)
+    val src = captureSourceCode[A](a)
     '{ ($a, $src) }
+}

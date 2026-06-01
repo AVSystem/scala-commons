@@ -126,16 +126,16 @@ object SharedExtensionsUtils extends SharedExtensions {
     def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
-    inline def showAst: A = ${ macros.ShowMacros.showAstImpl[A]('a) }
-    inline def showRawAst: A = ${ macros.ShowMacros.showRawAstImpl[A]('a) }
-    inline def showSymbol: A = ${ macros.ShowMacros.showSymbolImpl[A]('a) }
-    inline def showSymbolFullName: A = ${ macros.ShowMacros.showSymbolFullNameImpl[A]('a) }
-    inline def showType: A = ${ macros.ShowMacros.showTypeImpl[A]('a) }
-    inline def showRawType: A = ${ macros.ShowMacros.showRawTypeImpl[A]('a) }
-    inline def showTypeSymbol: A = ${ macros.ShowMacros.showTypeSymbolImpl[A]('a) }
-    inline def showTypeSymbolFullName: A = ${ macros.ShowMacros.showTypeSymbolFullNameImpl[A]('a) }
-    inline def sourceCode: String = ${ macros.ShowMacros.sourceCodeImpl[A]('a) }
-    inline def withSourceCode: (A, String) = ${ macros.ShowMacros.withSourceCodeImpl[A]('a) }
+    inline def showAst: A = ${ macros.UniversalOpsMacros.showAstImpl[A]('a) }
+    inline def showRawAst: A = ${ macros.UniversalOpsMacros.showRawAstImpl[A]('a) }
+    inline def showSymbol: A = ${ macros.UniversalOpsMacros.showSymbolImpl[A]('a) }
+    inline def showSymbolFullName: A = ${ macros.UniversalOpsMacros.showSymbolFullNameImpl[A]('a) }
+    inline def showType: A = ${ macros.UniversalOpsMacros.showTypeImpl[A]('a) }
+    inline def showRawType: A = ${ macros.UniversalOpsMacros.showRawTypeImpl[A]('a) }
+    inline def showTypeSymbol: A = ${ macros.UniversalOpsMacros.showTypeSymbolImpl[A]('a) }
+    inline def showTypeSymbolFullName: A = ${ macros.UniversalOpsMacros.showTypeSymbolFullNameImpl[A]('a) }
+    inline def sourceCode: String = ${ macros.UniversalOpsMacros.sourceCodeImpl[A]('a) }
+    inline def withSourceCode: (A, String) = ${ macros.UniversalOpsMacros.withSourceCodeImpl[A]('a) }
 
     def debugMacro: A = a
   }
