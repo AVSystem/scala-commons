@@ -85,7 +85,7 @@ object Commons extends ProjectGroup("commons") {
       WorkflowStep.Sbt(
         List("compile", "Test/compile", "scalafmtCheckAll", "scalafmtSbtCheck"),
         name = Some("Build + lint"),
-      ),
+      )
     ),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
@@ -242,8 +242,7 @@ object Commons extends ProjectGroup("commons") {
   )
 
   def sourceDirsSettings(baseMapper: File => File) = Seq(
-    Compile / unmanagedSourceDirectories ++=
-      mkSourceDirs(baseMapper(baseDirectory.value), "main"),
+    Compile / unmanagedSourceDirectories ++= mkSourceDirs(baseMapper(baseDirectory.value), "main"),
     Test / unmanagedSourceDirectories ++= mkSourceDirs(baseMapper(baseDirectory.value), "test"),
   )
 
