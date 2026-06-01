@@ -200,7 +200,7 @@ object Commons extends ProjectGroup("commons") {
       name := "commons",
       ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
       ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(
-        analyzer,
+        // analyzer, // TODO[scala3-port]: re-enable when module restored
         `core-js`,
         comprof,
       ),
@@ -227,19 +227,19 @@ object Commons extends ProjectGroup("commons") {
     )
     .settings(aggregateProjectSettings)
 
-  lazy val analyzer = mkSubProject
-    .dependsOn(core % Test)
-    .settings(
-      jvmCommonSettings,
-      libraryDependencies ++= Seq(
-        "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-        "io.monix" %% "monix" % monixVersion % Test,
-      ),
-      mimaBinaryIssueFilters ++= Seq(
-        // Internal compiler-plugin helper removed; not part of the public API.
-        exclude[DirectMissingMethodProblem]("com.avsystem.commons.analyzer.AnalyzerRule.report")
-      ),
-    )
+  // TODO[scala3-port]: analyzer module — Scala 2 compiler plugin; restore as Scala 3 plugin or formally drop (L)
+  // lazy val analyzer = mkSubProject
+  //   .dependsOn(core % Test)
+  //   .settings(
+  //     jvmCommonSettings,
+  //     libraryDependencies ++= Seq(
+  //       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+  //       "io.monix" %% "monix" % monixVersion % Test,
+  //     ),
+  //     mimaBinaryIssueFilters ++= Seq(
+  //       exclude[DirectMissingMethodProblem]("com.avsystem.commons.analyzer.AnalyzerRule.report")
+  //     ),
+  //   )
 
   def mkSourceDirs(base: File, conf: String): Seq[File] = Seq(
     base / "src" / conf / "scala",
