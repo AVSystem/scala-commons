@@ -16,7 +16,7 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def iterator: Iterator[Long] =
     jStream.iterator().asInstanceOf[JIterator[Long]].asScala
 
-  def onClose(closeHandler: => Any): ScalaJLongStream =
+  inline def onClose(closeHandler: => Any): ScalaJLongStream =
     new ScalaJLongStream(jStream.onClose(jRunnable(closeHandler)))
 
   def parallel: ScalaJLongStream =
@@ -28,10 +28,10 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def unordered: ScalaJLongStream =
     new ScalaJLongStream(jStream.unordered())
 
-  def allMatch(predicate: Long => Boolean): Boolean =
+  inline def allMatch(inline predicate: Long => Boolean): Boolean =
     jStream.allMatch(jLongPredicate(predicate))
 
-  def anyMatch(predicate: Long => Boolean): Boolean =
+  inline def anyMatch(inline predicate: Long => Boolean): Boolean =
     jStream.anyMatch(jLongPredicate(predicate))
 
   def asDoubleStream: ScalaJDoubleStream =
@@ -43,7 +43,7 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def boxed: ScalaJStream[Long] =
     new ScalaJStream(jStream.boxed.asInstanceOf[JStream[Long]])
 
-  def collect[R](supplier: => R)(accumulator: (R, Long) => Any, combiner: (R, R) => Any): R =
+  inline def collect[R](supplier: => R)(inline accumulator: (R, Long) => Any, inline combiner: (R, R) => Any): R =
     jStream.collect(jSupplier(supplier), jObjLongConsumer(accumulator), jBiConsumer(combiner))
 
   def count: Long =
@@ -52,7 +52,7 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def distinct: ScalaJLongStream =
     new ScalaJLongStream(jStream.distinct)
 
-  def filter(predicate: Long => Boolean): ScalaJLongStream =
+  inline def filter(inline predicate: Long => Boolean): ScalaJLongStream =
     new ScalaJLongStream(jStream.filter(jLongPredicate(predicate)))
 
   def findAny: Option[Long] =
@@ -61,28 +61,28 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def findFirst: Option[Long] =
     jStream.findFirst.asScala
 
-  def flatMap(mapper: Long => ScalaJLongStream): ScalaJLongStream =
+  inline def flatMap(inline mapper: Long => ScalaJLongStream): ScalaJLongStream =
     new ScalaJLongStream(jStream.flatMap(jLongFunction(d => mapper(d).jStream)))
 
-  def forEach(action: Long => Any): Unit =
+  inline def forEach(inline action: Long => Any): Unit =
     jStream.forEach(jLongConsumer(action))
 
-  def forEachOrdered(action: Long => Any): Unit =
+  inline def forEachOrdered(inline action: Long => Any): Unit =
     jStream.forEachOrdered(jLongConsumer(action))
 
   def limit(maxSize: Long): ScalaJLongStream =
     new ScalaJLongStream(jStream.limit(maxSize))
 
-  def map(mapper: Long => Long): ScalaJLongStream =
+  inline def map(inline mapper: Long => Long): ScalaJLongStream =
     new ScalaJLongStream(jStream.map(jLongUnaryOperator(mapper)))
 
-  def mapToDouble(mapper: Long => Double): ScalaJDoubleStream =
+  inline def mapToDouble(inline mapper: Long => Double): ScalaJDoubleStream =
     new ScalaJDoubleStream(jStream.mapToDouble(jLongToDoubleFunction(mapper)))
 
-  def mapToInt(mapper: Long => Int): ScalaJIntStream =
+  inline def mapToInt(inline mapper: Long => Int): ScalaJIntStream =
     new ScalaJIntStream(jStream.mapToInt(jLongToIntFunction(mapper)))
 
-  def mapToObj[U](mapper: Long => U): ScalaJStream[U] =
+  inline def mapToObj[U](inline mapper: Long => U): ScalaJStream[U] =
     new ScalaJStream(jStream.mapToObj(jLongFunction(mapper)))
 
   def max: Option[Long] =
@@ -91,16 +91,16 @@ final class ScalaJLongStream(private val jStream: JLongStream) extends AnyVal {
   def min: Option[Long] =
     jStream.min.asScala
 
-  def noneMatch(predicate: Long => Boolean): Boolean =
+  inline def noneMatch(inline predicate: Long => Boolean): Boolean =
     jStream.noneMatch(jLongPredicate(predicate))
 
-  def peek(action: Long => Any): ScalaJLongStream =
+  inline def peek(inline action: Long => Any): ScalaJLongStream =
     new ScalaJLongStream(jStream.peek(jLongConsumer(action)))
 
-  def reduce(identity: Long)(op: (Long, Long) => Long): Long =
+  inline def reduce(identity: Long)(inline op: (Long, Long) => Long): Long =
     jStream.reduce(identity, jLongBinaryOperator(op))
 
-  def reduce(op: (Long, Long) => Long): Option[Long] =
+  inline def reduce(inline op: (Long, Long) => Long): Option[Long] =
     jStream.reduce(jLongBinaryOperator(op)).asScala
 
   def skip(n: Long): ScalaJLongStream =

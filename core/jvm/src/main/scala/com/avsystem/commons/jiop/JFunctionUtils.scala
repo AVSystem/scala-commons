@@ -50,47 +50,47 @@ trait JFunctionUtils {
   type JToLongFunction[T] = juf.ToLongFunction[T]
   type JUnaryOperator[T] = juf.UnaryOperator[T]
 
-  def jBiConsumer[T, U](code: (T, U) => Any): JBiConsumer[T, U] = (t, u) => { code(t, u); () }
-  def jBiFunction[T, U, R](fun: (T, U) => R): JBiFunction[T, U, R] = fun(_, _)
-  def jBiPredicate[T, U](pred: (T, U) => Boolean): JBiPredicate[T, U] = pred(_, _)
-  def jBinaryOperator[T](op: (T, T) => T): JBinaryOperator[T] = op(_, _)
-  def jBooleanSupplier(expr: => Boolean): JBooleanSupplier = () => expr
-  def jConsumer[T](code: T => Any): JConsumer[T] = t => { code(t); () }
-  def jDoubleBinaryOperator(op: (Double, Double) => Double): JDoubleBinaryOperator = op(_, _)
-  def jDoubleConsumer(code: Double => Any): JDoubleConsumer = d => { code(d); () }
-  def jDoubleFunction[R](fun: Double => R): JDoubleFunction[R] = fun(_)
-  def jDoublePredicate(pred: Double => Boolean): JDoublePredicate = pred(_)
-  def jDoubleSupplier(expr: => Double): JDoubleSupplier = () => expr
-  def jDoubleToIntFunction(fun: Double => Int): JDoubleToIntFunction = fun(_)
-  def jDoubleToLongFunction(fun: Double => Long): JDoubleToLongFunction = fun(_)
-  def jDoubleUnaryOperator(op: Double => Double): JDoubleUnaryOperator = op(_)
-  def jFunction[T, R](fun: T => R): JFunction[T, R] = fun(_)
-  def jIntBinaryOperator(op: (Int, Int) => Int): JIntBinaryOperator = op(_, _)
-  def jIntConsumer(code: Int => Any): JIntConsumer = i => { code(i); () }
-  def jIntFunction[R](fun: Int => R): JIntFunction[R] = fun(_)
-  def jIntPredicate(pred: Int => Boolean): JIntPredicate = pred(_)
-  def jIntSupplier(expr: => Int): JIntSupplier = () => expr
-  def jIntToDoubleFunction(fun: Int => Double): JIntToDoubleFunction = fun(_)
-  def jIntToLongFunction(fun: Int => Long): JIntToLongFunction = fun(_)
-  def jIntUnaryOperator(op: Int => Int): JIntUnaryOperator = op(_)
-  def jLongBinaryOperator(op: (Long, Long) => Long): JLongBinaryOperator = op(_, _)
-  def jLongConsumer(code: Long => Any): JLongConsumer = l => { code(l); () }
-  def jLongFunction[R](fun: Long => R): JLongFunction[R] = fun(_)
-  def jLongPredicate(pred: Long => Boolean): JLongPredicate = pred(_)
-  def jLongSupplier(expr: => Long): JLongSupplier = () => expr
-  def jLongToDoubleFunction(fun: Long => Double): JLongToDoubleFunction = fun(_)
-  def jLongToIntFunction(fun: Long => Int): JLongToIntFunction = fun(_)
-  def jLongUnaryOperator(op: Long => Long): JLongUnaryOperator = op(_)
-  def jObjDoubleConsumer[T](code: (T, Double) => Any): JObjDoubleConsumer[T] = (t, d) => { code(t, d); () }
-  def jObjIntConsumer[T](code: (T, Int) => Any): JObjIntConsumer[T] = (t, i) => { code(t, i); () }
-  def jObjLongConsumer[T](code: (T, Long) => Any): JObjLongConsumer[T] = (t, l) => { code(t, l); () }
-  def jPredicate[T](pred: T => Boolean): JPredicate[T] = pred(_)
-  def jSupplier[T](expr: => T): JSupplier[T] = () => expr
-  def jToDoubleBiFunction[T, U](fun: (T, U) => Double): JToDoubleBiFunction[T, U] = fun(_, _)
-  def jToDoubleFunction[T](fun: T => Double): JToDoubleFunction[T] = fun(_)
-  def jToIntBiFunction[T, U](fun: (T, U) => Int): JToIntBiFunction[T, U] = fun(_, _)
-  def jToIntFunction[T](fun: T => Int): JToIntFunction[T] = fun(_)
-  def jToLongBiFunction[T, U](fun: (T, U) => Long): JToLongBiFunction[T, U] = fun(_, _)
-  def jToLongFunction[T](fun: T => Long): JToLongFunction[T] = fun(_)
-  def jUnaryOperator[T](op: T => T): JUnaryOperator[T] = op(_)
+  inline def jBiConsumer[T, U](inline code: (T, U) => Any): JBiConsumer[T, U] = (t, u) => code(t, u)
+  inline def jBiFunction[T, U, R](inline fun: (T, U) => R): JBiFunction[T, U, R] = fun(_, _)
+  inline def jBiPredicate[T, U](inline pred: (T, U) => Boolean): JBiPredicate[T, U] = pred(_, _)
+  inline def jBinaryOperator[T](inline op: (T, T) => T): JBinaryOperator[T] = op(_, _)
+  inline def jBooleanSupplier(expr: => Boolean): JBooleanSupplier = () => expr
+  inline def jConsumer[T](inline code: T => Any): JConsumer[T] = t => code(t)
+  inline def jDoubleBinaryOperator(inline op: (Double, Double) => Double): JDoubleBinaryOperator = op(_, _)
+  inline def jDoubleConsumer(inline code: Double => Any): JDoubleConsumer = d => code(d)
+  inline def jDoubleFunction[R](inline fun: Double => R): JDoubleFunction[R] = fun(_)
+  inline def jDoublePredicate(inline pred: Double => Boolean): JDoublePredicate = pred(_)
+  inline def jDoubleSupplier(expr: => Double): JDoubleSupplier = () => expr
+  inline def jDoubleToIntFunction(inline fun: Double => Int): JDoubleToIntFunction = fun(_)
+  inline def jDoubleToLongFunction(inline fun: Double => Long): JDoubleToLongFunction = fun(_)
+  inline def jDoubleUnaryOperator(inline op: Double => Double): JDoubleUnaryOperator = op(_)
+  inline def jFunction[T, R](inline fun: T => R): JFunction[T, R] = fun(_)
+  inline def jIntBinaryOperator(inline op: (Int, Int) => Int): JIntBinaryOperator = op(_, _)
+  inline def jIntConsumer(inline code: Int => Any): JIntConsumer = i => code(i)
+  inline def jIntFunction[R](inline fun: Int => R): JIntFunction[R] = fun(_)
+  inline def jIntPredicate(inline pred: Int => Boolean): JIntPredicate = pred(_)
+  inline def jIntSupplier(expr: => Int): JIntSupplier = () => expr
+  inline def jIntToDoubleFunction(inline fun: Int => Double): JIntToDoubleFunction = fun(_)
+  inline def jIntToLongFunction(inline fun: Int => Long): JIntToLongFunction = fun(_)
+  inline def jIntUnaryOperator(inline op: Int => Int): JIntUnaryOperator = op(_)
+  inline def jLongBinaryOperator(inline op: (Long, Long) => Long): JLongBinaryOperator = op(_, _)
+  inline def jLongConsumer(inline code: Long => Any): JLongConsumer = l => code(l)
+  inline def jLongFunction[R](inline fun: Long => R): JLongFunction[R] = fun(_)
+  inline def jLongPredicate(inline pred: Long => Boolean): JLongPredicate = pred(_)
+  inline def jLongSupplier(expr: => Long): JLongSupplier = () => expr
+  inline def jLongToDoubleFunction(inline fun: Long => Double): JLongToDoubleFunction = fun(_)
+  inline def jLongToIntFunction(inline fun: Long => Int): JLongToIntFunction = fun(_)
+  inline def jLongUnaryOperator(inline op: Long => Long): JLongUnaryOperator = op(_)
+  inline def jObjDoubleConsumer[T](inline code: (T, Double) => Any): JObjDoubleConsumer[T] = (t, d) => code(t, d)
+  inline def jObjIntConsumer[T](inline code: (T, Int) => Any): JObjIntConsumer[T] = (t, i) => code(t, i)
+  inline def jObjLongConsumer[T](inline code: (T, Long) => Any): JObjLongConsumer[T] = (t, l) => code(t, l)
+  inline def jPredicate[T](inline pred: T => Boolean): JPredicate[T] = pred(_)
+  inline def jSupplier[T](expr: => T): JSupplier[T] = () => expr
+  inline def jToDoubleBiFunction[T, U](inline fun: (T, U) => Double): JToDoubleBiFunction[T, U] = fun(_, _)
+  inline def jToDoubleFunction[T](inline fun: T => Double): JToDoubleFunction[T] = fun(_)
+  inline def jToIntBiFunction[T, U](inline fun: (T, U) => Int): JToIntBiFunction[T, U] = fun(_, _)
+  inline def jToIntFunction[T](inline fun: T => Int): JToIntFunction[T] = fun(_)
+  inline def jToLongBiFunction[T, U](inline fun: (T, U) => Long): JToLongBiFunction[T, U] = fun(_, _)
+  inline def jToLongFunction[T](inline fun: T => Long): JToLongFunction[T] = fun(_)
+  inline def jUnaryOperator[T](inline op: T => T): JUnaryOperator[T] = op(_)
 }
