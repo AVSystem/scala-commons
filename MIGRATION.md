@@ -18,6 +18,7 @@ the bottom of this file. Restoration ships incrementally per feature area.
 | `-Wconf` warning suppression blocks                   | Project rule: fix warnings at source, not via suppression.                                                                                                                                              |
 | `-language:experimental.macros`                       | Scala 3 uses `inline` + `scala.quoted`; flag is a no-op.                                                                                                                                                |
 | Scala 2 macro impls (`c.universe`, blackbox/whitebox) | Replaced by Scala 3 quotes/inline during feature-area restoration; the legacy `commons-macros` module is gone.                                                                                          |
+| `MetaMacros.{valueImpl, lazyMetadataImpl, dummy}` real bodies (THIS PHASE) | Fork ships `'{ ??? }` placeholders; the macro-quote SCAFFOLDING is ported in Phase 4 (slice 4.3) but real reflection-based derivation bodies are deferred to Phase 6. Downstream call sites of `MetadataCompanion.Lazy.lazyMetadata` / `AdtMetadataCompanion.materialize` / `metaAnnotations.infer.value` compile cleanly but throw `NotImplementedError` at runtime. **Intentional** — these APIs are meant to be inlined-away by upstream macros (GenCodec in Phase 6); if a runtime caller hits the `???`, it's a usage bug, not a regression. |
 
 ## 2. Deprecated on Scala 3
 
@@ -99,6 +100,23 @@ the bottom of this file. Restoration ships incrementally per feature area.
   `inline given materialize` body triggers a Dotty outer-accessor compiler assertion when `HasGenCodec` is nested inside
   a trait. Investigation deferred to Phase 6 / Dotty bug report.
 - `MacroInstancesTest` un-wrap remains deferred to slice 4.5 per phase plan.
+
+### core — meta MetaMacros + MetadataCompanion (slice 4.3)
+
+- **NEW FILE** `meta/MetaMacros.scala` — 7 macro-trait scaffolds + object MetaMacros companion. Imports
+  `scala.quoted.*` for the first time in the meta layer. Three splice impls (`valueImpl`, `lazyMetadataImpl`,
+  `dummy`) ship `'{ ??? }` bodies per fork (see §1 entry).
+- `meta/MetadataCompanion` reshaped:
+  - `def fromFallback[T](fallback: => Fallback[M[T]]): M[T]` →
+    `given fromFallback: [Real] => (fallback: Fallback[M[Real]]) => M[Real] = fallback.value`
+    (polymorphic context-function given; same idiom as slice 3.3 precedent)
+  - `Lazy` nested companion now `extends MetadataCompanionLazyMacros[M, Lazy]` — inherits
+    `inline given lazyMetadata` macro splice
+  - Added `given notFound: [T] => (forNotLazy: ImplicitNotFound[M[T]]) => ImplicitNotFound[Lazy[T]]` with
+    `@implicitNotFound("#{forNotLazy}")` interpolation
+  - `trait BoundedMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]]` mirror shape (Phase 1 stub had bound + body
+    methods returning `???`; reshaped to match fork)
+- Backlog rows for `MetadataCompanion.scala:27` and `:58` are resolved (Phase-1 TODO tags removed).
 
 ### mongo
 
@@ -190,8 +208,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/meta/AdtMetadataCompanion.scala:33`                     | materialize (bounded) (Scala 2 macro def)                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/meta/AdtMetadataCompanion.scala:36`                     | fromApplyUnapplyProvider (bounded) (Scala 2 macro def)                                                | L      |
 | `core/src/main/scala/com/avsystem/commons/meta/MacroInstances.scala:47`                           | materialize (Scala 2 macro def)                                                                       | L      |
-| `core/src/main/scala/com/avsystem/commons/meta/MetadataCompanion.scala:27`                        | lazyMetadata (Scala 2 macro def)                                                                      | L      |
-| `core/src/main/scala/com/avsystem/commons/meta/MetadataCompanion.scala:58`                        | lazyMetadata (bounded) (Scala 2 macro def)                                                            | L      |
 | `core/src/main/scala/com/avsystem/commons/meta/metaAnnotations.scala:193`                         | value (Scala 2 macro def)                                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:114`                            | SelfAnnotations.materialize (Scala 2 macro def)                                                       | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:12`                             | AnnotationOf.materialize (Scala 2 macro def)                                                          | L      |
