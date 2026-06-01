@@ -396,9 +396,9 @@ object TypedMongoCollection {
     rawCollection: MongoCollection[_]
   )(using meta: MongoEntityMeta[E]
   ): MongoCollection[E] = {
-    import meta.format._
+    import meta.format.{given, _}
     val codecRegistry: CodecRegistry = GenCodecRegistry.create[E](rawCollection.getCodecRegistry)
-    val documentClass = classTag.runtimeClass.asInstanceOf[Class[E]]
+    val documentClass = summon[ClassTag[E]].runtimeClass.asInstanceOf[Class[E]]
     rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)
   }
 }

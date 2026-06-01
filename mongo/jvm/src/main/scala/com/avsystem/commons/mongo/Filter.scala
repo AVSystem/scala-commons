@@ -55,10 +55,10 @@ object Filter {
     trait CanCompare[BSON <: BsonValue]
     object CanCompare {
       def create[BSON <: BsonValue]: CanCompare[BSON] = new CanCompare[BSON] {}
-      implicit val date: CanCompare[BsonDateTime] = create[BsonDateTime]
-      implicit val int32: CanCompare[BsonInt32] = create[BsonInt32]
-      implicit val int64: CanCompare[BsonInt64] = create[BsonInt64]
-      implicit val double: CanCompare[BsonDouble] = create[BsonDouble]
+      given CanCompare[BsonDateTime] = create[BsonDateTime]
+      given CanCompare[BsonInt32] = create[BsonInt32]
+      given CanCompare[BsonInt64] = create[BsonInt64]
+      given CanCompare[BsonDouble] = create[BsonDouble]
     }
   }
 }

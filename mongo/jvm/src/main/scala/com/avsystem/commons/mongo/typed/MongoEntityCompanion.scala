@@ -24,10 +24,10 @@ trait MongoEntityInstances[E <: BaseMongoEntity] extends MongoAdtInstances[E] {
 sealed trait IsMongoAdtOrSubtype[T]
 
 sealed abstract class BaseMongoCompanion[T] extends DataTypeDsl[T] {
-  implicit def codec: GenObjectCodec[T]
-  implicit def format: MongoAdtFormat[T]
+  given codec: GenObjectCodec[T]
+  given format: MongoAdtFormat[T]
 
-  implicit def isMongoAdtOrSubtype[C <: T]: IsMongoAdtOrSubtype[C] = null
+  given isMongoAdtOrSubtype[C <: T]: IsMongoAdtOrSubtype[C] = null
 
   implicit class macroDslExtensions(value: T) {
     @explicitGenerics
@@ -42,17 +42,17 @@ abstract class AbstractMongoDataCompanion[Implicits, E](
   implicits: Implicits
 )(using instances: MacroInstances[Implicits, MongoAdtInstances[E]]
 ) extends BaseMongoCompanion[E] {
-  implicit val codec: GenObjectCodec[E] = instances(implicits, this).codec
-  implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
+  given codec: GenObjectCodec[E] = instances(implicits, this).codec
+  given format: MongoAdtFormat[E] = instances(implicits, this).format
 }
 
 abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](
   implicits: Implicits
 )(using instances: MacroInstances[Implicits, MongoEntityInstances[E]]
 ) extends BaseMongoCompanion[E] {
-  implicit val codec: GenObjectCodec[E] = instances(implicits, this).codec
-  implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
-  implicit val meta: MongoEntityMeta[E] = instances(implicits, this).meta
+  given codec: GenObjectCodec[E] = instances(implicits, this).codec
+  given format: MongoAdtFormat[E] = instances(implicits, this).format
+  given meta: MongoEntityMeta[E] = instances(implicits, this).meta
 
   // TODO[scala3-port]: `E#IDType` type projection forbidden on abstract types; widen to Any to keep signatures (M)
   type ID = Any
