@@ -54,6 +54,9 @@ the bottom of this file. Restoration ships incrementally per feature area.
   compiles).
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
+- `GenCodec` internal value-class wrappers (`IterableOps`, `PairIterableOps`, `ListInputOps`, `ObjectInputOps`)
+  converted from `private implicit class … extends AnyVal` to Scala 3 `extension` blocks. All four are package-private
+  internal helpers — call-site transparent (no downstream API impact).
 
 ### mongo
 
@@ -63,6 +66,23 @@ the bottom of this file. Restoration ships incrementally per feature area.
   Scala 3 forbids type projections on non-concrete prefixes). Public-API signature change.
 - `BsonValueOutput.write` / `BsonValueInput.read` call sites require explicit `using` keyword.
 - `MongoPolyDataCompanion` / `TypedMapFormat` / `TypedMapRefOps` widened from `K[_]` / `D[_]` to `K[Any]` / `D[Any]`.
+- `implicit class XOps[…] extends AnyVal` blocks converted to Scala 3 `extension` blocks across `mongo/typed`:
+  - `MongoEntityCompanion.macroDslExtensions` and `MongoPolyDataCompanion.macroDslExtensions` — `extension (value: T)` /
+    `extension [T](value: D[T])`. Call-site transparent; downstream code that referenced these wrapper classes by name
+    (e.g. `new macroDslExtensions(x)`) will no longer compile (they no longer exist as named types).
+  - `MongoFormat.{collectionFormatOps, dictionaryFormatOps, typedMapFormatOps}` — `assume*` helpers exposed via
+    `extension`. Call-site transparent.
+  - `MongoPropertyRef.{CollectionRefOps, DictionaryRefOps, TypedMapRefOps}` — `extension` blocks. The typed-map variant
+    received `@scala.annotation.targetName("typedMapApply")` to disambiguate from the dictionary variant's `apply(K)`
+    (both erase to `apply(Object)` once promoted from value-class wrapping to extension methods sharing the companion's
+    namespace).
+  - `QueryOperatorsDsl.{VanillaQueryOperatorsDsl.ForCollection, QueryOperatorsDsl.ForCollection}` — `extension` blocks
+    (no named-argument inference issue). Inner helper `format` renamed to `elemFormat` to match fork shape.
+  - `UpdateOperatorsDsl.ForCollection` — exposed via `given Conversion[UpdateOperatorsDsl[C[T], R], ForCollection[C, T, R]]`
+    instead of `extension` because plain extension methods cannot infer `C`/`T` from named-argument call sites such as
+    `push(sort = ...)`. The `ForCollection` type is now a regular `class` (was `implicit class … extends AnyVal`);
+    downstream code that constructed `new ForCollection(dsl)` directly still compiles, but the previous value-class
+    `AnyVal` erasure is gone — boxing now occurs at conversion time. `scala.language.implicitConversions` import added.
 
 ### hocon
 
