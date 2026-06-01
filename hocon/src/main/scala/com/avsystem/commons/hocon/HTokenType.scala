@@ -131,7 +131,7 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
   case object MultilineString extends Patterned(""""{3}("{0,2}[^"]+)*"{3,}""".r)
   case object QuotedString extends Patterned(""""([^"\n\\]+|\\("|\\|/|b|f|n|r|t|u[0-9A-Fa-f]{4}))*"""".r)
 
-  final val values: List[HTokenType] = caseObjects
+  final lazy val values: List[HTokenType] = caseObjects
 }
 
 class HLexer(input: SourceFile) {
