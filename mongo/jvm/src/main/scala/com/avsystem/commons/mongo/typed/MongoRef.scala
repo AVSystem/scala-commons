@@ -250,23 +250,22 @@ sealed trait MongoPropertyRef[E, T]
 object MongoPropertyRef {
   final val Separator = "."
 
-  implicit class CollectionRefOps[E, C[X] <: Iterable[X], T](private val ref: MongoPropertyRef[E, C[T]])
-    extends AnyVal {
+  extension [E, C[X] <: Iterable[X], T](ref: MongoPropertyRef[E, C[T]]) {
     def head: MongoPropertyRef[E, T] = apply(0)
 
     def apply(index: Int): MongoPropertyRef[E, T] =
       MongoRef.ArrayIndexRef(ref, index, ref.format.assumeCollection.elementFormat)
   }
 
-  implicit class DictionaryRefOps[E, M[X, Y] <: BMap[X, Y], K, V](private val ref: MongoPropertyRef[E, M[K, V]])
-    extends AnyVal {
+  extension [E, M[X, Y] <: BMap[X, Y], K, V](ref: MongoPropertyRef[E, M[K, V]]) {
     def apply(key: K): MongoPropertyRef[E, V] = {
       val dictFormat = ref.format.assumeDictionary
       MongoRef.FieldRef(ref, dictFormat.keyCodec.write(key), dictFormat.valueFormat, Opt.Empty)
     }
   }
 
-  implicit class TypedMapRefOps[E, K[_]](private val ref: MongoPropertyRef[E, TypedMap[K]]) extends AnyVal {
+  extension [E, K[_]](ref: MongoPropertyRef[E, TypedMap[K]]) {
+    @scala.annotation.targetName("typedMapApply")
     def apply[T](key: K[T]): MongoPropertyRef[E, T] = {
       val tmFormat = ref.format.assumeTypedMap
       // TODO[scala3-port]: cast follows K[_] → K[Any] workaround in TypedMapFormat (S)
