@@ -55,6 +55,21 @@ the bottom of this file. Restoration ships incrementally per feature area.
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
 
+### core — meta foundation (slice 4.1)
+
+- `meta/AllowDerivation` — new file, sealed-trait derivation-permission marker (`sealed trait AllowDerivation[T]` +
+  `create[T]` factory + `AllowRecursiveDerivation` companion). Consumed by `MacroInstances.materializeInstances`
+  (slice 4.2). No public-API impact for downstream that didn't previously have access to this type.
+- `meta/OptionLike` — preserves `BaseOptionLike` `@bincompat` shim (intentional divergence from fork which drops it;
+  preserves source-compat for downstream binaries built against our Phase 1 stub). Adds fork's
+  `given [O] => (optionLike: OptionLike[O]) => made.Default[O] = () => optionLike.none` bridge so `OptionLike[O]`
+  auto-provides `made.Default[O]` for made-driven derivation.
+- `meta/metadata` — `ParamFlags.rawFlags` no longer carries `@name("dupa")` annotation (fork debug artifact stripped).
+  Affects serialized representation IF any downstream consumer was already serializing/round-tripping with the "dupa"
+  key — extremely unlikely given the annotation was fork debug noise. `metadata.scala` now carries the fork import
+  block (`import made.*`, `import made.annotation.*`, `import com.avsystem.commons.serialization.GenCodec.given`) plus
+  `@transparent`/`HasGenCodec` decoration on every flags/position ADT.
+
 ### mongo
 
 - `BsonRef.Creator.ref`, `DataTypeDsl.{ref, as, is, isNot}`, `TypedMongoUtils.optionalizeFirstArg` are stubbed with
