@@ -19,32 +19,21 @@ trait GuavaInterop {
   def gSupplier[T](expr: => T): GSupplier[T] = () => expr
   def gPredicate[T](pred: T => Boolean): GPredicate[T] = pred(_)
 
-  implicit def toDecorateAsScala[T](gfut: ListenableFuture[T]): DecorateFutureAsScala[T] =
-    new DecorateFutureAsScala(gfut)
-
-  implicit def toDecorateAsScalaPromise[T](gfut: SettableFuture[T]): DecorateSettableFutureAsScala[T] =
-    new DecorateSettableFutureAsScala(gfut)
-
-  implicit def toDecorateAsGuava[T](fut: Future[T]): DecorateFutureAsGuava[T] =
-    new DecorateFutureAsGuava(fut)
-}
-
-object GuavaInterop extends GuavaInterop {
-  class DecorateFutureAsScala[T](private val gfut: ListenableFuture[T]) extends AnyVal {
+  extension [T](gfut: ListenableFuture[T]) {
     def asScala: Future[T] = gfut match {
       case FutureAsListenableFuture(fut) => fut
       case _ => ListenableFutureAsScala(gfut)
     }
 
     def asScalaUnit: Future[Unit] =
-      asScala.toUnit
+      gfut.asScala.toUnit
   }
 
-  class DecorateSettableFutureAsScala[T](private val gfut: SettableFuture[T]) extends AnyVal {
+  extension [T](gfut: SettableFuture[T]) {
     def asScalaPromise: Promise[T] = new SettableFutureAsPromise(gfut)
   }
 
-  class DecorateFutureAsGuava[T](private val fut: Future[T]) extends AnyVal {
+  extension [T](fut: Future[T]) {
     def asGuava: ListenableFuture[T] = fut match {
       case ListenableFutureAsScala(gfut) => gfut
       case _ => FutureAsListenableFuture(fut)
@@ -53,7 +42,9 @@ object GuavaInterop extends GuavaInterop {
     def asGuavaVoid: ListenableFuture[Void] =
       fut.toVoid.asGuava
   }
+}
 
+object GuavaInterop extends GuavaInterop {
   private case class ListenableFutureAsScala[+T](gfut: ListenableFuture[T @uncheckedVariance]) extends Future[T] {
     def isCompleted: Boolean =
       gfut.isDone
