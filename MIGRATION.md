@@ -38,6 +38,13 @@ the bottom of this file. Restoration ships incrementally per feature area.
 - `crossScalaVersions` removed — the build is single-axis Scala 3.8.2.
 - Java CI matrix is Temurin 17 / 21 / 25 (matches upstream/scala-3 baseline).
 
+### import syntax
+
+- All `import X._` wildcard imports modernized to Scala 3 `import X.*` (top-level and method-scoped occurrences).
+- All `import X.{Y => Z}` rename clauses converted to Scala 3 `import X.Y as Z` (or `import X.{Y as Z, ...}` for multi-selector forms).
+- `import java.io.{ObjectInput => _, _}` exclude+wildcard pattern rewritten as `import java.io.{ObjectInput as _, *}`.
+- Scaladoc `@example` blocks updated to use the new syntax to match emitted code.
+
 ### core
 
 - Type parameter wildcards `K[_]` / `D[_]` / `C[_]` narrowed to `K[Any]` / `D[Any]` / `C[Any]` at a few derivation
