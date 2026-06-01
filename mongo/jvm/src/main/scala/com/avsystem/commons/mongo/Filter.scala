@@ -18,13 +18,13 @@ object Filter {
   def or(filters: Bson*): Bson = F.or(filters.asJava)
 
   @deprecated(message = "Use `equal` instead", since = "1.19.9")
-  def eq[A](key: DocKey[A, _], value: A): Bson = equal(key, value)
+  def eq[A](key: DocKey[A, ?], value: A): Bson = equal(key, value)
 
   @deprecated(message = "Use `notEqual` instead", since = "1.19.9")
-  def ne[A](key: DocKey[A, _], value: A): Bson = notEqual(key, value)
+  def ne[A](key: DocKey[A, ?], value: A): Bson = notEqual(key, value)
 
-  def equal[A](key: DocKey[A, _], value: A): Bson = F.eq(key.key, key.codec.toBson(value))
-  def notEqual[A](key: DocKey[A, _], value: A): Bson = F.ne(key.key, key.codec.toBson(value))
+  def equal[A](key: DocKey[A, ?], value: A): Bson = F.eq(key.key, key.codec.toBson(value))
+  def notEqual[A](key: DocKey[A, ?], value: A): Bson = F.ne(key.key, key.codec.toBson(value))
 
   def lt[A, BSON <: BsonValue: CanCompare](key: DocKey[A, BSON], value: A): Bson = F.lt(key.key, key.codec.toBson(value))
 
@@ -36,19 +36,19 @@ object Filter {
   def gte[A, BSON <: BsonValue: CanCompare](key: DocKey[A, BSON], value: A): Bson =
     F.gte(key.key, key.codec.toBson(value))
 
-  def in[A](key: DocKey[A, _], values: Iterable[A]): Bson = F.in(key.key, values.map(key.codec.toBson).asJava)
+  def in[A](key: DocKey[A, ?], values: Iterable[A]): Bson = F.in(key.key, values.map(key.codec.toBson).asJava)
 
-  def nin[A](key: DocKey[A, _], values: Iterable[A]): Bson = F.nin(key.key, values.map(key.codec.toBson).asJava)
+  def nin[A](key: DocKey[A, ?], values: Iterable[A]): Bson = F.nin(key.key, values.map(key.codec.toBson).asJava)
 
   def regex[A](key: DocKey[A, BsonString], pattern: String): Bson = F.regex(key.key, pattern)
 
-  def exists(key: DocKey[_, _]): Bson = F.exists(key.key, true)
+  def exists(key: DocKey[?, ?]): Bson = F.exists(key.key, true)
 
-  def notExists(key: DocKey[_, _]): Bson = F.exists(key.key, false)
+  def notExists(key: DocKey[?, ?]): Bson = F.exists(key.key, false)
 
-  def elemMatch(key: DocKey[_, _ <: BsonArray], filter: Bson): Bson = F.elemMatch(key.key, filter)
+  def elemMatch(key: DocKey[?, ? <: BsonArray], filter: Bson): Bson = F.elemMatch(key.key, filter)
 
-  def contains[A, COL <: Iterable[A]](key: DocKey[COL, _ <: BsonArray], value: A)(implicit fac: Factory[A, COL]): Bson =
+  def contains[A, COL <: Iterable[A]](key: DocKey[COL, ? <: BsonArray], value: A)(implicit fac: Factory[A, COL]): Bson =
     F.eq(key.key, key.codec.toBson((fac.newBuilder += value).result()).asScala.head)
 
   object Limitations {

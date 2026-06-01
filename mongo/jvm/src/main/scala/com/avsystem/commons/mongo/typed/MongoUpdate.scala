@@ -81,7 +81,7 @@ object MongoUpdate {
   ) extends MongoUpdate[T]
 
   final case class MultiUpdate[E](
-    propUpdates: Vector[PropertyUpdate[E, _]]
+    propUpdates: Vector[PropertyUpdate[E, ?]]
   ) extends MongoDocumentUpdate[E]
 
   final case class PropertyUpdate[E, T](

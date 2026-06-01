@@ -36,7 +36,7 @@ import org.bson.{BsonDocument, BsonValue}
   *   type of the MongoDB entity
   */
 case class MongoIndex[E](
-  fields: Vector[(MongoPropertyRef[E, _], MongoIndexType)],
+  fields: Vector[(MongoPropertyRef[E, ?], MongoIndexType)],
   setupOptions: IndexOptions => IndexOptions = identity,
 ) {
   require(fields.nonEmpty, "MongoDB index cannot be empty")
@@ -57,13 +57,13 @@ case class MongoIndex[E](
   }
 }
 object MongoIndex {
-  def apply[E](fields: (MongoPropertyRef[E, _], MongoIndexType)*): MongoIndex[E] =
+  def apply[E](fields: (MongoPropertyRef[E, ?], MongoIndexType)*): MongoIndex[E] =
     MongoIndex(fields.toVector)
 
-  def ascending[E](fields: MongoPropertyRef[E, _]*): MongoIndex[E] =
+  def ascending[E](fields: MongoPropertyRef[E, ?]*): MongoIndex[E] =
     MongoIndex(fields.iterator.map(f => f -> MongoIndexType.Ascending).toVector)
 
-  def descending[E](fields: MongoPropertyRef[E, _]*): MongoIndex[E] =
+  def descending[E](fields: MongoPropertyRef[E, ?]*): MongoIndex[E] =
     MongoIndex(fields.iterator.map(f => f -> MongoIndexType.Descending).toVector)
 }
 

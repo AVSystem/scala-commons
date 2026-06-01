@@ -12,7 +12,7 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
     new FilterDocBuilder(newPrefix.opt, filterDocs)
   }
 
-  @tailrec def addImpliedFilters(ref: MongoRef[_, _]): Unit = ref match {
+  @tailrec def addImpliedFilters(ref: MongoRef[?, ?]): Unit = ref match {
     case MongoRef.RootRef(_) =>
 
     case MongoRef.RootSubtypeRef(fullRef, caseFieldName, caseNames, _) =>

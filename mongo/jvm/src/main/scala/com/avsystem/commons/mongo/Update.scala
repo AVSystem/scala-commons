@@ -10,8 +10,8 @@ import org.bson.conversions.Bson
 object Update {
   def combine(updates: Bson*): Bson = U.combine(updates.asJava)
 
-  def set[A](key: DocKey[A, _], value: A): Bson = U.set(key.key, key.codec.toBson(value))
-  def unset(key: DocKey[_, _]): Bson = U.unset(key.key)
+  def set[A](key: DocKey[A, ?], value: A): Bson = U.set(key.key, key.codec.toBson(value))
+  def unset(key: DocKey[?, ?]): Bson = U.unset(key.key)
 
-  def max[A](key: DocKey[A, _], value: A): Bson = U.max(key.key, key.codec.toBson(value))
+  def max[A](key: DocKey[A, ?], value: A): Bson = U.max(key.key, key.codec.toBson(value))
 }
