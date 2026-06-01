@@ -40,7 +40,7 @@ sealed abstract class BaseMongoCompanion[T] extends DataTypeDsl[T] {
 
 abstract class AbstractMongoDataCompanion[Implicits, E](
   implicits: Implicits
-)(implicit instances: MacroInstances[Implicits, MongoAdtInstances[E]]
+)(using instances: MacroInstances[Implicits, MongoAdtInstances[E]]
 ) extends BaseMongoCompanion[E] {
   implicit val codec: GenObjectCodec[E] = instances(implicits, this).codec
   implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
@@ -48,7 +48,7 @@ abstract class AbstractMongoDataCompanion[Implicits, E](
 
 abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](
   implicits: Implicits
-)(implicit instances: MacroInstances[Implicits, MongoEntityInstances[E]]
+)(using instances: MacroInstances[Implicits, MongoEntityInstances[E]]
 ) extends BaseMongoCompanion[E] {
   implicit val codec: GenObjectCodec[E] = instances(implicits, this).codec
   implicit val format: MongoAdtFormat[E] = instances(implicits, this).format

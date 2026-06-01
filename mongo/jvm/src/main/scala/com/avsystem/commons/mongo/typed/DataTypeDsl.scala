@@ -14,7 +14,7 @@ trait DataRefDsl[E, T] {
   def SelfRef: ThisRef[E, T]
 
   // called by .ref macro to ensure that the source type is not opaque and inner references are possible
-  @macroPrivate def asAdtRef(implicit ev: IsMongoAdtOrSubtype[T]): ThisRef[E, T] = SelfRef
+  @macroPrivate def asAdtRef(using ev: IsMongoAdtOrSubtype[T]): ThisRef[E, T] = SelfRef
 
   /** A macro that interprets an anonymous function as a [[MongoPropertyRef]].
     *

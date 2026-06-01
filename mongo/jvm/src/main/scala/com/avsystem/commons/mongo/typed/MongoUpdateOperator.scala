@@ -44,7 +44,7 @@ sealed trait MongoUpdateOperator[T] extends Product {
   }
 }
 object MongoUpdateOperator {
-  final class CurrentDateType(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+  final class CurrentDateType(using enumCtx: EnumCtx) extends AbstractValueEnum
   object CurrentDateType extends AbstractValueEnumCompanion[CurrentDateType] {
     final val Timestamp, Date: Value = new CurrentDateType
   }

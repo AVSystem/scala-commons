@@ -101,7 +101,7 @@ object QueryOperatorsDsl {
     def containsAll(values: Iterable[T]): R = dsl.all(values)
   }
 
-  implicit def forOptional[O, T, R](dsl: QueryOperatorsDsl[O, R])(implicit optionLike: OptionLike.Aux[O, T])
+  implicit def forOptional[O, T, R](dsl: QueryOperatorsDsl[O, R])(using optionLike: OptionLike.Aux[O, T])
     : ForOptional[O, T, R] =
     new ForOptional(dsl)
 
@@ -113,7 +113,7 @@ object QueryOperatorsDsl {
   }
 }
 
-final class RegexFlag(val javaFlag: Int, val char: Char)(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+final class RegexFlag(val javaFlag: Int, val char: Char)(using enumCtx: EnumCtx) extends AbstractValueEnum
 object RegexFlag extends AbstractValueEnumCompanion[RegexFlag] {
   // code based on org.bson.codecs.PatternCodec
 

@@ -21,7 +21,7 @@ trait MongoPolyAdtInstances[D[_]] {
 
 abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](
   implicits: Implicits
-)(implicit instances: MacroInstances[Implicits, MongoPolyAdtInstances[D]]
+)(using instances: MacroInstances[Implicits, MongoPolyAdtInstances[D]]
 ) {
   implicit def codec[T: GenCodec]: GenObjectCodec[D[T]] = instances(implicits, this).codec[T]
 

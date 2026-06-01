@@ -22,7 +22,7 @@ trait BsonCodec[A, BSON <: BsonValue] { self =>
 
   def key(key: String): DocKey[A, BSON] = new DocKey[A, BSON](key, this)
 
-  def collection[C[X] <: IterableOnce[X]](implicit fac: Factory[A, C[A]]): BsonCodec[C[A], BsonArray] =
+  def collection[C[X] <: IterableOnce[X]](using fac: Factory[A, C[A]]): BsonCodec[C[A], BsonArray] =
     BsonCodec.create[C[A], BsonArray](
       ba => ba.iterator().asScala.map(bv => self.fromBson(bv.asInstanceOf[BSON])).to(fac),
       col => new BsonArray(col.iterator.map(self.toBson).to(JList)),
