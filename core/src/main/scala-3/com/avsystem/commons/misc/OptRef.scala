@@ -45,10 +45,11 @@ object OptRef {
   * {{{
   *   public void takeMaybeString(String str);
   * }}}
-  * and `null` will be used to represent absence of value. <p/> This comes at the cost of `A` having to be a nullable
-  * type. Also, empty value is represented internally using `null` which unfortunately makes [[OptRef]] suffer from
-  * SI-7396 (`hashCode` fails on `OptRef.Empty` which means that you can't add [[OptRef]] values into hash sets or use
-  * them as hash map keys).
+  * and `null` will be used to represent absence of value. <p/> On Scala 3, nullability is encoded directly in the
+  * stored value's type as `A | Null` rather than constraining the type parameter `A` itself — `A` may be any type, and
+  * the wrapper carries an explicit `A | Null` slot whose `null` inhabitant represents absence. Empty value is
+  * represented internally using `null`, which unfortunately makes [[OptRef]] suffer from SI-7396 (`hashCode` fails on
+  * `OptRef.Empty` which means that you can't add [[OptRef]] values into hash sets or use them as hash map keys).
   */
 final class OptRef[+A] @publicInBinary private[misc] (private[misc] val value: A | Null)
   extends AnyVal with OptBase[A] with Serializable {
