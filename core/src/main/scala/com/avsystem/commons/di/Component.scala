@@ -34,7 +34,7 @@ object ComponentInfo {
     )
 
   @compileTimeOnly("implicit ComponentInfo is only available inside code passed to component/singleton macro")
-  implicit def info: ComponentInfo = sys.error("stub")
+  given info: ComponentInfo = sys.error("stub")
 }
 
 /** Represents a lazily initialized component in a dependency injection setting. The name "component" indicates that the

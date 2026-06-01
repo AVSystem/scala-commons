@@ -82,8 +82,6 @@ object AutoOptionalParam {
 }
 
 trait AutoOptionalParams {
-  given allAutoOptionalParams[T](using
-    optionLike: OptionLike[T]
-  ): AutoOptionalParam[T] = AutoOptionalParam[T]
+  given allAutoOptionalParams[T](using optionLike: OptionLike[T]): AutoOptionalParam[T] = AutoOptionalParam[T]
 }
 object AutoOptionalParams extends AutoOptionalParams

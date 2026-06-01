@@ -67,13 +67,13 @@ class RunInQueueEC extends ExecutionContextExecutor {
 }
 
 trait HasExecutionContext {
-  protected implicit def executionContext: ExecutionContext
+  protected given executionContext: ExecutionContext
 }
 
 trait HasRunNowEC extends HasExecutionContext {
-  protected implicit final def executionContext: ExecutionContext = RunNowEC
+  protected implicit val executionContext: ExecutionContext = RunNowEC
 }
 
 trait HasRunInQueueEC extends HasExecutionContext {
-  protected implicit final def executionContext: ExecutionContext = RunInQueueEC
+  protected implicit val executionContext: ExecutionContext = RunInQueueEC
 }

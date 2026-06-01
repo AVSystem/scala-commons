@@ -8,8 +8,7 @@ trait TupleGenCodecs { this: GenCodec.type =>
   given tuple2Codec[T1, T2](using r1: GenCodec[T1], r2: GenCodec[T2]): GenCodec[(T1, T2)] =
     mkTupleCodec(r1, r2)
 
-  given tuple3Codec[T1, T2, T3](using r1: GenCodec[T1], r2: GenCodec[T2], r3: GenCodec[T3])
-    : GenCodec[(T1, T2, T3)] =
+  given tuple3Codec[T1, T2, T3](using r1: GenCodec[T1], r2: GenCodec[T2], r3: GenCodec[T3]): GenCodec[(T1, T2, T3)] =
     mkTupleCodec(r1, r2, r3)
 
   given tuple4Codec[T1, T2, T3, T4](
@@ -284,29 +283,8 @@ trait TupleGenCodecs { this: GenCodec.type =>
   ): GenCodec[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)] =
     mkTupleCodec(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20)
 
-  given tuple21Codec[
-    T1,
-    T2,
-    T3,
-    T4,
-    T5,
-    T6,
-    T7,
-    T8,
-    T9,
-    T10,
-    T11,
-    T12,
-    T13,
-    T14,
-    T15,
-    T16,
-    T17,
-    T18,
-    T19,
-    T20,
-    T21,
-  ](using    r1: GenCodec[T1],
+  given tuple21Codec[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](
+    using r1: GenCodec[T1],
     r2: GenCodec[T2],
     r3: GenCodec[T3],
     r4: GenCodec[T4],
@@ -330,30 +308,8 @@ trait TupleGenCodecs { this: GenCodec.type =>
   ): GenCodec[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)] =
     mkTupleCodec(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20, r21)
 
-  given tuple22Codec[
-    T1,
-    T2,
-    T3,
-    T4,
-    T5,
-    T6,
-    T7,
-    T8,
-    T9,
-    T10,
-    T11,
-    T12,
-    T13,
-    T14,
-    T15,
-    T16,
-    T17,
-    T18,
-    T19,
-    T20,
-    T21,
-    T22,
-  ](using    r1: GenCodec[T1],
+  given tuple22Codec[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](
+    using r1: GenCodec[T1],
     r2: GenCodec[T2],
     r3: GenCodec[T3],
     r4: GenCodec[T4],

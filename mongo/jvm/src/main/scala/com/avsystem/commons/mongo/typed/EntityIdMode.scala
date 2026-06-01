@@ -31,7 +31,6 @@ object EntityIdMode {
 
   given explicitIdMode[E <: MongoEntity[ID], ID]: EntityIdMode[E, ID] = Explicit()
 
-  given autoIdMode[E <: AutoIdMongoEntity[ID], ID](using
-    idWrapping: TransparentWrapping[ObjectId, ID]
-  ): EntityIdMode[E, ID] = Auto(idWrapping)
+  given autoIdMode[E <: AutoIdMongoEntity[ID], ID](using idWrapping: TransparentWrapping[ObjectId, ID])
+    : EntityIdMode[E, ID] = Auto(idWrapping)
 }

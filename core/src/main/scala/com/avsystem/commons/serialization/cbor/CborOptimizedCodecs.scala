@@ -18,19 +18,18 @@ trait CborOptimizedCodecs {
     * serialization. If the key type has a `GenKeyCodec` then this `GenCodec` behaves exactly the same as the standard
     * one for non-CBOR inputs/outputs.
     */
-  given cborMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](using
-    fac: Factory[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V]] = mkMapCodec(keyCodec => {
+  given cborMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](using fac: Factory[(K, V), M[K, V]])
+    : GenObjectCodec[M[K, V]] = mkMapCodec { keyCodec =>
     given GenKeyCodec[K] = keyCodec
     GenCodec.mapCodec[M, K, V]
-  })
+  }
 
-  given cborJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](using
-    fac: JFactory[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V]] = mkMapCodec(keyCodec => {
+  given cborJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](
+    using fac: JFactory[(K, V), M[K, V]]
+  ): GenObjectCodec[M[K, V]] = mkMapCodec { keyCodec =>
     given GenKeyCodec[K] = keyCodec
     GenCodec.jMapCodec[M, K, V]
-  })
+  }
 
   private def mkMapCodec[M[X, Y] <: AnyRef, K: GenCodec: OptGenKeyCodec, V: GenCodec](
     mkStdCodec: GenKeyCodec[K] => GenObjectCodec[M[K, V]]

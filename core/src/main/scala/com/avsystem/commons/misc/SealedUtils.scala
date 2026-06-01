@@ -123,8 +123,8 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
       ),
     )
 
-  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
-  implicit lazy val codec: GenCodec[T] = GenCodec.nullableSimple[T](
+  given keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
+  given codec: GenCodec[T] = GenCodec.nullableSimple[T](
     input => decode(input.readString()),
     (output, value) => output.writeString(value.name),
   )

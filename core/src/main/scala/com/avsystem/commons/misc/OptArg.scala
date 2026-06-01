@@ -1,5 +1,7 @@
 package com.avsystem.commons.misc
 
+import scala.annotation.targetName
+
 object OptArg {
 
   /** This conversion allows you to pass unwrapped values where `OptArg` is required. Kept as `implicit def` (not a
@@ -9,8 +11,10 @@ object OptArg {
   implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
 
   // additional implicits to cover most common, safe numeric promotions
-  implicit def intToOptArgLong(int: Int): OptArg[Long] = OptArg(int)
-  implicit def intToOptArgDouble(int: Int): OptArg[Double] = OptArg(int)
+  @targetName("intToOptArgLong")
+  given Conversion[Int, OptArg[Long]] = OptArg(_)
+  @targetName("intToOptArgDouble")
+  given Conversion[Int, OptArg[Double]] = OptArg(_)
 
   private object EmptyMarker extends Serializable
 

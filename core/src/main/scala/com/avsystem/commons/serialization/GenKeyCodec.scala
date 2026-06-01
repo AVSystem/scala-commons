@@ -93,4 +93,42 @@ object GenKeyCodec {
   given fromTransparentWrapping[R, T](using tw: TransparentWrapping[R, T], wrappedCodec: GenKeyCodec[R])
     : GenKeyCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
+
+  // Source-compat aliases for callers that previously referenced these by name.
+  @deprecated("Use summon[GenKeyCodec[Boolean]]", since = "scala-3-port")
+  def BooleanKeyCodec: GenKeyCodec[Boolean] = summon
+  @deprecated("Use summon[GenKeyCodec[Char]]", since = "scala-3-port")
+  def CharKeyCodec: GenKeyCodec[Char] = summon
+  @deprecated("Use summon[GenKeyCodec[Byte]]", since = "scala-3-port")
+  def ByteKeyCodec: GenKeyCodec[Byte] = summon
+  @deprecated("Use summon[GenKeyCodec[Short]]", since = "scala-3-port")
+  def ShortKeyCodec: GenKeyCodec[Short] = summon
+  @deprecated("Use summon[GenKeyCodec[Int]]", since = "scala-3-port")
+  def IntKeyCodec: GenKeyCodec[Int] = summon
+  @deprecated("Use summon[GenKeyCodec[Long]]", since = "scala-3-port")
+  def LongKeyCodec: GenKeyCodec[Long] = summon
+  @deprecated("Use summon[GenKeyCodec[BigInt]]", since = "scala-3-port")
+  def BigIntKeyCodec: GenKeyCodec[BigInt] = summon
+  @deprecated("Use summon[GenKeyCodec[JBoolean]]", since = "scala-3-port")
+  def JBooleanKeyCodec: GenKeyCodec[JBoolean] = summon
+  @deprecated("Use summon[GenKeyCodec[JCharacter]]", since = "scala-3-port")
+  def JCharacterKeyCodec: GenKeyCodec[JCharacter] = summon
+  @deprecated("Use summon[GenKeyCodec[JByte]]", since = "scala-3-port")
+  def JByteKeyCodec: GenKeyCodec[JByte] = summon
+  @deprecated("Use summon[GenKeyCodec[JShort]]", since = "scala-3-port")
+  def JShortKeyCodec: GenKeyCodec[JShort] = summon
+  @deprecated("Use summon[GenKeyCodec[JInteger]]", since = "scala-3-port")
+  def JIntKeyCodec: GenKeyCodec[JInteger] = summon
+  @deprecated("Use summon[GenKeyCodec[JLong]]", since = "scala-3-port")
+  def JLongKeyCodec: GenKeyCodec[JLong] = summon
+  @deprecated("Use summon[GenKeyCodec[JBigInteger]]", since = "scala-3-port")
+  def JBigIntegerKeyCodec: GenKeyCodec[JBigInteger] = summon
+  @deprecated("Use summon[GenKeyCodec[String]]", since = "scala-3-port")
+  def StringKeyCodec: GenKeyCodec[String] = summon
+  @deprecated("Use summon[GenKeyCodec[Symbol]]", since = "scala-3-port")
+  def SymbolKeyCodec: GenKeyCodec[Symbol] = summon
+  @deprecated("Use summon[GenKeyCodec[Timestamp]]", since = "scala-3-port")
+  def TimestampKeyCodec: GenKeyCodec[Timestamp] = summon
+  @deprecated("Use summon[GenKeyCodec[Bytes]]", since = "scala-3-port")
+  def BytesKeyCodec: GenKeyCodec[Bytes] = summon
 }

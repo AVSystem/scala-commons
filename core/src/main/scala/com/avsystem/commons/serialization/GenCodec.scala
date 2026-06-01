@@ -348,53 +348,53 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   private def notNull = throw new ReadFailure("not null")
 
-  implicit lazy val NothingCodec: GenCodec[Nothing] =
+  given NothingCodec: GenCodec[Nothing] =
     create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))
-  implicit lazy val NullCodec: GenCodec[Null] =
+  given NullCodec: GenCodec[Null] =
     create[Null](i => if (i.readNull()) null else notNull, (o, _) => o.writeNull())
-  implicit lazy val UnitCodec: GenCodec[Unit] =
+  given UnitCodec: GenCodec[Unit] =
     create[Unit](i => if (i.readNull()) () else notNull, (o, _) => o.writeNull())
-  implicit lazy val VoidCodec: GenCodec[Void] =
+  given VoidCodec: GenCodec[Void] =
     create[Void](i => if (i.readNull()) null else notNull, (o, _) => o.writeNull())
 
-  implicit lazy val BooleanCodec: GenCodec[Boolean] = nonNullSimple(_.readBoolean(), _ writeBoolean _)
-  implicit lazy val CharCodec: GenCodec[Char] = nonNullSimple(_.readChar(), _ writeChar _)
-  implicit lazy val ByteCodec: GenCodec[Byte] = nonNullSimple(_.readByte(), _ writeByte _)
-  implicit lazy val ShortCodec: GenCodec[Short] = nonNullSimple(_.readShort(), _ writeShort _)
-  implicit lazy val IntCodec: GenCodec[Int] = nonNullSimple(_.readInt(), _ writeInt _)
-  implicit lazy val LongCodec: GenCodec[Long] = nonNullSimple(_.readLong(), _ writeLong _)
-  implicit lazy val FloatCodec: GenCodec[Float] = nonNullSimple(_.readFloat(), _ writeFloat _)
-  implicit lazy val DoubleCodec: GenCodec[Double] = nonNullSimple(_.readDouble(), _ writeDouble _)
-  implicit lazy val BigIntCodec: GenCodec[BigInt] = nullableSimple(_.readBigInt(), _ writeBigInt _)
-  implicit lazy val BigDecimalCodec: GenCodec[BigDecimal] = nullableSimple(_.readBigDecimal(), _ writeBigDecimal _)
+  given BooleanCodec: GenCodec[Boolean] = nonNullSimple(_.readBoolean(), _ writeBoolean _)
+  given CharCodec: GenCodec[Char] = nonNullSimple(_.readChar(), _ writeChar _)
+  given ByteCodec: GenCodec[Byte] = nonNullSimple(_.readByte(), _ writeByte _)
+  given ShortCodec: GenCodec[Short] = nonNullSimple(_.readShort(), _ writeShort _)
+  given IntCodec: GenCodec[Int] = nonNullSimple(_.readInt(), _ writeInt _)
+  given LongCodec: GenCodec[Long] = nonNullSimple(_.readLong(), _ writeLong _)
+  given FloatCodec: GenCodec[Float] = nonNullSimple(_.readFloat(), _ writeFloat _)
+  given DoubleCodec: GenCodec[Double] = nonNullSimple(_.readDouble(), _ writeDouble _)
+  given BigIntCodec: GenCodec[BigInt] = nullableSimple(_.readBigInt(), _ writeBigInt _)
+  given BigDecimalCodec: GenCodec[BigDecimal] = nullableSimple(_.readBigDecimal(), _ writeBigDecimal _)
 
-  implicit lazy val JBooleanCodec: GenCodec[JBoolean] = nullableSimple(_.readBoolean(), _ writeBoolean _)
-  implicit lazy val JCharacterCodec: GenCodec[JCharacter] = nullableSimple(_.readChar(), _ writeChar _)
-  implicit lazy val JByteCodec: GenCodec[JByte] = nullableSimple(_.readByte(), _ writeByte _)
-  implicit lazy val JShortCodec: GenCodec[JShort] = nullableSimple(_.readShort(), _ writeShort _)
-  implicit lazy val JIntegerCodec: GenCodec[JInteger] = nullableSimple(_.readInt(), _ writeInt _)
-  implicit lazy val JLongCodec: GenCodec[JLong] = nullableSimple(_.readLong(), _ writeLong _)
-  implicit lazy val JFloatCodec: GenCodec[JFloat] = nullableSimple(_.readFloat(), _ writeFloat _)
-  implicit lazy val JDoubleCodec: GenCodec[JDouble] = nullableSimple(_.readDouble(), _ writeDouble _)
-  implicit lazy val JBigIntegerCodec: GenCodec[JBigInteger] =
+  given JBooleanCodec: GenCodec[JBoolean] = nullableSimple(_.readBoolean(), _ writeBoolean _)
+  given JCharacterCodec: GenCodec[JCharacter] = nullableSimple(_.readChar(), _ writeChar _)
+  given JByteCodec: GenCodec[JByte] = nullableSimple(_.readByte(), _ writeByte _)
+  given JShortCodec: GenCodec[JShort] = nullableSimple(_.readShort(), _ writeShort _)
+  given JIntegerCodec: GenCodec[JInteger] = nullableSimple(_.readInt(), _ writeInt _)
+  given JLongCodec: GenCodec[JLong] = nullableSimple(_.readLong(), _ writeLong _)
+  given JFloatCodec: GenCodec[JFloat] = nullableSimple(_.readFloat(), _ writeFloat _)
+  given JDoubleCodec: GenCodec[JDouble] = nullableSimple(_.readDouble(), _ writeDouble _)
+  given JBigIntegerCodec: GenCodec[JBigInteger] =
     nullableSimple(_.readBigInt().bigInteger, (o, v) => o.writeBigInt(BigInt(v)))
-  implicit lazy val JBigDecimalCodec: GenCodec[JBigDecimal] =
+  given JBigDecimalCodec: GenCodec[JBigDecimal] =
     nullableSimple(_.readBigDecimal().bigDecimal, (o, v) => o.writeBigDecimal(BigDecimal(v)))
 
-  implicit lazy val JDateCodec: GenCodec[JDate] =
+  given JDateCodec: GenCodec[JDate] =
     nullableSimple(i => new JDate(i.readTimestamp()), (o, d) => o.writeTimestamp(d.getTime))
-  implicit lazy val StringCodec: GenCodec[String] =
+  given StringCodec: GenCodec[String] =
     nullableSimple(_.readString(), _ writeString _)
-  implicit lazy val SymbolCodec: GenCodec[Symbol] =
+  given SymbolCodec: GenCodec[Symbol] =
     nullableSimple(i => Symbol(i.readString()), (o, s) => o.writeString(s.name))
-  implicit lazy val ByteArrayCodec: GenCodec[Array[Byte]] =
+  given ByteArrayCodec: GenCodec[Array[Byte]] =
     nullableSimple(_.readBinary(), _ writeBinary _)
-  implicit lazy val UuidCodec: GenCodec[UUID] =
+  given UuidCodec: GenCodec[UUID] =
     nullableSimple(i => UUID.fromString(i.readString()), (o, v) => o.writeString(v.toString))
 
-  implicit lazy val TimestampCodec: GenCodec[Timestamp] =
+  given TimestampCodec: GenCodec[Timestamp] =
     GenCodec.nonNullSimple(i => Timestamp(i.readTimestamp()), (o, t) => o.writeTimestamp(t.millis))
-  implicit lazy val BytesCodec: GenCodec[Bytes] =
+  given BytesCodec: GenCodec[Bytes] =
     GenCodec.nullableSimple(i => Bytes(i.readBinary()), (o, b) => o.writeBinary(b.bytes))
 
   private implicit class IterableOps[A](private val coll: BIterable[A]) extends AnyVal {
@@ -503,32 +503,25 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
-  given seqCodec[C[X] <: BSeq[X], T: GenCodec](using
-    fac: Factory[T, C[T]]
-  ): GenCodec[C[T] with BSeq[T]] =
+  given seqCodec[C[X] <: BSeq[X], T: GenCodec](using fac: Factory[T, C[T]]): GenCodec[C[T] with BSeq[T]] =
     nullableList[C[T] with BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
-  given setCodec[C[X] <: BSet[X], T: GenCodec](using
-    fac: Factory[T, C[T]]
-  ): GenCodec[C[T] with BSet[T]] =
+  given setCodec[C[X] <: BSet[X], T: GenCodec](using fac: Factory[T, C[T]]): GenCodec[C[T] with BSet[T]] =
     nullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
-  given jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](using
-    cbf: JFactory[T, C[T]]
-  ): GenCodec[C[T] with JCollection[T]] =
+  given jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](using cbf: JFactory[T, C[T]])
+    : GenCodec[C[T] with JCollection[T]] =
     nullableList[C[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
-  given mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](using
-    fac: Factory[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V]] =
+  given mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](using fac: Factory[(K, V), M[K, V]])
+    : GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.writeToObject(oo),
     )
 
-  given jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](using
-    cbf: JFactory[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V]] =
+  given jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](using cbf: JFactory[(K, V), M[K, V]])
+    : GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.asScala.writeToObject(oo),
@@ -598,8 +591,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  given fromTransparentWrapping[R, T](using tw: TransparentWrapping[R, T], wrappedCodec: GenCodec[R])
-    : GenCodec[T] =
+  given fromTransparentWrapping[R, T](using tw: TransparentWrapping[R, T], wrappedCodec: GenCodec[R]): GenCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 
   given fromFallback[T](using fallback: Fallback[GenCodec[T]]): GenCodec[T] =
