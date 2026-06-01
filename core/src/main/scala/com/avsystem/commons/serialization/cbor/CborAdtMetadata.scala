@@ -42,7 +42,7 @@ abstract class HasCborCodecWithDeps[D, T](
   */
 class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] = infer.value)
   extends AnnotationAggregate {
-  val rawKey: RawCbor = CborOutput.writeRawCbor(discriminatorFieldKey)(codec)
+  val rawKey: RawCbor = CborOutput.writeRawCbor(discriminatorFieldKey)(using codec)
 
   @flatten
   final def aggregated: List[StaticAnnotation] = reifyAggregated
@@ -65,7 +65,7 @@ class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] =
   *   }}}
   */
 class cborKey[T](key: T, @infer codec: GenCodec[T] = infer.value) extends StaticAnnotation {
-  val rawKey: RawCbor = CborOutput.writeRawCbor(key)(codec)
+  val rawKey: RawCbor = CborOutput.writeRawCbor(key)(using codec)
 }
 
 sealed trait CborAdtMetadata[T] extends TypedMetadata[T] {

@@ -41,54 +41,17 @@ trait GenCodec[T] {
 object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def apply[T](implicit codec: GenCodec[T]): GenCodec[T] = codec
 
-  /** Macro that automatically materializes a [[GenCodec]] for some type `T`, which must be one of: <ul> <li>singleton
-    * type, e.g. an `object`</li> <li>case class whose every field type has its own [[GenCodec]]</li>
-    * <li>(generalization of case classes) class or trait whose companion object has a pair of case-class-like `apply`
-    * and `unapply` methods and every parameter type of `apply` method has its own [[GenCodec]] </li> <li>sealed
-    * hierarchy in which every non-abstract subclass either has its own [[GenCodec]] or it can be automatically
-    * materialized with the same mechanism</li> </ul> Note that automatic materialization does NOT descend into types
-    * that `T` is made of (e.g. types of case class fields must have their own codecs independently declared). If you
-    * want recursive materialization, use `materializeRecursively`.
-    */
-  def materialize[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
+  // TODO[scala3-port]: GenCodec.materialize (Scala 2 macro def) (L)
+  def materialize[T]: GenCodec[T] = ???
 
-  /** Materializes a [[GenCodec]] for type `T` using `apply` and `unapply`/`unapplySeq` methods available on passed
-    * `applyUnapplyProvider` object. The signatures of `apply` and `unapply` must be as if `T` was a case class and
-    * `applyUnapplyProvider` was its companion object. This is useful for easy derivation of [[GenCodec]] for third
-    * party classes which don't have their own companion objects with `apply` and `unapply`. So essentially the
-    * `applyUnapplyProvider` is a "fake companion object" of type `T`.
-    *
-    * Example:
-    * {{{
-    *   class ThirdParty { ... }
-    *
-    *   object ThirdPartyFakeCompanion {
-    *     def apply(int: Int, string: String): ThirdParty = ...
-    *     def unapply(tp: ThirdParty): Option[(Int, String)] = ...
-    *   }
-    *
-    *   implicit val thirdPartyCodec: GenCodec[ThirdParty] =
-    *     GenCodec.fromApplyUnapplyProvider[ThirdParty](ThirdPartyFakeCompanion)
-    * }}}
-    */
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+  // TODO[scala3-port]: GenCodec.fromApplyUnapplyProvider (Scala 2 macro def) (L)
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenCodec[T] = ???
 
-  def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = macro
-    macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
+  // TODO[scala3-port]: GenCodec.applyUnapplyCodec (Scala 2 macro def) (L)
+  def applyUnapplyCodec[T]: ApplyUnapplyCodec[T] = ???
 
-  /** Materializes a [[GenCodec]] for a POJO that has a fluent builder. The fluent builder must have setters
-    * corresponding to the POJO's getters. Each setter must return the builder itself (because it's fluent). The builder
-    * is assumed to have default value for each field. These values are considered "transient", i.e. the codec will omit
-    * them during serialization, similarly to [[transientDefault]] annotation in case classes.
-    *
-    * @param newBuilder
-    *   an expression that creates a fresh builder
-    * @param build
-    *   a function that builds the final value (typically `_.build()` or `_.get()`)
-    */
-  def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.fromJavaBuilder[T, B]
+  // TODO[scala3-port]: GenCodec.fromJavaBuilder (Scala 2 macro def) (L)
+  def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] = ???
 
   @explicitGenerics
   def read[T: GenCodec](input: Input): T =
@@ -181,7 +144,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     (output, value) => output.writeSimple().writeString(keyCodec.write(value)),
   )
 
-  def forSealedEnum[T]: GenCodec[T] = macro macros.serialization.GenCodecMacros.forSealedEnum[T]
+  // TODO[scala3-port]: GenCodec.forSealedEnum (Scala 2 macro def) (L)
+  def forSealedEnum[T]: GenCodec[T] = ???
 
   class ReadFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
@@ -519,8 +483,10 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   // these are covered by the generic `seqCodec` and `setCodec` but making them explicit may be easier
   // for the compiler and also make IntelliJ less confused
-  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] = seqCodec[BSeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
-  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] = seqCodec[ISeq, T](GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] =
+    seqCodec[BSeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
+  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] =
+    seqCodec[ISeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
   implicit def mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]
   implicit def bindexedSeqCodec[T: GenCodec]: GenCodec[BIndexedSeq[T]] = seqCodec[BIndexedSeq, T]
   implicit def iindexedSeqCodec[T: GenCodec]: GenCodec[IIndexedSeq[T]] = seqCodec[IIndexedSeq, T]
@@ -641,14 +607,9 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 }
 
 trait RecursiveAutoCodecs { this: GenCodec.type =>
+  // TODO[scala3-port]: GenCodec.materializeRecursively (Scala 2 macro def) (L)
+  def materializeRecursively[T]: GenCodec[T] = ???
 
-  /** Like `materialize`, but descends into types that `T` is made of (e.g. case class field types).
-    */
-  def materializeRecursively[T]: GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.materializeRecursively[T]
-
-  /** INTERNAL API. Should not be used directly.
-    */
-  implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] = macro
-    macros.serialization.GenCodecMacros.materializeImplicitly[T]
+  // TODO[scala3-port]: GenCodec.materializeImplicitly (Scala 2 macro def) (L)
+  implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] = ???
 }

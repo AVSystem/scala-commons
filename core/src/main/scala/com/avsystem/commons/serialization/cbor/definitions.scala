@@ -71,6 +71,10 @@ object InitialByte extends InputMetadata[InitialByte] {
   */
 case class Tag(value: Int) extends AnyVal
 object Tag extends IntWrapperCompanion[Tag] {
+  // Scala 3 AnyVal case class' synthetic unapply returns the wrapper itself, not Option[Int];
+  // explicit Option-returning unapply satisfies TransparentWrapperCompanion.unapply.
+  override def unapply(t: Tag): Option[Int] = Some(t.value)
+
   final val StandardDateTime = Tag(0)
   final val EpochDateTime = Tag(1)
   final val PositiveBignum = Tag(2)

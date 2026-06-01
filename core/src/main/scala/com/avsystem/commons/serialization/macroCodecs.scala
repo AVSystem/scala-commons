@@ -104,7 +104,8 @@ abstract class ApplyUnapplyCodec[T](
   }
 }
 object ApplyUnapplyCodec {
-  def materialize[T]: ApplyUnapplyCodec[T] = macro macros.serialization.GenCodecMacros.applyUnapplyCodec[T]
+  // TODO[scala3-port]: ApplyUnapplyCodec.materialize (Scala 2 macro def) (L)
+  def materialize[T]: ApplyUnapplyCodec[T] = ???
 }
 
 abstract class ProductCodec[T <: Product](
