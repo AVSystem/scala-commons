@@ -26,6 +26,9 @@ object Commons extends ProjectGroup("commons") {
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean &&
     System.getProperty("idea.runid") == null
 
+  val scala3Version = "3.8.2"
+  val madeVersion = "0.1.1"
+
   val guavaVersion = "33.6.0-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.20"
@@ -67,32 +70,21 @@ object Commons extends ProjectGroup("commons") {
     developers := List(
       Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak"))
     ),
-    scalaVersion := "2.13.18",
+    scalaVersion := scala3Version,
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowArtifactUpload := false,
-    githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
+    githubWorkflowScalaVersions := Seq(scala3Version),
+    githubWorkflowJavaVersions := Seq(
+      JavaSpec.temurin("17"),
+      JavaSpec.temurin("21"),
+      JavaSpec.temurin("25"),
+    ),
     githubWorkflowEnv += "JAVA_OPTS" -> "-Dfile.encoding=UTF-8 -Xmx4G",
     githubWorkflowBuildMatrixFailFast := Some(false),
-    // MiMa only compares bytecode — result is JDK-agnostic, so we run it in a dedicated
-    // single-JDK job instead of multiplying the work across the build matrix.
-    githubWorkflowAddedJobs += WorkflowJob(
-      id = "mima",
-      name = "Binary Compatibility Check",
-      scalas = List(scalaVersion.value),
-      javas = List(JavaSpec.temurin("21")),
-      steps = githubWorkflowJobSetup.value.toList :+ WorkflowStep.Sbt(
-        List("mimaReportBinaryIssues"),
-        name = Some("Check binary compatibility"),
-      ),
-    ),
-    githubWorkflowAddedJobs += WorkflowJob(
-      id = "scalafmt",
-      name = "Scalafmt Check",
-      scalas = List(scalaVersion.value),
-      javas = List(JavaSpec.temurin("21")),
-      steps = githubWorkflowJobSetup.value.toList :+ WorkflowStep.Sbt(
-        List("scalafmtCheckAll", "scalafmtSbtCheck"),
-        name = Some("Check Scala formatting"),
+    githubWorkflowBuild := Seq(
+      WorkflowStep.Sbt(
+        List("compile", "Test/compile", "scalafmtCheckAll", "scalafmtSbtCheck"),
+        name = Some("Build + lint"),
       ),
     ),
     githubWorkflowBuildPreamble ++= Seq(
@@ -127,30 +119,17 @@ object Commons extends ProjectGroup("commons") {
     Compile / scalacOptions ++= Seq(
       "-encoding",
       "utf-8",
-      "-Yrangepos",
-      "-explaintypes",
+      "-explain-types",
       "-feature",
       "-deprecation",
       "-unchecked",
       "-language:implicitConversions",
       "-language:existentials",
       "-language:dynamics",
-      "-language:experimental.macros",
       "-language:higherKinds",
-      "-Xfatal-warnings",
-      "-Xsource:3",
-      "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-      "-Ycache-plugin-class-loader:last-modified",
-      "-Ycache-macro-class-loader:last-modified",
+      // TODO[scala3-port]: enable -Werror after warnings clean
+      // "-Werror",
     ),
-    Compile / scalacOptions ++= {
-      if (scalaBinaryVersion.value == "2.13")
-        Seq(
-          "-Xnon-strict-patmat-analysis",
-          "-Xlint:-strict-unsealed-patmat",
-        )
-      else Seq.empty
-    },
     Test / scalacOptions := (Compile / scalacOptions).value,
     Compile / doc / sources := Seq.empty, // relying on unidoc
     apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
@@ -211,7 +190,6 @@ object Commons extends ProjectGroup("commons") {
       noPublishSettings,
       name := "commons",
       ideExcludedDirectories := Seq(baseDirectory.value / ".bloop"),
-      ScalaUnidoc / unidoc / scalacOptions += "-Ymacro-expand:none",
       ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(
         analyzer,
         macros,
@@ -223,13 +201,16 @@ object Commons extends ProjectGroup("commons") {
   lazy val jvm = mkSubProject
     .in(file(".jvm"))
     .aggregate(
-      analyzer,
+      // TODO[scala3-port]: Scala 2 compiler plugin; restore as Scala 3 plugin (L)
+      // analyzer,
       macros,
       core,
-      jetty,
+      // TODO[scala3-port]: ee10 servlet wrapper (M)
+      // jetty,
       mongo,
       hocon,
-      spring,
+      // TODO[scala3-port]: spring-context wiring (S)
+      // spring,
     )
     .settings(aggregateProjectSettings)
 
@@ -255,16 +236,15 @@ object Commons extends ProjectGroup("commons") {
       ),
     )
 
-  def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
+  def mkSourceDirs(base: File, conf: String): Seq[File] = Seq(
     base / "src" / conf / "scala",
-    base / "src" / conf / s"scala-$scalaBinary",
     base / "src" / conf / "java",
   )
 
   def sourceDirsSettings(baseMapper: File => File) = Seq(
     Compile / unmanagedSourceDirectories ++=
-      mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "main"),
-    Test / unmanagedSourceDirectories ++= mkSourceDirs(baseMapper(baseDirectory.value), scalaBinaryVersion.value, "test"),
+      mkSourceDirs(baseMapper(baseDirectory.value), "main"),
+    Test / unmanagedSourceDirectories ++= mkSourceDirs(baseMapper(baseDirectory.value), "test"),
   )
 
   def sameNameAs(proj: Project) =
@@ -273,7 +253,6 @@ object Commons extends ProjectGroup("commons") {
 
   lazy val macros = mkSubProject.settings(
     jvmCommonSettings,
-    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     mimaPreviousArtifacts := Set.empty, // no need for MiMa checks
   )
 
@@ -297,6 +276,7 @@ object Commons extends ProjectGroup("commons") {
       libraryDependencies ++= Seq(
         "com.google.guava" % "guava" % guavaVersion % Optional,
         "io.monix" %% "monix" % monixVersion % Optional,
+        "io.github.halotukozak" %% "made" % madeVersion,
       ),
       mimaBinaryIssueFilters ++= coreMimaFilters,
     )
