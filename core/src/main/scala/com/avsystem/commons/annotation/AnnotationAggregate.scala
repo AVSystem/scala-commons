@@ -49,5 +49,6 @@ trait AnnotationAggregate extends StaticAnnotation {
     */
   def aggregated: List[StaticAnnotation]
 
-  protected[this] def reifyAggregated: List[StaticAnnotation] = macro macros.misc.MiscMacros.aggregatedAnnots
+  // TODO[scala3-port]: reifyAggregated (Scala 2 macro def) (L)
+  protected[this] def reifyAggregated: List[StaticAnnotation] = ???
 }
