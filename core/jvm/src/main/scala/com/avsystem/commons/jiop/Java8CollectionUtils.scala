@@ -16,17 +16,17 @@ trait Java8CollectionUtils {
 
 object Java8CollectionUtils {
   class jIteratorOps[A](private val it: JIterator[A]) extends AnyVal {
-    def forEachRemaining(code: A => Any): Unit =
+    inline def forEachRemaining(inline code: A => Any): Unit =
       it.forEachRemaining(jConsumer(code))
   }
 
   class jIterableOps[A](private val it: JIterable[A]) extends AnyVal {
-    def forEach(code: A => Any): Unit =
+    inline def forEach(inline code: A => Any): Unit =
       it.forEach(jConsumer(code))
   }
 
   class jCollectionOps[A](private val coll: JCollection[A]) extends AnyVal {
-    def removeIf(pred: A => Boolean): Unit =
+    inline def removeIf(inline pred: A => Boolean): Unit =
       coll.removeIf(jPredicate(pred))
 
     def scalaStream: ScalaJStream[A] =
@@ -49,22 +49,22 @@ object Java8CollectionUtils {
   }
 
   class jMapOps[K, V](private val map: JMap[K, V]) extends AnyVal {
-    def compute(key: K, remappingFunction: (K, V) => V): V =
+    inline def compute(key: K, inline remappingFunction: (K, V) => V): V =
       map.compute(key, jBiFunction(remappingFunction))
 
-    def computeIfAbsent(key: K)(mappingFunction: K => V): V =
+    inline def computeIfAbsent(key: K)(inline mappingFunction: K => V): V =
       map.computeIfAbsent(key, jFunction(mappingFunction))
 
-    def computeIfPresent(key: K)(remappingFunction: (K, V) => V): V =
+    inline def computeIfPresent(key: K)(inline remappingFunction: (K, V) => V): V =
       map.computeIfPresent(key, jBiFunction(remappingFunction))
 
-    def forEach(action: (K, V) => Any): Unit =
+    inline def forEach(inline action: (K, V) => Any): Unit =
       map.forEach(jBiConsumer(action))
 
-    def merge(key: K, value: V)(remappingFunction: (V, V) => V): V =
+    inline def merge(key: K, value: V)(inline remappingFunction: (V, V) => V): V =
       map.merge(key, value, jBiFunction(remappingFunction))
 
-    def replaceAll(function: (K, V) => V): Unit =
+    inline def replaceAll(inline function: (K, V) => V): Unit =
       map.replaceAll(jBiFunction(function))
   }
 }
