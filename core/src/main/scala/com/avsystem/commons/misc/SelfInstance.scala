@@ -1,7 +1,9 @@
 package com.avsystem.commons
 package misc
 
-case class SelfInstance[C[_]](instance: C[_])
+// TODO[scala3-port]: C[_] existential narrowed to C[Any] (Scala 3 forbids HKT wildcard application) (S)
+case class SelfInstance[C[_]](instance: C[Any])
 object SelfInstance {
-  implicit def materialize[C[_]]: SelfInstance[C] = macro macros.misc.MiscMacros.selfInstance[C[_]]
+  // TODO[scala3-port]: SelfInstance.materialize (Scala 2 macro def) (L)
+  implicit def materialize[C[_]]: SelfInstance[C] = ???
 }

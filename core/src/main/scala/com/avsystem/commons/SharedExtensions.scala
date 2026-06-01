@@ -126,32 +126,26 @@ object SharedExtensionsUtils extends SharedExtensions {
     def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
-    /** Prints AST of the prefix in a compilation error. Useful for debugging macros.
-      */
-    def showAst: A = macro macros.UniversalMacros.showAst[A]
-
-    /** Prints raw AST of the prefix in a compilation error. Useful for debugging macros.
-      */
-    def showRawAst: A = macro macros.UniversalMacros.showRawAst[A]
-
-    def showSymbol: A = macro macros.UniversalMacros.showSymbol[A]
-
-    def showSymbolFullName: A = macro macros.UniversalMacros.showSymbolFullName[A]
-
-    def showType: A = macro macros.UniversalMacros.showType[A]
-
-    def showRawType: A = macro macros.UniversalMacros.showRawType[A]
-
-    def showTypeSymbol: A = macro macros.UniversalMacros.showTypeSymbol[A]
-
-    def showTypeSymbolFullName: A = macro macros.UniversalMacros.showTypeSymbolFullName[A]
-
-    /** Returns source code of the prefix expression as string, exactly as in the source file. Strips common
-      * indentation. Requires -Yrangepos enabled.
-      */
-    def sourceCode: String = macro macros.UniversalMacros.sourceCode
-
-    def withSourceCode: (A, String) = macro macros.UniversalMacros.withSourceCode
+    // TODO[scala3-port]: showAst (Scala 2 macro def) (L)
+    def showAst: A = ???
+    // TODO[scala3-port]: showRawAst (Scala 2 macro def) (L)
+    def showRawAst: A = ???
+    // TODO[scala3-port]: showSymbol (Scala 2 macro def) (L)
+    def showSymbol: A = ???
+    // TODO[scala3-port]: showSymbolFullName (Scala 2 macro def) (L)
+    def showSymbolFullName: A = ???
+    // TODO[scala3-port]: showType (Scala 2 macro def) (L)
+    def showType: A = ???
+    // TODO[scala3-port]: showRawType (Scala 2 macro def) (L)
+    def showRawType: A = ???
+    // TODO[scala3-port]: showTypeSymbol (Scala 2 macro def) (L)
+    def showTypeSymbol: A = ???
+    // TODO[scala3-port]: showTypeSymbolFullName (Scala 2 macro def) (L)
+    def showTypeSymbolFullName: A = ???
+    // TODO[scala3-port]: sourceCode (Scala 2 macro def) (L)
+    def sourceCode: String = ???
+    // TODO[scala3-port]: withSourceCode (Scala 2 macro def) (L)
+    def withSourceCode: (A, String) = ???
 
     def debugMacro: A = a
   }

@@ -11,7 +11,7 @@ class SealedEnumTest extends AnyFunSuite {
     case object Third extends SomeEnum
     case object Fourth extends SomeEnum
 
-    val values: List[SomeEnum] = caseObjects
+    lazy val values: List[SomeEnum] = caseObjects
     val classTags: List[ClassTag[_ <: SomeEnum]] = SealedUtils.instancesFor[ClassTag, SomeEnum]
   }
 

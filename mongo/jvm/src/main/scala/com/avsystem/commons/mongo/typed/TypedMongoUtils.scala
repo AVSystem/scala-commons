@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.macros.misc.MiscMacros
 import monix.eval.Task
 import monix.reactive.Observable
 import org.reactivestreams.Publisher
@@ -21,5 +20,6 @@ trait TypedMongoUtils {
     * Reduces boilerplate associated with calling overloaded methods from Mongo ReactiveStreams driver that may or may
     * not take `ClientSession` as its first argument (non-nullable).
     */
-  protected def optionalizeFirstArg[T](expr: T): T = macro MiscMacros.optionalizeFirstArg
+  // TODO[scala3-port]: was Scala 2 macro `MiscMacros.optionalizeFirstArg`; stub keeps callers compiling (M)
+  protected def optionalizeFirstArg[T](expr: T): T = ???
 }

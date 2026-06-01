@@ -10,7 +10,8 @@ import scala.concurrent.duration.FiniteDuration
   * @param millis
   *   milliseconds since UNIX epoch, UTC
   */
-class Timestamp(val millis: Long) extends AnyVal with Comparable[Timestamp] {
+// TODO[scala3-port]: Comparable[Timestamp] (Scala 3 forbids AnyVal inheriting Object-derived traits) (S)
+class Timestamp(val millis: Long) extends AnyVal {
   def compareTo(o: Timestamp): Int = java.lang.Long.compare(millis, o.millis)
 
   // I don't want to inherit them from Ordered or something because that would cause boxing

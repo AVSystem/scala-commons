@@ -13,7 +13,7 @@ object Tag extends NamedEnumCompanion[Tag[_]] {
   implicit case object String extends Tag[String]
   implicit case object Int extends Tag[Int]
 
-  val values: ISeq[Tag[_]] = caseObjects
+  lazy val values: ISeq[Tag[?]] = caseObjects
 
   implicit def tagCodec[T]: GenCodec[Tag[T]] =
     codec.asInstanceOf[GenCodec[Tag[T]]]

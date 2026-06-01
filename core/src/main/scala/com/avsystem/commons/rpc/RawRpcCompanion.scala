@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.macros.rpc.RpcMacros
-
 /** Base trait for companion objects of raw RPC traits.
   */
 trait RawRpcCompanion[Raw] {
@@ -17,12 +15,12 @@ trait RawRpcCompanion[Raw] {
   def asReal[Real](raw: Raw)(implicit asRealRpc: AsRealRpc[Real]): Real = asRealRpc.asReal(raw)
   def asRaw[Real](real: Real)(implicit asRawRpc: AsRawRpc[Real]): Raw = asRawRpc.asRaw(real)
 
-  def materializeAsRaw[Real]: AsRawRpc[Real] = macro RpcMacros.rpcAsRaw[Raw, Real]
-  def materializeAsReal[Real]: AsRealRpc[Real] = macro RpcMacros.rpcAsReal[Raw, Real]
-  def materializeAsRawReal[Real]: AsRawRealRpc[Real] = macro RpcMacros.rpcAsRawReal[Raw, Real]
-
-  /** Like [[materializeAsRaw]] but for arbitrary real type instead of RPC trait. Scans all public methods of the real
-    * type (instead of abstract methods for RPC trait).
-    */
-  def materializeApiAsRaw[Real]: AsRawRpc[Real] = macro RpcMacros.apiAsRaw[Raw, Real]
+  // TODO[scala3-port]: RawRpcCompanion.materializeAsRaw (Scala 2 macro def) (L)
+  def materializeAsRaw[Real]: AsRawRpc[Real] = ???
+  // TODO[scala3-port]: RawRpcCompanion.materializeAsReal (Scala 2 macro def) (L)
+  def materializeAsReal[Real]: AsRealRpc[Real] = ???
+  // TODO[scala3-port]: RawRpcCompanion.materializeAsRawReal (Scala 2 macro def) (L)
+  def materializeAsRawReal[Real]: AsRawRealRpc[Real] = ???
+  // TODO[scala3-port]: RawRpcCompanion.materializeApiAsRaw (Scala 2 macro def) (L)
+  def materializeApiAsRaw[Real]: AsRawRpc[Real] = ???
 }

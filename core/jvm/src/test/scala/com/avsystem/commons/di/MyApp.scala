@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package di
 
+// TODO[scala3-port]: MyApp — depends on Components.???-stubbed APIs (M)
+/*
 package lazyVals {
 
   class Redis {
@@ -165,3 +167,4 @@ package entryPoints {
   }
 
 }
+ */

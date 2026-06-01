@@ -2,7 +2,6 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.annotation.{explicitGenerics, macroPrivate}
-import com.avsystem.commons.macros.serialization.MongoMacros
 
 trait DataRefDsl[E, T] {
   // convenience type alias
@@ -129,7 +128,8 @@ trait DataRefDsl[E, T] {
     *     UnionEntity.ref(_.as[ThirdCase].data.complexData("key").head.get)
     * }}}
     */
-  def ref[T0](fun: T => T0): MongoPropertyRef[E, T0] = macro MongoMacros.refImpl
+  // TODO[scala3-port]: was Scala 2 macro `MongoMacros.refImpl`; stub keeps callers compiling (L)
+  def ref[T0](fun: T => T0): MongoPropertyRef[E, T0] = ???
 
   /** Given a MongoDB union data type (defined with a sealed hierarchy with `@flatten` annotation), you can narrow it to
     * one of its case classes or intermediate sealed traits.
@@ -161,7 +161,8 @@ trait DataRefDsl[E, T] {
     * results of the query only to selected cases.
     */
   @explicitGenerics
-  def as[C <: T]: ThisRef[E, C] = macro MongoMacros.asSubtype[C]
+  // TODO[scala3-port]: was Scala 2 macro `MongoMacros.asSubtype`; stub keeps callers compiling (M)
+  def as[C <: T]: ThisRef[E, C] = ???
 
   /** Macro for obtaining a [[MongoDocumentFilter]] (condition) which is satisfied only by some specific subtype of an
     * entity type. The entity must be a sealed trait/class and the subtype must be either one of its case classes or an
@@ -189,12 +190,14 @@ trait DataRefDsl[E, T] {
     * }}}
     */
   @explicitGenerics
-  def is[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isSubtype[C]
+  // TODO[scala3-port]: was Scala 2 macro `MongoMacros.isSubtype`; stub keeps callers compiling (M)
+  def is[C <: T]: MongoDocumentFilter[E] = ???
 
   /** A negated version of [[is]].
     */
   @explicitGenerics
-  def isNot[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isNotSubtype[C]
+  // TODO[scala3-port]: was Scala 2 macro `MongoMacros.isNotSubtype`; stub keeps callers compiling (M)
+  def isNot[C <: T]: MongoDocumentFilter[E] = ???
 }
 
 trait DataTypeDsl[T] extends DataRefDsl[T, T] {

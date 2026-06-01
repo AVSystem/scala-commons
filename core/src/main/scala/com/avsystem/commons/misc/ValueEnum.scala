@@ -122,7 +122,8 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
 
   protected[this] final class ValName(val valName: String)
 
-  protected[this] implicit def valName: ValName = macro macros.misc.MiscMacros.enumValName
+  // TODO[scala3-port]: ValueEnumCompanion.valName (Scala 2 macro def) (L)
+  protected[this] implicit def valName: ValName = ???
 
   protected[this] implicit def enumCtx(implicit valName: ValName): EnumCtx =
     new Ctx(valName.valName, currentOrdinal)

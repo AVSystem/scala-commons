@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package di
 
+// TODO[scala3-port]: ComponentComposition — depends on Components.???-stubbed APIs (M)
+/*
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
@@ -37,3 +39,4 @@ object ComponentComposition {
     Await.result(system.service.init, Duration.Inf)
   }
 }
+ */

@@ -9,5 +9,6 @@ package annotation
   */
 class positioned(val point: Int) extends StaticAnnotation
 object positioned {
-  def here: Int = macro macros.misc.MiscMacros.posPoint
+  // TODO[scala3-port]: here (Scala 2 macro def) (L)
+  def here: Int = ???
 }

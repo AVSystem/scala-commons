@@ -140,7 +140,8 @@ trait GadtCodec[C[_]] {
   * provides a [[GenCodec]] for wildcard, i.e. `C[_]`.
   */
 abstract class HasGadtCodec[C[_]](implicit macroCodec: MacroInstances[Unit, GadtCodec[C]]) {
-  implicit lazy val wildcardCodec: GenCodec[C[_]] = macroCodec((), this).codec[Any].asInstanceOf[GenCodec[C[_]]]
+  // TODO[scala3-port]: C[_] existential narrowed to C[Any] (Scala 3 forbids HKT wildcard application) (S)
+  implicit lazy val wildcardCodec: GenCodec[C[Any]] = macroCodec((), this).codec[Any].asInstanceOf[GenCodec[C[Any]]]
   implicit def codec[T]: GenCodec[C[T]] = wildcardCodec.asInstanceOf[GenCodec[C[T]]]
 }
 

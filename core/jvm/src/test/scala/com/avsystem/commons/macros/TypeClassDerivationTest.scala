@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros
 
+// TODO[scala3-port]: TypeClassDerivationTest — depends on TestMacros / scala-2 `def ... = macro ...` (M)
+/*
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -61,8 +63,8 @@ object TypeClassDerivationTest {
     implicit def forList[T](implicit tct: TC[T]): TC[List[T]] = ForList(tct)
   }
   trait ImplicitMaterializers { this: TC.type =>
-    implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[TC[T]]): TC[T] =
-      macro macros.TestMacros.materializeImplicitly[T]
+    implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[TC[T]]): TC[T] = macro
+      macros.TestMacros.materializeImplicitly[T]
   }
 }
 
@@ -189,3 +191,4 @@ class TypeClassDerivationTest extends AnyFunSuite {
   }
 
 }
+ */

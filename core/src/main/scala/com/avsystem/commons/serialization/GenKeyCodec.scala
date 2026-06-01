@@ -25,12 +25,11 @@ trait GenKeyCodec[T] {
 object GenKeyCodec {
   def apply[T](implicit gkc: GenKeyCodec[T]): GenKeyCodec[T] = gkc
 
-  /** Materializes a `GenKeyCodec` for a "sealed enum" (sealed hierarchy with case objects at the bottom). The generated
-    * codec uses object name by default as key value. This can be adjusted with `@name` annotation.
-    */
-  def forSealedEnum[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forSealedEnum[T]
+  // TODO[scala3-port]: GenKeyCodec.forSealedEnum (Scala 2 macro def) (L)
+  def forSealedEnum[T]: GenKeyCodec[T] = ???
 
-  def forTransparentWrapper[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forTransparentWrapper[T]
+  // TODO[scala3-port]: GenKeyCodec.forTransparentWrapper (Scala 2 macro def) (L)
+  def forTransparentWrapper[T]: GenKeyCodec[T] = ???
 
   @explicitGenerics
   def read[T](key: String)(implicit keyCodec: GenKeyCodec[T]): T = keyCodec.read(key)
@@ -87,7 +86,7 @@ object GenKeyCodec {
   implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
     GenKeyCodec.create(
       string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
-      enum => enum.name(),
+      e => e.name(),
     )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)

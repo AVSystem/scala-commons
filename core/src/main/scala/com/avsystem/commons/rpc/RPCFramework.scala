@@ -36,29 +36,24 @@ trait RPCFramework {
     def apply[RealRPC](implicit asRawRPC: AsRawRPC[RealRPC]): AsRawRPC[RealRPC] = asRawRPC
   }
 
-  /** Materializes a factory of implementations of [[RawRPC]] which translate invocations of its raw methods to
-    * invocations of actual methods on `rpcImpl`. Method arguments and results are serialized and deserialized from/to
-    * [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
-    */
-  def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
+  // TODO[scala3-port]: materializeAsRaw (Scala 2 macro def) (L)
+  def materializeAsRaw[T]: AsRawRPC[T] = ???
 
   type AsRealRPC[RealRPC] = AsReal[RawRPC, RealRPC]
   object AsRealRPC {
     @inline def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
   }
 
-  /** Materializes a factory of implementations of `T` which are proxies that implement all abstract methods of `T` by
-    * forwarding them to `rawRpc`. Method arguments and results are serialized and deserialized from/to [[RawValue]]
-    * using [[Reader]] and [[Writer]] typeclasses.
-    */
-  def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
+  // TODO[scala3-port]: materializeAsReal (Scala 2 macro def) (L)
+  def materializeAsReal[T]: AsRealRPC[T] = ???
 
   type AsRawRealRPC[RealRPC] = AsRawReal[RawRPC, RealRPC]
   object AsRawRealRPC {
     @inline def apply[RealRPC](implicit AsRawRealRPC: AsRawRealRPC[RealRPC]): AsRawRealRPC[RealRPC] = AsRawRealRPC
   }
 
-  def materializeAsRawReal[T]: AsRawRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.AsRawRealImpl[T]
+  // TODO[scala3-port]: materializeAsRawReal (Scala 2 macro def) (L)
+  def materializeAsRawReal[T]: AsRawRealRPC[T] = ???
 
   trait Signature {
     @reifyName def name: String
@@ -74,7 +69,8 @@ trait RPCFramework {
     @infer typeMetadata: ParamTypeMetadata[T],
   ) extends TypedMetadata[T]
 
-  def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[RealRPC]
+  // TODO[scala3-port]: materializeMetadata (Scala 2 macro def) (L)
+  def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = ???
 
   /** Base trait for traits or classes "implementing" [[FullRPCInfo]] in various RPC frameworks. Having a separate
     * subtrait/subclass for every framework is beneficial for ScalaJS DCE.
@@ -100,7 +96,8 @@ trait RPCFramework {
     */
   type FullRPCInfo[RealRPC] <: BaseFullRPCInfo[RealRPC]
 
-  implicit def materializeFullInfo[T]: FullRPCInfo[T] = macro macros.rpc.RPCFrameworkMacros.fullInfoImpl[T]
+  // TODO[scala3-port]: materializeFullInfo (Scala 2 macro def) (L)
+  implicit def materializeFullInfo[T]: FullRPCInfo[T] = ???
 
   /** Convenience abstract class for companion objects of RPC interfaces. Makes sure all three RPC type classes
     * ([[AsRawRPC]], [[AsRealRPC]] and [[RPCMetadata]]) are macro-materialized for that RPC interface and confines macro
@@ -127,8 +124,11 @@ trait RPCFramework {
     // We can, but this prevents ScalaJS optimizer's DCE from distinguishing between `FullRPCInfo` traits/classes
     // of different RPC frameworks. This is important in cross-compiled code where any of these three typeclasses
     // may be completely unused on the JS side and we want to make sure that DCE gets rid of them.
-    implicit def asRealRPC: AsRealRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    implicit def asRawRPC: AsRawRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    implicit def metadata: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    // TODO[scala3-port]: RPCCompanion.asRealRPC (Scala 2 macro def) (L)
+    implicit def asRealRPC: AsRealRPC[RealRPC] = ???
+    // TODO[scala3-port]: RPCCompanion.asRawRPC (Scala 2 macro def) (L)
+    implicit def asRawRPC: AsRawRPC[RealRPC] = ???
+    // TODO[scala3-port]: RPCCompanion.metadata (Scala 2 macro def) (L)
+    implicit def metadata: RPCMetadata[RealRPC] = ???
   }
 }

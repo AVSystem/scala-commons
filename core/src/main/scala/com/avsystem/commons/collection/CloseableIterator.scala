@@ -2,7 +2,7 @@ package com.avsystem.commons
 package collection
 
 import java.util.function.Function
-import scala.annotation.nowarn
+import scala.annotation.{nowarn, targetName}
 import scala.annotation.unchecked.uncheckedVariance
 
 /** Abstraction over simple `Iterator` that allows one to close the resources associated with iterator without iterating
@@ -42,6 +42,7 @@ object CloseableIterator {
       def next(): T = it.next()
     }
 
+  @targetName("applyScalaCloseable")
   def apply[T](it: Iterator[T] with AutoCloseable): CloseableIterator[T] =
     apply(it, it)
 

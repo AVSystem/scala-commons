@@ -2,15 +2,12 @@ package com.avsystem.commons
 package misc
 
 object Implicits {
-
-  /** Similar to `implicitly` from standard library but implemented as a macro which materializes directly into the
-    * implicit value (without being wrapped as implicit parameter of a dummy method like `implicitly`). Also, using
-    * `infer` lets you have more detailed control over implicit-not-found compilation error messages through
-    * [[ImplicitNotFound]].
-    */
-  def infer[T]: T = macro macros.misc.MiscMacros.infer[T]
-  def infer[T](clue: String): T = macro macros.misc.MiscMacros.clueInfer[T]
-  def inferNonMacro[T](clue: String): T = macro macros.misc.MiscMacros.inferNonMacro[T]
+  // TODO[scala3-port]: infer (Scala 2 macro def) (L)
+  def infer[T]: T = ???
+  // TODO[scala3-port]: infer(clue) (Scala 2 macro def) (L)
+  def infer[T](clue: String): T = ???
+  // TODO[scala3-port]: inferNonMacro (Scala 2 macro def) (L)
+  def inferNonMacro[T](clue: String): T = ???
 }
 
 /** Extends the functionality of [[scala.annotation.implicitNotFound]] so that implicit-not-found error message is

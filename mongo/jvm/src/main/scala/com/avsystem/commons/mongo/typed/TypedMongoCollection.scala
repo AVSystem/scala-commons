@@ -33,7 +33,8 @@ class TypedMongoCollection[E <: BaseMongoEntity] private (
     clientSession.toOpt,
   )
 
-  type ID = E#IDType
+  // TODO[scala3-port]: `E#IDType` type projection forbidden on abstract types; widen to Any to keep signatures (M)
+  type ID = Any
 
   val format: MongoAdtFormat[E] = meta.format
 

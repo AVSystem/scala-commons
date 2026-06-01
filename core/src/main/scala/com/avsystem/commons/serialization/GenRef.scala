@@ -24,7 +24,8 @@ object RawRef {
   def create[S]: Creator[S] = new Creator[S] {}
 
   trait Creator[S] {
-    def ref[T](fun: S => T): RawRef = macro macros.serialization.GenRefMacros.rawRef
+    // TODO[scala3-port]: RawRef.Creator.ref (Scala 2 macro def) (L)
+    def ref[T](fun: S => T): RawRef = ???
   }
 }
 
@@ -49,11 +50,13 @@ object GenRef {
   trait Creator[S] {
     type Ref[T] = GenRef[S, T]
 
-    def ref[T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
+    // TODO[scala3-port]: GenRef.Creator.ref (Scala 2 macro def) (L)
+    def ref[T](fun: S => T): GenRef[S, T] = ???
   }
 
   trait Implicits {
-    implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
+    // TODO[scala3-port]: GenRef.Implicits.fun2GenRef (Scala 2 macro def) (L)
+    implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = ???
   }
   object Implicits extends Implicits
 }

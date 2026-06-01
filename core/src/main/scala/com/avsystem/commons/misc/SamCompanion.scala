@@ -8,13 +8,15 @@ import com.avsystem.commons.misc.SamCompanion.ValidSam
   "2.28.0",
 )
 abstract class SamCompanion[T, F](implicit vs: ValidSam[T, F]) {
-  def apply(fun: F): T = macro com.avsystem.commons.macros.misc.SamMacros.toSam[T, F]
+  // TODO[scala3-port]: SamCompanion.apply (Scala 2 macro def) (L)
+  def apply(fun: F): T = ???
 }
 
 object SamCompanion {
   sealed trait ValidSam[T, F]
 
   object ValidSam {
-    implicit def isValidSam[T, F]: ValidSam[T, F] = macro com.avsystem.commons.macros.misc.SamMacros.validateSam[T, F]
+    // TODO[scala3-port]: isValidSam (Scala 2 macro def) (L)
+    implicit def isValidSam[T, F]: ValidSam[T, F] = ???
   }
 }

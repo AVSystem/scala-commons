@@ -44,40 +44,6 @@ object MacroInstances {
     */
   final class materializeWith(prefix: Any, materializer: String = "materialize") extends StaticAnnotation
 
-  /** Materializes an instance of `MacroInstances[Implicits, Instances]`. This macro should not be invoked directly, it
-    * should only be used to materialize implicit parameters of RPC companion base classes, e.g.
-    * `com.avsystem.commons.rest.DefaultRestApiCompanion`.
-    *
-    * @example
-    *   {{{
-    *   trait SomeRawRpc { ... }
-    *   class SomeMetadata[Real](...)
-    *
-    *   trait SomeInstances[Real] {
-    *     def asReal: AsReal[SomeRawRpc, Real]
-    *     def metadata: SomeMetadata[Real]
-    *   }
-    *
-    *   trait SomeImplicits { ... }
-    *   object SomeImplicits extends SomeImplicits
-    *
-    *   trait SomeRealRpc { ... }
-    *   }}}
-    *
-    * `MacroInstances.materialize[SomeImplicits, SomeInstances[SomeRealRpc]]` would generate:
-    *
-    * {{{
-    *   new MacroInstances[SomeImplicits, SomeInstances[SomeRealRpc]] {
-    *     def apply(implicits: SomeImplicits, companion: Any): SomeInstances[SomeRealRpc] = {
-    *       import implicits._
-    *       new SomeInstances[SomeRealRpc] {
-    *         def asReal: AsReal[SomeRawRpc, SomeRealRpc] = AsReal.materialize
-    *         def metadata: SomeMetadata[Real] = SomeMetadata.materialize
-    *       }
-    *     }
-    *   }
-    * }}}
-    */
-  implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] =
-    macro macros.misc.MiscMacros.macroInstances
+  // TODO[scala3-port]: materialize (Scala 2 macro def) (L)
+  implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] = ???
 }

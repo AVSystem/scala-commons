@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package di
 
-import com.avsystem.commons.macros.di.ComponentMacros
 import com.avsystem.commons.misc.SourceInfo
 
 import java.util.concurrent.ConcurrentHashMap
@@ -16,31 +15,19 @@ trait Components extends ComponentsLowPrio {
   protected def componentInfo(sourceInfo: SourceInfo): ComponentInfo =
     ComponentInfo(componentNamePrefix, sourceInfo)
 
-  /** Creates a [[Component]] based on a definition (i.e. a constructor invocation). The definition may refer to other
-    * components as dependencies using `.ref`. This macro will transform the definition by extracting dependencies in a
-    * way that allows them to be initialized in parallel, before initializing the current component itself.
-    */
-  protected def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] =
-    macro ComponentMacros.component[T]
+  // TODO[scala3-port]: component (Scala 2 macro def) (L)
+  protected def component[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = ???
 
-  /** Asynchronous version of [[component]] macro.
-    */
+  // TODO[scala3-port]: asyncComponent (Scala 2 macro def) (L)
   protected def asyncComponent[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo)
-    : Component[T] = macro ComponentMacros.asyncComponent[T]
+    : Component[T] = ???
 
-  /** This is the same as [[component]] except that the created [[Component]] is cached inside an outer instance that
-    * implements [[Components]]. This way you can implement your components using `def`s rather than `val`s (`val`s can
-    * be problematic in traits) but caching will make sure that your `def` always returns the same, cached [[Component]]
-    * instance. The cache key is based on source position so overriding a method that returns `singleton` will create
-    * separate [[Component]] with different cache key.
-    */
-  protected def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] =
-    macro ComponentMacros.singleton[T]
+  // TODO[scala3-port]: singleton (Scala 2 macro def) (L)
+  protected def singleton[T](definition: => T)(implicit sourceInfo: SourceInfo): Component[T] = ???
 
-  /** Asynchronous version of [[singleton]] macro.
-    */
+  // TODO[scala3-port]: asyncSingleton (Scala 2 macro def) (L)
   protected def asyncSingleton[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo)
-    : Component[T] = macro ComponentMacros.asyncSingleton[T]
+    : Component[T] = ???
 
   private lazy val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[_]]]
 
@@ -50,7 +37,8 @@ trait Components extends ComponentsLowPrio {
     component.cached(cacheStorage, freshInfo)
   }
 
-  protected def reifyAllSingletons: List[Component[_]] = macro ComponentMacros.reifyAllSingletons
+  // TODO[scala3-port]: reifyAllSingletons (Scala 2 macro def) (L)
+  protected def reifyAllSingletons: List[Component[?]] = ???
 
   // avoids divergent implicit expansion involving `inject`
   // this is not strictly necessary but makes compiler error messages nicer
@@ -58,20 +46,20 @@ trait Components extends ComponentsLowPrio {
   implicit def ambiguousArbitraryComponent1[T]: Component[T] = null
   implicit def ambiguousArbitraryComponent2[T]: Component[T] = null
 
-  implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] =
-    macro ComponentMacros.autoComponent[T]
+  // TODO[scala3-port]: autoComponent (Scala 2 macro def) (L)
+  implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] = ???
 
-  protected def optEmptyComponent: Component[Opt[Nothing]] =
-    singleton(Opt.Empty)
+  // TODO[scala3-port]: optEmptyComponent (depends on stubbed singleton macro) (S)
+  protected def optEmptyComponent: Component[Opt[Nothing]] = ???
 
-  protected def noneComponent: Component[Option[Nothing]] =
-    singleton(None)
+  // TODO[scala3-port]: noneComponent (depends on stubbed singleton macro) (S)
+  protected def noneComponent: Component[Option[Nothing]] = ???
 
-  protected def sequenceOpt[T](componentOpt: Opt[Component[T]]): Component[Opt[T]] =
-    componentOpt.mapOr(optEmptyComponent, c => component(c.ref.opt))
+  // TODO[scala3-port]: sequenceOpt (depends on stubbed component macro) (S)
+  protected def sequenceOpt[T](componentOpt: Opt[Component[T]]): Component[Opt[T]] = ???
 
-  protected def sequenceOption[T](componentOpt: Option[Component[T]]): Component[Option[T]] =
-    componentOpt.mapOr(noneComponent, c => component(c.ref.option))
+  // TODO[scala3-port]: sequenceOption (depends on stubbed component macro) (S)
+  protected def sequenceOption[T](componentOpt: Option[Component[T]]): Component[Option[T]] = ???
 }
 trait ComponentsLowPrio {
   @compileTimeOnly(

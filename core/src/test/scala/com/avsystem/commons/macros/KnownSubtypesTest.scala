@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros
 
+// TODO[scala3-port]: KnownSubtypesTest — depends on TestMacros / scala-2 `def ... = macro ...` (L)
+/*
 class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
   def testKnownSubtypes[T, R]: Nothing = macro com.avsystem.commons.macros.TestMacros.testKnownSubtypes[T, R]
 
@@ -119,3 +121,4 @@ class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
   testKnownSubtypes[MemberedBase { type Elem = String }, (MemberedCase, GenericMemberedCase[String])]
   testKnownSubtypes[MemberedBase { type Elem = Int }, (MemberedCase, GenericMemberedCase[Int])]
 }
+ */

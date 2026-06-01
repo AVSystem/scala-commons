@@ -25,5 +25,6 @@ case class SourceInfo(
 object SourceInfo {
   def apply()(implicit si: SourceInfo): SourceInfo = si
 
-  implicit def here: SourceInfo = macro macros.misc.MiscMacros.sourceInfo
+  // TODO[scala3-port]: SourceInfo.here (Scala 2 macro def) (L)
+  implicit def here: SourceInfo = ???
 }

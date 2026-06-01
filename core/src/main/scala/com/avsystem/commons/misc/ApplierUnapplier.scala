@@ -10,7 +10,8 @@ trait Applier[T] {
   def apply(rawValues: Seq[Any]): T
 }
 object Applier {
-  implicit def materialize[T]: Applier[T] = macro macros.misc.MiscMacros.applier[T]
+  // TODO[scala3-port]: Applier.materialize (Scala 2 macro def) (L)
+  implicit def materialize[T]: Applier[T] = ???
 }
 
 /** Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns untyped sequence of
@@ -21,7 +22,8 @@ trait Unapplier[T] {
   def unapply(value: T): Seq[Any]
 }
 object Unapplier {
-  implicit def materialize[T]: Unapplier[T] = macro macros.misc.MiscMacros.unapplier[T]
+  // TODO[scala3-port]: Unapplier.materialize (Scala 2 macro def) (L)
+  implicit def materialize[T]: Unapplier[T] = ???
 }
 
 class ProductUnapplier[T <: Product] extends Unapplier[T] {
@@ -32,5 +34,6 @@ abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T]
 @implicitNotFound("cannot materialize ApplierUnapplier: ${T} is not a case class or case class like type")
 trait ApplierUnapplier[T] extends Applier[T] with Unapplier[T]
 object ApplierUnapplier {
-  implicit def materialize[T]: ApplierUnapplier[T] = macro macros.misc.MiscMacros.applierUnapplier[T]
+  // TODO[scala3-port]: ApplierUnapplier.materialize (Scala 2 macro def) (L)
+  implicit def materialize[T]: ApplierUnapplier[T] = ???
 }

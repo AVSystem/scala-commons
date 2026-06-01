@@ -67,7 +67,7 @@ sealed trait MongoToplevelRef[E, T <: E] extends MongoRef[E, T] {
   @macroPrivate def subtypeRefFor[C <: T: ClassTag]: MongoToplevelRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])
 
-  def decodeFrom(doc: BsonDocument): T = BsonValueInput.read(doc)(format.codec)
+  def decodeFrom(doc: BsonDocument): T = BsonValueInput.read(doc)(using format.codec)
 }
 
 /** Represents a path inside a MongoDB document.
@@ -269,7 +269,13 @@ object MongoPropertyRef {
   implicit class TypedMapRefOps[E, K[_]](private val ref: MongoPropertyRef[E, TypedMap[K]]) extends AnyVal {
     def apply[T](key: K[T]): MongoPropertyRef[E, T] = {
       val tmFormat = ref.format.assumeTypedMap
-      MongoRef.FieldRef(ref, tmFormat.keyCodec.write(key), tmFormat.valueFormats.valueFormat(key), Opt.Empty)
+      // TODO[scala3-port]: cast follows K[_] → K[Any] workaround in TypedMapFormat (S)
+      MongoRef.FieldRef(
+        ref,
+        tmFormat.keyCodec.write(key.asInstanceOf[K[Any]]),
+        tmFormat.valueFormats.valueFormat(key),
+        Opt.Empty,
+      )
     }
   }
 

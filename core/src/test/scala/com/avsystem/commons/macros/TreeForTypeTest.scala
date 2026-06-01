@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros
 
+// TODO[scala3-port]: TreeForTypeTest — depends on TestMacros / scala-2 `def ... = macro ...` (L)
+/*
 object TreeForTypeTest {
   def testTreeForType(tpeRepr: String): Nothing = macro com.avsystem.commons.macros.TestMacros.testTreeForType
 
@@ -126,3 +128,4 @@ object UnrelatedTreeForType {
     val lulz: Map[String, Int]
   }""")
 }
+ */

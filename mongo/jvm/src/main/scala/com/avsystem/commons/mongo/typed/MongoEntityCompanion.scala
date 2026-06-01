@@ -54,7 +54,8 @@ abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](
   implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
   implicit val meta: MongoEntityMeta[E] = instances(implicits, this).meta
 
-  type ID = E#IDType
+  // TODO[scala3-port]: `E#IDType` type projection forbidden on abstract types; widen to Any to keep signatures (M)
+  type ID = Any
 
   final val IdRef: Ref[ID] = meta.idRef
 }

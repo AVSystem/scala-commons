@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package macros
 
+// TODO[scala3-port]: ApplyUnapplyTest — depends on TestMacros / scala-2 `def ... = macro ...` (L)
+/*
 trait ApplierUnapplier[T, F] {
   def apply(f: F): T
   def unapply(t: T): F
@@ -28,3 +30,4 @@ object ApplyUnapplyTest {
   applierUnapplier[Custom[String], String]
   applierUnapplier[Generic[String], String]
 }
+ */

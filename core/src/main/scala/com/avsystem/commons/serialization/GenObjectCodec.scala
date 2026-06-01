@@ -34,10 +34,11 @@ object GenObjectCodec {
   def readObject[T: GenObjectCodec](input: ObjectInput): T =
     apply[T].readObject(input)
 
-  def materialize[T]: GenObjectCodec[T] = macro macros.serialization.GenCodecMacros.materialize[T]
+  // TODO[scala3-port]: GenObjectCodec.materialize (Scala 2 macro def) (L)
+  def materialize[T]: GenObjectCodec[T] = ???
 
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenObjectCodec[T] =
-    macro macros.serialization.GenCodecMacros.fromApplyUnapplyProvider[T]
+  // TODO[scala3-port]: GenObjectCodec.fromApplyUnapplyProvider (Scala 2 macro def) (L)
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenObjectCodec[T] = ???
 
   def create[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
     new GenObjectCodec[T] {

@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.macros.misc.MiscMacros
 import com.avsystem.commons.misc.ImplicitNotFound
 
 import scala.annotation.implicitNotFound
@@ -25,7 +24,8 @@ trait MetadataCompanion[M[_]] {
     def apply[Real](metadata: => M[Real]): Lazy[Real] = new Lazy(metadata)
 
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
-    implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
+    // TODO[scala3-port]: lazyMetadata (Scala 2 macro def) (L)
+    implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = ???
 
     @implicitNotFound("#{forNotLazy}")
     implicit def notFound[T](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
@@ -55,7 +55,8 @@ trait BoundedMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]] {
     def apply[Real >: Lo <: Hi](metadata: => M[Real]): Lazy[Real] = new Lazy(metadata)
 
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
-    implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
+    // TODO[scala3-port]: lazyMetadata (bounded) (Scala 2 macro def) (L)
+    implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = ???
 
     @implicitNotFound("#{forNotLazy}")
     implicit def notFound[T >: Lo <: Hi](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
