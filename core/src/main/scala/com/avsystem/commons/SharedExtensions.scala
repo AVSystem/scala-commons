@@ -235,11 +235,10 @@ object SharedExtensionsUtils extends SharedExtensions {
       import quotes.reflect.*
       import quotes.reflect.PositionMethods // bypass package-object auto-import of `universalOps`
 
-      def nonEmpty(o: Option[String]): Option[String] = o.filter(_.nonEmpty)
       val termPos = a.asTerm.underlyingArgument.pos
-      val txt = nonEmpty(PositionMethods.sourceCode(termPos))
-        .orElse(nonEmpty(PositionMethods.sourceCode(a.asTerm.pos)))
-        .orElse(nonEmpty(PositionMethods.sourceCode(Position.ofMacroExpansion)))
+      val txt = PositionMethods.sourceCode(termPos).filter(_.nonEmpty)
+        .orElse(PositionMethods.sourceCode(a.asTerm.pos).filter(_.nonEmpty))
+        .orElse(PositionMethods.sourceCode(Position.ofMacroExpansion).filter(_.nonEmpty))
         .getOrElse(report.errorAndAbort("source code unavailable at this position", a))
       Expr(txt)
 
