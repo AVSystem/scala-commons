@@ -18,6 +18,7 @@ the bottom of this file. Restoration ships incrementally per feature area.
 | `-Wconf` warning suppression blocks                   | Project rule: fix warnings at source, not via suppression.                                                                                                                                              |
 | `-language:experimental.macros`                       | Scala 3 uses `inline` + `scala.quoted`; flag is a no-op.                                                                                                                                                |
 | Scala 2 macro impls (`c.universe`, blackbox/whitebox) | Replaced by Scala 3 quotes/inline during feature-area restoration; the legacy `commons-macros` module is gone.                                                                                          |
+| `misc.Sam` / `misc.SamCompanion`                      | `@deprecated since 2.28.0`; stdlib native SAM conversion replaces it. Per rule `feedback_dont_port_deprecated.md`: skip @deprecated APIs with stdlib replacements. Phase 2 slice 02-05.                 |
 
 ## 2. Deprecated on Scala 3
 
@@ -107,7 +108,7 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 
 ## Backlog
 
-*Auto-derived from `git grep -nE 'TODO\[scala3-port\]'` on this PR's tip. Total tags: 155.*
+*Auto-derived from `git grep -nE 'TODO\[scala3-port\]'` on this PR's tip. Total tags: 153.*
 
 | Location                                                                                          | Description                                                                                           | Effort |
 |---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|--------|
@@ -164,9 +165,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/misc/Implicits.scala:5`                                 | infer (Scala 2 macro def)                                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Implicits.scala:7`                                 | infer(clue) (Scala 2 macro def)                                                                       | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Implicits.scala:9`                                 | inferNonMacro (Scala 2 macro def)                                                                     | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/Sam.scala:9`                                       | Sam.apply (Scala 2 macro def)                                                                         | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/SamCompanion.scala:11`                             | SamCompanion.apply (Scala 2 macro def)                                                                | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/SamCompanion.scala:19`                             | isValidSam (Scala 2 macro def)                                                                        | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SealedUtils.scala:12`                              | instancesFor (Scala 2 macro def; return type widened to TC[T])                                        | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SealedUtils.scala:52`                              | caseObjects (Scala 2 macro def)                                                                       | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SealedUtils.scala:8`                               | caseObjectsFor (Scala 2 macro def)                                                                    | L      |
