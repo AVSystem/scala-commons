@@ -23,9 +23,11 @@ the bottom of this file. Restoration ships incrementally per feature area.
 
 *Populated as features are restored and intentionally kept behind `@deprecated` to ease downstream migration.*
 
-| Symbol               | Since | Replacement |
-|----------------------|-------|-------------|
-| *(empty in Phase 1)* |       |             |
+| Symbol                              | Since   | Replacement                                                                                                                |
+|-------------------------------------|---------|----------------------------------------------------------------------------------------------------------------------------|
+| `Implicits.infer[T]: T`             | 3.0.0   | `scala.compiletime.summonInline[T]` or `summon[T]`                                                                         |
+| `Implicits.infer[T](clue: String)`  | 3.0.0   | `scala.compiletime.summonInline[T]` — `clue` parameter no longer needed (Scala 3 implicit search produces clear errors)    |
+| `Implicits.inferNonMacro[T](clue)`  | 3.0.0   | `scala.compiletime.summonInline[T]` — Scala 3 has no equivalent of `withMacrosDisabled`; semantics collapse to plain summon |
 
 ## 3. Source-compat breaks
 
@@ -107,7 +109,7 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 
 ## Backlog
 
-*Auto-derived from `git grep -nE 'TODO\[scala3-port\]'` on this PR's tip. Total tags: 155.*
+*Auto-derived from `git grep -nE 'TODO\[scala3-port\]'` on this PR's tip. Total tags: 152.*
 
 | Location                                                                                          | Description                                                                                           | Effort |
 |---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|--------|
@@ -161,9 +163,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/misc/Bidirectional.scala:6`                             | apply (Scala 2 macro def)                                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Delegation.scala:11`                               | materializeDelegation (Scala 2 macro def)                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Delegation.scala:21`                               | CurriedDelegation.apply (Scala 2 macro def)                                                           | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/Implicits.scala:5`                                 | infer (Scala 2 macro def)                                                                             | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/Implicits.scala:7`                                 | infer(clue) (Scala 2 macro def)                                                                       | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/Implicits.scala:9`                                 | inferNonMacro (Scala 2 macro def)                                                                     | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Sam.scala:9`                                       | Sam.apply (Scala 2 macro def)                                                                         | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SamCompanion.scala:11`                             | SamCompanion.apply (Scala 2 macro def)                                                                | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SamCompanion.scala:19`                             | isValidSam (Scala 2 macro def)                                                                        | L      |

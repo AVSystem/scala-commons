@@ -1,13 +1,17 @@
 package com.avsystem.commons
 package misc
 
+import scala.compiletime.summonInline
+
 object Implicits {
-  // TODO[scala3-port]: infer (Scala 2 macro def) (L)
-  def infer[T]: T = ???
-  // TODO[scala3-port]: infer(clue) (Scala 2 macro def) (L)
-  def infer[T](clue: String): T = ???
-  // TODO[scala3-port]: inferNonMacro (Scala 2 macro def) (L)
-  def inferNonMacro[T](clue: String): T = ???
+  @deprecated("use `scala.compiletime.summonInline[T]` or `summon[T]` directly", "3.0.0")
+  inline def infer[T]: T = summonInline[T]
+
+  @deprecated("use `scala.compiletime.summonInline[T]` (Scala 3 implicit search produces clear errors; the `clue` parameter is no longer needed)", "3.0.0")
+  inline def infer[T](clue: String): T = summonInline[T]
+
+  @deprecated("use `scala.compiletime.summonInline[T]` (Scala 3 has no equivalent of macro-disabled implicit search; semantics collapse to plain summon)", "3.0.0")
+  inline def inferNonMacro[T](clue: String): T = summonInline[T]
 }
 
 /** Extends the functionality of [[scala.annotation.implicitNotFound]] so that implicit-not-found error message is
