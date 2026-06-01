@@ -78,7 +78,7 @@ object TypedMap {
   def empty[K[_]]: TypedMap[K] =
     new TypedMap[K](Map.empty)
 
-  def apply[K[_]](entries: Entry[K, _]*): TypedMap[K] = {
+  def apply[K[_]](entries: Entry[K, ?]*): TypedMap[K] = {
     val raw = Map.newBuilder[K[Any], Any]
     entries.foreach(e => raw += e.pair.asInstanceOf[(K[Any], Any)])
     new TypedMap[K](raw.result())

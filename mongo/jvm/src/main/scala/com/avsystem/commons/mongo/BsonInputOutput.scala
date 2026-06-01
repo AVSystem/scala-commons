@@ -111,7 +111,7 @@ trait BsonOutput extends Any with OutputAndSimpleOutput {
       case Opt.Empty => writeBinary(BsonOutput.bigDecimalBytes(bigDecimal))
     }
 
-  override def keepsMetadata(metadata: InputMetadata[_]): Boolean =
+  override def keepsMetadata(metadata: InputMetadata[?]): Boolean =
     BsonTypeMetadata == metadata
 
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =

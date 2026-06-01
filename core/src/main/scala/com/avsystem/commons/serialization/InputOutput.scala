@@ -74,7 +74,7 @@ trait Output extends Any with AcceptsCustomEvents {
     * [[com.avsystem.commons.serialization.InputMetadata InputMetadata]] identifier. If this method returns `false` then
     * this `Output` does not support this medatata type and codec should fall back to some other serialization strategy.
     */
-  def keepsMetadata(metadata: InputMetadata[_]): Boolean = false
+  def keepsMetadata(metadata: InputMetadata[?]): Boolean = false
 
   /** This ugly workaround has been introduced when standard `Option` encoding changed from zero-or-one element list
     * encoding to unwrapped-or-null encoding which effectively disallowed serializing `null` and `Some(null)`. If some
@@ -168,7 +168,7 @@ trait SequentialOutput extends Any with AcceptsCustomEvents {
   /** Based on given collection's `knownSize` and [[sizePolicy]], declares the size of this output as size of this
     * collection if it is either cheap or required to do so.
     */
-  final def declareSizeOf(coll: BIterable[_]): Unit = sizePolicy match {
+  final def declareSizeOf(coll: BIterable[?]): Unit = sizePolicy match {
     case SizePolicy.Ignored =>
     case SizePolicy.Optional =>
       coll.knownSize match {

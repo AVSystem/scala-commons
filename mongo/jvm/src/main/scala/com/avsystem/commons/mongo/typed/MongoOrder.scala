@@ -21,7 +21,7 @@ object MongoOrder {
 
   def simple[T](ascending: Boolean): MongoOrder[T] = Simple(ascending)
 
-  def apply[E](refs: (MongoPropertyRef[E, _], Boolean)*): MongoDocumentOrder[E] =
+  def apply[E](refs: (MongoPropertyRef[E, ?], Boolean)*): MongoDocumentOrder[E] =
     MongoDocumentOrder(refs: _*)
 
   final case class Simple[T](ascending: Boolean) extends MongoOrder[T] {
@@ -52,17 +52,17 @@ object MongoOrder {
   * @tparam E
   *   type of the entity/document
   */
-case class MongoDocumentOrder[E](refs: Vector[(MongoPropertyRef[E, _], Boolean)]) extends MongoOrder[E] {
+case class MongoDocumentOrder[E](refs: Vector[(MongoPropertyRef[E, ?], Boolean)]) extends MongoOrder[E] {
   def andThen(other: MongoDocumentOrder[E]): MongoDocumentOrder[E] =
     MongoDocumentOrder(refs ++ other.refs)
 
-  def andThenBy(ref: MongoPropertyRef[E, _], ascending: Boolean): MongoDocumentOrder[E] =
+  def andThenBy(ref: MongoPropertyRef[E, ?], ascending: Boolean): MongoDocumentOrder[E] =
     MongoDocumentOrder(refs :+ (ref -> ascending))
 
-  def andThenAscendingBy(ref: MongoPropertyRef[E, _]): MongoDocumentOrder[E] =
+  def andThenAscendingBy(ref: MongoPropertyRef[E, ?]): MongoDocumentOrder[E] =
     andThenBy(ref, ascending = true)
 
-  def andThenDescendingBy(ref: MongoPropertyRef[E, _]): MongoDocumentOrder[E] =
+  def andThenDescendingBy(ref: MongoPropertyRef[E, ?]): MongoDocumentOrder[E] =
     andThenBy(ref, ascending = false)
 
   // TODO: lambda-macro versions of andThenBy
@@ -73,12 +73,12 @@ case class MongoDocumentOrder[E](refs: Vector[(MongoPropertyRef[E, _], Boolean)]
 object MongoDocumentOrder {
   def unspecified[E]: MongoDocumentOrder[E] = MongoDocumentOrder(Vector.empty)
 
-  def apply[E](refs: (MongoPropertyRef[E, _], Boolean)*): MongoDocumentOrder[E] =
+  def apply[E](refs: (MongoPropertyRef[E, ?], Boolean)*): MongoDocumentOrder[E] =
     MongoDocumentOrder(refs.toVector)
 
-  def ascending[E](refs: MongoPropertyRef[E, _]*): MongoDocumentOrder[E] =
+  def ascending[E](refs: MongoPropertyRef[E, ?]*): MongoDocumentOrder[E] =
     MongoDocumentOrder(refs.iterator.map(r => r -> true).toVector)
 
-  def descending[E](refs: MongoPropertyRef[E, _]*): MongoDocumentOrder[E] =
+  def descending[E](refs: MongoPropertyRef[E, ?]*): MongoDocumentOrder[E] =
     MongoDocumentOrder(refs.iterator.map(r => r -> false).toVector)
 }

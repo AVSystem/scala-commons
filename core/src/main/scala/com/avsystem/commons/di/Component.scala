@@ -8,10 +8,10 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance
 
-case class ComponentInitializationException(component: Component[_], cause: Throwable)
+case class ComponentInitializationException(component: Component[?], cause: Throwable)
   extends Exception(s"failed to initialize component ${component.info}", cause)
 
-case class DependencyCycleException(cyclePath: List[Component[_]])
+case class DependencyCycleException(cyclePath: List[Component[?]])
   extends Exception(
     s"component dependency cycle detected:\n${cyclePath.iterator.map(_.info).map("  " + _).mkString(" ->\n")}"
   )
@@ -46,7 +46,7 @@ object ComponentInfo {
   */
 final class Component[+T](
   val info: ComponentInfo,
-  deps: => IndexedSeq[Component[_]],
+  deps: => IndexedSeq[Component[?]],
   creator: IndexedSeq[Any] => ExecutionContext => Future[T],
   destroyer: DestroyFunction[T] = Component.emptyDestroy,
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
@@ -61,18 +61,18 @@ final class Component[+T](
   /** Returns dependencies of this component extracted from the component definition. You can use this to inspect the
     * dependency graph without initializing any components.
     */
-  lazy val dependencies: IndexedSeq[Component[_]] = deps
+  lazy val dependencies: IndexedSeq[Component[?]] = deps
 
   private[this] val storage: AtomicReference[Future[T]] =
     cachedStorage.getOrElse(new AtomicReference)
 
-  private def sameStorage(otherStorage: AtomicReference[_]): Boolean =
+  private def sameStorage(otherStorage: AtomicReference[?]): Boolean =
     storage eq otherStorage
 
   // equality based on storage identity is important for cycle detection with cached components
   override def hashCode(): Int = storage.hashCode()
   override def equals(obj: Any): Boolean = obj match {
-    case c: Component[_] => c.sameStorage(storage)
+    case c: Component[?] => c.sameStorage(storage)
     case _ => false
   }
 
@@ -106,7 +106,7 @@ final class Component[+T](
 
   /** Forces a dependency on another component or components.
     */
-  def dependsOn(moreDeps: Component[_]*): Component[T] =
+  def dependsOn(moreDeps: Component[?]*): Component[T] =
     new Component(info, deps ++ moreDeps, creator, destroyer, cachedStorage)
 
   /** Specifies an asynchronous function that will be used to destroy this component, i.e. free up any resources that
@@ -189,7 +189,7 @@ object Component {
   def async[T](definition: => T): ExecutionContext => Future[T] =
     implicit ctx => Future(definition)
 
-  def validateAll(components: Seq[Component[_]]): Unit =
+  def validateAll(components: Seq[Component[?]]): Unit =
     GraphUtils.dfs(components)(
       _.dependencies.toList,
       onCycle = (node, stack) => {
@@ -203,9 +203,9 @@ object Component {
     * ensured that a component is only destroyed after all components that depend on it are destroyed (reverse
     * initialization order). Independent components are destroyed in parallel, using given `ExecutionContext`.
     */
-  def destroyAll(components: Seq[Component[_]])(implicit ec: ExecutionContext): Future[Unit] = {
-    val reverseGraph = new MHashMap[Component[_], MListBuffer[Component[_]]]
-    val terminals = new MHashSet[Component[_]]
+  def destroyAll(components: Seq[Component[?]])(implicit ec: ExecutionContext): Future[Unit] = {
+    val reverseGraph = new MHashMap[Component[?], MListBuffer[Component[?]]]
+    val terminals = new MHashSet[Component[?]]
     GraphUtils.dfs(components)(
       _.dependencies.toList,
       onEnter = { (c, _) =>
@@ -218,9 +218,9 @@ object Component {
           terminals += c
       },
     )
-    val destroyFutures = new MHashMap[Component[_], Future[Unit]]
+    val destroyFutures = new MHashMap[Component[?], Future[Unit]]
 
-    def doDestroy(c: Component[_]): Future[Unit] =
+    def doDestroy(c: Component[?]): Future[Unit] =
       destroyFutures.getOrElseUpdate(c, Future.traverse(reverseGraph(c))(doDestroy).flatMap(_ => c.doDestroy))
 
     Future.traverse(reverseGraph.keys)(doDestroy).toUnit

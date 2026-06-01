@@ -119,7 +119,7 @@ object RpcMetadata {
   // TODO[scala3-port]: RpcMetadata.auto (Scala 2 macro def) (L)
   def auto[T]: T = ???
 
-  def nextInstance[T](it: Iterator[_], description: String): T =
+  def nextInstance[T](it: Iterator[?], description: String): T =
     if (it.hasNext) it.next().asInstanceOf[T]
     else throw new NoSuchElementException(s"typeclass instance for $description was not provided")
 }

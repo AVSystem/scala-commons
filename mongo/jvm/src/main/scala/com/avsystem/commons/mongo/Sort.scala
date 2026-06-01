@@ -8,6 +8,6 @@ import org.bson.conversions.Bson
   *   MKej
   */
 object Sort {
-  def ascending(keys: DocKey[_, _]*): Bson = S.ascending(keys.map(_.key).asJava)
-  def descending(keys: DocKey[_, _]*): Bson = S.descending(keys.map(_.key).asJava)
+  def ascending(keys: DocKey[?, ?]*): Bson = S.ascending(keys.map(_.key).asJava)
+  def descending(keys: DocKey[?, ?]*): Bson = S.descending(keys.map(_.key).asJava)
 }

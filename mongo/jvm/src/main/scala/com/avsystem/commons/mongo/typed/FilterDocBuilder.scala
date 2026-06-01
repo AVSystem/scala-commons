@@ -12,7 +12,7 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
     new FilterDocBuilder(newPrefix.opt, filterDocs)
   }
 
-  @tailrec def addImpliedFilters(ref: MongoRef[_, _]): Unit = ref match {
+  @tailrec def addImpliedFilters(ref: MongoRef[?, ?]): Unit = ref match {
     case MongoRef.RootRef(_) =>
 
     case MongoRef.RootSubtypeRef(fullRef, caseFieldName, caseNames, _) =>
@@ -36,7 +36,7 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
       addImpliedFilters(prefix)
   }
 
-  private def addOperator(op: MongoQueryOperator[_]): Unit = {
+  private def addOperator(op: MongoQueryOperator[?]): Unit = {
     val path = prefixPath.getOrElse(
       throw new IllegalArgumentException(
         "cannot add MongoOperatorsFilter to toplevel filter document without prefix path"
@@ -62,7 +62,7 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
     loop(0)
   }
 
-  def addFilter(filter: MongoFilter[_]): Unit = filter match {
+  def addFilter(filter: MongoFilter[?]): Unit = filter match {
     case Empty() =>
 
     case And(filters) =>

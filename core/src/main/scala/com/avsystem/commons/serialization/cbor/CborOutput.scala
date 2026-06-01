@@ -172,7 +172,7 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
         super.writeCustom(typeMarker, value)
     }
 
-  override def keepsMetadata(metadata: InputMetadata[_]): Boolean = metadata match {
+  override def keepsMetadata(metadata: InputMetadata[?]): Boolean = metadata match {
     case InitialByte | Tags => true
     case _ => super.keepsMetadata(metadata)
   }

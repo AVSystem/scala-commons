@@ -331,8 +331,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
-  def underlyingCodec(codec: GenCodec[_]): GenCodec[_] = codec match {
-    case tc: Transformed[_, _] => underlyingCodec(tc.wrapped)
+  def underlyingCodec(codec: GenCodec[?]): GenCodec[?] = codec match {
+    case tc: Transformed[?, ?] => underlyingCodec(tc.wrapped)
     case _ => codec
   }
 

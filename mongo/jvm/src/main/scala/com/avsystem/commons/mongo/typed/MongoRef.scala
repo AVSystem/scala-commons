@@ -22,7 +22,7 @@ import scala.annotation.tailrec
   */
 sealed trait MongoRef[E, T] extends MongoProjection[E, T] with DataRefDsl[E, T] { self =>
   def format: MongoFormat[T]
-  def projectionRefs: Set[MongoRef[E, _]] = Set(this)
+  def projectionRefs: Set[MongoRef[E, ?]] = Set(this)
   def showRecordId: Boolean = false
 
   @macroPrivate def subtypeRefFor[C <: T: ClassTag]: MongoRef[E, C]
