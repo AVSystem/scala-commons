@@ -2,6 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.{mongoId, BsonGenCodecs}
+import com.avsystem.commons.mongo.BsonGenCodecs.given
 import com.avsystem.commons.serialization.{GenCodec, TransparentWrapping}
 import org.bson.types.ObjectId
 
@@ -20,7 +21,7 @@ sealed trait EntityIdMode[E, ID] {
     case EntityIdMode.Explicit() =>
       format.fieldRefFor(MongoRef.RootRef(format), MongoEntity.Id)
     case EntityIdMode.Auto(idWrapping) =>
-      val idCodec = GenCodec.fromTransparentWrapping(idWrapping, BsonGenCodecs.objectIdCodec)
+      val idCodec = GenCodec.fromTransparentWrapping(idWrapping, summon[GenCodec[ObjectId]])
       MongoRef.FieldRef(MongoRef.RootRef(format), mongoId.Id, MongoFormat.Opaque(idCodec), Opt.Empty)
   }
 }

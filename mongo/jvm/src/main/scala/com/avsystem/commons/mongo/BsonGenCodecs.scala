@@ -10,46 +10,28 @@ import org.bson.types.{Decimal128, ObjectId}
 import java.nio.ByteBuffer
 
 trait BsonGenCodecs {
-  implicit def objectIdIdentityWrapping: TransparentWrapping[ObjectId, ObjectId] =
-    BsonGenCodecs.objectIdIdentityWrapping
-  implicit def objectIdCodec: GenCodec[ObjectId] = BsonGenCodecs.objectIdCodec
-  implicit def objectIdKeyCodec: GenKeyCodec[ObjectId] = BsonGenCodecs.objectIdKeyCodec
-  implicit def decimal128Codec: GenCodec[Decimal128] = BsonGenCodecs.decimal128Codec
-
-  implicit def bsonArrayCodec: GenCodec[BsonArray] = BsonGenCodecs.bsonArrayCodec
-  implicit def bsonBinaryCodec: GenCodec[BsonBinary] = BsonGenCodecs.bsonBinaryCodec
-  implicit def bsonBooleanCodec: GenCodec[BsonBoolean] = BsonGenCodecs.bsonBooleanCodec
-  implicit def bsonDateTimeCodec: GenCodec[BsonDateTime] = BsonGenCodecs.bsonDateTimeCodec
-  implicit def bsonDocumentCodec: GenCodec[BsonDocument] = BsonGenCodecs.bsonDocumentCodec
-  implicit def bsonDecimal128Codec: GenCodec[BsonDecimal128] = BsonGenCodecs.bsonDecimal128Codec
-  implicit def bsonDoubleCodec: GenCodec[BsonDouble] = BsonGenCodecs.bsonDoubleCodec
-  implicit def bsonInt32Codec: GenCodec[BsonInt32] = BsonGenCodecs.bsonInt32Codec
-  implicit def bsonInt64Codec: GenCodec[BsonInt64] = BsonGenCodecs.bsonInt64Codec
-  implicit def bsonNullCodec: GenCodec[BsonNull] = BsonGenCodecs.bsonNullCodec
-  implicit def bsonObjectIdCodec: GenCodec[BsonObjectId] = BsonGenCodecs.bsonObjectIdCodec
-  implicit def bsonStringCodec: GenCodec[BsonString] = BsonGenCodecs.bsonStringCodec
-  implicit def bsonValueCodec: GenCodec[BsonValue] = BsonGenCodecs.bsonValueCodec
+  export BsonGenCodecs.given
 }
 
 object BsonGenCodecs {
   // needed so that ObjectId can be used as ID type in AutoIdMongoEntity
   // (TransparentWrapping is used in EntityIdMode)
-  implicit val objectIdIdentityWrapping: TransparentWrapping[ObjectId, ObjectId] = TransparentWrapping.identity
+  given TransparentWrapping[ObjectId, ObjectId] = TransparentWrapping.identity
 
-  implicit val objectIdCodec: GenCodec[ObjectId] = GenCodec.nullable(
+  given GenCodec[ObjectId] = GenCodec.nullable(
     i => i.readCustom(ObjectIdMarker).getOrElse(new ObjectId(i.readSimple().readString())),
     (o, v) => if (!o.writeCustom(ObjectIdMarker, v)) o.writeSimple().writeString(v.toHexString),
   )
 
-  implicit val objectIdKeyCodec: GenKeyCodec[ObjectId] =
+  given GenKeyCodec[ObjectId] =
     GenKeyCodec.create(new ObjectId(_), _.toHexString)
 
-  implicit val decimal128Codec: GenCodec[Decimal128] = GenCodec.nullable(
+  given GenCodec[Decimal128] = GenCodec.nullable(
     i => i.readCustom(Decimal128Marker).getOrElse(new Decimal128(i.readSimple().readBigDecimal().bigDecimal)),
     (o, v) => if (!o.writeCustom(Decimal128Marker, v)) o.writeSimple().writeBigDecimal(v.bigDecimalValue()),
   )
 
-  implicit val bsonValueCodec: GenCodec[BsonValue] = GenCodec.create(
+  given GenCodec[BsonValue] = GenCodec.create(
     i =>
       i.readCustom(BsonValueMarker).getOrElse {
         val reader = new BsonBinaryReader(ByteBuffer.wrap(i.readSimple().readBinary()))
@@ -67,27 +49,63 @@ object BsonGenCodecs {
   )
 
   private def bsonValueSubCodec[T <: BsonValue](fromBsonValue: BsonValue => T): GenCodec[T] =
-    bsonValueCodec.transform(identity, fromBsonValue)
+    summon[GenCodec[BsonValue]].transform(identity, fromBsonValue)
 
-  implicit val bsonArrayCodec: GenCodec[BsonArray] = bsonValueSubCodec(_.asArray())
-  implicit val bsonBinaryCodec: GenCodec[BsonBinary] = bsonValueSubCodec(_.asBinary())
-  implicit val bsonBooleanCodec: GenCodec[BsonBoolean] = bsonValueSubCodec(_.asBoolean())
-  implicit val bsonDateTimeCodec: GenCodec[BsonDateTime] = bsonValueSubCodec(_.asDateTime())
-  implicit val bsonDocumentCodec: GenCodec[BsonDocument] = bsonValueSubCodec(_.asDocument())
-  implicit val bsonDecimal128Codec: GenCodec[BsonDecimal128] = bsonValueSubCodec(_.asDecimal128())
-  implicit val bsonDoubleCodec: GenCodec[BsonDouble] = bsonValueSubCodec(_.asDouble())
-  implicit val bsonInt32Codec: GenCodec[BsonInt32] = bsonValueSubCodec(_.asInt32())
-  implicit val bsonInt64Codec: GenCodec[BsonInt64] = bsonValueSubCodec(_.asInt64())
+  given GenCodec[BsonArray] = bsonValueSubCodec(_.asArray())
+  given GenCodec[BsonBinary] = bsonValueSubCodec(_.asBinary())
+  given GenCodec[BsonBoolean] = bsonValueSubCodec(_.asBoolean())
+  given GenCodec[BsonDateTime] = bsonValueSubCodec(_.asDateTime())
+  given GenCodec[BsonDocument] = bsonValueSubCodec(_.asDocument())
+  given GenCodec[BsonDecimal128] = bsonValueSubCodec(_.asDecimal128())
+  given GenCodec[BsonDouble] = bsonValueSubCodec(_.asDouble())
+  given GenCodec[BsonInt32] = bsonValueSubCodec(_.asInt32())
+  given GenCodec[BsonInt64] = bsonValueSubCodec(_.asInt64())
 
-  implicit val bsonNullCodec: GenCodec[BsonNull] =
+  given GenCodec[BsonNull] =
     bsonValueSubCodec { bv =>
       if (bv.isNull) BsonNull.VALUE
       else throw new ReadFailure("Input did not contain expected null value")
     }
 
-  implicit val bsonObjectIdCodec: GenCodec[BsonObjectId] =
-    objectIdCodec.transform(_.getValue, new BsonObjectId(_))
+  given GenCodec[BsonObjectId] =
+    summon[GenCodec[ObjectId]].transform(_.getValue, new BsonObjectId(_))
 
-  implicit val bsonStringCodec: GenCodec[BsonString] =
+  given GenCodec[BsonString] =
     GenCodec.StringCodec.transform(_.getValue, new BsonString(_))
+
+  // Source-compat aliases for callers that previously referenced these by name.
+  @deprecated("Use summon[TransparentWrapping[ObjectId, ObjectId]]", since = "scala-3")
+  def objectIdIdentityWrapping: TransparentWrapping[ObjectId, ObjectId] = summon
+  @deprecated("Use summon[GenCodec[ObjectId]]", since = "scala-3")
+  def objectIdCodec: GenCodec[ObjectId] = summon
+  @deprecated("Use summon[GenKeyCodec[ObjectId]]", since = "scala-3")
+  def objectIdKeyCodec: GenKeyCodec[ObjectId] = summon
+  @deprecated("Use summon[GenCodec[Decimal128]]", since = "scala-3")
+  def decimal128Codec: GenCodec[Decimal128] = summon
+  @deprecated("Use summon[GenCodec[BsonValue]]", since = "scala-3")
+  def bsonValueCodec: GenCodec[BsonValue] = summon
+  @deprecated("Use summon[GenCodec[BsonArray]]", since = "scala-3")
+  def bsonArrayCodec: GenCodec[BsonArray] = summon
+  @deprecated("Use summon[GenCodec[BsonBinary]]", since = "scala-3")
+  def bsonBinaryCodec: GenCodec[BsonBinary] = summon
+  @deprecated("Use summon[GenCodec[BsonBoolean]]", since = "scala-3")
+  def bsonBooleanCodec: GenCodec[BsonBoolean] = summon
+  @deprecated("Use summon[GenCodec[BsonDateTime]]", since = "scala-3")
+  def bsonDateTimeCodec: GenCodec[BsonDateTime] = summon
+  @deprecated("Use summon[GenCodec[BsonDocument]]", since = "scala-3")
+  def bsonDocumentCodec: GenCodec[BsonDocument] = summon
+  @deprecated("Use summon[GenCodec[BsonDecimal128]]", since = "scala-3")
+  def bsonDecimal128Codec: GenCodec[BsonDecimal128] = summon
+  @deprecated("Use summon[GenCodec[BsonDouble]]", since = "scala-3")
+  def bsonDoubleCodec: GenCodec[BsonDouble] = summon
+  @deprecated("Use summon[GenCodec[BsonInt32]]", since = "scala-3")
+  def bsonInt32Codec: GenCodec[BsonInt32] = summon
+  @deprecated("Use summon[GenCodec[BsonInt64]]", since = "scala-3")
+  def bsonInt64Codec: GenCodec[BsonInt64] = summon
+  @deprecated("Use summon[GenCodec[BsonNull]]", since = "scala-3")
+  def bsonNullCodec: GenCodec[BsonNull] = summon
+  @deprecated("Use summon[GenCodec[BsonObjectId]]", since = "scala-3")
+  def bsonObjectIdCodec: GenCodec[BsonObjectId] = summon
+  @deprecated("Use summon[GenCodec[BsonString]]", since = "scala-3")
+  def bsonStringCodec: GenCodec[BsonString] = summon
 }
