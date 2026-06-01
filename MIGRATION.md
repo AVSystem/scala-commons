@@ -16,7 +16,7 @@ Status tokens: `cross` (cross-builds on both versions), `stub` (Scala 3 wired wi
 
 | Module | 2.13 | 3.x | MiMa | Tasty-MiMa | Notes |
 |--------|------|-----|------|------------|-------|
-| macros | cross | stub | n/a | n/a | Whitebox 2.13 macros; Scala 3 jar empty in the next port. |
+| macros | cross | stub | n/a | n/a | Empty scala-3 dir; whitebox impls remain 2.13-only. |
 | made | n/a | pending | n/a | n/a | Scala-3-only dep, pinned to `io.github.halotukozak:made_3:0.1.0`. |
 | core | cross | pending | green | pending | Cross-compile target; tests still pending on Scala 3. |
 | hocon | cross | pending | green | pending | Pure-Scala; first downstream port after `core`. |
