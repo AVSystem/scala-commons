@@ -72,7 +72,7 @@ trait CollectionAliases {
   export scm.Buffer as MBuffer
 
   export scm.Builder as MBuilder
-  type MColBuilder[Elem, +Col[_]] = scm.Builder[Elem, Col[Elem]]
+  type MColBuilder[Elem, +Col[_]] = MBuilder[Elem, Col[Elem]]
 
   export scm.ListBuffer as MListBuffer
 
