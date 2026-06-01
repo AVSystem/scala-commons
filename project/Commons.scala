@@ -260,17 +260,16 @@ object Commons extends ProjectGroup("commons") {
     exclude[DirectMissingMethodProblem]("com.avsystem.commons.SharedExtensionsUtils#IteratorOps.distinctBy$extension"),
   )
 
-  lazy val core = mkSubProject
-    .settings(
-      jvmCommonSettings,
-      sourceDirsSettings(_ / "jvm"),
-      libraryDependencies ++= Seq(
-        "com.google.guava" % "guava" % guavaVersion % Optional,
-        "io.monix" %% "monix" % monixVersion % Optional,
-        "io.github.halotukozak" %% "made" % madeVersion,
-      ),
-      mimaBinaryIssueFilters ++= coreMimaFilters,
-    )
+  lazy val core = mkSubProject.settings(
+    jvmCommonSettings,
+    sourceDirsSettings(_ / "jvm"),
+    libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % guavaVersion % Optional,
+      "io.monix" %% "monix" % monixVersion % Optional,
+      "io.github.halotukozak" %% "made" % madeVersion,
+    ),
+    mimaBinaryIssueFilters ++= coreMimaFilters,
+  )
 
   lazy val `core-js` = mkSubProject
     .in(core.base / "js")
