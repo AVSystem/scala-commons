@@ -126,18 +126,66 @@ object SharedExtensionsUtils extends SharedExtensions {
     def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
-    inline def showAst: A = ${ macros.UniversalOpsMacros.showAstImpl[A]('a) }
-    inline def showRawAst: A = ${ macros.UniversalOpsMacros.showRawAstImpl[A]('a) }
-    inline def showSymbol: A = ${ macros.UniversalOpsMacros.showSymbolImpl[A]('a) }
-    inline def showSymbolFullName: A = ${ macros.UniversalOpsMacros.showSymbolFullNameImpl[A]('a) }
-    inline def showType: A = ${ macros.UniversalOpsMacros.showTypeImpl[A]('a) }
-    inline def showRawType: A = ${ macros.UniversalOpsMacros.showRawTypeImpl[A]('a) }
-    inline def showTypeSymbol: A = ${ macros.UniversalOpsMacros.showTypeSymbolImpl[A]('a) }
-    inline def showTypeSymbolFullName: A = ${ macros.UniversalOpsMacros.showTypeSymbolFullNameImpl[A]('a) }
-    inline def sourceCode: String = ${ macros.UniversalOpsMacros.sourceCodeImpl[A]('a) }
-    inline def withSourceCode: (A, String) = ${ macros.UniversalOpsMacros.withSourceCodeImpl[A]('a) }
+    inline def showAst: A = ${ UniversalOps.showAstImpl[A]('a) }
+    inline def showRawAst: A = ${ UniversalOps.showRawAstImpl[A]('a) }
+    inline def showSymbol: A = ${ UniversalOps.showSymbolImpl[A]('a) }
+    inline def showSymbolFullName: A = ${ UniversalOps.showSymbolFullNameImpl[A]('a) }
+    inline def showType: A = ${ UniversalOps.showTypeImpl[A]('a) }
+    inline def showRawType: A = ${ UniversalOps.showRawTypeImpl[A]('a) }
+    inline def showTypeSymbol: A = ${ UniversalOps.showTypeSymbolImpl[A]('a) }
+    inline def showTypeSymbolFullName: A = ${ UniversalOps.showTypeSymbolFullNameImpl[A]('a) }
+    inline def sourceCode: String = ${ macros.UniversalOpsSourceMacros.sourceCodeImpl[A]('a) }
+    inline def withSourceCode: (A, String) = ${ macros.UniversalOpsSourceMacros.withSourceCodeImpl[A]('a) }
 
     def debugMacro: A = a
+  }
+
+  object UniversalOps {
+    import scala.quoted.*
+
+    def showAstImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(Printer.TreeCode.show(a.asTerm), a)
+      a
+
+    def showRawAstImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(Printer.TreeStructure.show(a.asTerm), a)
+      a
+
+    def showSymbolImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(a.asTerm.symbol.toString, a)
+      a
+
+    def showSymbolFullNameImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(a.asTerm.symbol.fullName, a)
+      a
+
+    def showTypeImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(TypeRepr.of[A].widen.show, a)
+      a
+
+    def showRawTypeImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(Printer.TypeReprStructure.show(TypeRepr.of[A].widen), a)
+      a
+
+    def showTypeSymbolImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(TypeRepr.of[A].typeSymbol.toString, a)
+      a
+
+    def showTypeSymbolFullNameImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
+      import quotes.reflect.*
+      report.info(TypeRepr.of[A].typeSymbol.fullName, a)
+      a
+
+    // sourceCode / withSourceCode impls live in `commons.macros.UniversalOpsSourceMacros`
+    // (must be in a different package to avoid `Position.sourceCode` resolving via the
+    // package-object auto-imported `universalOps` implicit conversion → infinite macro recursion)
   }
 
   class LazyUniversalOps[A](private val a: () => A) extends AnyVal {
