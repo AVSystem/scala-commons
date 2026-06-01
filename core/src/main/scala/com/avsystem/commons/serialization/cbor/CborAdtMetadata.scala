@@ -16,24 +16,16 @@ import scala.annotation.nowarn
   * hierarchies with annotations: [[cborKey]] and [[cborDiscriminator]], again taking advantage of the fact that CBOR
   * map keys can be of arbitrary type and not just strings</li> </ul>
   */
-abstract class HasCborCodec[T](implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtInstances[T]]) {
-  implicit lazy val codec: GenObjectCodec[T] = instances(CborOptimizedCodecs, this).cborCodec
+// TODO[scala3-port]: HasCborCodec — reshape CborAdtInstances[T] to NamedTuple form (Phase 6); stubbed for slice 4.2 MacroInstances bound
+abstract class HasCborCodec[T] {
+  implicit lazy val codec: GenObjectCodec[T] = ???
 }
 
 /** Like [[HasCborCodec]] but allows injecting additional implicits - like [[HasGenCodecWithDeps]].
   */
-abstract class HasCborCodecWithDeps[D, T](
-  implicit instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
-  deps: scala.ValueOf[D],
-) {
-  @bincompat
-  @nowarn("msg=deprecated")
-  private[serialization] def this(
-    applyUnapplyProvider: ValueOf[D],
-    instances: MacroInstances[(CborOptimizedCodecs, D), CborAdtInstances[T]],
-  ) = this()(using instances, applyUnapplyProvider.toScala)
-
-  implicit lazy val codec: GenObjectCodec[T] = instances((CborOptimizedCodecs, deps.value), this).cborCodec
+// TODO[scala3-port]: HasCborCodecWithDeps — reshape CborAdtInstances[T] to NamedTuple form (Phase 6); stubbed for slice 4.2
+abstract class HasCborCodecWithDeps[D, T] {
+  implicit lazy val codec: GenObjectCodec[T] = ???
 }
 
 /** Apply this annotation on a sealed trait/class whose companion extends [[HasCborCodec]] in order to customize the
@@ -262,11 +254,7 @@ trait CborAdtPolyInstances[C[_]] {
 
 /** Like [[HasCborCodec]] but for parameterized (generic) data types.
   */
-abstract class HasPolyCborCodec[C[_]](
-  implicit instances: MacroInstances[CborOptimizedCodecs, CborAdtPolyInstances[C]]
-) {
-  private lazy val validatedInstances = instances(CborOptimizedCodecs, this).setup(_.metadata[Nothing].validate())
-
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] =
-    validatedInstances.metadata[T].adjustCodec(validatedInstances.stdCodec[T])
+// TODO[scala3-port]: HasPolyCborCodec — reshape CborAdtPolyInstances[C] to NamedTuple form (Phase 6); stubbed for slice 4.2
+abstract class HasPolyCborCodec[C[_]] {
+  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = ???
 }
