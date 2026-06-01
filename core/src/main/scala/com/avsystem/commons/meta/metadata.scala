@@ -1,7 +1,10 @@
 package com.avsystem.commons
 package meta
 
-import com.avsystem.commons.serialization.{transparent, HasGenCodec}
+import made.*
+import made.annotation.*
+import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
+import com.avsystem.commons.serialization.GenCodec.given
 
 /** This trait must be extended by all method metadata classes and all parameter metadata classes. For method metadata,
   * type parameter `T` will be matched against each real method result type. For parameter metadata, type parameter `T`
@@ -21,7 +24,7 @@ final class DefaultValue[T](dv: => T) {
 @transparent
 final case class ParamFlags(rawFlags: Int) extends AnyVal {
 
-  import ParamFlags._
+  import ParamFlags.*
 
   def |(other: ParamFlags): ParamFlags = new ParamFlags(rawFlags | other.rawFlags)
   def &(other: ParamFlags): ParamFlags = new ParamFlags(rawFlags & other.rawFlags)
@@ -51,19 +54,18 @@ final case class ParamFlags(rawFlags: Int) extends AnyVal {
 }
 
 object ParamFlags extends HasGenCodec[ParamFlags] {
-  private[this] var currentFlag: Int = 1
-  private[this] def nextFlag(): ParamFlags = {
-    val flag = currentFlag
-    currentFlag = currentFlag << 1
-    new ParamFlags(flag)
-  }
-
   final val Empty: ParamFlags = new ParamFlags(0)
   final val Implicit: ParamFlags = nextFlag()
   final val ByName: ParamFlags = nextFlag()
   final val Repeated: ParamFlags = nextFlag()
   final val HasDefaultValue: ParamFlags = nextFlag()
   final val Synthetic: ParamFlags = nextFlag()
+  private var currentFlag: Int = 1
+  private def nextFlag(): ParamFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new ParamFlags(flag)
+  }
 }
 
 /** Information about real parameter position in its method. All indices start from 0.
@@ -120,7 +122,7 @@ object SymbolSource extends HasGenCodec[SymbolSource]
 @transparent
 final case class TypeFlags(rawFlags: Int) extends AnyVal {
 
-  import TypeFlags._
+  import TypeFlags.*
 
   def |(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags | other.rawFlags)
   def &(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags & other.rawFlags)
@@ -152,13 +154,6 @@ final case class TypeFlags(rawFlags: Int) extends AnyVal {
 }
 
 object TypeFlags extends HasGenCodec[TypeFlags] {
-  private[this] var currentFlag: Int = 1
-  private[this] def nextFlag(): TypeFlags = {
-    val flag = currentFlag
-    currentFlag = currentFlag << 1
-    new TypeFlags(flag)
-  }
-
   final val Empty: TypeFlags = new TypeFlags(0)
   final val Abstract: TypeFlags = nextFlag()
   final val Final: TypeFlags = nextFlag()
@@ -166,6 +161,12 @@ object TypeFlags extends HasGenCodec[TypeFlags] {
   final val Case: TypeFlags = nextFlag()
   final val Trait: TypeFlags = nextFlag()
   final val Object: TypeFlags = nextFlag()
+  private var currentFlag: Int = 1
+  private def nextFlag(): TypeFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new TypeFlags(flag)
+  }
 }
 
 /** Information about method (also `val` or `var`) flags and modifiers as defined in Scala code.
@@ -173,7 +174,7 @@ object TypeFlags extends HasGenCodec[TypeFlags] {
 @transparent
 final case class MethodFlags(rawFlags: Int) extends AnyVal {
 
-  import MethodFlags._
+  import MethodFlags.*
 
   def |(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags | other.rawFlags)
   def &(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags & other.rawFlags)
@@ -212,13 +213,6 @@ final case class MethodFlags(rawFlags: Int) extends AnyVal {
   }
 }
 object MethodFlags extends HasGenCodec[MethodFlags] {
-  private[this] var currentFlag: Int = 1
-  private[this] def nextFlag(): MethodFlags = {
-    val flag = currentFlag
-    currentFlag = currentFlag << 1
-    new MethodFlags(flag)
-  }
-
   final val Empty: MethodFlags = new MethodFlags(0)
   final val Abstract: MethodFlags = nextFlag()
   final val Final: MethodFlags = nextFlag()
@@ -226,4 +220,10 @@ object MethodFlags extends HasGenCodec[MethodFlags] {
   final val Getter: MethodFlags = nextFlag()
   final val Setter: MethodFlags = nextFlag()
   final val Var: MethodFlags = nextFlag()
+  private var currentFlag: Int = 1
+  private def nextFlag(): MethodFlags = {
+    val flag = currentFlag
+    currentFlag = currentFlag << 1
+    new MethodFlags(flag)
+  }
 }
