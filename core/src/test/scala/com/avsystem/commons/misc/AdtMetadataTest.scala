@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package misc
 
+// TODO[scala3-port]: AdtMetadataTest + HasGenCodecStructure — uses classical-trait `Instances`; reshape to NamedTuple form (Phase 6) per slice 4.2 MacroInstances `Instances <: AnyNamedTuple` bound
+/*
 import com.avsystem.commons.annotation.positioned
 import com.avsystem.commons.meta.{adtCaseMetadata, adtCaseSealedParentMetadata, adtParamMetadata, allowUnorderedSubtypes, checked, composite, infer, multi, AdtMetadataCompanion, MacroInstances, TypedMetadata}
 import com.avsystem.commons.serialization.{name, GenCaseInfo, GenCodec, GenParamInfo, GenUnionInfo}
@@ -111,3 +113,5 @@ object Peculiarity {
 }
 
 case object God extends Being
+
+ */

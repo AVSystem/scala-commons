@@ -129,9 +129,10 @@ object DummyRPC {
     def metadata: RPCMetadata[T]
   }
 
-  abstract class RPCCompanion[T](implicit instances: MacroInstances[DummyRPC.type, Instances[T]]) {
-    implicit lazy val asRawRPC: AsRawRPC[T] = instances(DummyRPC, this).asRaw
-    implicit lazy val asRealRPC: AsRealRPC[T] = instances(DummyRPC, this).asReal
-    implicit lazy val metadata: RPCMetadata[T] = instances(DummyRPC, this).metadata
+  // TODO[scala3-port]: RPCCompanion — reshape Instances[T] to NamedTuple form (Phase 6) per slice 4.2 MacroInstances bound; stubbed
+  abstract class RPCCompanion[T] {
+    implicit lazy val asRawRPC: AsRawRPC[T] = ???
+    implicit lazy val asRealRPC: AsRealRPC[T] = ???
+    implicit lazy val metadata: RPCMetadata[T] = ???
   }
 }

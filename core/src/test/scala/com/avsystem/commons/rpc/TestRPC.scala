@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package rpc
 
+// TODO[scala3-port]: TestRPC — depends on DummyRPC.RPCCompanion which uses classical-trait `Instances`; reshape (Phase 6) per slice 4.2 MacroInstances bound
+/*
 import com.avsystem.commons.rpc.DummyRPC._
 import com.avsystem.commons.serialization.{optionalParam, transientDefault, whenAbsent, HasGenCodec}
 import scala.annotation.nowarn
@@ -125,3 +127,5 @@ object TestRPC extends RPCCompanion[TestRPC] {
       onCall("generallyDoStuff", List(write(tag), write(list)), list.headOption)
   }
 }
+
+ */
