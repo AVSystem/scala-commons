@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.macros.misc.MiscMacros
-
 import scala.collection.Factory
 
 class InvalidRpcCall(msg: String, cause: Throwable = null) extends RuntimeException(msg, cause)
@@ -55,5 +53,6 @@ object RpcUtils {
     : AsReal[Raw, Real] =
     raw => asReal.asReal(interceptor.toNewRaw(raw))
 
-  def compilationError(error: String): Nothing = macro MiscMacros.compilationError
+  // TODO[scala3-port]: compilationError (Scala 2 macro def) (L)
+  def compilationError(error: String): Nothing = ???
 }
