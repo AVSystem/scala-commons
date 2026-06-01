@@ -175,14 +175,14 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     @infer val codec: GenObjectCodec[T],
     @infer val dataClassTag: ClassTag[T],
     @reifyAnnot val flattenAnnot: flatten,
-    @multi @adtCaseMetadata val cases: List[Case[_]],
+    @multi @adtCaseMetadata val cases: List[Case[?]],
   ) extends MongoAdtFormat[T] {
 
-    lazy val casesByClass: Map[Class[_], Case[_]] =
+    lazy val casesByClass: Map[Class[?], Case[?]] =
       cases.toMapBy(_.classTag.runtimeClass)
 
-    lazy val subUnionsByClass: Map[Class[_], UnionFormat[_]] = {
-      val casesPerClass = new MHashMap[Class[_], (SealedParent[_], MListBuffer[Case[_]])]
+    lazy val subUnionsByClass: Map[Class[?], UnionFormat[?]] = {
+      val casesPerClass = new MHashMap[Class[?], (SealedParent[?], MListBuffer[Case[?]])]
       for {
         cse <- cases
         subUnion <- cse.sealedParents
@@ -206,7 +206,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     }
 
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0] = {
-      @tailrec def loop(cases: List[Case[_]], rawName: Opt[String]): Unit = cases match {
+      @tailrec def loop(cases: List[Case[?]], rawName: Opt[String]): Unit = cases match {
         case cse :: tail =>
           val field = cse
             .getField(scalaFieldName)
@@ -228,7 +228,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     }
 
     private def subtypeInfo[T0](subclass: Class[T0]): (List[String], MongoAdtFormat[T0]) = {
-      def asAdtFormat[C](cse: Case[_], codec: GenObjectCodec[_]): MongoAdtFormat[C] =
+      def asAdtFormat[C](cse: Case[?], codec: GenObjectCodec[?]): MongoAdtFormat[C] =
         cse.asInstanceOf[Case[C]].asAdtFormat(codec.asInstanceOf[GenObjectCodec[C]])
 
       casesByClass
@@ -282,9 +282,9 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   sealed trait Case[T] extends TypedMetadata[T] {
     def info: GenCaseInfo[T]
     def classTag: ClassTag[T]
-    def sealedParents: List[SealedParent[_]]
+    def sealedParents: List[SealedParent[?]]
 
-    def getField(scalaFieldName: String): Opt[Field[_]]
+    def getField(scalaFieldName: String): Opt[Field[?]]
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0]
 
     def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T]
@@ -294,8 +294,8 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   final class RecordCase[T](
     @composite val info: GenCaseInfo[T],
     @infer val classTag: ClassTag[T],
-    @multi @adtParamMetadata val fields: List[Field[_]],
-    @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[_]],
+    @multi @adtParamMetadata val fields: List[Field[?]],
+    @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[?]],
   ) extends Case[T] {
     def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =
       new RecordFormat(this, codec)
@@ -303,10 +303,10 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     def transparentWrapper: Boolean =
       info.transparent && fields.size == 1
 
-    lazy val fieldsByScalaName: Map[String, Field[_]] =
+    lazy val fieldsByScalaName: Map[String, Field[?]] =
       fields.toMapBy(_.info.sourceName)
 
-    def getField(scalaFieldName: String): Opt[Field[_]] =
+    def getField(scalaFieldName: String): Opt[Field[?]] =
       fieldsByScalaName.getOpt(scalaFieldName)
 
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0] = {
@@ -326,14 +326,14 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   final class SingletonCase[T](
     @composite val info: GenCaseInfo[T],
     @infer val classTag: ClassTag[T],
-    @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[_]],
+    @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[?]],
     @infer @checked val value: scala.ValueOf[T],
   ) extends Case[T] {
     def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =
       new SingletonFormat(this, codec)
 
     // TODO: @generated
-    def getField(scalaFieldName: String): Opt[Field[_]] = Opt.Empty
+    def getField(scalaFieldName: String): Opt[Field[?]] = Opt.Empty
 
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0] =
       throw new NoSuchElementException(s"Field $scalaFieldName not found")
