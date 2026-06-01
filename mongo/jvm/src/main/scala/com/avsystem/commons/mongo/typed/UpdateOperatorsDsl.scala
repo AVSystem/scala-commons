@@ -27,9 +27,11 @@ trait UpdateOperatorsDsl[T, R] {
 object UpdateOperatorsDsl {
   import MongoUpdateOperator._
 
-  // A `given Conversion` (not an `extension`) is used here so the higher-kinded `C[T]` is unified once,
-  // at conversion time, against the receiver's `UpdateOperatorsDsl[C[T], R]` base type. Plain extension
-  // methods fail to infer `C`/`T` from the receiver for named-argument calls such as `push(sort = ...)`.
+  // TODO[scala3-port]: convert ForCollection to an `extension` block once the HKT receiver-inference
+  //   regression is fixed (dotty#XXXXX). A `given Conversion` (not an `extension`) is used here so
+  //   the higher-kinded `C[T]` is unified once, at conversion time, against the receiver's
+  //   `UpdateOperatorsDsl[C[T], R]` base type. Plain extension methods fail to infer `C`/`T` from the
+  //   receiver for named-argument calls such as `push(sort = ...)`.
   given [C[X] <: Iterable[X], T, R] => Conversion[UpdateOperatorsDsl[C[T], R], ForCollection[C, T, R]] =
     ForCollection(_)
 
