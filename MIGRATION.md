@@ -18,6 +18,7 @@ the bottom of this file. Restoration ships incrementally per feature area.
 | `-Wconf` warning suppression blocks                   | Project rule: fix warnings at source, not via suppression.                                                                                                                                              |
 | `-language:experimental.macros`                       | Scala 3 uses `inline` + `scala.quoted`; flag is a no-op.                                                                                                                                                |
 | Scala 2 macro impls (`c.universe`, blackbox/whitebox) | Replaced by Scala 3 quotes/inline during feature-area restoration; the legacy `commons-macros` module is gone.                                                                                          |
+| `com.avsystem.commons.misc.Implicits` object          | Scala 2 macro helpers `infer` / `inferNonMacro` — covered by `scala.compiletime.summon[T]`. Object deleted outright; `ImplicitNotFound` sealed trait kept (now lives in `com.avsystem.commons.misc.ImplicitNotFound`, same package, no caller-visible change). |
 
 ## 2. Deprecated on Scala 3
 
