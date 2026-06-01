@@ -70,6 +70,36 @@ the bottom of this file. Restoration ships incrementally per feature area.
   block (`import made.*`, `import made.annotation.*`, `import com.avsystem.commons.serialization.GenCodec.given`) plus
   `@transparent`/`HasGenCodec` decoration on every flags/position ADT.
 
+### core — meta MacroInstances (slice 4.2)
+
+- `meta/MacroInstances` now constrains `Instances <: AnyNamedTuple` (was unbounded in our Phase 1 stub).
+  Downstream `XyzInstances` types passed as the second type parameter must be **named-tuple type aliases** —
+  classical-trait instance bundles will fail to compile.
+  Example reshape pattern:
+  ```scala
+  // before: trait FooInstances { def codec: GenCodec[Foo]; def meta: GenMetadata[Foo] }
+  // after:  type FooInstances = (codec: GenCodec[Foo], meta: GenMetadata[Foo])
+  ```
+- `MacroInstances.materialize` is now an `inline given` (was classical `implicit def` stub) — call sites need
+  no change but error messages from failed implicit search are now Scala-3 standard (not the legacy detailed
+  tree-printing trace from the Scala 2 macro).
+- `MacroInstances` is now `sealed class` (was open trait stub) — downstream subclassing prohibited.
+- Knock-on reshapes (required to keep slice 4.1's `metadata.scala` `HasGenCodec[ParamFlags]` extenders compiling):
+  - `serialization/HasGenCodec[T]` (and `HasApplyUnapplyCodec[T]`, `HasGenObjectCodec[T]`, and their `*WithDeps` variants)
+    now take `MacroInstances[?, (codec: GenCodec[T])]` (named-tuple, was `() => GenCodec[T]`). Caller-source-compatible
+    for `object Foo extends HasGenCodec[Foo]` extenders.
+  - `serialization/{HasPolyGenCodec, HasPolyGenObjectCodec, HasGadtCodec, HasRecursiveGenCodec, HasGenAndKeyCodec, HasGenCodecFromAU}`
+    plus `serialization/cbor/{HasCborCodec, HasCborCodecWithDeps, HasPolyCborCodec}` stubbed to `???` (members return
+    `???` at runtime; classes preserve their type names). They take classical-trait `Instances` (e.g. `PolyCodec[C]`,
+    `GadtCodec[C]`) that violate the new `AnyNamedTuple` bound; reshape deferred to Phase 6.
+- Tests using classical-trait `Instances` (`AdtMetadataTest`'s `HasGenCodecStructure`, `DummyRPC.RPCCompanion` callers
+  `RPCMetadataTest`/`RPCTest`/`TestRPC`) wrapped under `/* ... */` until Phase 6 reshapes them. `DummyRPC.RPCCompanion`
+  itself stubbed to `???` (type name preserved).
+- `SerializationTestUtils` (a `trait` with nested `object TestCC extends HasGenCodec[TestCC]`) wrapped: the new
+  `inline given materialize` body triggers a Dotty outer-accessor compiler assertion when `HasGenCodec` is nested inside
+  a trait. Investigation deferred to Phase 6 / Dotty bug report.
+- `MacroInstancesTest` un-wrap remains deferred to slice 4.5 per phase plan.
+
 ### mongo
 
 - `BsonRef.Creator.ref`, `DataTypeDsl.{ref, as, is, isNot}`, `TypedMongoUtils.optionalizeFirstArg` are stubbed with
