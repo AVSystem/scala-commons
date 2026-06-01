@@ -54,6 +54,6 @@ object Timestamp {
   implicit def conversions(tstamp: Timestamp): TimestampConversions =
     new TimestampConversions(tstamp.millis)
 
-  implicit val ordering: Ordering[Timestamp] =
+  given ordering: Ordering[Timestamp] =
     Ordering.by(_.millis)
 }

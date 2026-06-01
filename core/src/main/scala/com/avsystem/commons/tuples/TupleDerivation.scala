@@ -7,21 +7,21 @@ package tuples
 trait TupleDerivation[C[_]] {
   case class ElementInstances[T, I](instances: I)
   object ElementInstances {
-    implicit def tuple1Instances[T1](implicit i1: C[T1]): ElementInstances[Tuple1[T1], Tuple1[C[T1]]] =
+    given tuple1Instances[T1](using i1: C[T1]): ElementInstances[Tuple1[T1], Tuple1[C[T1]]] =
       ElementInstances(Tuple1(i1))
-    implicit def tuple2Instances[T1, T2](implicit i1: C[T1], i2: C[T2]): ElementInstances[(T1, T2), (C[T1], C[T2])] =
+    given tuple2Instances[T1, T2](using i1: C[T1], i2: C[T2]): ElementInstances[(T1, T2), (C[T1], C[T2])] =
       ElementInstances((i1, i2))
-    implicit def tuple3Instances[T1, T2, T3](implicit i1: C[T1], i2: C[T2], i3: C[T3])
+    given tuple3Instances[T1, T2, T3](using i1: C[T1], i2: C[T2], i3: C[T3])
       : ElementInstances[(T1, T2, T3), (C[T1], C[T2], C[T3])] =
       ElementInstances((i1, i2, i3))
-    implicit def tuple4Instances[T1, T2, T3, T4](implicit i1: C[T1], i2: C[T2], i3: C[T3], i4: C[T4])
+    given tuple4Instances[T1, T2, T3, T4](using i1: C[T1], i2: C[T2], i3: C[T3], i4: C[T4])
       : ElementInstances[(T1, T2, T3, T4), (C[T1], C[T2], C[T3], C[T4])] =
       ElementInstances((i1, i2, i3, i4))
-    implicit def tuple5Instances[T1, T2, T3, T4, T5](implicit i1: C[T1], i2: C[T2], i3: C[T3], i4: C[T4], i5: C[T5])
+    given tuple5Instances[T1, T2, T3, T4, T5](using i1: C[T1], i2: C[T2], i3: C[T3], i4: C[T4], i5: C[T5])
       : ElementInstances[(T1, T2, T3, T4, T5), (C[T1], C[T2], C[T3], C[T4], C[T5])] =
       ElementInstances((i1, i2, i3, i4, i5))
-    implicit def tuple6Instances[T1, T2, T3, T4, T5, T6](
-      implicit i1: C[T1],
+    given tuple6Instances[T1, T2, T3, T4, T5, T6](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -29,8 +29,8 @@ trait TupleDerivation[C[_]] {
       i6: C[T6],
     ): ElementInstances[(T1, T2, T3, T4, T5, T6), (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6])] =
       ElementInstances((i1, i2, i3, i4, i5, i6))
-    implicit def tuple7Instances[T1, T2, T3, T4, T5, T6, T7](
-      implicit i1: C[T1],
+    given tuple7Instances[T1, T2, T3, T4, T5, T6, T7](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -39,8 +39,8 @@ trait TupleDerivation[C[_]] {
       i7: C[T7],
     ): ElementInstances[(T1, T2, T3, T4, T5, T6, T7), (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7])] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7))
-    implicit def tuple8Instances[T1, T2, T3, T4, T5, T6, T7, T8](
-      implicit i1: C[T1],
+    given tuple8Instances[T1, T2, T3, T4, T5, T6, T7, T8](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -50,8 +50,8 @@ trait TupleDerivation[C[_]] {
       i8: C[T8],
     ): ElementInstances[(T1, T2, T3, T4, T5, T6, T7, T8), (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7], C[T8])] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8))
-    implicit def tuple9Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-      implicit i1: C[T1],
+    given tuple9Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -65,8 +65,8 @@ trait TupleDerivation[C[_]] {
       (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7], C[T8], C[T9]),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9))
-    implicit def tuple10Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-      implicit i1: C[T1],
+    given tuple10Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -81,8 +81,8 @@ trait TupleDerivation[C[_]] {
       (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7], C[T8], C[T9], C[T10]),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10))
-    implicit def tuple11Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](
-      implicit i1: C[T1],
+    given tuple11Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -98,8 +98,8 @@ trait TupleDerivation[C[_]] {
       (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7], C[T8], C[T9], C[T10], C[T11]),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11))
-    implicit def tuple12Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](
-      implicit i1: C[T1],
+    given tuple12Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -116,8 +116,8 @@ trait TupleDerivation[C[_]] {
       (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7], C[T8], C[T9], C[T10], C[T11], C[T12]),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12))
-    implicit def tuple13Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](
-      implicit i1: C[T1],
+    given tuple13Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -135,8 +135,8 @@ trait TupleDerivation[C[_]] {
       (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7], C[T8], C[T9], C[T10], C[T11], C[T12], C[T13]),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13))
-    implicit def tuple14Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](
-      implicit i1: C[T1],
+    given tuple14Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -155,8 +155,8 @@ trait TupleDerivation[C[_]] {
       (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7], C[T8], C[T9], C[T10], C[T11], C[T12], C[T13], C[T14]),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14))
-    implicit def tuple15Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](
-      implicit i1: C[T1],
+    given tuple15Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -176,8 +176,8 @@ trait TupleDerivation[C[_]] {
       (C[T1], C[T2], C[T3], C[T4], C[T5], C[T6], C[T7], C[T8], C[T9], C[T10], C[T11], C[T12], C[T13], C[T14], C[T15]),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15))
-    implicit def tuple16Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](
-      implicit i1: C[T1],
+    given tuple16Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -215,8 +215,8 @@ trait TupleDerivation[C[_]] {
       ),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16))
-    implicit def tuple17Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](
-      implicit i1: C[T1],
+    given tuple17Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -256,8 +256,8 @@ trait TupleDerivation[C[_]] {
       ),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17))
-    implicit def tuple18Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](
-      implicit i1: C[T1],
+    given tuple18Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -299,8 +299,8 @@ trait TupleDerivation[C[_]] {
       ),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17, i18))
-    implicit def tuple19Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](
-      implicit i1: C[T1],
+    given tuple19Instances[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](
+      using i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -344,7 +344,7 @@ trait TupleDerivation[C[_]] {
       ),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17, i18, i19))
-    implicit def tuple20Instances[
+    given tuple20Instances[
       T1,
       T2,
       T3,
@@ -365,8 +365,7 @@ trait TupleDerivation[C[_]] {
       T18,
       T19,
       T20,
-    ](implicit
-      i1: C[T1],
+    ](using      i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -412,7 +411,7 @@ trait TupleDerivation[C[_]] {
       ),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17, i18, i19, i20))
-    implicit def tuple21Instances[
+    given tuple21Instances[
       T1,
       T2,
       T3,
@@ -434,8 +433,7 @@ trait TupleDerivation[C[_]] {
       T19,
       T20,
       T21,
-    ](implicit
-      i1: C[T1],
+    ](using      i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -483,7 +481,7 @@ trait TupleDerivation[C[_]] {
       ),
     ] =
       ElementInstances((i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17, i18, i19, i20, i21))
-    implicit def tuple22Instances[
+    given tuple22Instances[
       T1,
       T2,
       T3,
@@ -506,8 +504,7 @@ trait TupleDerivation[C[_]] {
       T20,
       T21,
       T22,
-    ](implicit
-      i1: C[T1],
+    ](using      i1: C[T1],
       i2: C[T2],
       i3: C[T3],
       i4: C[T4],
@@ -569,7 +566,7 @@ object GenTupleDerivation {
       val instParams = js.map(j => s"i$j: C[T$j]").mkString(",")
       val instTypes = js.map(j => s"C[T$j]").mkString(",")
       val instances = js.map(j => s"i$j").mkString(",")
-      println(s"def tuple${i}Instances[$tuple](implicit $instParams): ElementInstances[($tuple),($instTypes)] =\nElementInstances(($instances))")
+      println(s"def tuple${i}Instances[$tuple](using $instParams): ElementInstances[($tuple),($instTypes)] =\nElementInstances(($instances))")
     }
   }
 }

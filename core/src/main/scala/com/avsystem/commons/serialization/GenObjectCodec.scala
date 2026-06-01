@@ -53,7 +53,7 @@ object GenObjectCodec {
   }
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R])
+  given fromTransparentWrapping[R, T](using tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R])
     : GenObjectCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 

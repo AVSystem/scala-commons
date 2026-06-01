@@ -21,7 +21,7 @@ sealed trait EntityIdMode[E, ID] {
     case EntityIdMode.Explicit() =>
       format.fieldRefFor(MongoRef.RootRef(format), MongoEntity.Id)
     case EntityIdMode.Auto(idWrapping) =>
-      val idCodec = GenCodec.fromTransparentWrapping(idWrapping, summon[GenCodec[ObjectId]])
+      val idCodec = GenCodec.fromTransparentWrapping(using idWrapping, summon[GenCodec[ObjectId]])
       MongoRef.FieldRef(MongoRef.RootRef(format), mongoId.Id, MongoFormat.Opaque(idCodec), Opt.Empty)
   }
 }

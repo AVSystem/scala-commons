@@ -307,7 +307,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       def nullable: Boolean = wrapped.nullable
     }
 
-    implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrapped: OOOFieldsObjectCodec[R])
+    given fromTransparentWrapping[R, T](using tw: TransparentWrapping[R, T], wrapped: OOOFieldsObjectCodec[R])
       : OOOFieldsObjectCodec[T] =
       new Transformed(wrapped, tw.unwrap, tw.wrap)
   }
@@ -467,7 +467,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     }
   }
 
-  implicit def arrayCodec[T: ClassTag: GenCodec]: GenCodec[Array[T]] =
+  given arrayCodec[T: ClassTag: GenCodec]: GenCodec[Array[T]] =
     nullableList[Array[T]](
       _.iterator(read[T]).toArray[T],
       (lo, arr) => {
@@ -483,58 +483,58 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   // these are covered by the generic `seqCodec` and `setCodec` but making them explicit may be easier
   // for the compiler and also make IntelliJ less confused
-  implicit def bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] =
-    seqCodec[BSeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
-  implicit def iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] =
-    seqCodec[ISeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
-  implicit def mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]
-  implicit def bindexedSeqCodec[T: GenCodec]: GenCodec[BIndexedSeq[T]] = seqCodec[BIndexedSeq, T]
-  implicit def iindexedSeqCodec[T: GenCodec]: GenCodec[IIndexedSeq[T]] = seqCodec[IIndexedSeq, T]
-  implicit def mindexedSeqCodec[T: GenCodec]: GenCodec[MIndexedSeq[T]] = seqCodec[MIndexedSeq, T]
-  implicit def listCodec[T: GenCodec]: GenCodec[List[T]] = seqCodec[List, T]
-  implicit def vectorCodec[T: GenCodec]: GenCodec[Vector[T]] = seqCodec[Vector, T]
-  implicit def bsetCodec[T: GenCodec]: GenCodec[BSet[T]] = setCodec[BSet, T]
-  implicit def isetCodec[T: GenCodec]: GenCodec[ISet[T]] = setCodec[ISet, T]
-  implicit def msetCodec[T: GenCodec]: GenCodec[MSet[T]] = setCodec[MSet, T]
-  implicit def ihashSetCodec[T: GenCodec]: GenCodec[IHashSet[T]] = setCodec[IHashSet, T]
-  implicit def mhashSetCodec[T: GenCodec]: GenCodec[MHashSet[T]] = setCodec[MHashSet, T]
+  given bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] =
+    seqCodec[BSeq, T](using GenCodec[T], summon[Factory[T, List[T]]])
+  given iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] =
+    seqCodec[ISeq, T](using GenCodec[T], summon[Factory[T, List[T]]])
+  given mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]
+  given bindexedSeqCodec[T: GenCodec]: GenCodec[BIndexedSeq[T]] = seqCodec[BIndexedSeq, T]
+  given iindexedSeqCodec[T: GenCodec]: GenCodec[IIndexedSeq[T]] = seqCodec[IIndexedSeq, T]
+  given mindexedSeqCodec[T: GenCodec]: GenCodec[MIndexedSeq[T]] = seqCodec[MIndexedSeq, T]
+  given listCodec[T: GenCodec]: GenCodec[List[T]] = seqCodec[List, T]
+  given vectorCodec[T: GenCodec]: GenCodec[Vector[T]] = seqCodec[Vector, T]
+  given bsetCodec[T: GenCodec]: GenCodec[BSet[T]] = setCodec[BSet, T]
+  given isetCodec[T: GenCodec]: GenCodec[ISet[T]] = setCodec[ISet, T]
+  given msetCodec[T: GenCodec]: GenCodec[MSet[T]] = setCodec[MSet, T]
+  given ihashSetCodec[T: GenCodec]: GenCodec[IHashSet[T]] = setCodec[IHashSet, T]
+  given mhashSetCodec[T: GenCodec]: GenCodec[MHashSet[T]] = setCodec[MHashSet, T]
 
   // seqCodec, setCodec, jCollectionCodec, mapCodec, jMapCodec, fallbackMapCodec and fallbackJMapCodec
   // have these weird return types (e.g. GenCodec[C[T] with BSeq[T]] instead of just GenCodec[C[T]]) because it's a
   // workaround for https://groups.google.com/forum/#!topic/scala-user/O_fkaChTtg4
 
-  implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
-    implicit fac: Factory[T, C[T]]
+  given seqCodec[C[X] <: BSeq[X], T: GenCodec](using
+    fac: Factory[T, C[T]]
   ): GenCodec[C[T] with BSeq[T]] =
     nullableList[C[T] with BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
-  implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
-    implicit fac: Factory[T, C[T]]
+  given setCodec[C[X] <: BSet[X], T: GenCodec](using
+    fac: Factory[T, C[T]]
   ): GenCodec[C[T] with BSet[T]] =
     nullableList[C[T] with BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
-  implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
-    implicit cbf: JFactory[T, C[T]]
+  given jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](using
+    cbf: JFactory[T, C[T]]
   ): GenCodec[C[T] with JCollection[T]] =
     nullableList[C[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
-  implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit fac: Factory[(K, V), M[K, V]]
+  given mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](using
+    fac: Factory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.writeToObject(oo),
     )
 
-  implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: JFactory[(K, V), M[K, V]]
+  given jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](using
+    cbf: JFactory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] =
     nullableObject[M[K, V]](
       _.collectTo[K, V, M[K, V]],
       (oo, value) => value.asScala.writeToObject(oo),
     )
 
-  implicit def optionCodec[T: GenCodec]: GenCodec[Option[T]] = create[Option[T]](
+  given optionCodec[T: GenCodec]: GenCodec[Option[T]] = create[Option[T]](
     input =>
       if (input.legacyOptionEncoding) {
         val li = input.readList()
@@ -555,10 +555,10 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
         },
   )
 
-  implicit def nOptCodec[T: GenCodec]: GenCodec[NOpt[T]] =
+  given nOptCodec[T: GenCodec]: GenCodec[NOpt[T]] =
     new Transformed[NOpt[T], Option[T]](optionCodec[T], _.toOption, _.toNOpt)
 
-  implicit def optCodec[T: GenCodec]: GenCodec[Opt[T]] =
+  given optCodec[T: GenCodec]: GenCodec[Opt[T]] =
     create[Opt[T]](
       i => if (i.readNull()) Opt.Empty else Opt(read[T](i)),
       (o, vo) =>
@@ -568,13 +568,13 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
         },
     )
 
-  implicit def optArgCodec[T: GenCodec]: GenCodec[OptArg[T]] =
+  given optArgCodec[T: GenCodec]: GenCodec[OptArg[T]] =
     new Transformed[OptArg[T], Opt[T]](optCodec[T], _.toOpt, _.toOptArg)
 
-  implicit def optRefCodec[T >: Null: GenCodec]: GenCodec[OptRef[T]] =
+  given optRefCodec[T >: Null: GenCodec]: GenCodec[OptRef[T]] =
     new Transformed[OptRef[T], Opt[T]](optCodec[T], _.toOpt, _.toOptRef)
 
-  implicit def eitherCodec[A: GenCodec, B: GenCodec]: GenCodec[Either[A, B]] = nullableObject(
+  given eitherCodec[A: GenCodec, B: GenCodec]: GenCodec[Either[A, B]] = nullableObject(
     oi => {
       val fi = oi.nextField()
       fi.fieldName match {
@@ -592,17 +592,17 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     },
   )
 
-  implicit def jEnumCodec[E <: Enum[E]: ClassTag]: GenCodec[E] = nullableSimple(
+  given jEnumCodec[E <: Enum[E]: ClassTag]: GenCodec[E] = nullableSimple(
     in => Enum.valueOf(classTag[E].runtimeClass.asInstanceOf[Class[E]], in.readString()),
     (out, value) => out.writeString(value.name),
   )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrappedCodec: GenCodec[R])
+  given fromTransparentWrapping[R, T](using tw: TransparentWrapping[R, T], wrappedCodec: GenCodec[R])
     : GenCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 
-  implicit def fromFallback[T](implicit fallback: Fallback[GenCodec[T]]): GenCodec[T] =
+  given fromFallback[T](using fallback: Fallback[GenCodec[T]]): GenCodec[T] =
     fallback.value
 }
 
@@ -611,5 +611,5 @@ trait RecursiveAutoCodecs { this: GenCodec.type =>
   def materializeRecursively[T]: GenCodec[T] = ???
 
   // TODO[scala3-port]: GenCodec.materializeImplicitly (Scala 2 macro def) (L)
-  implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] = ???
+  given materializeImplicitly[T](using allow: AllowImplicitMacro[GenCodec[T]]): GenCodec[T] = ???
 }

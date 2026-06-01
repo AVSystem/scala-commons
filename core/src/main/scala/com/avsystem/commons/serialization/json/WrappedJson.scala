@@ -11,7 +11,7 @@ import com.avsystem.commons.serialization.GenCodec
   */
 final case class WrappedJson(value: String) extends AnyVal with CaseMethods
 object WrappedJson {
-  implicit val codec: GenCodec[WrappedJson] = GenCodec.create(
+  given codec: GenCodec[WrappedJson] = GenCodec.create(
     in => WrappedJson(in.readCustom(RawJson).getOrElse(in.readSimple().readString())),
     (out, v) => if (!out.writeCustom(RawJson, v.value)) out.writeSimple().writeString(v.value),
   )

@@ -18,17 +18,23 @@ trait CborOptimizedCodecs {
     * serialization. If the key type has a `GenKeyCodec` then this `GenCodec` behaves exactly the same as the standard
     * one for non-CBOR inputs/outputs.
     */
-  implicit def cborMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](
-    implicit fac: Factory[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V]] = mkMapCodec(implicit keyCodec => GenCodec.mapCodec[M, K, V])
+  given cborMapCodec[M[X, Y] <: BMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](using
+    fac: Factory[(K, V), M[K, V]]
+  ): GenObjectCodec[M[K, V]] = mkMapCodec(keyCodec => {
+    given GenKeyCodec[K] = keyCodec
+    GenCodec.mapCodec[M, K, V]
+  })
 
-  implicit def cborJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](
-    implicit fac: JFactory[(K, V), M[K, V]]
-  ): GenObjectCodec[M[K, V]] = mkMapCodec(implicit keyCodec => GenCodec.jMapCodec[M, K, V])
+  given cborJMapCodec[M[X, Y] <: JMap[X, Y], K: GenCodec: OptGenKeyCodec, V: GenCodec](using
+    fac: JFactory[(K, V), M[K, V]]
+  ): GenObjectCodec[M[K, V]] = mkMapCodec(keyCodec => {
+    given GenKeyCodec[K] = keyCodec
+    GenCodec.jMapCodec[M, K, V]
+  })
 
   private def mkMapCodec[M[X, Y] <: AnyRef, K: GenCodec: OptGenKeyCodec, V: GenCodec](
     mkStdCodec: GenKeyCodec[K] => GenObjectCodec[M[K, V]]
-  )(implicit fac: Factory[(K, V), M[K, V]]
+  )(using fac: Factory[(K, V), M[K, V]]
   ): GenObjectCodec[M[K, V]] = {
     val hexKeysStdCodec = mkStdCodec(new GenKeyCodec[K] {
       def read(key: String): K = CborInput.readRawCbor[K](RawCbor.fromHex(key))
@@ -97,10 +103,10 @@ class OOOFieldCborRawKeysCodec[T](stdObjectCodec: OOOFieldsObjectCodec[T], keyCo
   */
 case class OptGenKeyCodec[K](keyCodec: Opt[GenKeyCodec[K]])
 object OptGenKeyCodec extends OptGenKeyCodecLowPriority {
-  def apply[K](implicit optGenKeyCodec: OptGenKeyCodec[K]): OptGenKeyCodec[K] = optGenKeyCodec
+  def apply[K](using optGenKeyCodec: OptGenKeyCodec[K]): OptGenKeyCodec[K] = optGenKeyCodec
 
-  implicit def fromKeyCodec[K: GenKeyCodec]: OptGenKeyCodec[K] = OptGenKeyCodec(Opt(GenKeyCodec[K]))
+  given fromKeyCodec[K: GenKeyCodec]: OptGenKeyCodec[K] = OptGenKeyCodec(Opt(GenKeyCodec[K]))
 }
 trait OptGenKeyCodecLowPriority { this: OptGenKeyCodec.type =>
-  implicit def noKeyCodec[K]: OptGenKeyCodec[K] = OptGenKeyCodec(Opt.Empty)
+  given noKeyCodec[K]: OptGenKeyCodec[K] = OptGenKeyCodec(Opt.Empty)
 }

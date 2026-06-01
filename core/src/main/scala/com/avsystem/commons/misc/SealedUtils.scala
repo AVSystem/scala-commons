@@ -31,9 +31,9 @@ object SealedUtils {
   */
 trait SealedEnumCompanion[T] {
 
-  /** Thanks to this implicit, [[SealedEnumCompanion]] and its subtraits can be used as typeclasses.
+  /** Thanks to this given, [[SealedEnumCompanion]] and its subtraits can be used as typeclasses.
     */
-  implicit def evidence: this.type = this
+  given evidence: this.type = this
 
   /** Holds a list of all case objects of a sealed trait or class `T`. This must be implemented separately for every
     * sealed enum, but can be implemented simply by using the [[caseObjects]] macro. It's important to *always* state
@@ -153,7 +153,7 @@ object OrderedEnum {
   private object reusableOrdering extends Ordering[OrderedEnum] {
     def compare(x: OrderedEnum, y: OrderedEnum) = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
   }
-  implicit def ordering[T <: OrderedEnum]: Ordering[T] =
+  given ordering[T <: OrderedEnum]: Ordering[T] =
     reusableOrdering.asInstanceOf[Ordering[T]]
 }
 

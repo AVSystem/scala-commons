@@ -14,19 +14,19 @@ import scala.annotation.nowarn
   * etc.
   */
 abstract class HasGenCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenCodec[T]]) {
-  implicit val codec: GenCodec[T] = macroCodec((), this).apply()
+  given codec: GenCodec[T] = macroCodec((), this).apply()
 }
 
 /** Like [[HasGenCodec]] but materializes an [[ApplyUnapplyCodec]] instead of just [[GenCodec]].
   */
 abstract class HasApplyUnapplyCodec[T](implicit macroCodec: MacroInstances[Unit, () => ApplyUnapplyCodec[T]]) {
-  implicit val codec: ApplyUnapplyCodec[T] = macroCodec((), this).apply()
+  given codec: ApplyUnapplyCodec[T] = macroCodec((), this).apply()
 }
 
 /** Like [[HasGenCodec]] but materializes a [[GenObjectCodec]] instead of just [[GenCodec]].
   */
 abstract class HasGenObjectCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenObjectCodec[T]]) {
-  implicit val codec: GenObjectCodec[T] = macroCodec((), this).apply()
+  given codec: GenObjectCodec[T] = macroCodec((), this).apply()
 }
 
 /** A version of [[HasGenCodec]] which injects additional implicits into macro materialization. Implicits are imported
@@ -41,7 +41,7 @@ abstract class HasGenCodecWithDeps[D, T](
   private[serialization] def this(applyUnapplyProvider: ValueOf[D], instances: MacroInstances[D, () => GenCodec[T]]) =
     this()(instances, applyUnapplyProvider.toScala)
 
-  implicit val codec: GenCodec[T] = macroCodec(deps.value, this).apply()
+  given codec: GenCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 /** A version of [[HasApplyUnapplyCodecWithDeps]] which injects additional implicits into macro materialization.
@@ -59,7 +59,7 @@ abstract class HasApplyUnapplyCodecWithDeps[D, T](
     instances: MacroInstances[D, () => ApplyUnapplyCodec[T]],
   ) = this()(instances, applyUnapplyProvider.toScala)
 
-  implicit val codec: ApplyUnapplyCodec[T] = macroCodec(deps.value, this).apply()
+  given codec: ApplyUnapplyCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 /** A version of [[HasGenObjectCodec]] which injects additional implicits into macro materialization. Implicits are
@@ -77,7 +77,7 @@ abstract class HasGenObjectCodecWithDeps[D, T](
     instances: MacroInstances[D, () => GenObjectCodec[T]],
   ) = this()(instances, applyUnapplyProvider.toScala)
 
-  implicit val codec: GenObjectCodec[T] = macroCodec(deps.value, this).apply()
+  given codec: GenObjectCodec[T] = macroCodec(deps.value, this).apply()
 }
 
 trait PolyCodec[C[_]] {
@@ -87,7 +87,7 @@ trait PolyCodec[C[_]] {
 /** Like [[HasGenCodec]] but for parameterized (generic) data types.
   */
 abstract class HasPolyGenCodec[C[_]](implicit macroCodec: MacroInstances[Unit, PolyCodec[C]]) {
-  implicit def codec[T: GenCodec]: GenCodec[C[T]] = macroCodec((), this).codec
+  given codec[T: GenCodec]: GenCodec[C[T]] = macroCodec((), this).codec
 }
 
 /** A version of [[HasPolyGenCodec]] which injects additional implicits into macro materialization. Implicits are
@@ -103,7 +103,7 @@ abstract class HasPolyGenCodecWithDeps[D, C[_]](
   private[serialization] def this(applyUnapplyProvider: ValueOf[D], instances: MacroInstances[D, PolyCodec[C]]) =
     this()(instances, applyUnapplyProvider.toScala)
 
-  implicit def codec[T: GenCodec]: GenCodec[C[T]] = macroCodec(deps.value, this).codec
+  given codec[T: GenCodec]: GenCodec[C[T]] = macroCodec(deps.value, this).codec
 }
 
 trait PolyObjectCodec[C[_]] {
@@ -113,7 +113,7 @@ trait PolyObjectCodec[C[_]] {
 /** Like [[HasGenObjectCodec]] but for parameterized (generic) data types.
   */
 abstract class HasPolyGenObjectCodec[C[_]](implicit macroCodec: MacroInstances[Unit, PolyObjectCodec[C]]) {
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec((), this).codec
+  given codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec((), this).codec
 }
 
 /** A version of [[HasPolyGenObjectCodec]] which injects additional implicits into macro materialization. Implicits are
@@ -129,7 +129,7 @@ abstract class HasPolyGenObjectCodecWithDeps[D, C[_]](
   private[serialization] def this(applyUnapplyProvider: ValueOf[D], instances: MacroInstances[D, PolyObjectCodec[C]]) =
     this()(instances, applyUnapplyProvider.toScala)
 
-  implicit def codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec(deps.value, this).codec
+  given codec[T: GenCodec]: GenObjectCodec[C[T]] = macroCodec(deps.value, this).codec
 }
 
 trait GadtCodec[C[_]] {
@@ -141,8 +141,8 @@ trait GadtCodec[C[_]] {
   */
 abstract class HasGadtCodec[C[_]](implicit macroCodec: MacroInstances[Unit, GadtCodec[C]]) {
   // TODO[scala3-port]: C[_] existential narrowed to C[Any] (Scala 3 forbids HKT wildcard application) (S)
-  implicit lazy val wildcardCodec: GenCodec[C[Any]] = macroCodec((), this).codec[Any].asInstanceOf[GenCodec[C[Any]]]
-  implicit def codec[T]: GenCodec[C[T]] = wildcardCodec.asInstanceOf[GenCodec[C[T]]]
+  given wildcardCodec: GenCodec[C[Any]] = macroCodec((), this).codec[Any].asInstanceOf[GenCodec[C[Any]]]
+  given codec[T]: GenCodec[C[T]] = wildcardCodec.asInstanceOf[GenCodec[C[T]]]
 }
 
 trait RecursiveCodec[T] {
@@ -153,7 +153,7 @@ trait RecursiveCodec[T] {
 /** Like [[HasGenCodec]] but uses [[GenCodec.materializeRecursively]] for materialization.
   */
 abstract class HasRecursiveGenCodec[T](implicit instances: MacroInstances[Unit, RecursiveCodec[T]]) {
-  implicit lazy val codec: GenCodec[T] = instances((), this).codec
+  given codec: GenCodec[T] = instances((), this).codec
 }
 
 trait CodecWithKeyCodec[T] {
@@ -166,8 +166,8 @@ trait CodecWithKeyCodec[T] {
   * that wraps exactly one field for which [[GenKeyCodec]] exists.
   */
 abstract class HasGenAndKeyCodec[T](implicit instances: MacroInstances[Unit, CodecWithKeyCodec[T]]) {
-  implicit lazy val codec: GenCodec[T] = instances((), this).codec
-  implicit lazy val keyCodec: GenKeyCodec[T] = instances((), this).keyCodec
+  given codec: GenCodec[T] = instances((), this).codec
+  given keyCodec: GenKeyCodec[T] = instances((), this).keyCodec
 }
 
 trait AUCodec[AU, T] {
@@ -189,6 +189,6 @@ abstract class HasGenCodecFromAU[AU, T](
   private[serialization] def this(applyUnapplyProvider: ValueOf[AU], instances: MacroInstances[Unit, AUCodec[AU, T]]) =
     this()(instances, applyUnapplyProvider.toScala)
 
-  implicit final lazy val codec: GenCodec[T] =
+  given codec: GenCodec[T] =
     instances((), this).codec(applyUnapplyProvider.value)
 }

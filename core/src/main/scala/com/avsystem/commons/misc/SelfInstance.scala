@@ -5,5 +5,5 @@ package misc
 case class SelfInstance[C[_]](instance: C[Any])
 object SelfInstance {
   // TODO[scala3-port]: SelfInstance.materialize (Scala 2 macro def) (L)
-  implicit def materialize[C[_]]: SelfInstance[C] = ???
+  given materialize[C[_]]: SelfInstance[C] = ???
 }

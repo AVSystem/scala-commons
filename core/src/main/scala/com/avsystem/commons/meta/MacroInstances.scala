@@ -45,5 +45,5 @@ object MacroInstances {
   final class materializeWith(prefix: Any, materializer: String = "materialize") extends StaticAnnotation
 
   // TODO[scala3-port]: materialize (Scala 2 macro def) (L)
-  implicit def materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] = ???
+  given materialize[Implicits, Instances]: MacroInstances[Implicits, Instances] = ???
 }
