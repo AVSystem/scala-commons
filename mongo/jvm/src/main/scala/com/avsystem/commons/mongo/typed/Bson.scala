@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
-import org.bson._
+import org.bson.*
 
 object Bson {
   final val And = "$and"

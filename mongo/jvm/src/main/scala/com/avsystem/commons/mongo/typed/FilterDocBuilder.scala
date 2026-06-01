@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.mongo.typed.MongoFilter._
+import com.avsystem.commons.mongo.typed.MongoFilter.*
 import org.bson.{BsonArray, BsonDocument}
 
 import scala.annotation.tailrec

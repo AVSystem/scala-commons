@@ -3,8 +3,8 @@ package mongo
 
 // TODO[scala3-port]: BsonInputOutputTest — depends on stubbed materialize / mongo entity companions (M)
 /*
-import com.avsystem.commons.serialization._
-import org.bson._
+import com.avsystem.commons.serialization.*
+import org.bson.*
 import org.bson.io.BasicOutputBuffer
 import org.bson.json.{JsonMode, JsonWriterSettings}
 import org.bson.types.Decimal128

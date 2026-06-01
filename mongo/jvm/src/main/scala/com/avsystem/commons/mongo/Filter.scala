@@ -3,7 +3,7 @@ package mongo
 
 import com.mongodb.client.model.{Filters => F}
 import org.bson.conversions.Bson
-import org.bson._
+import org.bson.*
 
 import _root_.scala.collection.Factory
 

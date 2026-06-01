@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.mongodb.client.model._
+import com.mongodb.client.model.*
 
 /** Represents a single MongoDB write operation in a
   * [[https://docs.mongodb.com/manual/core/bulk-write-operations/ bulk write operation]].

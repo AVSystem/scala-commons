@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo
 
 import com.avsystem.commons.serialization.{GenCodec, ListOutput, ObjectOutput}
-import org.bson._
+import org.bson.*
 import org.bson.types.{Decimal128, ObjectId}
 
 object BsonValueOutput {

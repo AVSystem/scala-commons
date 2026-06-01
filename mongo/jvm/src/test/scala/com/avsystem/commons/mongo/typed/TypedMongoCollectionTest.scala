@@ -13,7 +13,7 @@ import org.scalactic.source.Position
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.time._
+import org.scalatest.time.*
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

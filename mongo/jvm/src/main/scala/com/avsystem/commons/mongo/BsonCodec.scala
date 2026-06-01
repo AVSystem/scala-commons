@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo
 
 import org.bson.types.ObjectId
-import org.bson._
+import org.bson.*
 
 import java.time.Instant
 import _root_.scala.collection.Factory

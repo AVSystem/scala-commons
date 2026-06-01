@@ -1,8 +1,8 @@
 package com.avsystem.commons
 package mongo
 
-import com.avsystem.commons.serialization._
-import org.bson._
+import com.avsystem.commons.serialization.*
+import org.bson.*
 import org.bson.types.{Decimal128, ObjectId}
 
 object BsonValueInput {
