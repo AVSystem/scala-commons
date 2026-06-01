@@ -63,7 +63,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * avoiding intermediate variables.
       *
       * @example
-      * {{{someVeryLongExpression() |> (v => if(condition(v)) something(v) else somethingElse(v))}}}
+      *   {{{someVeryLongExpression() |> (v => if(condition(v)) something(v) else somethingElse(v))}}}
       */
     def |>[B](f: A => B): B = f(a)
 
@@ -96,14 +96,14 @@ object SharedExtensionsUtils extends SharedExtensions {
       * more clarity and avoids polluting outer scope.
       *
       * @example
-      * {{{
+      *   {{{
       * import javax.swing._
       * // this entire expression returns the panel
       * new JPanel().setup { p =>
       *   p.setEnabled(true)
       *   p.setSize(100, 100)
       * }
-      * }}}
+      *   }}}
       */
     def setup(code: A => Any): A = {
       code(a)
@@ -117,23 +117,20 @@ object SharedExtensionsUtils extends SharedExtensions {
       * checking.
       *
       * @example
-      * {{{
+      *   {{{
       *   Option(42) uncheckedMatch {
       *     case Some(int) => println(int)
       *   }
-      * }}}
+      *   }}}
       */
     def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
     inline def showAst: A = ${ UniversalOps.showAstImpl[A]('a) }
-    inline def showRawAst: A = ${ UniversalOps.showRawAstImpl[A]('a) }
     inline def showSymbol: A = ${ UniversalOps.showSymbolImpl[A]('a) }
-    inline def showSymbolFullName: A = ${ UniversalOps.showSymbolFullNameImpl[A]('a) }
     inline def showType: A = ${ UniversalOps.showTypeImpl[A]('a) }
     inline def showRawType: A = ${ UniversalOps.showRawTypeImpl[A]('a) }
     inline def showTypeSymbol: A = ${ UniversalOps.showTypeSymbolImpl[A]('a) }
-    inline def showTypeSymbolFullName: A = ${ UniversalOps.showTypeSymbolFullNameImpl[A]('a) }
     inline def sourceCode: String = ${ UniversalOps.sourceCodeImpl[A]('a) }
     inline def withSourceCode: (A, String) = ${ UniversalOps.withSourceCodeImpl[A]('a) }
 
@@ -144,29 +141,84 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     import scala.quoted.*
 
+    /** Detailed multi-line dump of a `quotes.reflect.Symbol`. Inspired by the `made` library. */
+    private def symbolInfo(using quotes: Quotes)(symbol: quotes.reflect.Symbol): String =
+      import quotes.reflect.*
+      s"""
+         |$symbol
+         |maybeOwner: ${symbol.maybeOwner}
+         |flags: ${symbol.flags.show}
+         |privateWithin: ${symbol.privateWithin.map(_.show)}
+         |protectedWithin: ${symbol.protectedWithin.map(_.show)}
+         |name: ${symbol.name}
+         |fullName: ${symbol.fullName}
+         |pos: ${symbol.pos}
+         |docstring: ${symbol.docstring}
+         |tree: ${scala.util.Try(symbol.tree.show).getOrElse("no tree")}
+         |annotations: ${symbol.annotations.map(_.show)}
+         |isDefinedInCurrentRun: ${symbol.isDefinedInCurrentRun}
+         |isClassDef: ${symbol.isClassDef}
+         |isTypeDef: ${symbol.isTypeDef}
+         |isValDef: ${symbol.isValDef}
+         |isDefDef: ${symbol.isDefDef}
+         |isBind: ${symbol.isBind}
+         |isNoSymbol: ${symbol.isNoSymbol}
+         |exists: ${symbol.exists}
+         |declaredFields: ${symbol.declaredFields}
+         |declaredMethods: ${symbol.declaredMethods}
+         |declaredTypes: ${symbol.declaredTypes}
+         |paramSymss: ${symbol.paramSymss}
+         |primaryConstructor: ${symbol.primaryConstructor}
+         |caseFields: ${symbol.caseFields}
+         |signature: ${symbol.signature}
+         |companionClass: ${symbol.companionClass}
+         |companionModule: ${symbol.companionModule}
+         |children: ${symbol.children}
+         |typeRef: ${scala.util.Try(symbol.typeRef.show).getOrElse("no typeRef")}
+         |termRef: ${scala.util.Try(symbol.termRef.show).getOrElse("no termRef")}
+         |""".stripMargin
+
+    /** Detailed multi-line dump of a `quotes.reflect.TypeRepr`. Inspired by `made`. */
+    private def typeReprInfo(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): String =
+      s"""
+         |type: ${tpe.show}
+         |raw: $tpe
+         |widen: ${tpe.widen.show}
+         |dealias: ${tpe.dealias.show}
+         |simplified: ${tpe.simplified.show}
+         |classSymbol: ${tpe.classSymbol}
+         |typeSymbol: ${tpe.typeSymbol}
+         |termSymbol: ${tpe.termSymbol}
+         |isSingleton: ${tpe.isSingleton}
+         |baseClasses: ${tpe.baseClasses}
+         |isFunctionType: ${tpe.isFunctionType}
+         |isContextFunctionType: ${tpe.isContextFunctionType}
+         |isDependentFunctionType: ${tpe.isDependentFunctionType}
+         |isTupleN: ${tpe.isTupleN}
+         |typeArgs: ${tpe.typeArgs}
+         |""".stripMargin
+
+    /** Structure + short-code dump of a `quotes.reflect.Tree`. Inspired by `made`. */
+    private def treeInfo(using quotes: Quotes)(tree: quotes.reflect.Tree): String =
+      import quotes.reflect.*
+      s"""
+         |Structure: ${Printer.TreeStructure.show(tree)}
+         |ShortCode: ${Printer.TreeShortCode.show(tree)}
+         |""".stripMargin
+
     def showAstImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
       import quotes.reflect.*
-      report.info(Printer.TreeCode.show(a.asTerm), a)
-      a
-
-    def showRawAstImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
-      import quotes.reflect.*
-      report.info(Printer.TreeStructure.show(a.asTerm), a)
+      report.info(treeInfo(a.asTerm), a)
       a
 
     def showSymbolImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
       import quotes.reflect.*
-      report.info(a.asTerm.symbol.toString, a)
-      a
-
-    def showSymbolFullNameImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
-      import quotes.reflect.*
-      report.info(a.asTerm.symbol.fullName, a)
+      report.info(symbolInfo(a.asTerm.symbol), a)
       a
 
     def showTypeImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
       import quotes.reflect.*
-      report.info(TypeRepr.of[A].widen.show, a)
+      report.info(typeReprInfo(TypeRepr.of[A]), a)
       a
 
     def showRawTypeImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
@@ -176,22 +228,19 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def showTypeSymbolImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
       import quotes.reflect.*
-      report.info(TypeRepr.of[A].typeSymbol.toString, a)
-      a
-
-    def showTypeSymbolFullNameImpl[A: Type](a: Expr[A])(using Quotes): Expr[A] =
-      import quotes.reflect.*
-      report.info(TypeRepr.of[A].typeSymbol.fullName, a)
+      report.info(symbolInfo(TypeRepr.of[A].typeSymbol), a)
       a
 
     def sourceCodeImpl[A: Type](a: Expr[A])(using quotes: Quotes): Expr[String] =
       import quotes.reflect.*
-      import quotes.reflect.PositionMethods // to bypass package-object auto-import of `universalOps`,
+      import quotes.reflect.PositionMethods // bypass package-object auto-import of `universalOps`
 
-      val pos = a.asTerm.pos
-      val txt = PositionMethods.sourceCode(pos).orElse(PositionMethods.sourceCode(Position.ofMacroExpansion)).getOrElse(
-        report.errorAndAbort("source code unavailable at this position", a)
-      )
+      def nonEmpty(o: Option[String]): Option[String] = o.filter(_.nonEmpty)
+      val termPos = a.asTerm.underlyingArgument.pos
+      val txt = nonEmpty(PositionMethods.sourceCode(termPos))
+        .orElse(nonEmpty(PositionMethods.sourceCode(a.asTerm.pos)))
+        .orElse(nonEmpty(PositionMethods.sourceCode(Position.ofMacroExpansion)))
+        .getOrElse(report.errorAndAbort("source code unavailable at this position", a))
       Expr(txt)
 
     def withSourceCodeImpl[A: Type](a: Expr[A])(using Quotes): Expr[(A, String)] =
@@ -210,13 +259,13 @@ object SharedExtensionsUtils extends SharedExtensions {
     def optionIf(condition: Boolean): Option[A] =
       if (condition) Some(a()) else None
 
-    def recoverFrom[T <: Throwable : ClassTag](fallbackValue: => A): A =
+    def recoverFrom[T <: Throwable: ClassTag](fallbackValue: => A): A =
       try a()
       catch {
         case _: T => fallbackValue
       }
 
-    def recoverToOpt[T <: Throwable : ClassTag]: Opt[A] =
+    def recoverToOpt[T <: Throwable: ClassTag]: Opt[A] =
       try Opt(a())
       catch {
         case _: T => Opt.Empty
@@ -391,17 +440,17 @@ object SharedExtensionsUtils extends SharedExtensions {
       * useful for performing a parallel map. For example, to apply a function to all items of a list
       *
       * @tparam A
-      * the type of the value inside the Futures in the `IterableOnce`
+      *   the type of the value inside the Futures in the `IterableOnce`
       * @tparam B
-      * the type of the value of the returned `Future`
+      *   the type of the value of the returned `Future`
       * @tparam M
-      * the type of the `IterableOnce` of Futures
+      *   the type of the `IterableOnce` of Futures
       * @param in
-      * the `IterableOnce` of Futures which will be sequenced
+      *   the `IterableOnce` of Futures which will be sequenced
       * @param fn
-      * the function to apply to the `IterableOnce` of Futures to produce the results
+      *   the function to apply to the `IterableOnce` of Futures to produce the results
       * @return
-      * the `Future` of the `IterableOnce` of results
+      *   the `Future` of the `IterableOnce` of results
       */
     def traverseCompleted[A, B, M[X] <: IterableOnce[X]](
       in: M[A]
@@ -421,13 +470,13 @@ object SharedExtensionsUtils extends SharedExtensions {
       * which only completes after all `in` `Future`s are completed.
       *
       * @tparam A
-      * the type of the value inside the Futures
+      *   the type of the value inside the Futures
       * @tparam M
-      * the type of the `IterableOnce` of Futures
+      *   the type of the `IterableOnce` of Futures
       * @param in
-      * the `IterableOnce` of Futures which will be sequenced
+      *   the `IterableOnce` of Futures which will be sequenced
       * @return
-      * the `Future` of the `IterableOnce` of results
+      *   the `Future` of the `IterableOnce` of results
       */
     def sequenceCompleted[A, M[X] <: IterableOnce[X]](
       in: M[Future[A]]
@@ -541,7 +590,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     def sequence[A, M[X] <: IterableOnce[X]](in: M[Try[A]])(implicit bf: BuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] =
       in.iterator
         .foldLeft(Try(bf.newBuilder(in))) {
-          case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
+          case (f @ Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
           case (tr, tb) =>
             for {
               r <- tr
@@ -558,11 +607,11 @@ object SharedExtensionsUtils extends SharedExtensions {
       * }}}
       */
     def traverse[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Try[B])(implicit bf: BuildFrom[M[A], B, M[B]])
-    : Try[M[B]] =
+      : Try[M[B]] =
       in.iterator
         .map(fn)
         .foldLeft(Try(bf.newBuilder(in))) {
-          case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
+          case (f @ Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
           case (tr, tb) =>
             for {
               r <- tr
