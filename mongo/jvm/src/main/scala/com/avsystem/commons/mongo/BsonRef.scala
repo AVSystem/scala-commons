@@ -25,7 +25,8 @@ object BsonRef {
   trait Creator[S] {
     type Ref[T] = BsonRef[S, T]
 
-    def ref[T](fun: S => T): BsonRef[S, T] = macro macros.serialization.BsonRefMacros.bsonRef[S, T]
+    // TODO[scala3-port]: was Scala 2 macro `BsonRefMacros.bsonRef`; stub keeps callers compiling (L)
+    def ref[T](fun: S => T): BsonRef[S, T] = ???
   }
 
   def apply[S, T](genRef: GenRef[S, T])(implicit codec: GenCodec[T]): BsonRef[S, T] = {

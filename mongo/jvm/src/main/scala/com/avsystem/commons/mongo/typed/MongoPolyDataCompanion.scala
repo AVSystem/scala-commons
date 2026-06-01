@@ -30,7 +30,8 @@ abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](
     instances(implicits, this).format[T]
   }
 
-  implicit def isMongoAdtOrSubtype[C <: D[_]]: IsMongoAdtOrSubtype[C] = null
+  // TODO[scala3-port]: D[_] → D[Any] workaround for Scala 3 wildcard-as-type-arg restriction (S)
+  implicit def isMongoAdtOrSubtype[C <: D[Any]]: IsMongoAdtOrSubtype[C] = null
 
   implicit class macroDslExtensions[T](value: D[T]) {
     @explicitGenerics

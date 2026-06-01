@@ -74,9 +74,10 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     valueFormat: MongoFormat[V],
   ) extends MongoFormat[M[K, V]]
 
+  // TODO[scala3-port]: K[_] → K[Any] workaround for Scala 3 wildcard-as-type-arg restriction (S)
   final case class TypedMapFormat[K[_]](
     codec: GenCodec[TypedMap[K]],
-    keyCodec: GenKeyCodec[K[_]],
+    keyCodec: GenKeyCodec[K[Any]],
     valueFormats: MongoFormatMapping[K],
   ) extends MongoFormat[TypedMap[K]]
 
@@ -103,10 +104,12 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     valueFormat: MongoFormat[V],
   ): MongoFormat[M[K, V]] = DictionaryFormat(mapCodec, keyCodec, valueFormat)
 
+  // TODO[scala3-port]: K[_] → K[Any] workaround for Scala 3 wildcard-as-type-arg restriction (S)
   implicit def typedMapFormat[K[_]](
-    implicit keyCodec: GenKeyCodec[K[_]],
+    implicit keyCodec: GenKeyCodec[K[Any]],
     valueFormats: MongoFormatMapping[K],
-  ): MongoFormat[TypedMap[K]] = TypedMapFormat[K](TypedMap.typedMapCodec, keyCodec, valueFormats)
+  ): MongoFormat[TypedMap[K]] =
+    TypedMapFormat[K](TypedMap.typedMapCodec, keyCodec, valueFormats)
 
   implicit def optionalFormat[O, T](
     implicit optionLike: OptionLike.Aux[O, T],
@@ -349,7 +352,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
           .map(a => Try(a.value))
           .orElse(defaultValue.map(a => Try(a.value)))
           .flatMap(_.toOpt)
-          .map(v => BsonValueOutput.write(v)(format.value.codec))
+          .map(v => BsonValueOutput.write(v)(using format.value.codec))
   }
 
   final class SealedParent[T](
@@ -358,11 +361,12 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   ) extends TypedMetadata[T]
 }
 
+// TODO[scala3-port]: `E#IDType` type projection forbidden on abstract types; widen to Any to keep signatures (M)
 final class MongoEntityMeta[E <: BaseMongoEntity](
   @infer val format: MongoAdtFormat[E],
-  @infer val idMode: EntityIdMode[E, E#IDType],
+  @infer val idMode: EntityIdMode[E, Any],
 ) {
-  def idRef: MongoPropertyRef[E, E#IDType] = idMode.idRef(format)
+  def idRef: MongoPropertyRef[E, Any] = idMode.idRef(format)
 }
 object MongoEntityMeta extends BoundedAdtMetadataCompanion[BaseMongoEntity, Nothing, MongoEntityMeta] {
   private[typed] def bincompatMeta[E <: BaseMongoEntity](format: MongoAdtFormat[E]): MongoEntityMeta[E] =
