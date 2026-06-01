@@ -48,17 +48,17 @@ object Filter {
 
   def elemMatch(key: DocKey[_, _ <: BsonArray], filter: Bson): Bson = F.elemMatch(key.key, filter)
 
-  def contains[A, COL <: Iterable[A]](key: DocKey[COL, _ <: BsonArray], value: A)(implicit fac: Factory[A, COL]): Bson =
+  def contains[A, COL <: Iterable[A]](key: DocKey[COL, _ <: BsonArray], value: A)(using fac: Factory[A, COL]): Bson =
     F.eq(key.key, key.codec.toBson((fac.newBuilder += value).result()).asScala.head)
 
   object Limitations {
     trait CanCompare[BSON <: BsonValue]
     object CanCompare {
       def create[BSON <: BsonValue]: CanCompare[BSON] = new CanCompare[BSON] {}
-      implicit val date: CanCompare[BsonDateTime] = create[BsonDateTime]
-      implicit val int32: CanCompare[BsonInt32] = create[BsonInt32]
-      implicit val int64: CanCompare[BsonInt64] = create[BsonInt64]
-      implicit val double: CanCompare[BsonDouble] = create[BsonDouble]
+      given CanCompare[BsonDateTime] = create[BsonDateTime]
+      given CanCompare[BsonInt32] = create[BsonInt32]
+      given CanCompare[BsonInt64] = create[BsonInt64]
+      given CanCompare[BsonDouble] = create[BsonDouble]
     }
   }
 }

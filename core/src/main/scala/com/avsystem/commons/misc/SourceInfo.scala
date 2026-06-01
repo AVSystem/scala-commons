@@ -26,5 +26,5 @@ object SourceInfo {
   def apply()(implicit si: SourceInfo): SourceInfo = si
 
   // TODO[scala3-port]: SourceInfo.here (Scala 2 macro def) (L)
-  implicit def here: SourceInfo = ???
+  given here: SourceInfo = ???
 }

@@ -54,6 +54,31 @@ the bottom of this file. Restoration ships incrementally per feature area.
   compiles).
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
+- `implicit val/def` typeclass instances rewritten to `given` across `serialization`, `cbor`,
+  `meta`, `misc`, `tuples` (slice 3.3). Named-import callers that referenced these by name
+  (e.g. `GenCodec.bseqCodec`, `GenKeyCodec.IntKeyCodec`, `TypeString.codec`) must switch to
+  `summon[GenCodec[BSeq[T]]]` or use `import X.given` for given-import semantics. Anonymous
+  `given T = …` preferred for canonical instances per fork pattern.
+- Named-import compatibility shims: `@deprecated def NAME: T = summon[T]` aliases added in
+  `BoxingUnboxing` (`BooleanBoxing` … `DoubleBoxing`, `BooleanUnboxing` … `DoubleUnboxing`)
+  and `GenKeyCodec` (`BooleanKeyCodec` … `BytesKeyCodec`) so downstream callers using
+  `GenKeyCodec.IntKeyCodec`-style named lookup keep compiling. Each shim emits a deprecation
+  warning pointing to `summon[T]`. Mirrors `BsonGenCodecs` source-compat layer from fork
+  commit `8f70be80`.
+- `OptArg.argToOptArg` PRESERVED as `implicit def` — polymorphic `Conversion[A, OptArg[A]]`
+  would generate a clashing JVM erasure bridge (both `A` and the `OptArg` value class erase to
+  `Object`). Verbatim explanatory comment from fork `39c047eb` retained inline.
+- `GenRef.fun2GenRef` PRESERVED as `implicit def` (currently a `???` Phase-2 stub; Phase 4
+  feature-port will restore the macro-splice body; macro-splice-over-inline-arg rationale per
+  fork `ebffde26` documented as preservation rule).
+- `RunNowEC.Implicits.executionContext` / `RunInQueueEC.Implicits.executionContext` PRESERVED
+  as `implicit val` — the wildcard-import-into-`Implicits`-object idiom is the public API
+  (`import RunNowEC.Implicits._`). Converting to `given` would silently stop providing the EC
+  to wildcard-import callers (givens require `import X.given`).
+- `(implicit X: T)` parameter lists left in place across slice-3.1 extension-shim sites
+  (`SharedExtensions.implicit def *Ops`, jiop, jsiop, `Components.autoComponent`, etc.). Those
+  are conversion shims for `implicit class` value-class wrappers and are being rewritten to
+  `extension` blocks in slice 3.1 (PR #868), which deletes the conversion entirely.
 
 ### mongo
 
@@ -63,10 +88,33 @@ the bottom of this file. Restoration ships incrementally per feature area.
   Scala 3 forbids type projections on non-concrete prefixes). Public-API signature change.
 - `BsonValueOutput.write` / `BsonValueInput.read` call sites require explicit `using` keyword.
 - `MongoPolyDataCompanion` / `TypedMapFormat` / `TypedMapRefOps` widened from `K[_]` / `D[_]` to `K[Any]` / `D[Any]`.
+- `(implicit X: T)` parameter lists rewritten to `(using X: T)` across 19 mongo files in
+  slice 3.3 (BsonCodec, BsonRef, DocKey, Filter, GenCodecProvider, BsonRefIterable*, Sorting,
+  MongoOps, TextSearchLanguage, DataTypeDsl, MongoEntityCompanion, MongoIndex,
+  MongoPolyDataCompanion, MongoRef, MongoUpdateOperator, ProjectionZippers, QueryOperatorsDsl,
+  TypedMongoCollection). Source-compat: positional call sites unchanged (Scala 3 accepts both
+  syntaxes); named-arg call sites must update from `foo(x = …)` to `foo(using x = …)`.
+- `BsonGenCodecs` rewritten per fork `8f70be80`: trait uses `export BsonGenCodecs.given`,
+  object holds anonymous `given GenCodec[X] = …` declarations + `@deprecated def name: T = summon`
+  shims for source-compat with named-import callers (`BsonGenCodecs.objectIdCodec`, etc.).
+- `MongoFormat.codec` / `MongoAdtFormat.codec`/`dataClassTag` are now `given` in trait
+  declarations; consumers using `import meta.format._` to bring `codec`/`dataClassTag` into
+  implicit scope must switch to `import meta.format.{given, _}` for given-import semantics
+  (already applied internally in `TypedMongoCollection.mkNativeCollection`).
+- `KeyGetter.bsonRefKeyGetter` / `docKeyKeyGetter` rewritten from `implicit object … extends T`
+  to `given X: T with { … }`. Source-compat: positional resolution unchanged; `import X._`
+  callers must switch to `import X.given`.
 
 ### hocon
 
 - `SealedEnumCompanion.values` override now `lazy val` (see core notes).
+- `HoconGenCodecs` codec instances (`ConfigCodec`, `FiniteDurationCodec`, `JavaDurationCodec`,
+  `PeriodCodec`, `SizeInBytesCodec`, `ClassKeyCodec`, `ClassCodec`) rewritten from
+  `implicit final val` to `given` (slice 3.3). Same named-import caveat as the core entry
+  applies.
+- `ConfigObjectCompanion.codec` instance and `DefaultConfigCompanion` macro-instance
+  parameter rewritten to `using`.
+- `HTree.HIncludeQualifier` / `HStringSyntax` constructor implicit param rewritten to `using`.
 
 ## 4. Binary-compat breaks
 

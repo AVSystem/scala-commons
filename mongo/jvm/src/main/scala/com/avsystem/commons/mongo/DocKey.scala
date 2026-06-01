@@ -8,7 +8,7 @@ import org.bson.{BsonDocument, BsonValue}
   *   MKej
   */
 case class DocKey[A, BSON <: BsonValue](key: String, codec: BsonCodec[A, BSON]) {
-  def ++[B, BBSON <: BsonValue](other: DocKey[B, BBSON])(implicit ev: BSON <:< BsonDocument): DocKey[B, BBSON] =
+  def ++[B, BBSON <: BsonValue](other: DocKey[B, BBSON])(using ev: BSON <:< BsonDocument): DocKey[B, BBSON] =
     new DocKey(key + "." + other.key, other.codec)
 }
 object DocKey {

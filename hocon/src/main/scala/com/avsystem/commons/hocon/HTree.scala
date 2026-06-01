@@ -56,12 +56,12 @@ object HTree {
   final case class HQualifiedInclude(qualifier: HIncludeQualifier, target: HString)(val tokens: HTokenRange)
     extends HRegularIncludeTarget
 
-  final class HIncludeQualifier(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+  final class HIncludeQualifier(using enumCtx: EnumCtx) extends AbstractValueEnum
   object HIncludeQualifier extends AbstractValueEnumCompanion[HIncludeQualifier] {
     final val Classpath, File, Url: Value = new HIncludeQualifier
   }
 
-  final class HStringSyntax(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+  final class HStringSyntax(using enumCtx: EnumCtx) extends AbstractValueEnum
   object HStringSyntax extends AbstractValueEnumCompanion[HStringSyntax] {
     final val Whitespace, Unquoted, Quoted, Multiline: Value = new HStringSyntax
   }

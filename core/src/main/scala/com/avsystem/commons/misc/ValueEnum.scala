@@ -59,7 +59,7 @@ trait ValueEnum extends NamedEnum {
   * compatibility it's better to extend this abstract class rather than [[ValueEnum]] trait directly. See [[ValueEnum]]
   * documentation for more information on value-based enums.
   */
-abstract class AbstractValueEnum(protected implicit val enumCtx: EnumCtx) extends ValueEnum
+abstract class AbstractValueEnum(using protected val enumCtx: EnumCtx) extends ValueEnum
 
 @implicitNotFound(
   "Value based enum must be assigned to a public, final, non-lazy val in its companion object " +
@@ -123,9 +123,9 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
   protected[this] final class ValName(val valName: String)
 
   // TODO[scala3-port]: ValueEnumCompanion.valName (Scala 2 macro def) (L)
-  protected[this] implicit def valName: ValName = ???
+  protected[this] given valName: ValName = ???
 
-  protected[this] implicit def enumCtx(implicit valName: ValName): EnumCtx =
+  protected[this] given enumCtx(using valName: ValName): EnumCtx =
     new Ctx(valName.valName, currentOrdinal)
 }
 

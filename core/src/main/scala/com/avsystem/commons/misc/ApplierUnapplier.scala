@@ -11,7 +11,7 @@ trait Applier[T] {
 }
 object Applier {
   // TODO[scala3-port]: Applier.materialize (Scala 2 macro def) (L)
-  implicit def materialize[T]: Applier[T] = ???
+  given materialize[T]: Applier[T] = ???
 }
 
 /** Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns untyped sequence of
@@ -23,7 +23,7 @@ trait Unapplier[T] {
 }
 object Unapplier {
   // TODO[scala3-port]: Unapplier.materialize (Scala 2 macro def) (L)
-  implicit def materialize[T]: Unapplier[T] = ???
+  given materialize[T]: Unapplier[T] = ???
 }
 
 class ProductUnapplier[T <: Product] extends Unapplier[T] {
@@ -35,5 +35,5 @@ abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T]
 trait ApplierUnapplier[T] extends Applier[T] with Unapplier[T]
 object ApplierUnapplier {
   // TODO[scala3-port]: ApplierUnapplier.materialize (Scala 2 macro def) (L)
-  implicit def materialize[T]: ApplierUnapplier[T] = ???
+  given materialize[T]: ApplierUnapplier[T] = ???
 }

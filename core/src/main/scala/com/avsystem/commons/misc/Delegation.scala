@@ -9,7 +9,7 @@ trait Delegation[A, B] {
 
 object Delegation {
   // TODO[scala3-port]: materializeDelegation (Scala 2 macro def) (L)
-  implicit def materializeDelegation[A, B]: Delegation[A, B] = ???
+  given materializeDelegation[A, B]: Delegation[A, B] = ???
 
   /** Provides following syntax:
     *

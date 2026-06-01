@@ -10,7 +10,7 @@ import scala.annotation.implicitNotFound
 case class AnnotationOf[A, T](annot: A) extends AnyVal
 object AnnotationOf {
   // TODO[scala3-port]: AnnotationOf.materialize (Scala 2 macro def) (L)
-  implicit def materialize[A, T]: AnnotationOf[A, T] = ???
+  given materialize[A, T]: AnnotationOf[A, T] = ???
 }
 
 /** A typeclass which captures a possible annotation of type `A` applied on a class/trait/object associated with type
@@ -20,7 +20,7 @@ object AnnotationOf {
 case class OptAnnotationOf[A, T](annotOpt: Opt[A])
 object OptAnnotationOf {
   // TODO[scala3-port]: OptAnnotationOf.materialize (Scala 2 macro def) (L)
-  implicit def materialize[A, T]: OptAnnotationOf[A, T] = ???
+  given materialize[A, T]: OptAnnotationOf[A, T] = ???
 }
 
 /** A typeclass which captures all annotations of type `A` applied on a class/trait/object associated with type `T`.
@@ -29,7 +29,7 @@ object OptAnnotationOf {
 case class AnnotationsOf[A, T](annots: List[A]) extends AnyVal
 object AnnotationsOf {
   // TODO[scala3-port]: AnnotationsOf.materialize (Scala 2 macro def) (L)
-  implicit def materialize[A, T]: AnnotationsOf[A, T] = ???
+  given materialize[A, T]: AnnotationsOf[A, T] = ???
 }
 
 /** A typeclass which serves as an evidence that an annotation of type `A` is applied on a class/trait/object associated
@@ -44,7 +44,7 @@ object HasAnnotation {
   def create[A, T]: HasAnnotation[A, T] = reusable.asInstanceOf[HasAnnotation[A, T]]
 
   // TODO[scala3-port]: HasAnnotation.materialize (Scala 2 macro def) (L)
-  implicit def materialize[A, T]: HasAnnotation[A, T] = ???
+  given materialize[A, T]: HasAnnotation[A, T] = ???
 }
 
 /** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures an annotation of
@@ -67,7 +67,7 @@ object HasAnnotation {
 case class SelfAnnotation[A](annot: A) extends AnyVal
 object SelfAnnotation {
   // TODO[scala3-port]: SelfAnnotation.materialize (Scala 2 macro def) (L)
-  implicit def materialize[A]: SelfAnnotation[A] = ???
+  given materialize[A]: SelfAnnotation[A] = ???
 }
 
 /** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures a possible
@@ -90,7 +90,7 @@ object SelfAnnotation {
 case class SelfOptAnnotation[A](annotOpt: Opt[A])
 object SelfOptAnnotation {
   // TODO[scala3-port]: SelfOptAnnotation.materialize (Scala 2 macro def) (L)
-  implicit def materialize[A]: SelfOptAnnotation[A] = ???
+  given materialize[A]: SelfOptAnnotation[A] = ???
 }
 
 /** A typeclass which may be used in an implicit constructor parameter of an abstract class. Captures all annotations of
@@ -112,5 +112,5 @@ object SelfOptAnnotation {
 case class SelfAnnotations[A](annots: List[A]) extends AnyVal
 object SelfAnnotations {
   // TODO[scala3-port]: SelfAnnotations.materialize (Scala 2 macro def) (L)
-  implicit def materialize[A]: SelfAnnotations[A] = ???
+  given materialize[A]: SelfAnnotations[A] = ???
 }

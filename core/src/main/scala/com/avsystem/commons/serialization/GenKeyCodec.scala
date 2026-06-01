@@ -60,37 +60,38 @@ object GenKeyCodec {
     }
   }
 
-  implicit lazy val BooleanKeyCodec: GenKeyCodec[Boolean] = create(_.toBoolean, _.toString)
-  implicit lazy val CharKeyCodec: GenKeyCodec[Char] = create(_.charAt(0), _.toString)
-  implicit lazy val ByteKeyCodec: GenKeyCodec[Byte] = create(_.toByte, _.toString)
-  implicit lazy val ShortKeyCodec: GenKeyCodec[Short] = create(_.toShort, _.toString)
-  implicit lazy val IntKeyCodec: GenKeyCodec[Int] = create(_.toInt, _.toString)
-  implicit lazy val LongKeyCodec: GenKeyCodec[Long] = create(_.toLong, _.toString)
-  implicit lazy val BigIntKeyCodec: GenKeyCodec[BigInt] = create(BigInt(_), _.toString)
+  given BooleanKeyCodec: GenKeyCodec[Boolean] = create(_.toBoolean, _.toString)
+  given CharKeyCodec: GenKeyCodec[Char] = create(_.charAt(0), _.toString)
+  given ByteKeyCodec: GenKeyCodec[Byte] = create(_.toByte, _.toString)
+  given ShortKeyCodec: GenKeyCodec[Short] = create(_.toShort, _.toString)
+  given IntKeyCodec: GenKeyCodec[Int] = create(_.toInt, _.toString)
+  given LongKeyCodec: GenKeyCodec[Long] = create(_.toLong, _.toString)
+  given BigIntKeyCodec: GenKeyCodec[BigInt] = create(BigInt(_), _.toString)
 
-  implicit lazy val JBooleanKeyCodec: GenKeyCodec[JBoolean] = create(_.toBoolean, _.toString)
-  implicit lazy val JCharacterKeyCodec: GenKeyCodec[JCharacter] = create(_.charAt(0), _.toString)
-  implicit lazy val JByteKeyCodec: GenKeyCodec[JByte] = create(_.toByte, _.toString)
-  implicit lazy val JShortKeyCodec: GenKeyCodec[JShort] = create(_.toShort, _.toString)
-  implicit lazy val JIntKeyCodec: GenKeyCodec[JInteger] = create(_.toInt, _.toString)
-  implicit lazy val JLongKeyCodec: GenKeyCodec[JLong] = create(_.toLong, _.toString)
-  implicit lazy val JBigIntegerKeyCodec: GenKeyCodec[JBigInteger] = create(new JBigInteger(_), _.toString)
+  given JBooleanKeyCodec: GenKeyCodec[JBoolean] = create(_.toBoolean, _.toString)
+  given JCharacterKeyCodec: GenKeyCodec[JCharacter] = create(_.charAt(0), _.toString)
+  given JByteKeyCodec: GenKeyCodec[JByte] = create(_.toByte, _.toString)
+  given JShortKeyCodec: GenKeyCodec[JShort] = create(_.toShort, _.toString)
+  given JIntKeyCodec: GenKeyCodec[JInteger] = create(_.toInt, _.toString)
+  given JLongKeyCodec: GenKeyCodec[JLong] = create(_.toLong, _.toString)
+  given JBigIntegerKeyCodec: GenKeyCodec[JBigInteger] = create(new JBigInteger(_), _.toString)
 
-  implicit lazy val StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
-  implicit lazy val SymbolKeyCodec: GenKeyCodec[Symbol] = create(Symbol(_), _.name)
-  implicit lazy val UuidCodec: GenKeyCodec[UUID] = create(UUID.fromString, _.toString)
+  given StringKeyCodec: GenKeyCodec[String] = create(identity, identity)
+  given SymbolKeyCodec: GenKeyCodec[Symbol] = create(Symbol(_), _.name)
+  given UUIDKeyCodec: GenKeyCodec[UUID] = create(UUID.fromString, _.toString)
 
-  implicit lazy val TimestampKeyCodec: GenKeyCodec[Timestamp] = GenKeyCodec.create(Timestamp.parse, _.toString)
-  implicit lazy val BytesKeyCodec: GenKeyCodec[Bytes] = GenKeyCodec.create(Bytes.fromBase64(_), _.base64)
+  given TimestampKeyCodec: GenKeyCodec[Timestamp] = GenKeyCodec.create(Timestamp.parse, _.toString)
+  given BytesKeyCodec: GenKeyCodec[Bytes] = GenKeyCodec.create(Bytes.fromBase64(_), _.base64)
 
-  implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
+  given jEnumKeyCodec: [E <: Enum[E]] => (ct: ClassTag[E]) => GenKeyCodec[E] =
     GenKeyCodec.create(
       string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
       e => e.name(),
     )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
-  implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrappedCodec: GenKeyCodec[R])
-    : GenKeyCodec[T] =
+  given fromTransparentWrapping
+    : [R, T] => (tw: TransparentWrapping[R, T]) => (wrappedCodec: GenKeyCodec[R]) => GenKeyCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
+
 }

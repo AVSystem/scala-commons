@@ -11,16 +11,16 @@ import scala.concurrent.duration.*
 import scala.jdk.javaapi.DurationConverters
 
 trait HoconGenCodecs {
-  implicit def configCodec: GenCodec[Config] = HoconGenCodecs.ConfigCodec
-  implicit def finiteDurationCodec: GenCodec[FiniteDuration] = HoconGenCodecs.FiniteDurationCodec
-  implicit def jDurationCodec: GenCodec[JDuration] = HoconGenCodecs.JavaDurationCodec
-  implicit def periodCodec: GenCodec[Period] = HoconGenCodecs.PeriodCodec
-  implicit def sizeInBytesCodec: GenCodec[SizeInBytes] = HoconGenCodecs.SizeInBytesCodec
-  implicit def classKeyCodec: GenKeyCodec[Class[?]] = HoconGenCodecs.ClassKeyCodec
-  implicit def classCodec: GenCodec[Class[?]] = HoconGenCodecs.ClassCodec
+  given configCodec: GenCodec[Config] = HoconGenCodecs.ConfigCodec
+  given finiteDurationCodec: GenCodec[FiniteDuration] = HoconGenCodecs.FiniteDurationCodec
+  given jDurationCodec: GenCodec[JDuration] = HoconGenCodecs.JavaDurationCodec
+  given periodCodec: GenCodec[Period] = HoconGenCodecs.PeriodCodec
+  given sizeInBytesCodec: GenCodec[SizeInBytes] = HoconGenCodecs.SizeInBytesCodec
+  given classKeyCodec: GenKeyCodec[Class[?]] = HoconGenCodecs.ClassKeyCodec
+  given classCodec: GenCodec[Class[?]] = HoconGenCodecs.ClassCodec
 }
 object HoconGenCodecs {
-  implicit final val ConfigCodec: GenCodec[Config] = GenCodec.nullable(
+  given ConfigCodec: GenCodec[Config] = GenCodec.nullable(
     input =>
       input.readCustom(ConfigValueMarker).fold(ConfigFactory.parseString(input.readSimple().readString())) {
         case obj: ConfigObject => obj.toConfig
@@ -33,7 +33,7 @@ object HoconGenCodecs {
       },
   )
 
-  implicit final val FiniteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
+  given FiniteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
     input =>
       input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
     (output, value) =>
@@ -41,26 +41,26 @@ object HoconGenCodecs {
         output.writeSimple().writeLong(value.toMillis),
   )
 
-  implicit final val JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(
+  given JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(
     input => input.readCustom(DurationMarker).getOrElse(JDuration.ofMillis(input.readSimple().readLong())),
     (output, value) => if (!output.writeCustom(DurationMarker, value)) output.writeSimple().writeLong(value.toMillis),
   )
 
-  implicit final val PeriodCodec: GenCodec[Period] = GenCodec.nullable(
+  given PeriodCodec: GenCodec[Period] = GenCodec.nullable(
     input => input.readCustom(PeriodMarker).getOrElse(Period.parse(input.readSimple().readString())),
     (output, value) => if (!output.writeCustom(PeriodMarker, value)) output.writeSimple().writeString(value.toString),
   )
 
-  implicit final val SizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(
+  given SizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(
     input => SizeInBytes(input.readCustom(SizeInBytesMarker).getOrElse(input.readSimple().readLong())),
     (output, value) =>
       if (!output.writeCustom(SizeInBytesMarker, value.bytes)) output.writeSimple().writeLong(value.bytes),
   )
 
-  implicit final val ClassKeyCodec: GenKeyCodec[Class[?]] =
+  given ClassKeyCodec: GenKeyCodec[Class[?]] =
     GenKeyCodec.create(Class.forName, _.getName)
 
-  implicit final val ClassCodec: GenCodec[Class[?]] =
+  given ClassCodec: GenCodec[Class[?]] =
     GenCodec.nullableString(Class.forName, _.getName)
 }
 
@@ -72,9 +72,9 @@ trait ConfigObjectCodec[T] {
 
 abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
   implicits: Implicits
-)(implicit instances: MacroInstances[Implicits, ConfigObjectCodec[T]]
+)(using instances: MacroInstances[Implicits, ConfigObjectCodec[T]]
 ) {
-  implicit lazy val codec: GenCodec[T] = instances(implicits, this).objectCodec
+  given codec: GenCodec[T] = instances(implicits, this).objectCodec
 
   final def read(config: Config): T = HoconInput.read[T](config)
 }
@@ -86,5 +86,5 @@ abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
   * that it automatically imports codecs from [[HoconGenCodecs]] - codecs for third party types often used in
   * configuration.
   */
-abstract class DefaultConfigCompanion[T](implicit macroCodec: MacroInstances[HoconGenCodecs, ConfigObjectCodec[T]])
+abstract class DefaultConfigCompanion[T](using macroCodec: MacroInstances[HoconGenCodecs, ConfigObjectCodec[T]])
   extends AbstractConfigCompanion[HoconGenCodecs, T](DefaultHoconGenCodecs)

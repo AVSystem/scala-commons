@@ -357,7 +357,7 @@ trait ProjectionZippers { this: MongoProjection.type =>
     )
 }
 
-final class ProductProjection[E, T](componentProjections: Seq[MongoProjection[E, _]])(implicit applier: Applier[T])
+final class ProductProjection[E, T](componentProjections: Seq[MongoProjection[E, _]])(using applier: Applier[T])
   extends MongoProjection[E, T] {
 
   def projectionRefs: Set[MongoRef[E, _]] =

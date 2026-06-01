@@ -2,6 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.mongo.{mongoId, BsonGenCodecs}
+import com.avsystem.commons.mongo.BsonGenCodecs.given
 import com.avsystem.commons.serialization.{GenCodec, TransparentWrapping}
 import org.bson.types.ObjectId
 
@@ -20,7 +21,7 @@ sealed trait EntityIdMode[E, ID] {
     case EntityIdMode.Explicit() =>
       format.fieldRefFor(MongoRef.RootRef(format), MongoEntity.Id)
     case EntityIdMode.Auto(idWrapping) =>
-      val idCodec = GenCodec.fromTransparentWrapping(idWrapping, BsonGenCodecs.objectIdCodec)
+      val idCodec = GenCodec.fromTransparentWrapping(using idWrapping)(using summon[GenCodec[ObjectId]])
       MongoRef.FieldRef(MongoRef.RootRef(format), mongoId.Id, MongoFormat.Opaque(idCodec), Opt.Empty)
   }
 }
@@ -28,9 +29,8 @@ object EntityIdMode {
   case class Explicit[E, ID]() extends EntityIdMode[E, ID]
   case class Auto[E, ID](idWrapping: TransparentWrapping[ObjectId, ID]) extends EntityIdMode[E, ID]
 
-  implicit def explicitIdMode[E <: MongoEntity[ID], ID]: EntityIdMode[E, ID] = Explicit()
+  given explicitIdMode[E <: MongoEntity[ID], ID]: EntityIdMode[E, ID] = Explicit()
 
-  implicit def autoIdMode[E <: AutoIdMongoEntity[ID], ID](
-    implicit idWrapping: TransparentWrapping[ObjectId, ID]
-  ): EntityIdMode[E, ID] = Auto(idWrapping)
+  given autoIdMode[E <: AutoIdMongoEntity[ID], ID](using idWrapping: TransparentWrapping[ObjectId, ID])
+    : EntityIdMode[E, ID] = Auto(idWrapping)
 }

@@ -6,7 +6,7 @@ import com.avsystem.commons.serialization.GenCodec
 import org.bson.codecs.Codec
 import org.bson.codecs.configuration.{CodecProvider, CodecRegistry}
 
-class GenCodecProvider[T: GenCodec](legacyOptionEncoding: Boolean)(implicit ct: ClassTag[T]) extends CodecProvider {
+class GenCodecProvider[T: GenCodec](legacyOptionEncoding: Boolean)(using ct: ClassTag[T]) extends CodecProvider {
   private val mongoCodec = new GenCodecBasedBsonCodec[T](legacyOptionEncoding)
   private val runtimeClass = ct.runtimeClass
 

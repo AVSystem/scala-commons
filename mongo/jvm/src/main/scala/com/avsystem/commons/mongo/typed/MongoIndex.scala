@@ -67,7 +67,7 @@ object MongoIndex {
     MongoIndex(fields.iterator.map(f => f -> MongoIndexType.Descending).toVector)
 }
 
-final class MongoIndexType(implicit enumCtx: EnumCtx) extends AbstractValueEnum {
+final class MongoIndexType(using enumCtx: EnumCtx) extends AbstractValueEnum {
 
   import MongoIndexType._
 

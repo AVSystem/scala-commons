@@ -3,32 +3,32 @@ package misc
 
 case class Boxing[-A, +B](fun: A => B) extends AnyVal
 object Boxing extends LowPrioBoxing {
-  def fromImplicitConv[A, B](implicit conv: A => B): Boxing[A, B] = Boxing(conv)
+  def fromImplicitConv[A, B](using conv: A => B): Boxing[A, B] = Boxing(conv)
 
-  implicit val BooleanBoxing: Boxing[Boolean, JBoolean] = fromImplicitConv
-  implicit val ByteBoxing: Boxing[Byte, JByte] = fromImplicitConv
-  implicit val ShortBoxing: Boxing[Short, JShort] = fromImplicitConv
-  implicit val IntBoxing: Boxing[Int, JInteger] = fromImplicitConv
-  implicit val LongBoxing: Boxing[Long, JLong] = fromImplicitConv
-  implicit val FloatBoxing: Boxing[Float, JFloat] = fromImplicitConv
-  implicit val DoubleBoxing: Boxing[Double, JDouble] = fromImplicitConv
+  given BooleanBoxing: Boxing[Boolean, JBoolean] = fromImplicitConv
+  given ByteBoxing: Boxing[Byte, JByte] = fromImplicitConv
+  given ShortBoxing: Boxing[Short, JShort] = fromImplicitConv
+  given IntBoxing: Boxing[Int, JInteger] = fromImplicitConv
+  given LongBoxing: Boxing[Long, JLong] = fromImplicitConv
+  given FloatBoxing: Boxing[Float, JFloat] = fromImplicitConv
+  given DoubleBoxing: Boxing[Double, JDouble] = fromImplicitConv
 }
 trait LowPrioBoxing { this: Boxing.type =>
-  implicit def nullableBoxing[A >: Null]: Boxing[A, A] = Boxing(identity)
+  given nullableBoxing: [A >: Null] => Boxing[A, A] = Boxing(identity)
 }
 
 case class Unboxing[+A, -B](fun: B => A) extends AnyVal
 object Unboxing extends LowPrioUnboxing {
-  def fromImplicitConv[A, B](implicit conv: B => A): Unboxing[A, B] = Unboxing(conv)
+  def fromImplicitConv[A, B](using conv: B => A): Unboxing[A, B] = Unboxing(conv)
 
-  implicit val BooleanUnboxing: Unboxing[Boolean, JBoolean] = fromImplicitConv
-  implicit val ByteUnboxing: Unboxing[Byte, JByte] = fromImplicitConv
-  implicit val ShortUnboxing: Unboxing[Short, JShort] = fromImplicitConv
-  implicit val IntUnboxing: Unboxing[Int, JInteger] = fromImplicitConv
-  implicit val LongUnboxing: Unboxing[Long, JLong] = fromImplicitConv
-  implicit val FloatUnboxing: Unboxing[Float, JFloat] = fromImplicitConv
-  implicit val DoubleUnboxing: Unboxing[Double, JDouble] = fromImplicitConv
+  given BooleanUnboxing: Unboxing[Boolean, JBoolean] = fromImplicitConv
+  given ByteUnboxing: Unboxing[Byte, JByte] = fromImplicitConv
+  given ShortUnboxing: Unboxing[Short, JShort] = fromImplicitConv
+  given IntUnboxing: Unboxing[Int, JInteger] = fromImplicitConv
+  given LongUnboxing: Unboxing[Long, JLong] = fromImplicitConv
+  given FloatUnboxing: Unboxing[Float, JFloat] = fromImplicitConv
+  given DoubleUnboxing: Unboxing[Double, JDouble] = fromImplicitConv
 }
 trait LowPrioUnboxing { this: Unboxing.type =>
-  implicit def nullableUnboxing[A >: Null]: Unboxing[A, A] = Unboxing(identity)
+  given nullableUnboxing: [A >: Null] => Unboxing[A, A] = Unboxing(identity)
 }

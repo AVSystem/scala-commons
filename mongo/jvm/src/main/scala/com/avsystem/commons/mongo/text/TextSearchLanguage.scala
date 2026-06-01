@@ -10,7 +10,7 @@ import com.avsystem.commons.misc.{AbstractValueEnum, AbstractValueEnumCompanion,
   * @see
   *   [[https://docs.mongodb.com/manual/reference/text-search-languages/#text-search-languages]]
   */
-final class TextSearchLanguage(val code: String)(implicit enumCtx: EnumCtx) extends AbstractValueEnum
+final class TextSearchLanguage(val code: String)(using enumCtx: EnumCtx) extends AbstractValueEnum
 object TextSearchLanguage extends AbstractValueEnumCompanion[TextSearchLanguage] {
 
   /** Uses simple tokenization with no list of stop words and no stemming.

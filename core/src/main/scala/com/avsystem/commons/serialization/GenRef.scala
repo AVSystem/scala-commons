@@ -19,7 +19,7 @@ object RawRef {
   case class Composite(left: RawRef, right: RawRef) extends RawRef
   case object Identity extends RawRef
 
-  implicit val codec: GenCodec[RawRef] = GenCodec.materialize[RawRef]
+  given codec: GenCodec[RawRef] = GenCodec.materialize[RawRef]
 
   def create[S]: Creator[S] = new Creator[S] {}
 
@@ -30,7 +30,7 @@ object RawRef {
 }
 
 object SimpleRawRef {
-  implicit val codec: GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
+  given codec: GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
 }
 
 case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) {

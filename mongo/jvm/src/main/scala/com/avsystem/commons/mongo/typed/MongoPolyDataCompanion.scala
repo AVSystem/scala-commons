@@ -21,17 +21,17 @@ trait MongoPolyAdtInstances[D[_]] {
 
 abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](
   implicits: Implicits
-)(implicit instances: MacroInstances[Implicits, MongoPolyAdtInstances[D]]
+)(using instances: MacroInstances[Implicits, MongoPolyAdtInstances[D]]
 ) {
-  implicit def codec[T: GenCodec]: GenObjectCodec[D[T]] = instances(implicits, this).codec[T]
+  given codec[T: GenCodec]: GenObjectCodec[D[T]] = instances(implicits, this).codec[T]
 
-  implicit def format[T: MongoFormat]: MongoAdtFormat[D[T]] = {
-    implicit def tCodec: GenCodec[T] = MongoFormat[T].codec
+  given format[T: MongoFormat]: MongoAdtFormat[D[T]] = {
+    given tCodec: GenCodec[T] = MongoFormat[T].codec
     instances(implicits, this).format[T]
   }
 
   // TODO[scala3-port]: D[_] → D[Any] workaround for Scala 3 wildcard-as-type-arg restriction (S)
-  implicit def isMongoAdtOrSubtype[C <: D[Any]]: IsMongoAdtOrSubtype[C] = null
+  given isMongoAdtOrSubtype[C <: D[Any]]: IsMongoAdtOrSubtype[C] = null
 
   implicit class macroDslExtensions[T](value: D[T]) {
     @explicitGenerics

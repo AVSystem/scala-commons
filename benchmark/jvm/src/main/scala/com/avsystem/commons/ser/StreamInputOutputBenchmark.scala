@@ -11,8 +11,8 @@ case class Toplevel(int: Int, nested: Nested, str: String)
 case class Nested(list: List[Int], int: Int)
 
 object Toplevel {
-  implicit val nestedCodec: GenCodec[Nested] = GenCodec.materialize[Nested]
-  implicit val codec: GenCodec[Toplevel] = GenCodec.materialize[Toplevel]
+  given nestedCodec: GenCodec[Nested] = GenCodec.materialize[Nested]
+  given codec: GenCodec[Toplevel] = GenCodec.materialize[Toplevel]
 }
 
 @Warmup(iterations = 10)

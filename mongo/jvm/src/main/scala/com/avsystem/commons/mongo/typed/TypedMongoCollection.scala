@@ -19,14 +19,14 @@ class TypedMongoCollection[E <: BaseMongoEntity] private (
   val nativeCollection: MongoCollection[E],
   docCollection: MongoCollection[BsonDocument],
   val clientSession: Opt[TypedClientSession],
-)(implicit meta: MongoEntityMeta[E]
+)(using meta: MongoEntityMeta[E]
 ) extends DataTypeDsl[E]
     with TypedMongoUtils {
 
   def this(
     rawCollection: MongoCollection[_],
     clientSession: OptArg[TypedClientSession] = OptArg.Empty,
-  )(implicit meta: MongoEntityMeta[E]
+  )(using meta: MongoEntityMeta[E]
   ) = this(
     TypedMongoCollection.mkNativeCollection[E](rawCollection),
     rawCollection.withDocumentClass(classOf[BsonDocument]),
@@ -385,20 +385,20 @@ class TypedMongoCollection[E <: BaseMongoEntity] private (
   }
 
   @bincompat private[typed] def this(rawCollection: MongoCollection[_], format: MongoAdtFormat[E]) =
-    this(rawCollection)(MongoEntityMeta.bincompatMeta(format))
+    this(rawCollection)(using MongoEntityMeta.bincompatMeta(format))
 
   @bincompat private[typed] def this(rawCollection: MongoCollection[_], meta: MongoEntityMeta[E]) =
-    this(rawCollection)(meta)
+    this(rawCollection)(using meta)
 }
 
 object TypedMongoCollection {
   private def mkNativeCollection[E <: BaseMongoEntity: MongoEntityMeta](
     rawCollection: MongoCollection[_]
-  )(implicit meta: MongoEntityMeta[E]
+  )(using meta: MongoEntityMeta[E]
   ): MongoCollection[E] = {
-    import meta.format._
+    import meta.format.{given, _}
     val codecRegistry: CodecRegistry = GenCodecRegistry.create[E](rawCollection.getCodecRegistry)
-    val documentClass = classTag.runtimeClass.asInstanceOf[Class[E]]
+    val documentClass = summon[ClassTag[E]].runtimeClass.asInstanceOf[Class[E]]
     rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)
   }
 }

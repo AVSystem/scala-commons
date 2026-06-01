@@ -43,11 +43,12 @@ trait Components extends ComponentsLowPrio {
   // avoids divergent implicit expansion involving `inject`
   // this is not strictly necessary but makes compiler error messages nicer
   // i.e. the compiler will emit "could not find implicit value" instead of "divergent implicit expansion"
-  implicit def ambiguousArbitraryComponent1[T]: Component[T] = null
-  implicit def ambiguousArbitraryComponent2[T]: Component[T] = null
+  given ambiguousArbitraryComponent1[T]: Component[T] = null
+  given ambiguousArbitraryComponent2[T]: Component[T] = null
 
   // TODO[scala3-port]: autoComponent (Scala 2 macro def) (L)
-  implicit def autoComponent[T](definition: => T)(implicit sourceInfo: SourceInfo): AutoComponent[T] = ???
+  // Kept as `implicit def`: macro-stubbed and takes a by-name parameter, which a non-inline `given Conversion` cannot carry.
+  implicit def autoComponent[T](definition: => T)(using sourceInfo: SourceInfo): AutoComponent[T] = ???
 
   // TODO[scala3-port]: optEmptyComponent (depends on stubbed singleton macro) (S)
   protected def optEmptyComponent: Component[Opt[Nothing]] = ???
@@ -65,5 +66,5 @@ trait ComponentsLowPrio {
   @compileTimeOnly(
     "implicit Component[T] => implicit T inference only works inside code passed to component/singleton macro"
   )
-  implicit def inject[T](implicit component: Component[T]): T = sys.error("stub")
+  given inject[T](using component: Component[T]): T = sys.error("stub")
 }

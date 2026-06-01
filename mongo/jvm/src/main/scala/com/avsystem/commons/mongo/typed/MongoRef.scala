@@ -279,7 +279,7 @@ object MongoPropertyRef {
     }
   }
 
-  implicit def optionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(implicit optionLike: OptionLike.Aux[O, T])
+  implicit def optionalRefOps[E, O, T](ref: MongoPropertyRef[E, O])(using optionLike: OptionLike.Aux[O, T])
     : OptionalRefOps[E, O, T] =
     new OptionalRefOps[E, O, T](ref)
 
@@ -290,7 +290,7 @@ object MongoPropertyRef {
     }
   }
 
-  implicit def transparentRefOps[E, T, R](ref: MongoPropertyRef[E, T])(implicit wrapping: TransparentWrapping[R, T])
+  implicit def transparentRefOps[E, T, R](ref: MongoPropertyRef[E, T])(using wrapping: TransparentWrapping[R, T])
     : TransparentRefOps[E, T, R] =
     new TransparentRefOps[E, T, R](ref)
 

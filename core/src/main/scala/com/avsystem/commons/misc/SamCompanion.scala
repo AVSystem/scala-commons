@@ -17,6 +17,6 @@ object SamCompanion {
 
   object ValidSam {
     // TODO[scala3-port]: isValidSam (Scala 2 macro def) (L)
-    implicit def isValidSam[T, F]: ValidSam[T, F] = ???
+    given isValidSam[T, F]: ValidSam[T, F] = ???
   }
 }
