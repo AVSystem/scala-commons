@@ -40,6 +40,12 @@ the bottom of this file. Restoration ships incrementally per feature area.
 
 ### core
 
+- `CommonAliases`, `MiscAliases`, `CollectionAliases` switched from `type X = Y` + `final def/val X: Y.type = Y`
+  pairs to single Scala 3 `export Y as X` (or `export Y` for no-rename) clauses. Source-level callers are unaffected
+  (same names resolve to the same `Y` symbols), but the JVM bytecode no longer emits dedicated forwarders for the type
+  aliases / companion vals — `export` re-exports the source symbol directly. May affect MiMa-style bincompat tooling
+  once a Scala 3 baseline is published. `MColBuilder` retained as plain `type` (its RHS `scm.Builder[Elem, Col[Elem]]`
+  is a higher-kinded substitution, not a pure symbol rename, so `export` doesn't apply).
 - Type parameter wildcards `K[_]` / `D[_]` / `C[_]` narrowed to `K[Any]` / `D[Any]` / `C[Any]` at a few derivation
   seams (`TypedMap`, `SelfInstance`, `HasGenCodec.wildcardCodec`). Scala 3 forbids HKT wildcard application; downstream
   callers using the explicit signatures may need to cast.
