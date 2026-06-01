@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import java.{lang => jl, util => ju}
+import java.{lang as jl, util as ju}
 import scala.collection.Factory
 
 trait JCollectionUtils extends JFactories {
@@ -213,7 +213,7 @@ trait JCollectionUtils extends JFactories {
     }
   }
 
-  import JCollectionUtils._
+  import JCollectionUtils.*
 
   implicit def pairIterableOps[A, B](coll: IterableOnce[(A, B)]): pairIterableOps[A, B] = new pairIterableOps(coll)
 }

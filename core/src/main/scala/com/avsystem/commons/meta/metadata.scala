@@ -21,7 +21,7 @@ final class DefaultValue[T](dv: => T) {
 @transparent
 final case class ParamFlags(rawFlags: Int) extends AnyVal {
 
-  import ParamFlags._
+  import ParamFlags.*
 
   def |(other: ParamFlags): ParamFlags = new ParamFlags(rawFlags | other.rawFlags)
   def &(other: ParamFlags): ParamFlags = new ParamFlags(rawFlags & other.rawFlags)
@@ -120,7 +120,7 @@ object SymbolSource extends HasGenCodec[SymbolSource]
 @transparent
 final case class TypeFlags(rawFlags: Int) extends AnyVal {
 
-  import TypeFlags._
+  import TypeFlags.*
 
   def |(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags | other.rawFlags)
   def &(other: TypeFlags): TypeFlags = new TypeFlags(rawFlags & other.rawFlags)
@@ -173,7 +173,7 @@ object TypeFlags extends HasGenCodec[TypeFlags] {
 @transparent
 final case class MethodFlags(rawFlags: Int) extends AnyVal {
 
-  import MethodFlags._
+  import MethodFlags.*
 
   def |(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags | other.rawFlags)
   def &(other: MethodFlags): MethodFlags = new MethodFlags(rawFlags & other.rawFlags)

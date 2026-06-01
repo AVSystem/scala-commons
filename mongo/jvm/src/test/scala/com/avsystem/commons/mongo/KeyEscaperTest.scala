@@ -7,8 +7,8 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class KeyEscaperTest extends AnyFunSuite with ScalaCheckPropertyChecks {
 
-  import KeyEscaper._
-  import KeyEscaperTest._
+  import KeyEscaper.*
+  import KeyEscaperTest.*
 
   test("custom keys") {
     val customCases = List(

@@ -48,7 +48,7 @@ final class NativeJsonOutput(
     new NativeJsonObjectOutput(valueConsumer, options)
 
   override def writeBinary(binary: Array[Byte]): Unit = {
-    import js.JSConverters._
+    import js.JSConverters.*
     valueConsumer(binary.toJSArray)
   }
 

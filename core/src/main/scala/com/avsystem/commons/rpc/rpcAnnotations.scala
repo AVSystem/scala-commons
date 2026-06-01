@@ -108,10 +108,10 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   * `AsReal` and `AsRaw`).
   *
   * {{{
-  * import com.avsystem.commons._
-  * import com.avsystem.commons.rpc._
-  * import com.avsystem.commons.serialization._
-  * import com.avsystem.commons.serialization.json._
+  * import com.avsystem.commons.*
+  * import com.avsystem.commons.rpc.*
+  * import com.avsystem.commons.serialization.*
+  * import com.avsystem.commons.serialization.json.*
   *
   * case class Json(jsonStr: String)
   * object Json {

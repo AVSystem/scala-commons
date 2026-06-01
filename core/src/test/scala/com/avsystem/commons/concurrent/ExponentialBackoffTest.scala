@@ -10,7 +10,7 @@ import scala.concurrent.duration.*
   */
 class ExponentialBackoffTest extends AnyFunSuite with Matchers {
   test("simple") {
-    import RetryStrategy._
+    import RetryStrategy.*
     val eb = immediately.andThen(exponentially(1.second)).maxDelay(20.seconds).maxRetries(64)
 
     val allDelays = Iterator.iterateUntilEmpty(eb.nextRetry)(_._2.nextRetry).map(_._1).toList

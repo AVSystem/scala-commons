@@ -11,7 +11,7 @@ import com.mongodb.client.model.*
   */
 sealed trait MongoWrite[E] {
 
-  import MongoWrite._
+  import MongoWrite.*
 
   def toWriteModel: WriteModel[E] = this match {
     case InsertOne(value) =>

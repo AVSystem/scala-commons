@@ -23,7 +23,7 @@ class ObservableBlockingIterator[T](
 ) extends CloseableIterator[T]
     with Subscriber[T] {
 
-  import ObservableBlockingIterator._
+  import ObservableBlockingIterator.*
 
   @volatile private[this] var last: Any = Empty
   @volatile private[this] var ackPromise: Promise[Ack] = _

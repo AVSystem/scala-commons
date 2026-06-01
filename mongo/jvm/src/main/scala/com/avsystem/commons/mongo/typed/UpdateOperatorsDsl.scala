@@ -3,7 +3,7 @@ package mongo.typed
 
 trait UpdateOperatorsDsl[T, R] {
 
-  import MongoUpdateOperator._
+  import MongoUpdateOperator.*
 
   def format: MongoFormat[T]
   protected def wrapUpdate(update: MongoUpdate[T]): R
@@ -25,7 +25,7 @@ trait UpdateOperatorsDsl[T, R] {
 object UpdateOperatorsDsl {
   implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: UpdateOperatorsDsl[C[T], R]) extends AnyVal {
 
-    import MongoUpdateOperator._
+    import MongoUpdateOperator.*
 
     private def format: MongoFormat[T] = dsl.format.assumeCollection.elementFormat
 

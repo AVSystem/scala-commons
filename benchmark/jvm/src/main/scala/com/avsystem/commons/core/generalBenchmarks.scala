@@ -10,7 +10,7 @@ import org.openjdk.jmh.infra.Blackhole
 @BenchmarkMode(Array(Mode.Throughput))
 class LoopBenchmark {
 
-  import LoopBenchmark._
+  import LoopBenchmark.*
 
   @Benchmark
   def rangeForeachTest(blackhole: Blackhole): Unit = {

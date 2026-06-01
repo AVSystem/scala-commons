@@ -37,7 +37,7 @@ object TreeForTypeTest {
 
 class TreeForTypeTest {
 
-  import TreeForTypeTest._
+  import TreeForTypeTest.*
 
   type B
   val y = "y"
@@ -107,7 +107,7 @@ class TreeForTypeTest {
 
 object UnrelatedTreeForType {
 
-  import TreeForTypeTest._
+  import TreeForTypeTest.*
 
   testTreeForType("Int")
   testTreeForType("Integer")

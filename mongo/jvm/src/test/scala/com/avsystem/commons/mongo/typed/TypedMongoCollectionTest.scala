@@ -31,7 +31,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
   final val Rte = RecordTestEntity
   final val Rtaie = RecordTestAutoIdEntity
 
-  import UnionTestEntity._
+  import UnionTestEntity.*
 
   private val client = TypedMongoClient()
   private val db = client.getDatabase("test")

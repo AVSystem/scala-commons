@@ -208,7 +208,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   }
 
   test("typed map") {
-    import SealedKey._
+    import SealedKey.*
     testRoundtrip(TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true))
   }
 

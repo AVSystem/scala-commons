@@ -46,7 +46,7 @@ class NamedEnumTest extends AnyFunSuite with Matchers {
   }
 
   test("all possible ways of `name` override") {
-    import SomeNamedEnum._
+    import SomeNamedEnum.*
     assert(
       byName == Map(
         "First" -> First,

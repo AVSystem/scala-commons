@@ -12,8 +12,8 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class FilteringTest extends AnyFunSuite {
 
-  import Filtering._
-  import FilteringTest._
+  import Filtering.*
+  import FilteringTest.*
 
   private def testCase(name: String)(filter: (Ref[String]) => Bson)(verify: (String) => Bson): Unit = {
     import BsonEquality.bsonEquality

@@ -23,7 +23,7 @@ object NativeJsonInputOutputTest {
 }
 
 class NativeJsonInputOutputTest extends AnyFunSuite {
-  import NativeJsonInputOutputTest._
+  import NativeJsonInputOutputTest.*
 
   case class BilateralTestCase(name: String, options: NativeFormatOptions, testStringRepr: Boolean = true)
 

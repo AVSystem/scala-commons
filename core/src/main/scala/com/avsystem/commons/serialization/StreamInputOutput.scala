@@ -2,7 +2,7 @@ package com.avsystem.commons
 package serialization
 
 import java.io.{DataInputStream, DataOutputStream}
-import java.{lang => jl}
+import java.lang as jl
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
 
@@ -157,7 +157,7 @@ private class StreamListInput(is: DataInputStream) extends ListInput {
 
 private class StreamObjectInput(is: DataInputStream) extends ObjectInput {
 
-  import StreamObjectInput._
+  import StreamObjectInput.*
 
   private[this] var currentField: FieldInput = NoneYet
 
