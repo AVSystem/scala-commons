@@ -82,9 +82,19 @@ object Commons extends ProjectGroup("commons") {
     githubWorkflowBuildMatrixFailFast := Some(false),
     githubWorkflowBuild := Seq(
       WorkflowStep.Sbt(
-        List("compile", "Test/compile", "scalafmtCheckAll", "scalafmtSbtCheck"),
-        name = Some("Build + lint"),
-      )
+        List("compile", "Test/compile"),
+        name = Some("Build"),
+      ),
+    ),
+    githubWorkflowAddedJobs += WorkflowJob(
+      id = "scalafmt",
+      name = "Scalafmt Check",
+      scalas = List(scalaVersion.value),
+      javas = List(JavaSpec.temurin("21")),
+      steps = githubWorkflowJobSetup.value.toList :+ WorkflowStep.Sbt(
+        List("scalafmtCheckAll", "scalafmtSbtCheck"),
+        name = Some("Check Scala formatting"),
+      ),
     ),
     githubWorkflowBuildPreamble ++= Seq(
       WorkflowStep.Use(
