@@ -13,23 +13,16 @@ import scala.annotation.implicitNotFound
   *   metadata class constructor
   */
 trait MetadataCompanion[M[_]] {
-  final def apply[Real](implicit metadata: M[Real]): M[Real] = metadata
-
-  implicit final def fromFallback[Real](implicit fallback: Fallback[M[Real]]): M[Real] = fallback.value
-
+  given fromFallback: [Real] => (fallback: Fallback[M[Real]]) => M[Real] = fallback.value
+  final def apply[Real](using metadata: M[Real]): M[Real] = metadata
   final class Lazy[Real](metadata: => M[Real]) {
     lazy val value: M[Real] = metadata
   }
-  object Lazy {
-    def apply[Real](metadata: => M[Real]): Lazy[Real] = new Lazy(metadata)
-
-    // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
-    // TODO[scala3-port]: lazyMetadata (Scala 2 macro def) (L)
-    implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = ???
-
+  object Lazy extends MetadataCompanionLazyMacros[M, Lazy] {
     @implicitNotFound("#{forNotLazy}")
-    implicit def notFound[T](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
+    given notFound: [T] => (forNotLazy: ImplicitNotFound[M[T]]) => ImplicitNotFound[Lazy[T]] =
       ImplicitNotFound()
+    def apply[Real](metadata: => M[Real]): Lazy[Real] = new Lazy(metadata)
   }
 }
 
@@ -44,22 +37,15 @@ trait MetadataCompanion[M[_]] {
   */
 // cannot share code with MetadataCompanion because of binary compatibility problems, must copy
 trait BoundedMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]] {
-  final def apply[Real >: Lo <: Hi](implicit metadata: M[Real]): M[Real] = metadata
-
-  implicit final def fromFallback[Real >: Lo <: Hi](implicit fallback: Fallback[M[Real]]): M[Real] = fallback.value
-
+  given fromFallback: [Real >: Lo <: Hi] => (fallback: Fallback[M[Real]]) => M[Real] = fallback.value
+  final def apply[Real >: Lo <: Hi](using metadata: M[Real]): M[Real] = metadata
   final class Lazy[Real >: Lo <: Hi](metadata: => M[Real]) {
     lazy val value: M[Real] = metadata
   }
-  object Lazy {
-    def apply[Real >: Lo <: Hi](metadata: => M[Real]): Lazy[Real] = new Lazy(metadata)
-
-    // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
-    // TODO[scala3-port]: lazyMetadata (bounded) (Scala 2 macro def) (L)
-    implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = ???
-
+  object Lazy extends BoundedMetadataCompanionLazyMacros[Hi, Lo, M, Lazy] {
     @implicitNotFound("#{forNotLazy}")
-    implicit def notFound[T >: Lo <: Hi](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
+    given notFound: [T >: Lo <: Hi] => (forNotLazy: ImplicitNotFound[M[T]]) => ImplicitNotFound[Lazy[T]] =
       ImplicitNotFound()
+    def apply[Real >: Lo <: Hi](metadata: => M[Real]): Lazy[Real] = new Lazy(metadata)
   }
 }
