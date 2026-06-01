@@ -5,7 +5,7 @@ import com.avsystem.commons.meta.Fallback
 import com.avsystem.commons.misc.ImplicitNotFound
 import com.avsystem.commons.serialization.TransparentWrapping
 
-import scala.annotation.implicitNotFound
+import scala.annotation.{implicitNotFound, nowarn}
 
 @implicitNotFound("Cannot serialize ${Real} into ${Raw}, appropriate AsRaw instance not found")
 trait AsRaw[Raw, Real] {
@@ -35,7 +35,8 @@ object AsRaw extends FallbackAsRaw {
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
     _.map(asRaw.asRaw)
 
-  @implicitNotFound("#{forPlain}")
+  @deprecated("Use native implicitNotFound instead", "2.29.0")
+  @nowarn("msg=deprecated")
   implicit def notFoundForTry[Raw, Real](
     implicit forPlain: ImplicitNotFound[AsRaw[Raw, Real]]
   ): ImplicitNotFound[AsRaw[Try[Raw], Try[Real]]] = ImplicitNotFound()
@@ -67,7 +68,8 @@ object AsReal extends FallbackAsReal {
   implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
     _.map(asReal.asReal)
 
-  @implicitNotFound("#{forPlain}")
+  @deprecated("Use native implicitNotFound instead", "2.29.0")
+  @nowarn("msg=deprecated")
   implicit def notFoundForTry[Raw, Real](
     implicit forPlain: ImplicitNotFound[AsReal[Raw, Real]]
   ): ImplicitNotFound[AsReal[Try[Raw], Try[Real]]] = ImplicitNotFound()
