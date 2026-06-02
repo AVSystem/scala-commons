@@ -2,6 +2,7 @@ package com.avsystem.commons
 package misc
 
 import scala.annotation.implicitNotFound
+import scala.quoted.{Expr, Quotes, Type}
 
 /** Base trait for `val`-based enums, i.e. enums implemented as a single class with companion object keeping enum values
   * as instances of the enum class in `final val` fields. This is an alternative way of implementing enums as compared
@@ -41,25 +42,25 @@ import scala.annotation.implicitNotFound
   *   }}}
   */
 trait ValueEnum extends NamedEnum {
-  protected def enumCtx: EnumCtx
-
-  enumCtx.register(this)
 
   /** Enum value index, starting from 0. Reflects the order in which enum constants are declared in the companion object
     * of the enum class.
     */
   def ordinal: Int = enumCtx.ordinal
 
+  enumCtx.register(this)
+
   /** Name of the `final val` in enum companion object that this enum value is assigned to.
     */
   def name: String = enumCtx.valName
+  protected def enumCtx: EnumCtx
 }
 
 /** Convenience abstract class implementing [[ValueEnum]]. For less generated code, faster compilation and better binary
   * compatibility it's better to extend this abstract class rather than [[ValueEnum]] trait directly. See [[ValueEnum]]
   * documentation for more information on value-based enums.
   */
-abstract class AbstractValueEnum(protected implicit val enumCtx: EnumCtx) extends ValueEnum
+abstract class AbstractValueEnum(using protected val enumCtx: EnumCtx) extends ValueEnum
 
 @implicitNotFound(
   "Value based enum must be assigned to a public, final, non-lazy val in its companion object " +
@@ -77,11 +78,6 @@ sealed trait EnumCtx extends Any {
 trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { companion =>
   type Value = T
 
-  private[this] val registryBuilder = IIndexedSeq.newBuilder[T]
-  private[this] var currentOrdinal: Int = 0
-  private[this] var finished: Boolean = false
-  private[this] var awaitingRegister: Boolean = false
-
   /** Holds an indexed sequence of all enum values, ordered by their ordinal (`values(i).ordinal` is always equal to
     * `i`).
     */
@@ -94,9 +90,13 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     finished = true
     registryBuilder.result()
   }
+  private val registryBuilder = IIndexedSeq.newBuilder[T]
+  private var currentOrdinal: Int = 0
+  private var finished: Boolean = false
+  private var awaitingRegister: Boolean = false
 
-  implicit final val ordering: Ordering[T] = Ordering.by(_.ordinal)
-  implicit final def ordered(value: T): Ordered[T] = Ordered.orderingToOrdered(value)
+  given ordering: Ordering[T] = Ordering.by(_.ordinal)
+  given ordered: Conversion[T, Ordered[T]] = Ordered.orderingToOrdered(_)
 
   private class Ctx(val valName: String, val ordinal: Int) extends EnumCtx {
     if (awaitingRegister) {
@@ -104,13 +104,14 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     }
     awaitingRegister = true
 
-    private[this] var registered = false
+    private var registered = false
 
     override def register(value: ValueEnum): Unit = companion.synchronized {
       if (finished)
-        throw new IllegalStateException(s"Enum values have already been collected - too late to register enum $value")
-      else if (registered)
-        throw new IllegalStateException("Cannot register using the same EnumCtx more than once")
+        throw new IllegalStateException(
+          s"Enum values have already been collected - too late to register enum $value"
+        )
+      else if (registered) throw new IllegalStateException("Cannot register using the same EnumCtx more than once")
       else {
         registryBuilder += value.asInstanceOf[T] // `enumValName` macro performs static checks that make this safe
         currentOrdinal += 1
@@ -120,13 +121,43 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     }
   }
 
-  protected[this] final class ValName(val valName: String)
+  given (valName: ValName) => EnumCtx = new Ctx(valName.valName, currentOrdinal)
 
-  // TODO[scala3-port]: ValueEnumCompanion.valName (Scala 2 macro def) (L)
-  protected[this] implicit def valName: ValName = ???
+  protected final class ValName(val valName: String) // todo make it opaque
 
-  protected[this] implicit def enumCtx(implicit valName: ValName): EnumCtx =
-    new Ctx(valName.valName, currentOrdinal)
+  inline protected given ValName = ${ valNameImpl[Value, ValName, this.type]('{ ValName(_) }) }
+}
+
+def valNameImpl[T <: ValueEnum: Type, ValName: Type, Owner: Type](
+  createValName: Expr[String => ValName]
+)(using quotes: Quotes
+): Expr[ValName] = {
+  import quotes.reflect.*
+
+  def omitAnonClass(owner: Symbol): Symbol =
+    if (owner.isDefDef && owner.name == "<init>" && owner.owner.name.contains("$anon"))
+      owner.owner.owner
+    else owner
+
+  extension (s: Symbol)
+    def isPublic: Boolean =
+      !s.flags.is(Flags.Protected) && !s.flags.is(Flags.Private) && !s.flags.is(Flags.PrivateLocal)
+
+  val owner = omitAnonClass(Symbol.spliceOwner.owner)
+
+  val valid = owner.isTerm && owner.owner == TypeRepr.of[Owner].typeSymbol && owner.isValDef &&
+    owner.flags.is(Flags.Final) && !owner.flags.is(Flags.Lazy) && owner.isPublic && owner.typeRef <:< TypeRepr.of[T]
+
+  if (!valid) {
+    // idk it's still required, but let's keep it just in case
+    report.errorAndAbort(
+      "ValueEnum must be assigned to a public, final, non-lazy val in its companion object " +
+        "with explicit `Value` type annotation, e.g. `final val MyEnumValue: Value = new MyEnumClass"
+    )
+  }
+
+  val name = Expr(owner.name)
+  '{ $createValName.apply($name) }
 }
 
 /** Convenience abstract class implementing [[ValueEnumCompanion]]. For less generated code, faster compilation and
