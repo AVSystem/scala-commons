@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package annotation
 
+import scala.quoted.*
+
 /** Annotate a symbol (i.e. class, method, parameter, etc.) with `@positioned(positioned.here)` to retain source
   * position information for that symbol to be available in macro implementations which inspect that symbol. This is
   * necessary e.g. for determining declaration order of subtypes of sealed hierarchies in macro implementations. This
@@ -9,6 +11,10 @@ package annotation
   */
 class positioned(val point: Int) extends StaticAnnotation
 object positioned {
-  // TODO[scala3-port]: here (Scala 2 macro def) (L)
-  def here: Int = ???
+  inline def here: Int = ${ hereImpl }
+
+  private def hereImpl(using Quotes): Expr[Int] = {
+    import quotes.reflect.*
+    Expr(Position.ofMacroExpansion.start)
+  }
 }

@@ -8,13 +8,16 @@ class SourceInfoTest extends AnyFunSuite with Matchers {
   val srcInfo = SourceInfo.here
 
   test("simple") {
+    // Scala 3 macro `Position.ofMacroExpansion` points to the receiver (start of
+    // `SourceInfo.here`) rather than the method name itself, hence different
+    // offset/column from the upstream Scala 2.13 macro.
     srcInfo should matchPattern {
       case SourceInfo(
             _,
             "SourceInfoTest.scala",
-            216,
+            205,
             8,
-            28,
+            17,
             "  val srcInfo = SourceInfo.here",
             List("srcInfo", "SourceInfoTest", "misc", "commons", "avsystem", "com"),
           ) =>
