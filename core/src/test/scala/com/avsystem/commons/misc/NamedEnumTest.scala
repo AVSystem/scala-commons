@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -71,5 +72,17 @@ class NamedEnumTest extends AnyFunSuite with Matchers {
 
   test("top level objects") {
     assert(SomeNamedEnum.byName.contains("I am toplvl"))
+  }
+
+  test("keyCodec round-trip via NamedEnumCompanion given") {
+    val codec = summon[GenKeyCodec[SomeNamedEnum]]
+    for (v <- SomeNamedEnum.values) {
+      codec.read(codec.write(v)) shouldEqual v
+    }
+  }
+
+  test("codec given resolves to a NamedEnumCompanion-backed instance") {
+    val codec = summon[GenCodec[SomeNamedEnum]]
+    (codec should be).theSameInstanceAs(SomeNamedEnum.codec)
   }
 }
