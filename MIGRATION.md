@@ -55,6 +55,12 @@ the bottom of this file. Restoration ships incrementally per feature area.
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
 
+### core — misc SourceInfo (slice 02-02 partial)
+
+- `SourceInfo.here` ported from Scala 2 `c.macroApplication` macro to Scala 3 `inline implicit def here: SourceInfo = ${ hereImpl }` using `Position.ofMacroExpansion` and `Symbol.spliceOwner.owner` enclosing-symbol walk.
+- Public API preserved: `SourceInfo.here` remains an `implicit def` returning `SourceInfo`; callers unchanged.
+- `positioned.here` deferred to a follow-up slice in 02-02 scope.
+
 ### mongo
 
 - `BsonRef.Creator.ref`, `DataTypeDsl.{ref, as, is, isNot}`, `TypedMongoUtils.optionalizeFirstArg` are stubbed with
@@ -173,7 +179,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/misc/SelfInstance.scala:4`                              | C[_] existential narrowed to C[Any] (Scala 3 forbids HKT wildcard application)                        | S      |
 | `core/src/main/scala/com/avsystem/commons/misc/SelfInstance.scala:7`                              | SelfInstance.materialize (Scala 2 macro def)                                                          | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SimpleClassName.scala:8`                           | SimpleClassName.materialize (Scala 2 macro def)                                                       | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/SourceInfo.scala:28`                               | SourceInfo.here (Scala 2 macro def)                                                                   | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Timestamp.scala:13`                                | Comparable[Timestamp] (Scala 3 forbids AnyVal inheriting Object-derived traits)                       | S      |
 | `core/src/main/scala/com/avsystem/commons/misc/TypeString.scala:31`                               | TypeString.materialize (Scala 2 macro def)                                                            | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/TypeString.scala:90`                               | JavaClassName.materialize (Scala 2 macro def)                                                         | L      |
