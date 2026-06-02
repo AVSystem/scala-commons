@@ -5,8 +5,7 @@ package misc
   *
   * @deprecated
   *   `Delegation` is being removed in the Scala 3 release of scala-commons. The blackbox macros have no Scala 3
-  *   counterpart; write the delegating wrapper manually
-  *   (`new TargetTrait { def x = source.x; ... }`).
+  *   counterpart; write the delegating wrapper manually (`new TargetTrait { def x = source.x; ... }`).
   */
 @deprecated(
   "Delegation will be removed in the Scala 3 release of scala-commons. Write the delegating wrapper manually.",
