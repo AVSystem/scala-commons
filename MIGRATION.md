@@ -18,6 +18,7 @@ the bottom of this file. Restoration ships incrementally per feature area.
 | `-Wconf` warning suppression blocks                   | Project rule: fix warnings at source, not via suppression.                                                                                                                                              |
 | `-language:experimental.macros`                       | Scala 3 uses `inline` + `scala.quoted`; flag is a no-op.                                                                                                                                                |
 | Scala 2 macro impls (`c.universe`, blackbox/whitebox) | Replaced by Scala 3 quotes/inline during feature-area restoration; the legacy `commons-macros` module is gone.                                                                                          |
+| `misc/Bidirectional`                                  | Scala 2 whitebox macro deleted from the Scala 3 tree (file + test removed). Restoration not planned: write the reversed `PartialFunction` manually at call sites. A `@deprecated` shim shipping in the parallel Scala 2 `master` PR gives downstream a warning window before the symbol disappears.        |
 
 ## 2. Deprecated on Scala 3
 
@@ -158,7 +159,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/misc/ApplierUnapplier.scala:13`                         | Applier.materialize (Scala 2 macro def)                                                               | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/ApplierUnapplier.scala:25`                         | Unapplier.materialize (Scala 2 macro def)                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/ApplierUnapplier.scala:37`                         | ApplierUnapplier.materialize (Scala 2 macro def)                                                      | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/Bidirectional.scala:6`                             | apply (Scala 2 macro def)                                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Delegation.scala:11`                               | materializeDelegation (Scala 2 macro def)                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Delegation.scala:21`                               | CurriedDelegation.apply (Scala 2 macro def)                                                           | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Implicits.scala:5`                                 | infer (Scala 2 macro def)                                                                             | L      |
