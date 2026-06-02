@@ -1,17 +1,30 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
-object SealedUtils {
-  // TODO[scala3-port]: caseObjectsFor (Scala 2 macro def) (L)
-  @explicitGenerics
-  def caseObjectsFor[T]: List[T] = ???
+import scala.compiletime
+import scala.deriving.Mirror
 
-  // TODO[scala3-port]: instancesFor (Scala 2 macro def; return type widened to TC[T]) (L)
-  @explicitGenerics
-  def instancesFor[TC[_], T]: List[TC[T]] = ???
+object SealedUtils {
+  inline def instancesFor[TC[_], T: Mirror.SumOf as m]: List[TC[T]] =
+    compiletime.summonAll[Tuple.Map[m.MirroredElemTypes, TC]].toList.asInstanceOf[List[TC[T]]]
+
+  inline def caseObjects[T: Mirror.SumOf as m]: List[T] =
+    collectCaseObjects[T, m.MirroredElemTypes]
+
+  inline private def collectCaseObjects[T, Tup <: Tuple]: List[T] = inline compiletime.erasedValue[Tup] match {
+    case _: (h *: t) =>
+      compiletime.summonFrom {
+        case vo: scala.ValueOf[`h`] =>
+          vo.value.asInstanceOf[T] :: Nil
+        case m: Mirror.SumOf[`h`] =>
+          collectCaseObjects[T, m.MirroredElemTypes] // todo: check if required to recurse into nested sum type
+        case _ =>
+          Nil
+      } ::: collectCaseObjects[T, t]
+    case _: EmptyTuple => Nil
+  }
 }
 
 /** Base trait for companion objects of sealed traits that serve as enums, i.e. their only values are case objects. For
@@ -33,7 +46,7 @@ trait SealedEnumCompanion[T] {
 
   /** Thanks to this implicit, [[SealedEnumCompanion]] and its subtraits can be used as typeclasses.
     */
-  implicit def evidence: this.type = this
+  given evidence: this.type = this
 
   /** Holds a list of all case objects of a sealed trait or class `T`. This must be implemented separately for every
     * sealed enum, but can be implemented simply by using the [[caseObjects]] macro. It's important to *always* state
@@ -46,11 +59,14 @@ trait SealedEnumCompanion[T] {
     * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for
     * [[com.avsystem.commons.misc.OrderedEnum OrderedEnum]].
     */
-  // lazy to allow lazy-val override in ValueEnumCompanion (Scala 3 disallows lazy overriding non-lazy)
-  lazy val values: ISeq[T]
+  def values: ISeq[T]
 
-  // TODO[scala3-port]: caseObjects (Scala 2 macro def) (L)
-  protected def caseObjects: List[T] = ???
+  /** A macro which reifies a list of all case objects of the sealed trait or class `T`. WARNING: the order of case
+    * objects in the resulting list is well defined only for enums that extend [[OrderedEnum]]. In such case, the order
+    * is consistent with declaration order in source file. However, if the enum is not an [[OrderedEnum]], the order may
+    * be arbitrary.
+    */
+  inline protected def caseObjects(using Mirror.SumOf[T]): List[T] = SealedUtils.caseObjects[T]
 }
 
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]
@@ -123,8 +139,8 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
       ),
     )
 
-  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
-  implicit lazy val codec: GenCodec[T] = GenCodec.nullableSimple[T](
+  given keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
+  given codec: GenCodec[T] = GenCodec.nullableSimple[T](
     input => decode(input.readString()),
     (output, value) => output.writeString(value.name),
   )
@@ -151,10 +167,10 @@ trait OrderedEnum {
 }
 object OrderedEnum {
   private object reusableOrdering extends Ordering[OrderedEnum] {
-    def compare(x: OrderedEnum, y: OrderedEnum) = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
+    def compare(x: OrderedEnum, y: OrderedEnum): Int = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
   }
-  implicit def ordering[T <: OrderedEnum]: Ordering[T] =
-    reusableOrdering.asInstanceOf[Ordering[T]]
+
+  given ordering: [T <: OrderedEnum] => Ordering[T] = reusableOrdering.asInstanceOf[Ordering[T]]
 }
 
 abstract class AbstractNamedEnumCompanion[T <: NamedEnum]
