@@ -46,14 +46,36 @@ the bottom of this file. Restoration ships incrementally per feature area.
 - `SelfInstance` HKT wildcard parameter narrowed to `C[Any]` (see `core/.../misc/SelfInstance.scala`).
 - `Timestamp` no longer extends `Comparable[Timestamp]` — Scala 3 forbids `AnyVal` inheriting Object-derived traits. Use
   the explicit comparator.
-- `SealedEnumCompanion.values` is `lazy val` instead of `val` (initialization order under Scala 3 sealed-children
-  enumeration).
 - `Tag` companion has an explicit `unapply` (Scala 3 case-class extractor inference changed).
-- `SealedUtils.instancesFor` return type widened to `TC[T]`.
 - `GenCodec.bseqCodec` / `iseqCodec` use the explicit `using` keyword (Scala 2 second-implicit-arg-list syntax no longer
   compiles).
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
+
+### core — misc SealedUtils (slice 5.6)
+
+- `misc/SealedUtils.scala` ported from `origin/master:core/src/main/scala-3/com/avsystem/commons/misc/SealedUtils.scala`
+  per fork commit `3ec8c125`. Pattern 4 — pure inline / no quoted macro: uses `compiletime.{summonAll, summonFrom,
+  erasedValue}` + `Mirror.SumOf` + `scala.ValueOf` for compile-time case-object listing.
+- `SealedUtils.caseObjectsFor[T]` REMOVED (zero internal callers per pre-port audit). Downstream replacement is
+  `SealedUtils.caseObjects[T: Mirror.SumOf]` — recorded in §1.
+- `SealedEnumCompanion.values` widened from `lazy val values: ISeq[T]` to `def values: ISeq[T]`; subclasses overriding
+  with `lazy val` continue to compile.
+- `SealedEnumCompanion.caseObjects` is now `inline protected def caseObjects(using Mirror.SumOf[T]): List[T]`
+  delegating to `SealedUtils.caseObjects[T]` (was Scala 2 macro stubbed to `???`).
+- `SealedEnumCompanion.evidence: this.type = this` REMAINS COMMENTED OUT (matches fork). Uncommenting triggers
+  `illegal inheritance: self type X.type does not conform to self type scala.deriving.Mirror.Sum` on every companion
+  object extending `SealedEnumCompanion` (the auto-derived `Mirror.Sum` for the companion clashes with the
+  same-type `given`). Downstream consumers needing the typeclass-from-companion idiom can do
+  `summon[SomeEnum.type]` only if they re-introduce the `given` locally.
+- `NamedEnumCompanion`: `implicit lazy val keyCodec` / `implicit lazy val codec` replaced by named
+  `given keyCodec: GenKeyCodec[T]` / `given codec: GenCodec[T]`. Public names preserved — downstream
+  `MyEnum.codec` / `MyEnum.keyCodec` continues to work.
+- `OrderedEnum.ordering[T]` `implicit def` replaced by named `given ordering: [T <: OrderedEnum] => Ordering[T]`.
+- `SealedEnumTest` + `NamedEnumTest` un-wrapped and green (6/6).
+- Compat traits `OrderedEnumCompat` / `NamedEnumCompanionCompat` from fork `compat.scala` (pure deprecation
+  wrappers) are intentionally NOT ported in this slice — own future slice once we batch the rest of
+  `compat.scala`.
 
 ### mongo
 
@@ -172,9 +194,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/misc/Sam.scala:9`                                       | Sam.apply (Scala 2 macro def)                                                                         | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SamCompanion.scala:11`                             | SamCompanion.apply (Scala 2 macro def)                                                                | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SamCompanion.scala:19`                             | isValidSam (Scala 2 macro def)                                                                        | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/SealedUtils.scala:12`                              | instancesFor (Scala 2 macro def; return type widened to TC[T])                                        | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/SealedUtils.scala:52`                              | caseObjects (Scala 2 macro def)                                                                       | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/SealedUtils.scala:8`                               | caseObjectsFor (Scala 2 macro def)                                                                    | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SelfInstance.scala:4`                              | C[_] existential narrowed to C[Any] (Scala 3 forbids HKT wildcard application)                        | S      |
 | `core/src/main/scala/com/avsystem/commons/misc/SelfInstance.scala:7`                              | SelfInstance.materialize (Scala 2 macro def)                                                          | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SimpleClassName.scala:8`                           | SimpleClassName.materialize (Scala 2 macro def)                                                       | L      |
