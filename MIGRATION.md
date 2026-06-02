@@ -55,6 +55,25 @@ the bottom of this file. Restoration ships incrementally per feature area.
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
 
+### core — misc ApplierUnapplier (slice 5.3)
+
+- `misc/ApplierUnapplier.scala` ported from
+  `origin/master:core/src/main/scala-3/com/avsystem/commons/misc/ApplierUnapplier.scala`.
+  Resolution mechanism reshaped from Scala 2 macro `implicit def materialize[T]` to Scala 3
+  `given derived` based on `scala.deriving.Mirror.ProductOf`:
+  - `Applier`:   `given derived[T <: Product: Mirror.ProductOf as m]` —
+    `m.fromTuple(Tuple.fromArray(rawValues.toArray).asInstanceOf[m.MirroredElemTypes])`.
+  - `Unapplier`: `given derived[T <: Product]` — `productIterator.toArray` wrapped in `IArraySeq`.
+  - `ApplierUnapplier`: `given derived[T: {Applier as applier, Unapplier as unapplier}]` —
+    delegating composition.
+- Public trait surface (`Applier`, `Unapplier`, `ApplierUnapplier`, `ProductUnapplier`,
+  `ProductApplierUnapplier`) unchanged; source-compat for callers that summon a typeclass.
+  Breaking only for hand-written `apply`/`unapply` "case-class-like" types that previously
+  relied on the macro reflection path — `Mirror.ProductOf` only fires for true case classes
+  (and tuples). The `ApplierUnapplierTest.custom` case is `ignore`d on that basis (fork
+  precedent).
+- `ApplierUnapplierTest` re-enabled per fork commit `7085bd8f`.
+
 ### mongo
 
 - `BsonRef.Creator.ref`, `DataTypeDsl.{ref, as, is, isNot}`, `TypedMongoUtils.optionalizeFirstArg` are stubbed with
@@ -155,9 +174,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:46`                             | HasAnnotation.materialize (Scala 2 macro def)                                                         | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:69`                             | SelfAnnotation.materialize (Scala 2 macro def)                                                        | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/AnnotationOf.scala:92`                             | SelfOptAnnotation.materialize (Scala 2 macro def)                                                     | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/ApplierUnapplier.scala:13`                         | Applier.materialize (Scala 2 macro def)                                                               | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/ApplierUnapplier.scala:25`                         | Unapplier.materialize (Scala 2 macro def)                                                             | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/ApplierUnapplier.scala:37`                         | ApplierUnapplier.materialize (Scala 2 macro def)                                                      | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Bidirectional.scala:6`                             | apply (Scala 2 macro def)                                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Delegation.scala:11`                               | materializeDelegation (Scala 2 macro def)                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Delegation.scala:21`                               | CurriedDelegation.apply (Scala 2 macro def)                                                           | L      |
