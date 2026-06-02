@@ -55,6 +55,32 @@ the bottom of this file. Restoration ships incrementally per feature area.
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
 
+### core — misc ValueEnum (slice 5.7)
+
+- `misc/ValueEnum.scala` ported verbatim from
+  `origin/master:core/src/main/scala-3/com/avsystem/commons/misc/ValueEnum.scala`. Top-level
+  `def valNameImpl[T <: ValueEnum: Type, ValName: Type, Owner: Type]` lives in this file (NOT in
+  `MiscMacros.scala`) — Pattern 5 enclosing-symbol walk via `Symbol.spliceOwner.owner` +
+  `omitAnonClass` (Pitfall 5 cleared: `.owner` is required, not bare `spliceOwner`).
+- Companion `inline protected given ValName = ${ valNameImpl[Value, ValName, this.type]('{ ValName(_) }) }`
+  replaces the Phase-1 `implicit def valName: ValName = ???` stub. Call sites unchanged.
+- `Ctx` registration machinery preserved verbatim: `synchronized` block + `awaitingRegister` /
+  `finished` flag dance + `lazy val values`. Pitfall 8 (SI-7046-style init-order) cleared —
+  `ValueEnumTest` "value enum test" green with ordinals (0..4) and names (One/Two/Three/Four/Five_?)
+  matching declaration order.
+- `EnumCtx` constructor parameter on `AbstractValueEnum` flipped from `(implicit ...)` to
+  `(using ...)` per fork.
+- `implicit final val ordering: Ordering[T]` replaced by named `given ordering: Ordering[T] =
+  Ordering.by(_.ordinal)`. Public name preserved — downstream `MyEnum.ordering` continues to work.
+- `implicit final def ordered(value: T): Ordered[T]` modernized to `given ordered: Conversion[T,
+  Ordered[T]] = Ordered.orderingToOrdered(_)` — Scala 3 idiomatic implicit conversion. Downstream
+  `enumA < enumB` keeps compiling without an extra `import scala.math.Ordered.orderingToOrdered`.
+- Rule-3 auto-fix: local `import scala.quoted.{Expr, Quotes, Type}` because `CommonAliases.scala`
+  on this branch base lacks the fork's `export scala.quoted.*` line (matches slice 5.3/5.5 precedent).
+- `ValueEnumTest.scala` synced from fork: "value enum test" un-wrapped + green; "enum constant
+  member validation" stays `ignore`d per fork (compile-time validation via `assertCompiles` /
+  `assertDoesNotCompile` is harder to reproduce in Scala 3 toolbox).
+
 ### mongo
 
 - `BsonRef.Creator.ref`, `DataTypeDsl.{ref, as, is, isNot}`, `TypedMongoUtils.optionalizeFirstArg` are stubbed with
@@ -177,7 +203,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/misc/Timestamp.scala:13`                                | Comparable[Timestamp] (Scala 3 forbids AnyVal inheriting Object-derived traits)                       | S      |
 | `core/src/main/scala/com/avsystem/commons/misc/TypeString.scala:31`                               | TypeString.materialize (Scala 2 macro def)                                                            | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/TypeString.scala:90`                               | JavaClassName.materialize (Scala 2 macro def)                                                         | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/ValueEnum.scala:125`                               | ValueEnumCompanion.valName (Scala 2 macro def)                                                        | L      |
 | `core/src/main/scala/com/avsystem/commons/rpc/AsRawReal.scala:100`                                | AsRawReal.materialize (Scala 2 macro def)                                                             | L      |
 | `core/src/main/scala/com/avsystem/commons/rpc/AsRawReal.scala:113`                                | RpcMetadata.materialize (Scala 2 macro def)                                                           | L      |
 | `core/src/main/scala/com/avsystem/commons/rpc/AsRawReal.scala:116`                                | RpcMetadata.materializeForApi (Scala 2 macro def)                                                     | L      |
