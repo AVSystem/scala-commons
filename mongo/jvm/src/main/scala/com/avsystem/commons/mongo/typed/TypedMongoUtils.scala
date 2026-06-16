@@ -6,7 +6,7 @@ import monix.reactive.Observable
 import org.reactivestreams.Publisher
 
 trait TypedMongoUtils {
-  import com.avsystem.commons.mongo.reactive.ReactiveMongoExtensions._
+  import com.avsystem.commons.mongo.reactive.ReactiveMongoExtensions.*
 
   protected final def empty(publisher: Publisher[Void]): Task[Unit] = publisher.completedL
   protected final def single[T](publisher: Publisher[T]): Task[T] = publisher.headL

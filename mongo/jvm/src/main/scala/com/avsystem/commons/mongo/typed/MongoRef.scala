@@ -108,7 +108,7 @@ sealed trait MongoPropertyRef[E, T]
   type ThisRef[E0, T0] = MongoPropertyRef[E0, T0]
   def SelfRef: MongoPropertyRef[E, T] = this
 
-  import MongoRef._
+  import MongoRef.*
 
   @macroPrivate def subtypeRefFor[C <: T: ClassTag]: MongoPropertyRef[E, C] =
     format.assumeUnion.subtypeRefFor(this, classTag[C].runtimeClass.asInstanceOf[Class[C]])

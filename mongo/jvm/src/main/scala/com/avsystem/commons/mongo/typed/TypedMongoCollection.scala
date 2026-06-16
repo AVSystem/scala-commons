@@ -4,8 +4,8 @@ package mongo.typed
 import com.avsystem.commons.annotation.bincompat
 import com.avsystem.commons.mongo.core.GenCodecRegistry
 import com.mongodb.bulk.BulkWriteResult
-import com.mongodb.client.model._
-import com.mongodb.client.result._
+import com.mongodb.client.model.*
+import com.mongodb.client.result.*
 import com.mongodb.reactivestreams.client.{DistinctPublisher, FindPublisher, MongoCollection}
 import com.mongodb.{MongoNamespace, ReadConcern, ReadPreference, WriteConcern}
 import monix.eval.Task
@@ -396,7 +396,7 @@ object TypedMongoCollection {
     rawCollection: MongoCollection[_]
   )(implicit meta: MongoEntityMeta[E]
   ): MongoCollection[E] = {
-    import meta.format._
+    import meta.format.*
     val codecRegistry: CodecRegistry = GenCodecRegistry.create[E](rawCollection.getCodecRegistry)
     val documentClass = classTag.runtimeClass.asInstanceOf[Class[E]]
     rawCollection.withCodecRegistry(codecRegistry).withDocumentClass(documentClass)

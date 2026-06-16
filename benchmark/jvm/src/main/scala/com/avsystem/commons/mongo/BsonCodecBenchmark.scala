@@ -16,7 +16,7 @@ import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement,
 @State(Scope.Thread)
 class BsonCodecBenchmark {
 
-  import BsonCodecBenchmark._
+  import BsonCodecBenchmark.*
 
   private val something = Toplevel(42, Nested(List(4, 8, 15, 16, 23, 42, 0), 131), "lol")
   private val doc = somethingCodec.toDocument(something)
@@ -52,7 +52,7 @@ class BsonCodecBenchmark {
 
 object BsonCodecBenchmark {
 
-  import BsonCodec._
+  import BsonCodec.*
 
   val bsonDocumentCodec = new BsonDocumentCodec()
 

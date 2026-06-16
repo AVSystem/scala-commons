@@ -8,11 +8,11 @@ import org.bson.{BsonType, BsonValue}
 
 import java.util.regex.Pattern
 import scala.annotation.tailrec
-import scala.util.matching.{Regex => SRegex}
+import scala.util.matching.Regex as SRegex
 
 trait VanillaQueryOperatorsDsl[T, R] {
 
-  import MongoQueryOperator._
+  import MongoQueryOperator.*
 
   def format: MongoFormat[T]
 
@@ -62,7 +62,7 @@ object VanillaQueryOperatorsDsl {
   implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: VanillaQueryOperatorsDsl[C[T], R])
     extends AnyVal {
 
-    import MongoQueryOperator._
+    import MongoQueryOperator.*
 
     private def format: MongoFormat[T] = dsl.format.assumeCollection.elementFormat
 

@@ -7,7 +7,7 @@ import monix.execution.Scheduler
 import monix.reactive.Observable
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 abstract class BlockingUtils {
   def defaultTimeout: Duration = 60.seconds

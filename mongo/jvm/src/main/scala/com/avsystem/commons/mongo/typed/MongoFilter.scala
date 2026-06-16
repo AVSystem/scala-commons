@@ -14,7 +14,7 @@ import org.bson.{BsonArray, BsonDocument}
   */
 sealed trait MongoFilter[T] {
 
-  import MongoFilter._
+  import MongoFilter.*
 
   def on[E](prefix: MongoPropertyRef[E, T]): MongoDocumentFilter[E] =
     PropertyValueFilter(prefix, this)
@@ -120,7 +120,7 @@ final case class MongoOperatorsFilter[T](operators: Seq[MongoQueryOperator[T]]) 
   */
 sealed trait MongoDocumentFilter[E] extends MongoFilter[E] {
 
-  import MongoFilter._
+  import MongoFilter.*
 
   def and(other: MongoDocumentFilter[E]): MongoDocumentFilter[E] = (this, other) match {
     case (Empty(), other) => other

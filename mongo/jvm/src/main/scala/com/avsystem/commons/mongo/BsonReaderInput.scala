@@ -3,7 +3,7 @@ package mongo
 
 import com.avsystem.commons.serialization.{ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
-import org.bson._
+import org.bson.*
 import org.bson.types.{Decimal128, ObjectId}
 
 import _root_.scala.annotation.tailrec

@@ -12,7 +12,7 @@ class ValueEnumTest extends AnyFunSuite {
   }
 
   test("value enum test") {
-    import SomeValueEnum._
+    import SomeValueEnum.*
     assert(values == List(One, Two, Three, Four, Five_?))
     assert(values.map(_.ordinal) == List.range(0, 5))
     assert(values.map(_.name) == List("One", "Two", "Three", "Four", "Five_?"))

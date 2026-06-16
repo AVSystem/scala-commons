@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import com.avsystem.commons.jiop.GuavaInterop._
+import com.avsystem.commons.jiop.GuavaInterop.*
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
 

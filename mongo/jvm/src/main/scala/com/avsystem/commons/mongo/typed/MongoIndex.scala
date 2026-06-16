@@ -24,7 +24,7 @@ import org.bson.{BsonDocument, BsonValue}
   *   MongoIndex.ascending(MyEntity.ref(_.int), MyEntity.ref(_.num))
   *
   *   // {"int": 1, "num": -1, "_id": "hashed"}
-  *   import MongoIndexType._
+  *   import MongoIndexType.*
   *   MongoIndex(
   *     MyEntity.ref(_.int) -> Ascending,
   *     MyEntity.ref(_.num) -> Descending,
@@ -69,7 +69,7 @@ object MongoIndex {
 
 final class MongoIndexType(implicit enumCtx: EnumCtx) extends AbstractValueEnum {
 
-  import MongoIndexType._
+  import MongoIndexType.*
 
   def toBson: BsonValue = this match {
     case Ascending => Bson.int(1)

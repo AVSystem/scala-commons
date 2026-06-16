@@ -137,7 +137,7 @@ class TypeStringTest extends AnyFunSuite {
 
 object UnrelatedTypeString {
 
-  import TypeStringTest._
+  import TypeStringTest.*
 
   def defineTests[T: TypeString](suite: TypeStringTest): Unit = {
     import suite.testTypeString

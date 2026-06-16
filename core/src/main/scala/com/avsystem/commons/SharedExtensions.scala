@@ -97,7 +97,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       *
       * @example
       *   {{{
-      * import javax.swing._
+      * import javax.swing.*
       * // this entire expression returns the panel
       * new JPanel().setup { p =>
       *   p.setEnabled(true)

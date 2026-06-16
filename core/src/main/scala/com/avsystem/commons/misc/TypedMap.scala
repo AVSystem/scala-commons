@@ -1,8 +1,8 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.SharedExtensions._
+import com.avsystem.commons.SharedExtensions.*
 import com.avsystem.commons.misc.TypedMap.GenCodecMapping
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 
 /** A map whose keys are parameterized with value type. This makes it possible to associate different value type with
   * each key, in a type-safe way.

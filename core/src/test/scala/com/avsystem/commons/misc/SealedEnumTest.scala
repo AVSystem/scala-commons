@@ -16,12 +16,12 @@ class SealedEnumTest extends AnyFunSuite {
   }
 
   test("case objects listing") {
-    import SomeEnum._
+    import SomeEnum.*
     assert(values == List(First, Second, Third, Fourth))
   }
 
   test("typeclass instance listing") {
-    import SomeEnum._
+    import SomeEnum.*
     assert(classTags.map(_.runtimeClass) == List(First.getClass, Second.getClass, Third.getClass, Fourth.getClass))
   }
 }

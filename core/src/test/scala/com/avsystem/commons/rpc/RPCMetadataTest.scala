@@ -2,7 +2,7 @@ package com.avsystem.commons
 package rpc
 
 import com.avsystem.commons.misc.TypeString
-import com.avsystem.commons.rpc.DummyRPC._
+import com.avsystem.commons.rpc.DummyRPC.*
 import com.avsystem.commons.serialization.GenCodec
 import org.scalatest.funsuite.AnyFunSuite
 

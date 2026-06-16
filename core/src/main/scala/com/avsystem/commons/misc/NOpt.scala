@@ -41,7 +41,7 @@ object NOpt {
   */
 final class NOpt[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
-  import NOpt._
+  import NOpt.*
 
   private def value: A = (if (rawValue.asInstanceOf[AnyRef] eq NullMarker) null else rawValue).asInstanceOf[A]
 

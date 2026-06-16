@@ -1,6 +1,6 @@
 package com.avsystem.commons.misc
 
-import com.avsystem.commons.SharedExtensions._
+import com.avsystem.commons.SharedExtensions.*
 
 import org.scalacheck.{Gen, Shrink}
 import org.scalatest.funsuite.AnyFunSuite

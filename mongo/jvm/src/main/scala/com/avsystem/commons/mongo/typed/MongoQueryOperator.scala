@@ -7,7 +7,7 @@ import org.bson.{BsonDocument, BsonType, BsonValue}
 
 sealed trait MongoQueryOperator[T] extends Product {
 
-  import MongoQueryOperator._
+  import MongoQueryOperator.*
 
   def rawOperator: String = "$" + productPrefix.uncapitalize
 

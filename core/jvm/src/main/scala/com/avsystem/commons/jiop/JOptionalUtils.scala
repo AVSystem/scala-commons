@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package jiop
 
-import java.{util => ju}
+import java.util as ju
 
 trait JOptionalUtils {
 
-  import JOptionalUtils._
+  import JOptionalUtils.*
 
   type JOptional[T] = ju.Optional[T]
   type JOptionalDouble = ju.OptionalDouble

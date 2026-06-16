@@ -22,7 +22,7 @@ final class InitialByte(val value: Byte) extends AnyVal {
 }
 object InitialByte extends InputMetadata[InitialByte] {
 
-  import MajorType._
+  import MajorType.*
 
   def apply(major: MajorType, info: Int): InitialByte = {
     require(info >= 0 && info < 32)

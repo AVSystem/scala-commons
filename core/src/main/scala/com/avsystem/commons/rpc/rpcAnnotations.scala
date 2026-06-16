@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package rpc
 
-import com.avsystem.commons.meta._
+import com.avsystem.commons.meta.*
 
 /** You can use this annotation on overloaded RPC methods to give them unique identifiers for RPC serialization. You can
   * also subclass this annotation provided that you always override the `name` parameter with another constructor
@@ -108,10 +108,10 @@ sealed trait RpcEncoding extends RawMethodAnnotation with RawParamAnnotation
   * `AsReal` and `AsRaw`).
   *
   * {{{
-  * import com.avsystem.commons._
-  * import com.avsystem.commons.rpc._
-  * import com.avsystem.commons.serialization._
-  * import com.avsystem.commons.serialization.json._
+  * import com.avsystem.commons.*
+  * import com.avsystem.commons.rpc.*
+  * import com.avsystem.commons.serialization.*
+  * import com.avsystem.commons.serialization.json.*
   *
   * case class Json(jsonStr: String)
   * object Json {

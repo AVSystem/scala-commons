@@ -6,7 +6,7 @@ package macros
 import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.reflect.runtime.{universe => ru}
+import scala.reflect.runtime.universe as ru
 
 object TypeClassDerivationTest {
 
@@ -70,7 +70,7 @@ object TypeClassDerivationTest {
 
 class TypeClassDerivationTest extends AnyFunSuite {
 
-  import TypeClassDerivationTest._
+  import TypeClassDerivationTest.*
 
   test("unknown test") {
     assert(materialize[Int] == UnknownTC(typeRepr[Int]))

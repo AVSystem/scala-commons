@@ -10,8 +10,8 @@ package annotation
   * into implementation so that they can be accessed both in compile time and in runtime.
   *
   * {{{
-  *   import scala.annotation._
-  *   import com.avsystem.commons.serialization._
+  *   import scala.annotation.*
+  *   import com.avsystem.commons.serialization.*
   *
   *   class mongoId extends AnnotationAggregate {
   *     @name("_id") @outOfOrder

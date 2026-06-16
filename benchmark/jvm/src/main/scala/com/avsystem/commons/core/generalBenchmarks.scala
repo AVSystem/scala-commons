@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package core
 
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 
 @Warmup(iterations = 5)
@@ -10,7 +10,7 @@ import org.openjdk.jmh.infra.Blackhole
 @BenchmarkMode(Array(Mode.Throughput))
 class LoopBenchmark {
 
-  import LoopBenchmark._
+  import LoopBenchmark.*
 
   @Benchmark
   def rangeForeachTest(blackhole: Blackhole): Unit = {

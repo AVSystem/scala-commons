@@ -3,7 +3,7 @@ package mongo
 
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodecWithDeps}
-import org.bson._
+import org.bson.*
 import org.bson.json.JsonReader
 import org.bson.types.{Decimal128, ObjectId}
 import org.scalactic.source.Position

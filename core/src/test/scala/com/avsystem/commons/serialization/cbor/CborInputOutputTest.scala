@@ -5,7 +5,7 @@ package serialization.cbor
 /*
 import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.json.JsonStringOutput
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite

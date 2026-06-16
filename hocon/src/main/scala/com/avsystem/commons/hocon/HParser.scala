@@ -15,9 +15,9 @@ object HParser {
 }
 class HParser(tokens: IndexedSeq[HToken]) {
 
-  import HParser._
-  import HTokenType._
-  import HTree._
+  import HParser.*
+  import HTokenType.*
+  import HTree.*
 
   private[this] var idx = 0
 
