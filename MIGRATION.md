@@ -126,7 +126,7 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 
 ## Backlog
 
-*Auto-derived from `git grep -nE 'TODO\[scala3-port\]'` on this PR's tip. Total tags: 155.*
+*Auto-derived from `git grep -nE 'TODO\[scala3-port\]'` on this PR's tip. Total tags: 144.*
 
 | Location                                                                                          | Description                                                                                           | Effort |
 |---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|--------|
@@ -137,16 +137,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/jvm/src/test/scala/com/avsystem/commons/macros/TypeClassDerivationTest.scala:4`             | TypeClassDerivationTest — depends on TestMacros / scala-2 `def ... = macro ...`                       | M      |
 | `core/jvm/src/test/scala/com/avsystem/commons/serialization/JCodecTestBase.scala:4`               | JCodecTestBase — depends on commented serialization test data / stubbed materialize                   | M      |
 | `core/jvm/src/test/scala/com/avsystem/commons/serialization/JGenCodecTest.scala:4`                | JGenCodecTest — depends on commented serialization test data / stubbed materialize                    | M      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:129`                             | showAst (Scala 2 macro def)                                                                           | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:131`                             | showRawAst (Scala 2 macro def)                                                                        | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:133`                             | showSymbol (Scala 2 macro def)                                                                        | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:135`                             | showSymbolFullName (Scala 2 macro def)                                                                | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:137`                             | showType (Scala 2 macro def)                                                                          | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:139`                             | showRawType (Scala 2 macro def)                                                                       | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:141`                             | showTypeSymbol (Scala 2 macro def)                                                                    | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:143`                             | showTypeSymbolFullName (Scala 2 macro def)                                                            | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:145`                             | sourceCode (Scala 2 macro def)                                                                        | L      |
-| `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:147`                             | withSourceCode (Scala 2 macro def)                                                                    | L      |
 | `core/src/main/scala/com/avsystem/commons/annotation/AnnotationAggregate.scala:52`                | reifyAggregated (Scala 2 macro def)                                                                   | L      |
 | `core/src/main/scala/com/avsystem/commons/annotation/positioned.scala:12`                         | here (Scala 2 macro def)                                                                              | L      |
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:18`                                 | component (Scala 2 macro def)                                                                         | L      |
