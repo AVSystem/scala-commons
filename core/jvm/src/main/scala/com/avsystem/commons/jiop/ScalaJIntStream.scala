@@ -16,7 +16,7 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def iterator: Iterator[Int] =
     jStream.iterator().asInstanceOf[JIterator[Int]].asScala
 
-  def onClose(closeHandler: => Any): ScalaJIntStream =
+  inline def onClose(closeHandler: => Any): ScalaJIntStream =
     new ScalaJIntStream(jStream.onClose(jRunnable(closeHandler)))
 
   def parallel: ScalaJIntStream =
@@ -28,10 +28,10 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def unordered: ScalaJIntStream =
     new ScalaJIntStream(jStream.unordered())
 
-  def allMatch(predicate: Int => Boolean): Boolean =
+  inline def allMatch(inline predicate: Int => Boolean): Boolean =
     jStream.allMatch(jIntPredicate(predicate))
 
-  def anyMatch(predicate: Int => Boolean): Boolean =
+  inline def anyMatch(inline predicate: Int => Boolean): Boolean =
     jStream.anyMatch(jIntPredicate(predicate))
 
   def asDoubleStream: ScalaJDoubleStream =
@@ -46,7 +46,7 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def boxed: ScalaJStream[Int] =
     new ScalaJStream(jStream.boxed.asInstanceOf[JStream[Int]])
 
-  def collect[R](supplier: => R)(accumulator: (R, Int) => Any, combiner: (R, R) => Any): R =
+  inline def collect[R](supplier: => R)(inline accumulator: (R, Int) => Any, inline combiner: (R, R) => Any): R =
     jStream.collect(jSupplier(supplier), jObjIntConsumer(accumulator), jBiConsumer(combiner))
 
   def count: Long =
@@ -55,7 +55,7 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def distinct: ScalaJIntStream =
     new ScalaJIntStream(jStream.distinct)
 
-  def filter(predicate: Int => Boolean): ScalaJIntStream =
+  inline def filter(inline predicate: Int => Boolean): ScalaJIntStream =
     new ScalaJIntStream(jStream.filter(jIntPredicate(predicate)))
 
   def findAny: Option[Int] =
@@ -64,28 +64,28 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def findFirst: Option[Int] =
     jStream.findFirst.asScala
 
-  def flatMap(mapper: Int => ScalaJIntStream): ScalaJIntStream =
+  inline def flatMap(inline mapper: Int => ScalaJIntStream): ScalaJIntStream =
     new ScalaJIntStream(jStream.flatMap(jIntFunction(d => mapper(d).jStream)))
 
-  def forEach(action: Int => Any): Unit =
+  inline def forEach(inline action: Int => Any): Unit =
     jStream.forEach(jIntConsumer(action))
 
-  def forEachOrdered(action: Int => Any): Unit =
+  inline def forEachOrdered(inline action: Int => Any): Unit =
     jStream.forEachOrdered(jIntConsumer(action))
 
   def limit(maxSize: Long): ScalaJIntStream =
     new ScalaJIntStream(jStream.limit(maxSize))
 
-  def map(mapper: Int => Int): ScalaJIntStream =
+  inline def map(inline mapper: Int => Int): ScalaJIntStream =
     new ScalaJIntStream(jStream.map(jIntUnaryOperator(mapper)))
 
-  def mapToDouble(mapper: Int => Double): ScalaJDoubleStream =
+  inline def mapToDouble(inline mapper: Int => Double): ScalaJDoubleStream =
     new ScalaJDoubleStream(jStream.mapToDouble(jIntToDoubleFunction(mapper)))
 
-  def mapToLong(mapper: Int => Long): ScalaJLongStream =
+  inline def mapToLong(inline mapper: Int => Long): ScalaJLongStream =
     new ScalaJLongStream(jStream.mapToLong(jIntToLongFunction(mapper)))
 
-  def mapToObj[U](mapper: Int => U): ScalaJStream[U] =
+  inline def mapToObj[U](inline mapper: Int => U): ScalaJStream[U] =
     new ScalaJStream(jStream.mapToObj(jIntFunction(mapper)))
 
   def max: Option[Int] =
@@ -94,16 +94,16 @@ final class ScalaJIntStream(private val jStream: JIntStream) extends AnyVal {
   def min: Option[Int] =
     jStream.min.asScala
 
-  def noneMatch(predicate: Int => Boolean): Boolean =
+  inline def noneMatch(inline predicate: Int => Boolean): Boolean =
     jStream.noneMatch(jIntPredicate(predicate))
 
-  def peek(action: Int => Any): ScalaJIntStream =
+  inline def peek(inline action: Int => Any): ScalaJIntStream =
     new ScalaJIntStream(jStream.peek(jIntConsumer(action)))
 
-  def reduce(identity: Int)(op: (Int, Int) => Int): Int =
+  inline def reduce(identity: Int)(inline op: (Int, Int) => Int): Int =
     jStream.reduce(identity, jIntBinaryOperator(op))
 
-  def reduce(op: (Int, Int) => Int): Option[Int] =
+  inline def reduce(inline op: (Int, Int) => Int): Option[Int] =
     jStream.reduce(jIntBinaryOperator(op)).asScala
 
   def skip(n: Long): ScalaJIntStream =

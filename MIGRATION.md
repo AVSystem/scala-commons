@@ -54,6 +54,51 @@ the bottom of this file. Restoration ships incrementally per feature area.
   compiles).
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
+- `@inline def` → `inline def` across Opt family (`Opt`, `NOpt`, `OptArg`, `OptRef` — 117 sites). Scala 3 `inline def` is
+  implicitly `final` and cannot be overridden — a source-compat break for downstream subclassers. Mitigation: targets
+  are value classes (final by construction); zero impact on downstream subclassing patterns. Three trivial accessors
+  (`isEmpty`, `isDefined`, `nonEmpty`, `get`) kept as plain `def` per Scala 3 inline edge case: pattern-match desugaring
+  (`case Opt(x) =>`) calls these and cannot inline at compiler-generated call sites.
+- Whitelist preserved verbatim (JVM-optimizer-hint convention on tight-loop parser hot paths): `CborInput.bits` (1
+  site), `JsonStringInput` (5 sites — `read`, `isNext`, `isNextDigit`, `advance`, nested `update`), `RPCFramework` (2
+  sites — RPC module remains Scala 2.13-only per fork strategy).
+- `@publicInBinary` annotation added on private constructors and `private[misc]` members referenced from `inline def`
+  bodies in `Opt`, `NOpt`, `OptArg`, `OptRef` (Scala 3 compiler requirement: "Private constructors used in inline
+  methods require @publicInBinary"). Binary-stable extension point; no source-compat impact on callers.
+- Binary-compat: Scala 3 `inline def` emits no bytecode method. MiMa would flag if/when the scala-3 baseline is
+  released; currently MiMa is off (`mimaPreviousArtifacts := Set.empty`).
+- `inline` scope tightened (per user directive 2026-06-01): `inline def` is now applied only to methods with at least one
+  `Function`/`PartialFunction`-typed parameter (e.g. `map[B](inline f: A => B)`, `collect(inline pf: PartialFunction[A, B])`,
+  `foreach[U](inline f: A => U)`, `fold(ifEmpty: => B)(inline f: A => B)`). Methods whose only parameters are values,
+  implicits, or by-name (`=> T`) are reverted to plain `def` — by-name already provides call-site substitution in
+  Scala 3 without the `inline def` overhead. Affected reverts: `boxed`/`boxedOrNull`/`unboxed`/`toOption`/`toOpt`/`toOptRef`/
+  `toNOpt`/`toOptArg`/`orNull`/`flatten`/`contains`/`iterator`/`toList`/`zip`/`getOrElse`/`orElse`/`toRight`/`toLeft`/
+  `forEmpty` in the Opt family; `Opt.LazyOptOps.unless`; `gSupplier` in GuavaInterop; `jBooleanSupplier`/`jDoubleSupplier`/
+  `jIntSupplier`/`jLongSupplier`/`jSupplier` in JFunctionUtils; `onClose` in all four `ScalaJ*Stream` types.
+- Redundant `inline` keyword stripped from by-name parameters across retained `inline def` methods (Scala 3: `inline x: => T`
+  is redundant — `=> T` already provides call-site splicing). Affected: `fold(ifEmpty: => B)`, `mapOr(ifEmpty: => B)` in
+  Opt family; `collect(supplier: => R)(…)` in all four `ScalaJ*Stream` types.
+- `inline` extended to jiop adapters with Function-typed parameters: `JFunctionUtils` jXxx adapters (38 sites with
+  Function params; 5 Supplier adapters now plain `def`), `Java8CollectionUtils` (`jCollection.forEach/removeIf`,
+  `jMap.compute*`/`forEach`/`merge`/`replaceAll`), `GuavaInterop` gFunction/gPredicate (2 sites; gSupplier now plain
+  `def`), and `ScalaJ{Stream,IntStream,LongStream,DoubleStream}` pipeline ops (`filter`/`map`/`flatMap`/`forEach`/
+  `reduce`/`collect`/`peek`/…). Exception: `ListenableFutureAsScala.{onComplete, transform, transformWith}` in
+  `GuavaInterop` override `scala.concurrent.Future` methods (which have non-`inline` params) and stay as plain `def` —
+  Scala 3 forbids overriding a non-inline parameter with an inline parameter.
+- Trailing `; ()` removed from Consumer SAM lambda bodies in `JFunctionUtils` (`jBiConsumer`/`jConsumer`/`jDoubleConsumer`/
+  `jIntConsumer`/`jLongConsumer`/`jObjDoubleConsumer`/`jObjIntConsumer`/`jObjLongConsumer`). Scala 3 SAM conversion to a
+  void-returning Java functional interface accepts a result expression of any type — explicit `()`-coercion is unnecessary
+  noise.
+- By-name parameters reshaped to `inline` value parameters on `inline def` Opt-family forwarders where the body uses
+  the parameter exactly once in a straight-line `if/then/else` branch (no closure capture, no multi-evaluation, no
+  default value). Affected (19 sites across Opt/NOpt/OptArg/OptRef): `getOrElse(inline default: B)`,
+  `fold(inline ifEmpty: B)(inline f: ...)`, `mapOr(inline ifEmpty: B, inline f: ...)`, `orElse(inline alternative: Opt[B])`,
+  `toRight(inline left: X)`, `toLeft(inline right: X)`, `forEmpty(inline sideEffect: Unit)`. Rationale: with `inline def`,
+  an `inline B` parameter substitutes the expression literally at the call site — no `Function0` thunk allocation, no
+  by-name dispatch overhead. Strictly cheaper than `=> B` for single-use straight-line bodies. Call-site syntax is
+  identical (callers pass any `B`-typed expression). Suppliers (`gSupplier`, `jBooleanSupplier`, `jDoubleSupplier`,
+  `jIntSupplier`, `jLongSupplier`, `jSupplier`) and stream `onClose`/`collect(supplier:)` keep `=> T` — those by-name
+  params are wrapped inside `() => expr` closures (deferred-evaluation intent).
 
 ### core — misc ApplierUnapplier (slice 5.3)
 

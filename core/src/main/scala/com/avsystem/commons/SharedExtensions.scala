@@ -65,18 +65,18 @@ object SharedExtensionsUtils extends SharedExtensions {
       * @example
       *   {{{someVeryLongExpression() |> (v => if(condition(v)) something(v) else somethingElse(v))}}}
       */
-    def |>[B](f: A => B): B = f(a)
+    inline def |>[B](inline f: A => B): B = f(a)
 
-    def applyIf[A0 >: A](predicate: A => Boolean)(f: A => A0): A0 =
+    inline def applyIf[A0 >: A](inline predicate: A => Boolean)(inline f: A => A0): A0 =
       if (predicate(a)) f(a) else a
 
     /** Explicit syntax to discard the value of a side-effecting expression. Useful when `-Ywarn-value-discard` compiler
       * option is enabled.
       */
     @nowarn
-    def discard: Unit = ()
+    inline def discard: Unit = ()
 
-    def thenReturn[T](value: T): T = value
+    inline def thenReturn[T](inline value: T): T = value
 
     def option: Option[A] = Option(a)
 
@@ -105,12 +105,12 @@ object SharedExtensionsUtils extends SharedExtensions {
       * }
       *   }}}
       */
-    def setup(code: A => Any): A = {
+    inline def setup(inline code: A => Any): A = {
       code(a)
       a
     }
 
-    def matchOpt[B](pf: PartialFunction[A, B]): Opt[B] =
+    inline def matchOpt[B](inline pf: PartialFunction[A, B]): Opt[B] =
       pf.applyOpt(a)
 
     /** To be used instead of normal `match` keyword in pattern matching in order to suppress non-exhaustive match
@@ -123,7 +123,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       *   }
       *   }}}
       */
-    def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
+    inline def uncheckedMatch[B](inline pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
     // TODO[scala3-port]: showAst (Scala 2 macro def) (L)
@@ -151,23 +151,23 @@ object SharedExtensionsUtils extends SharedExtensions {
   }
 
   class LazyUniversalOps[A](private val a: () => A) extends AnyVal {
-    def evalFuture: Future[A] = FutureCompanionOps.eval(a())
+    inline def evalFuture: Future[A] = FutureCompanionOps.eval(a())
 
-    def evalTry: Try[A] = Try(a())
+    inline def evalTry: Try[A] = Try(a())
 
-    def optIf(condition: Boolean): Opt[A] =
+    inline def optIf(inline condition: Boolean): Opt[A] =
       if (condition) Opt(a()) else Opt.Empty
 
-    def optionIf(condition: Boolean): Option[A] =
+    inline def optionIf(inline condition: Boolean): Option[A] =
       if (condition) Some(a()) else None
 
-    def recoverFrom[T <: Throwable: ClassTag](fallbackValue: => A): A =
+    inline def recoverFrom[T <: Throwable: ClassTag](fallbackValue: => A): A =
       try a()
       catch {
         case _: T => fallbackValue
       }
 
-    def recoverToOpt[T <: Throwable: ClassTag]: Opt[A] =
+    inline def recoverToOpt[T <: Throwable: ClassTag]: Opt[A] =
       try Opt(a())
       catch {
         case _: T => Opt.Empty
@@ -233,7 +233,7 @@ object SharedExtensionsUtils extends SharedExtensions {
   }
 
   class IntOps(private val int: Int) extends AnyVal {
-    def times(code: => Any): Unit = {
+    inline def times(inline code: => Any): Unit = {
       var i = 0
       while (i < int) {
         code
@@ -243,22 +243,22 @@ object SharedExtensionsUtils extends SharedExtensions {
   }
 
   class FutureOps[A](private val fut: Future[A]) extends AnyVal {
-    def onCompleteNow[U](f: Try[A] => U): Unit =
+    inline def onCompleteNow[U](inline f: Try[A] => U): Unit =
       fut.onComplete(f)(RunNowEC)
 
-    def andThenNow[U](pf: PartialFunction[Try[A], U]): Future[A] =
+    inline def andThenNow[U](inline pf: PartialFunction[Try[A], U]): Future[A] =
       fut.andThen(pf)(RunNowEC)
 
-    def foreachNow[U](f: A => U): Unit =
+    inline def foreachNow[U](inline f: A => U): Unit =
       fut.foreach(f)(RunNowEC)
 
-    def transformNow[S](s: A => S, f: Throwable => Throwable): Future[S] =
+    inline def transformNow[S](inline s: A => S, inline f: Throwable => Throwable): Future[S] =
       fut.transform(s, f)(RunNowEC)
 
-    def transformNow[S](f: Try[A] => Try[S]): Future[S] =
+    inline def transformNow[S](inline f: Try[A] => Try[S]): Future[S] =
       fut.transform(f)(RunNowEC)
 
-    def transformWithNow[S](f: Try[A] => Future[S]): Future[S] =
+    inline def transformWithNow[S](inline f: Try[A] => Future[S]): Future[S] =
       fut.transformWith(f)(RunNowEC)
 
     def wrapToTry: Future[Try[A]] =
@@ -266,27 +266,27 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     /** Maps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
-    def mapNow[B](f: A => B): Future[B] =
+    inline def mapNow[B](inline f: A => B): Future[B] =
       fut.map(f)(RunNowEC)
 
     /** FlatMaps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
-    def flatMapNow[B](f: A => Future[B]): Future[B] =
+    inline def flatMapNow[B](inline f: A => Future[B]): Future[B] =
       fut.flatMap(f)(RunNowEC)
 
-    def filterNow(p: A => Boolean): Future[A] =
+    inline def filterNow(inline p: A => Boolean): Future[A] =
       fut.filter(p)(RunNowEC)
 
-    def collectNow[B](pf: PartialFunction[A, B]): Future[B] =
+    inline def collectNow[B](inline pf: PartialFunction[A, B]): Future[B] =
       fut.collect(pf)(RunNowEC)
 
-    def recoverNow[U >: A](pf: PartialFunction[Throwable, U]): Future[U] =
+    inline def recoverNow[U >: A](inline pf: PartialFunction[Throwable, U]): Future[U] =
       fut.recover(pf)(RunNowEC)
 
-    def recoverWithNow[B >: A](pf: PartialFunction[Throwable, Future[B]]): Future[B] =
+    inline def recoverWithNow[B >: A](inline pf: PartialFunction[Throwable, Future[B]]): Future[B] =
       fut.recoverWith(pf)(RunNowEC)
 
-    def zipWithNow[B, R](that: Future[B])(f: (A, B) => R): Future[R] =
+    inline def zipWithNow[B, R](that: Future[B])(inline f: (A, B) => R): Future[R] =
       fut.zipWith(that)(f)(RunNowEC)
 
     def toUnit: Future[Unit] =
@@ -331,7 +331,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * evaluation throws an exception. This is very similar to `Future.apply` but evaluates the argument immediately,
       * without dispatching it to some `ExecutionContext`.
       */
-    def eval[T](expr: => T): Future[T] =
+    inline def eval[T](inline expr: => T): Future[T] =
       try Future.successful(expr)
       catch {
         case NonFatal(cause) => Future.failed(cause)
@@ -416,7 +416,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * @return the same option
       * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
       */
-    def forEmpty(sideEffect: => Unit): Option[A] = {
+    inline def forEmpty(inline sideEffect: => Unit): Option[A] = {
       if (option.isEmpty) {
         sideEffect
       }
@@ -425,7 +425,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     /** The same as `fold` but takes arguments in a single parameter list for better type inference.
       */
-    def mapOr[B](ifEmpty: => B, f: A => B): B =
+    inline def mapOr[B](inline ifEmpty: => B, inline f: A => B): B =
       option.fold(ifEmpty)(f)
   }
 
@@ -461,7 +461,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * Don't use .failed projection, because it unnecessarily creates Exception in case of Success, which is an
       * expensive operation.
       */
-    def tapFailure(action: Throwable => Unit): Try[A] = tr match {
+    inline def tapFailure(inline action: Throwable => Unit): Try[A] = tr match {
       case Success(_) => tr
       case Failure(throwable) =>
         try action(throwable)
@@ -531,7 +531,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     /** The same thing as `orElse` but with arguments flipped. Useful in situations where `orElse` would have to be
       * called on a partial function literal, which does not work well with type inference.
       */
-    def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
+    inline def unless(inline pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
 
     def applyNOpt(a: A): NOpt[B] = pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
       case NoValueMarker => NOpt.Empty
@@ -543,18 +543,18 @@ object SharedExtensionsUtils extends SharedExtensions {
       case rawValue => Opt(rawValue.asInstanceOf[B])
     }
 
-    def fold[C](a: A)(forEmpty: A => C, forNonEmpty: B => C): C = pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
-      case NoValueMarker => forEmpty(a)
-      case rawValue => forNonEmpty(rawValue.asInstanceOf[B])
-    }
+    inline def fold[C](a: A)(inline forEmpty: A => C, inline forNonEmpty: B => C): C =
+      pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
+        case NoValueMarker => forEmpty(a)
+        case rawValue => forNonEmpty(rawValue.asInstanceOf[B])
+      }
   }
   object PartialFunctionOps {
-    private object NoValueMarker
-    private final val NoValueMarkerFunc = (_: Any) => NoValueMarker
+    object NoValueMarker
+    final val NoValueMarkerFunc = (_: Any) => NoValueMarker
   }
 
   class IterableOnceOps[C[X] <: IterableOnce[X], A](private val coll: C[A]) extends AnyVal {
-    private def it: Iterator[A] = coll.iterator
 
     def toSized[To](fac: Factory[A, To], sizeHint: Int): To = {
       val b = fac.newBuilder
@@ -563,70 +563,101 @@ object SharedExtensionsUtils extends SharedExtensions {
       b.result()
     }
 
-    def toMapBy[K](keyFun: A => K): Map[K, A] =
+    inline def toMapBy[K](inline keyFun: A => K): Map[K, A] =
       mkMap(keyFun, identity)
 
-    def mkMap[K, V](keyFun: A => K, valueFun: A => V): Map[K, V] = {
+    inline def mkMap[K, V](inline keyFun: A => K, inline valueFun: A => V): Map[K, V] = {
       val res = Map.newBuilder[K, V]
-      it.foreach { a =>
+      coll.iterator.foreach { a =>
         res += ((keyFun(a), valueFun(a)))
       }
       res.result()
     }
 
-    def groupToMap[K, V, To](keyFun: A => K, valueFun: A => V)(implicit bf: BuildFrom[C[A], V, To]): Map[K, To] = {
+    inline def groupToMap[K, V, To](
+      inline keyFun: A => K,
+      inline valueFun: A => V,
+    )(implicit bf: BuildFrom[C[A], V, To]
+    ): Map[K, To] = {
       val builders = mutable.Map[K, mutable.Builder[V, To]]()
-      it.foreach { a =>
+      coll.iterator.foreach { a =>
         builders.getOrElseUpdate(keyFun(a), bf.newBuilder(coll)) += valueFun(a)
       }
       builders.iterator.map { case (k, v) => (k, v.result()) }.toMap
     }
 
-    def findOpt(p: A => Boolean): Opt[A] = it.find(p).toOpt
+    inline def findOpt(inline p: A => Boolean): Opt[A] = coll.iterator.find(p).toOpt
 
-    def flatCollect[B](f: PartialFunction[A, IterableOnce[B]])(implicit fac: Factory[B, C[B]]): C[B] =
+    inline def flatCollect[B](inline f: PartialFunction[A, IterableOnce[B]])(implicit fac: Factory[B, C[B]]): C[B] =
       coll.iterator.collect(f).flatten.to(fac)
 
-    def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = it.collectFirst(pf).toOpt
+    inline def collectFirstOpt[B](inline pf: PartialFunction[A, B]): Opt[B] = coll.iterator.collectFirst(pf).toOpt
 
-    def reduceOpt[A1 >: A](op: (A1, A1) => A1): Opt[A1] = if (it.isEmpty) Opt.Empty else it.reduce(op).opt
+    inline def reduceOpt[A1 >: A](inline op: (A1, A1) => A1): Opt[A1] = {
+      val it = coll.iterator
+      if (it.isEmpty) Opt.Empty else it.reduce(op).opt
+    }
 
-    def reduceLeftOpt[B >: A](op: (B, A) => B): Opt[B] = if (it.isEmpty) Opt.Empty else it.reduceLeft(op).opt
+    inline def reduceLeftOpt[B >: A](inline op: (B, A) => B): Opt[B] = {
+      val it = coll.iterator
+      if (it.isEmpty) Opt.Empty else it.reduceLeft(op).opt
+    }
 
-    def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = if (it.isEmpty) Opt.Empty else it.reduceRight(op).opt
+    inline def reduceRightOpt[B >: A](inline op: (A, B) => B): Opt[B] = {
+      val it = coll.iterator
+      if (it.isEmpty) Opt.Empty else it.reduceRight(op).opt
+    }
 
-    def maxOpt(implicit ord: Ordering[A]): Opt[A] = if (it.isEmpty) Opt.Empty else it.max.opt
+    def maxOpt(implicit ord: Ordering[A]): Opt[A] = {
+      val it = coll.iterator
+      if (it.isEmpty) Opt.Empty else it.max.opt
+    }
 
-    def maxOptBy[B: Ordering](f: A => B): Opt[A] = if (it.isEmpty) Opt.Empty else it.maxBy(f).opt
+    inline def maxOptBy[B: Ordering](inline f: A => B): Opt[A] = {
+      val it = coll.iterator
+      if (it.isEmpty) Opt.Empty else it.maxBy(f).opt
+    }
 
-    def minOpt(implicit ord: Ordering[A]): Opt[A] = if (it.isEmpty) Opt.Empty else it.min.opt
+    def minOpt(implicit ord: Ordering[A]): Opt[A] = {
+      val it = coll.iterator
+      if (it.isEmpty) Opt.Empty else it.min.opt
+    }
 
-    def minOptBy[B: Ordering](f: A => B): Opt[A] = if (it.isEmpty) Opt.Empty else it.minBy(f).opt
+    inline def minOptBy[B: Ordering](inline f: A => B): Opt[A] = {
+      val it = coll.iterator
+      if (it.isEmpty) Opt.Empty else it.minBy(f).opt
+    }
 
     def indexOfOpt(elem: A): Opt[Int] = coll.iterator.indexOf(elem).opt.filter(_ != -1)
 
-    def indexWhereOpt(p: A => Boolean): Opt[Int] = coll.iterator.indexWhere(p).opt.filter(_ != -1)
+    inline def indexWhereOpt(inline p: A => Boolean): Opt[Int] = coll.iterator.indexWhere(p).opt.filter(_ != -1)
 
-    def mkStringOr(start: String, sep: String, end: String, default: String): String =
+    def mkStringOr(start: String, sep: String, end: String, default: String): String = {
+      val it = coll.iterator
       if (it.nonEmpty) it.mkString(start, sep, end) else default
+    }
 
-    def mkStringOr(sep: String, default: String): String =
+    def mkStringOr(sep: String, default: String): String = {
+      val it = coll.iterator
       if (it.nonEmpty) it.mkString(sep) else default
+    }
 
     def mkStringOrEmpty(start: String, sep: String, end: String): String =
       mkStringOr(start, sep, end, "")
 
-    def asyncFoldLeft[B](zero: Future[B])(fun: (B, A) => Future[B])(implicit ec: ExecutionContext): Future[B] =
-      it.foldLeft(zero)((fb, a) => fb.flatMap(b => fun(b, a)))
+    inline def asyncFoldLeft[B](zero: Future[B])(inline fun: (B, A) => Future[B])(implicit ec: ExecutionContext)
+      : Future[B] =
+      coll.iterator.foldLeft(zero)((fb, a) => fb.flatMap(b => fun(b, a)))
 
-    def asyncFoldRight[B](zero: Future[B])(fun: (A, B) => Future[B])(implicit ec: ExecutionContext): Future[B] =
-      it.foldRight(zero)((a, fb) => fb.flatMap(b => fun(a, b)))
+    inline def asyncFoldRight[B](zero: Future[B])(inline fun: (A, B) => Future[B])(implicit ec: ExecutionContext)
+      : Future[B] =
+      coll.iterator.foldRight(zero)((a, fb) => fb.flatMap(b => fun(a, b)))
 
-    def asyncForeach(fun: A => Future[Unit])(implicit ec: ExecutionContext): Future[Unit] =
-      it.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
+    inline def asyncForeach(inline fun: A => Future[Unit])(implicit ec: ExecutionContext): Future[Unit] =
+      coll.iterator.foldLeft[Future[Unit]](Future.unit)((fu, a) => fu.flatMap(_ => fun(a)))
 
-    def partitionEither[L, R](
-      fun: A => Either[L, R]
+    inline def partitionEither[L, R](
+      inline fun: A => Either[L, R]
     )(implicit
       facL: Factory[L, C[L]],
       facR: Factory[R, C[R]],
