@@ -2,6 +2,7 @@ package com.avsystem.commons
 package misc
 
 import scala.annotation.implicitNotFound
+import scala.deriving.Mirror
 
 /** Typeclass which captures case class `apply` method in a raw form that takes untyped sequence of arguments.
   */
@@ -10,8 +11,8 @@ trait Applier[T] {
   def apply(rawValues: Seq[Any]): T
 }
 object Applier {
-  // TODO[scala3-port]: Applier.materialize (Scala 2 macro def) (L)
-  implicit def materialize[T]: Applier[T] = ???
+  given derived[T <: Product: Mirror.ProductOf as m]: Applier[T] = rawValues =>
+    m.fromTuple(Tuple.fromArray(rawValues.toArray).asInstanceOf[m.MirroredElemTypes])
 }
 
 /** Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns untyped sequence of
@@ -22,8 +23,7 @@ trait Unapplier[T] {
   def unapply(value: T): Seq[Any]
 }
 object Unapplier {
-  // TODO[scala3-port]: Unapplier.materialize (Scala 2 macro def) (L)
-  implicit def materialize[T]: Unapplier[T] = ???
+  given derived[T <: Product]: Unapplier[T] = value => IArraySeq.unsafeWrapArray(value.productIterator.toArray)
 }
 
 class ProductUnapplier[T <: Product] extends Unapplier[T] {
@@ -34,6 +34,8 @@ abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T]
 @implicitNotFound("cannot materialize ApplierUnapplier: ${T} is not a case class or case class like type")
 trait ApplierUnapplier[T] extends Applier[T] with Unapplier[T]
 object ApplierUnapplier {
-  // TODO[scala3-port]: ApplierUnapplier.materialize (Scala 2 macro def) (L)
-  implicit def materialize[T]: ApplierUnapplier[T] = ???
+  given derived[T: {Applier as applier, Unapplier as unapplier}]: ApplierUnapplier[T] = new ApplierUnapplier[T] {
+    override def apply(rawValues: Seq[Any]): T = applier.apply(rawValues)
+    override def unapply(value: T): Seq[Any] = unapplier.unapply(value)
+  }
 }
