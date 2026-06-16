@@ -103,6 +103,12 @@ the bottom of this file. Restoration ships incrementally per feature area.
 | `spring`         | Deleted outright — spring-context wiring deprecated upstream.                                | n/a (will-not-migrate) |
 | `comprof`        | `scalac-profiling` is Scala 2 only.                                                          | TBD                    |
 
+### sbt plugins disabled
+
+| Plugin           | Reason                                                                                                          | Restore effort                |
+|------------------|-----------------------------------------------------------------------------------------------------------------|-------------------------------|
+| `sbt-ci-release` | Transitively pulls `sbt-git` whose JGit fails with `NoWorkTreeException` on linked git worktrees. Disabled to keep per-branch worktree builds green; release plumbing unaffected outside CI. | S — re-enable once releasing. |
+
 ### Test sources commented per-file
 
 38 test classes commented across 38 files (whole-file `/* ... */` wraps) — every wrapped file had ALL classes broken
@@ -126,7 +132,7 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 
 ## Backlog
 
-*Auto-derived from `git grep -nE 'TODO\[scala3-port\]'` on this PR's tip. Total tags: 155.*
+*Auto-derived from `git grep -nE 'TODO\[scala3-port\]'` on this PR's tip. Total tags: 154.*
 
 | Location                                                                                          | Description                                                                                           | Effort |
 |---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|--------|
@@ -148,7 +154,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:145`                             | sourceCode (Scala 2 macro def)                                                                        | L      |
 | `core/src/main/scala/com/avsystem/commons/SharedExtensions.scala:147`                             | withSourceCode (Scala 2 macro def)                                                                    | L      |
 | `core/src/main/scala/com/avsystem/commons/annotation/AnnotationAggregate.scala:52`                | reifyAggregated (Scala 2 macro def)                                                                   | L      |
-| `core/src/main/scala/com/avsystem/commons/annotation/positioned.scala:12`                         | here (Scala 2 macro def)                                                                              | L      |
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:18`                                 | component (Scala 2 macro def)                                                                         | L      |
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:21`                                 | asyncComponent (Scala 2 macro def)                                                                    | L      |
 | `core/src/main/scala/com/avsystem/commons/di/Components.scala:25`                                 | singleton (Scala 2 macro def)                                                                         | L      |
@@ -189,7 +194,6 @@ Full per-file list with locations is in the Backlog table below (filter rows whe
 | `core/src/main/scala/com/avsystem/commons/misc/SelfInstance.scala:4`                              | C[_] existential narrowed to C[Any] (Scala 3 forbids HKT wildcard application)                        | S      |
 | `core/src/main/scala/com/avsystem/commons/misc/SelfInstance.scala:7`                              | SelfInstance.materialize (Scala 2 macro def)                                                          | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/SimpleClassName.scala:8`                           | SimpleClassName.materialize (Scala 2 macro def)                                                       | L      |
-| `core/src/main/scala/com/avsystem/commons/misc/SourceInfo.scala:28`                               | SourceInfo.here (Scala 2 macro def)                                                                   | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/Timestamp.scala:13`                                | Comparable[Timestamp] (Scala 3 forbids AnyVal inheriting Object-derived traits)                       | S      |
 | `core/src/main/scala/com/avsystem/commons/misc/TypeString.scala:31`                               | TypeString.materialize (Scala 2 macro def)                                                            | L      |
 | `core/src/main/scala/com/avsystem/commons/misc/TypeString.scala:90`                               | JavaClassName.materialize (Scala 2 macro def)                                                         | L      |
