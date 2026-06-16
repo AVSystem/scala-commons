@@ -3,29 +3,17 @@ package jiop
 
 trait Java8CollectionUtils {
 
-  import Java8CollectionUtils._
-
-  implicit def jIteratorOps[A](it: JIterator[A]): jIteratorOps[A] = new jIteratorOps(it)
-  implicit def jIterableOps[A](it: JIterable[A]): jIterableOps[A] = new jIterableOps(it)
-  implicit def jCollectionOps[A](it: JCollection[A]): jCollectionOps[A] = new jCollectionOps(it)
-  implicit def intJCollectionOps(it: JCollection[Int]): intJCollectionOps = new intJCollectionOps(it)
-  implicit def longJCollectionOps(it: JCollection[Long]): longJCollectionOps = new longJCollectionOps(it)
-  implicit def doubleJCollectionOps(it: JCollection[Double]): doubleJCollectionOps = new doubleJCollectionOps(it)
-  implicit def jMapOps[K, V](map: JMap[K, V]): jMapOps[K, V] = new jMapOps(map)
-}
-
-object Java8CollectionUtils {
-  class jIteratorOps[A](private val it: JIterator[A]) extends AnyVal {
+  extension [A](it: JIterator[A]) {
     def forEachRemaining(code: A => Any): Unit =
       it.forEachRemaining(jConsumer(code))
   }
 
-  class jIterableOps[A](private val it: JIterable[A]) extends AnyVal {
+  extension [A](it: JIterable[A]) {
     def forEach(code: A => Any): Unit =
       it.forEach(jConsumer(code))
   }
 
-  class jCollectionOps[A](private val coll: JCollection[A]) extends AnyVal {
+  extension [A](coll: JCollection[A]) {
     def removeIf(pred: A => Boolean): Unit =
       coll.removeIf(jPredicate(pred))
 
@@ -33,22 +21,22 @@ object Java8CollectionUtils {
       coll.stream.asScala
   }
 
-  class intJCollectionOps(private val coll: JCollection[Int]) extends AnyVal {
+  extension (coll: JCollection[Int]) {
     def scalaIntStream: ScalaJIntStream =
       coll.stream.asScalaIntStream
   }
 
-  class longJCollectionOps(private val coll: JCollection[Long]) extends AnyVal {
+  extension (coll: JCollection[Long]) {
     def scalaLongStream: ScalaJLongStream =
       coll.stream.asScalaLongStream
   }
 
-  class doubleJCollectionOps(private val coll: JCollection[Double]) extends AnyVal {
+  extension (coll: JCollection[Double]) {
     def scalaDoubleStream: ScalaJDoubleStream =
       coll.stream.asScalaDoubleStream
   }
 
-  class jMapOps[K, V](private val map: JMap[K, V]) extends AnyVal {
+  extension [K, V](map: JMap[K, V]) {
     def compute(key: K, remappingFunction: (K, V) => V): V =
       map.compute(key, jBiFunction(remappingFunction))
 
@@ -68,3 +56,5 @@ object Java8CollectionUtils {
       map.replaceAll(jBiFunction(function))
   }
 }
+
+object Java8CollectionUtils extends Java8CollectionUtils
