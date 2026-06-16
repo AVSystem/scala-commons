@@ -24,7 +24,7 @@ class TypedMongoCollection[E <: BaseMongoEntity] private (
     with TypedMongoUtils {
 
   def this(
-    rawCollection: MongoCollection[_],
+    rawCollection: MongoCollection[?],
     clientSession: OptArg[TypedClientSession] = OptArg.Empty,
   )(implicit meta: MongoEntityMeta[E]
   ) = this(
@@ -384,16 +384,16 @@ class TypedMongoCollection[E <: BaseMongoEntity] private (
     )
   }
 
-  @bincompat private[typed] def this(rawCollection: MongoCollection[_], format: MongoAdtFormat[E]) =
+  @bincompat private[typed] def this(rawCollection: MongoCollection[?], format: MongoAdtFormat[E]) =
     this(rawCollection)(MongoEntityMeta.bincompatMeta(format))
 
-  @bincompat private[typed] def this(rawCollection: MongoCollection[_], meta: MongoEntityMeta[E]) =
+  @bincompat private[typed] def this(rawCollection: MongoCollection[?], meta: MongoEntityMeta[E]) =
     this(rawCollection)(meta)
 }
 
 object TypedMongoCollection {
   private def mkNativeCollection[E <: BaseMongoEntity: MongoEntityMeta](
-    rawCollection: MongoCollection[_]
+    rawCollection: MongoCollection[?]
   )(implicit meta: MongoEntityMeta[E]
   ): MongoCollection[E] = {
     import meta.format._

@@ -29,7 +29,7 @@ trait Components extends ComponentsLowPrio {
   protected def asyncSingleton[T](definition: ExecutionContext => Future[T])(implicit sourceInfo: SourceInfo)
     : Component[T] = ???
 
-  private lazy val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[_]]]
+  private lazy val singletonsCache = new ConcurrentHashMap[ComponentInfo, AtomicReference[Future[?]]]
 
   protected def cached[T](component: Component[T], freshInfo: ComponentInfo): Component[T] = {
     val cacheStorage =

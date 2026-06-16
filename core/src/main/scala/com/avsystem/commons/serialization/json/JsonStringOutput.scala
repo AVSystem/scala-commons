@@ -123,7 +123,7 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
 
   def writeRawJson(json: String): Unit = builder.append(json)
 
-  override def keepsMetadata(metadata: InputMetadata[_]): Boolean =
+  override def keepsMetadata(metadata: InputMetadata[?]): Boolean =
     metadata == JsonType
 
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =

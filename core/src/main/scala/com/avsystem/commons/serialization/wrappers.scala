@@ -68,7 +68,7 @@ abstract class OutputWrapper extends Output {
   def writeList(): ListOutput = wrapped.writeList()
   def writeObject(): ObjectOutput = wrapped.writeObject()
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean = wrapped.writeCustom(typeMarker, value)
-  override def keepsMetadata(metadata: InputMetadata[_]): Boolean = wrapped.keepsMetadata(metadata)
+  override def keepsMetadata(metadata: InputMetadata[?]): Boolean = wrapped.keepsMetadata(metadata)
   override def customEvent[T](marker: CustomEventMarker[T], value: T): Boolean = wrapped.customEvent(marker, value)
   override def legacyOptionEncoding: Boolean = wrapped.legacyOptionEncoding
 }

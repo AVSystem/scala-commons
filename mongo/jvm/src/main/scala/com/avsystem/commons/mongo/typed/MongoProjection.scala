@@ -35,7 +35,7 @@ import scala.annotation.tailrec
   *   [[https://docs.mongodb.com/manual/tutorial/project-fields-from-query-results/]]
   */
 trait MongoProjection[E, T] {
-  def projectionRefs: Set[MongoRef[E, _]]
+  def projectionRefs: Set[MongoRef[E, ?]]
   def decodeFrom(doc: BsonDocument): T
   def showRecordId: Boolean
 
@@ -70,12 +70,12 @@ trait MongoProjection[E, T] {
 
   final def toProjectionBson: BsonDocument = {
     val doc = new BsonDocument
-    @tailrec def loop(it: Iterator[MongoRef[E, _]]): Unit =
+    @tailrec def loop(it: Iterator[MongoRef[E, ?]]): Unit =
       if (it.hasNext) it.next() match {
-        case propRef: MongoPropertyRef[E, _] =>
+        case propRef: MongoPropertyRef[E, ?] =>
           doc.put(propRef.projectionPath, Bson.int(1))
           loop(it)
-        case _: MongoToplevelRef[E, _] =>
+        case _: MongoToplevelRef[E, ?] =>
           doc.clear()
       }
     loop(projectionRefs.iterator)
@@ -88,7 +88,7 @@ trait MongoProjection[E, T] {
 
 object MongoProjection extends ProjectionZippers {
   final class Mapped[E, T, T0](prev: MongoProjection[E, T], fun: T => T0) extends MongoProjection[E, T0] {
-    def projectionRefs: Set[MongoRef[E, _]] = prev.projectionRefs
+    def projectionRefs: Set[MongoRef[E, ?]] = prev.projectionRefs
     def showRecordId: Boolean = prev.showRecordId
     def decodeFrom(doc: BsonDocument): T0 = fun(prev.decodeFrom(doc))
     def on[E0](ref: MongoRef[E0, E]): MongoProjection[E0, T0] = new Mapped(prev.on(ref), fun)
@@ -99,7 +99,7 @@ object MongoProjection extends ProjectionZippers {
     second: MongoProjection[E, T0],
     fun: (T, T0) => T1,
   ) extends MongoProjection[E, T1] {
-    def projectionRefs: Set[MongoRef[E, _]] =
+    def projectionRefs: Set[MongoRef[E, ?]] =
       first.projectionRefs ++ second.projectionRefs
 
     def showRecordId: Boolean = first.showRecordId || second.showRecordId
@@ -114,7 +114,7 @@ object MongoProjection extends ProjectionZippers {
   final val RecordId = "$recordId"
 
   final case class ShowRecordId[E, T](projection: MongoProjection[E, T]) extends MongoProjection[E, WithRecordId[T]] {
-    def projectionRefs: Set[MongoRef[E, _]] = projection.projectionRefs
+    def projectionRefs: Set[MongoRef[E, ?]] = projection.projectionRefs
 
     def decodeFrom(doc: BsonDocument): WithRecordId[T] =
       WithRecordId(projection.decodeFrom(doc), doc.getInt64(RecordId).getValue)

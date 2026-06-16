@@ -54,6 +54,10 @@ the bottom of this file. Restoration ships incrementally per feature area.
   compiles).
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
+- HKT wildcard `_` → `?` in applied positions (slice 3.2). Type-argument-position syntax only;
+  kind-parameter declarations (`class Foo[F[_]]`, `def baz[M[_], A]`, etc.) preserved per Scala 3.
+  Pure type-level rename — no source-compat impact for downstream callers; type-argument site syntax
+  only.
 
 ### core — misc ApplierUnapplier (slice 5.3)
 
@@ -82,6 +86,8 @@ the bottom of this file. Restoration ships incrementally per feature area.
   Scala 3 forbids type projections on non-concrete prefixes). Public-API signature change.
 - `BsonValueOutput.write` / `BsonValueInput.read` call sites require explicit `using` keyword.
 - `MongoPolyDataCompanion` / `TypedMapFormat` / `TypedMapRefOps` widened from `K[_]` / `D[_]` to `K[Any]` / `D[Any]`.
+- HKT wildcard `_` → `?` in applied positions (slice 3.2). Same as core entry — pure
+  type-argument-position syntax change with no source-compat impact.
 
 ### hocon
 
