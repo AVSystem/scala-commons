@@ -40,7 +40,7 @@ object AnnotationsOf {
 @implicitNotFound("${T} is not annotated with ${A}")
 final class HasAnnotation[A, T] private ()
 object HasAnnotation {
-  private[this] val reusable = new HasAnnotation
+  private val reusable = new HasAnnotation
   def create[A, T]: HasAnnotation[A, T] = reusable.asInstanceOf[HasAnnotation[A, T]]
 
   // TODO[scala3-port]: HasAnnotation.materialize (Scala 2 macro def) (L)

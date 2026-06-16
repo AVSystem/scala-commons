@@ -27,7 +27,7 @@ abstract class ApplyUnapplyCodec[T](
   protected def dependencies: Array[GenCodec[_]]
   protected def instantiate(fieldValues: FieldValues): T
 
-  private[this] lazy val deps = dependencies
+  private lazy val deps = dependencies
 
   protected final def writeField[A](output: ObjectOutput, idx: Int, value: A): Unit =
     writeField(fieldNames(idx), output, value, deps(idx).asInstanceOf[GenCodec[A]])
@@ -154,7 +154,7 @@ abstract class NestedSealedHierarchyCodec[T](
 
   def caseDependencies: Array[GenCodec[_]]
 
-  private[this] lazy val caseDeps = caseDependencies
+  private lazy val caseDeps = caseDependencies
 
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     val caseIdx = caseIndexByValue(value)
@@ -188,8 +188,8 @@ abstract class FlatSealedHierarchyCodec[T](
   def oooDependencies: Array[GenCodec[_]]
   def caseDependencies: Array[OOOFieldsObjectCodec[_]]
 
-  private[this] lazy val oooDeps = oooDependencies
-  private[this] lazy val caseDeps = caseDependencies
+  private lazy val oooDeps = oooDependencies
+  private lazy val caseDeps = caseDependencies
 
   final def writeObject(output: ObjectOutput, value: T): Unit = {
     val caseIdx = caseIndexByValue(value)
