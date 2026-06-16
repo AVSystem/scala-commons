@@ -22,7 +22,7 @@ object MongoOrder {
   def simple[T](ascending: Boolean): MongoOrder[T] = Simple(ascending)
 
   def apply[E](refs: (MongoPropertyRef[E, _], Boolean)*): MongoDocumentOrder[E] =
-    MongoDocumentOrder(refs: _*)
+    MongoDocumentOrder(refs*)
 
   final case class Simple[T](ascending: Boolean) extends MongoOrder[T] {
     def toBson: BsonValue = Bson.int(if (ascending) 1 else -1)

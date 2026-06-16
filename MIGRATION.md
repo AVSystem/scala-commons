@@ -54,6 +54,9 @@ the bottom of this file. Restoration ships incrementally per feature area.
   compiles).
 - `enum` was renamed to `e` at one call site in `GenKeyCodec` (`enum` is reserved in Scala 3).
 - `@targetName` annotation added to `CloseableIterator` overloaded methods.
+- Varargs splice syntax modernized from Scala 2 `foo(seq: _*)` to Scala 3 `foo(seq*)` across all
+  call sites (`CrossUtils.wrappedArray`/`dictionary`, `JCollectionUtils.JIterable.apply`,
+  `MongoOrder.apply`). Pure call-site syntax — no signature change, no source-compat impact.
 
 ### core — misc ApplierUnapplier (slice 5.3)
 
