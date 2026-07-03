@@ -3,7 +3,7 @@ package serialization.nativejs
 
 import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization.json.WrappedJson
-import com.avsystem.commons.serialization.{GenCodec, HasGenCodec, optionalParam}
+import com.avsystem.commons.serialization.{optionalParam, GenCodec, HasGenCodec}
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.scalajs.js

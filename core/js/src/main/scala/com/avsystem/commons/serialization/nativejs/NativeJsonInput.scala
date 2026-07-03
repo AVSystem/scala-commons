@@ -131,7 +131,7 @@ final class NativeJsonListInput(array: js.Array[js.Any], options: NativeFormatOp
 }
 
 final class NativeJsonObjectInput(dict: js.Dictionary[js.Any], options: NativeFormatOptions) extends ObjectInput {
-  private val it = dict.iterator.filterNot({ case (_, value) => js.isUndefined(value) })
+  private val it = dict.iterator.filterNot { case (_, value) => js.isUndefined(value) }
 
   override def hasNext: Boolean =
     it.hasNext
