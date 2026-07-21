@@ -131,13 +131,16 @@ final class NativeJsonListInput(array: js.Array[js.Any], options: NativeFormatOp
 }
 
 final class NativeJsonObjectInput(dict: js.Dictionary[js.Any], options: NativeFormatOptions) extends ObjectInput {
-  private val it = dict.iterator
+  private val it = dict.iterator.filterNot { case (_, value) => js.isUndefined(value) }
 
   override def hasNext: Boolean =
     it.hasNext
 
   override def peekField(name: String): Opt[FieldInput] =
-    if (dict.contains(name)) Opt(new NativeJsonFieldInput(name, dict(name), options)) else Opt.Empty
+    if (dict.contains(name) && !js.isUndefined(dict(name)))
+      Opt(new NativeJsonFieldInput(name, dict(name), options))
+    else
+      Opt.Empty
 
   override def nextField(): FieldInput = {
     val (key, value) = it.next()

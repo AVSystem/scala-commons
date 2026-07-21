@@ -3,8 +3,10 @@ package serialization.nativejs
 
 import com.avsystem.commons.misc.{Bytes, Timestamp}
 import com.avsystem.commons.serialization.json.WrappedJson
-import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
+import com.avsystem.commons.serialization.{optionalParam, GenCodec, HasGenCodec}
 import org.scalatest.funsuite.AnyFunSuite
+
+import scala.scalajs.js
 
 object NativeJsonInputOutputTest {
 
@@ -20,6 +22,14 @@ object NativeJsonInputOutputTest {
     rawJson: WrappedJson,
   )
   object TestModel extends HasGenCodec[TestModel]
+
+  case class OptionalFieldsModel(
+    required: String,
+    @optionalParam opt: Opt[String],
+    @optionalParam option: Option[Int],
+    withDefault: Int = 42,
+  )
+  object OptionalFieldsModel extends HasGenCodec[OptionalFieldsModel]
 }
 
 class NativeJsonInputOutputTest extends AnyFunSuite {
@@ -78,5 +88,49 @@ class NativeJsonInputOutputTest extends AnyFunSuite {
     val raw = NativeJsonOutput.writeAsString(input, options)
     val deserialized = NativeJsonInput.readString[T](raw, options)
     assert(deserialized == input)
+  }
+
+  // --- issue #848: JS `undefined` field values must be treated as absent ---
+
+  test("undefined fields are treated as absent when reading a case class") {
+    val dict = js.Dictionary[js.Any](
+      "required" -> "abc",
+      "opt" -> js.undefined,
+      "option" -> js.undefined,
+      "withDefault" -> js.undefined,
+    )
+    assert(NativeJsonInput.read[OptionalFieldsModel](dict) == OptionalFieldsModel("abc", Opt.Empty, None, 42))
+  }
+
+  test("undefined fields behave identically to omitted fields") {
+    val withUndefined = js.Dictionary[js.Any](
+      "required" -> "abc",
+      "opt" -> js.undefined,
+      "option" -> js.undefined,
+      "withDefault" -> js.undefined,
+    )
+    val omitted = js.Dictionary[js.Any]("required" -> "abc")
+    assert(NativeJsonInput.read[OptionalFieldsModel](withUndefined) == NativeJsonInput.read[OptionalFieldsModel](omitted))
+  }
+
+  test("undefined value for a required field is treated as missing") {
+    val dict = js.Dictionary[js.Any]("required" -> js.undefined, "option" -> 5)
+    // MissingField (not a generic "cannot read" failure) proves the undefined field was skipped entirely
+    assertThrows[GenCodec.MissingField] {
+      NativeJsonInput.read[OptionalFieldsModel](dict)
+    }
+  }
+
+  test("undefined entries are skipped when reading a Map (iterator path)") {
+    val dict = js.Dictionary[js.Any]("a" -> "1", "b" -> js.undefined, "c" -> "3")
+    assert(NativeJsonInput.read[Map[String, String]](dict) == Map("a" -> "1", "c" -> "3"))
+  }
+
+  test("peekField treats an undefined value as an absent field") {
+    val dict = js.Dictionary[js.Any]("defined" -> "value", "undef" -> js.undefined)
+    val objectInput = new NativeJsonInput(dict, NativeFormatOptions.RawString).readObject()
+    assert(objectInput.peekField("undef").isEmpty) // present-but-undefined -> absent
+    assert(objectInput.peekField("missing").isEmpty) // truly absent
+    assert(objectInput.peekField("defined").isDefined)
   }
 }
