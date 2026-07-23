@@ -70,6 +70,45 @@ object FlatSealedStuff extends HasGenCodec[FlatSealedStuff] {
   final val ExampleJsonString = JsonStringOutput.write(ExampleList)
 }
 
+object BigDoubleMap {
+  // Large String -> Double map, with a spread of double shapes: small fractions, large/small magnitudes,
+  // negatives and whole numbers. Used to compare Double-formatting strategies.
+  final val Example: Map[String, Double] = List
+    .tabulate(128) { i =>
+      val d = ((i + 1) * 0.123456789) * (if (i % 2 == 0) 1 else -1) * math.pow(10, (i % 7) - 3)
+      s"field_$i" -> d
+    }
+    .toMap
+
+  final val ExampleJsonStandard: String = JsonStringOutput.write(Example)
+}
+
+/** A large JSON object mixing all four number types the fast codec covers (`Int`, `Long`, `Double`, `Float`), spread
+  * across four maps of 32 entries each — 132 keys total. Represents a realistic numeric-heavy payload (e.g. a Kafka
+  * telemetry record) and is the end-to-end target for comparing [[JsonNumberCodec.Standard]] vs
+  * [[JsonNumberCodec.Fast]] on both serialization and deserialization.
+  */
+case class BigNumbers(
+  ints: Map[String, Int],
+  longs: Map[String, Long],
+  doubles: Map[String, Double],
+  floats: Map[String, Float],
+)
+@nowarn
+object BigNumbers extends HasGenCodec[BigNumbers] {
+  private def tab[V](f: Int => V): Map[String, V] =
+    List.tabulate(32)(i => s"field_$i" -> f(i)).toMap
+
+  final val Example: BigNumbers = BigNumbers(
+    ints = tab(i => (i * 2654435761L - 1234567890L).toInt),
+    longs = tab(i => i.toLong * 2654435761L - 1234567890123L),
+    doubles = tab(i => ((i + 1) * 0.123456789) * (if (i % 2 == 0) 1 else -1) * math.pow(10, (i % 7) - 3)),
+    floats = tab(i => (((i + 1) * 0.31830988f) * (if (i % 2 == 0) 1 else -1) * math.pow(10, (i % 5) - 2)).toFloat),
+  )
+
+  final val ExampleJsonStandard: String = JsonStringOutput.write(Example)
+}
+
 case class Foo(s: String, d: Double, i: Int, l: Long, bs: List[Boolean])
 @nowarn
 object Foo extends HasGenCodec[Foo] {
