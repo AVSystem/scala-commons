@@ -78,7 +78,7 @@ class PaxsonConversionTest extends AnyFunSuite with Matchers {
         dbits(EiselLemireDouble.parse(str)) == dbits(expected),
         s"parse '$str' -> ${EiselLemireDouble.parse(str)} (jdk $expected)",
       )
-      // also through the full input, exercising the reader's buffer path
+      // also through the full input, exercising readDouble end-to-end
       assert(dbits(JsonStringInput.read[Double](str)) == dbits(expected), s"read '$str'")
     }
 

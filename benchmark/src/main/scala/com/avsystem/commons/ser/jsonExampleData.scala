@@ -83,10 +83,10 @@ object BigDoubleMap {
   final val ExampleJson: String = JsonStringOutput.write(Example)
 }
 
-/** A large JSON object mixing all four number types the fast codec covers (`Int`, `Long`, `Double`, `Float`), spread
-  * across four maps of 32 entries each — 132 keys total. Represents a realistic numeric-heavy payload (e.g. a Kafka
-  * telemetry record) and is the end-to-end target for the number-codec benchmarks on both serialization and
-  * deserialization.
+/** A large JSON object mixing all four primitive number types (`Int`, `Long`, `Double`, `Float`), spread across four
+  * maps of 32 entries each — 132 keys total. The fast codec speeds up the `Double`/`Float` portions (`Int`/`Long` are
+  * unchanged); this represents a realistic numeric-heavy payload (e.g. a Kafka telemetry record) and is the end-to-end
+  * target for the number benchmarks on both serialization and deserialization.
   */
 case class BigNumbers(
   ints: Map[String, Int],

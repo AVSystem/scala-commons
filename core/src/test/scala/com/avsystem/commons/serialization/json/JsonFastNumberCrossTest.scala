@@ -5,14 +5,14 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import scala.util.Random
 
-/** Cross-platform (JVM + Scala.js) smoke test of the JSON number codec — the fast, buffer-based reads and
-  * shortest-digit writes that [[JsonStringInput]] / [[JsonStringOutput]] use. The exhaustive suites (Paxson stress
-  * vectors, 2M-value sweeps, `toString`-format comparisons) are JVM-only under `core/jvm/src/test` — they are too slow
-  * under Scala.js' emulated `Long` arithmetic and some compare against JVM `toString` formatting. This suite sticks to
-  * platform-independent oracles: a write must round-trip bit-exactly through a read, and integer reads must preserve
+/** Cross-platform (JVM + Scala.js) smoke test of the fast JSON number handling — the Eisel-Lemire `Double`/`Float`
+  * reads and shortest-digit writes that [[JsonStringInput]] / [[JsonStringOutput]] use. The exhaustive suites (Paxson
+  * stress vectors, 2M-value sweeps, `toString`-format comparisons) are JVM-only under `core/jvm/src/test` — they are too
+  * slow under Scala.js' emulated `Long` arithmetic and some compare against JVM `toString` formatting. This suite sticks
+  * to platform-independent oracles: a write must round-trip bit-exactly through a read, and integer reads must preserve
   * their value.
   */
-class JsonNumberCodecCrossTest extends AnyFunSuite {
+class JsonFastNumberCrossTest extends AnyFunSuite {
 
   private def dbits(d: Double): Long = java.lang.Double.doubleToLongBits(d)
   private def fbits(f: Float): Int = java.lang.Float.floatToIntBits(f)

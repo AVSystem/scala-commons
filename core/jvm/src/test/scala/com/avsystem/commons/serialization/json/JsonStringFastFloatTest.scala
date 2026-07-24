@@ -100,7 +100,7 @@ class JsonStringFastFloatTest extends AnyFunSuite with Matchers with ScalaCheckP
     }
   }
 
-  test("floats embedded in an array read via the buffer path") {
+  test("floats embedded in an array read back bit-exactly") {
     val json = specials.map(_.toString).mkString("[", ",", "]")
     val read = JsonStringInput.read[List[Float]](json)
     read.zip(specials).foreach { case (r, v) => assert(bits(r) == bits(v), s"$v -> $r") }

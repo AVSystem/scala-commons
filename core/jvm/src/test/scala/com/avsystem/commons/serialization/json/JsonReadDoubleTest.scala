@@ -8,15 +8,14 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.util.Random
 
-/** Exercises [[JsonStringInput.readDouble]] parsing directly from the reader's char buffer (numbers embedded in a
-  * larger JSON document, so the parsed range has non-zero start/end offsets). The value read back must be bit-identical
-  * to the original.
+/** Exercises [[JsonStringInput.readDouble]] end-to-end (numbers embedded in a larger JSON document, read through the
+  * full deserialization path). The value read back must be bit-identical to the original.
   */
-class JsonReadDoubleBufferTest extends AnyFunSuite with Matchers with ScalaCheckPropertyChecks {
+class JsonReadDoubleTest extends AnyFunSuite with Matchers with ScalaCheckPropertyChecks {
 
   private def bits(d: Double): Long = java.lang.Double.doubleToLongBits(d)
 
-  // readDouble routes through the Eisel-Lemire buffer parser (the path under test).
+  // readDouble parses the number's text with the Eisel-Lemire parser (the path under test).
   private def readList(json: String): List[Double] = JsonStringInput.read[List[Double]](json)
 
   test("doubles embedded in a JSON array round-trip bit-exactly") {
@@ -41,7 +40,7 @@ class JsonReadDoubleBufferTest extends AnyFunSuite with Matchers with ScalaCheck
     read.zip(values).foreach { case (r, v) => assert(bits(r) == bits(v), s"$v -> $r") }
   }
 
-  test("property-based: arrays of random doubles round-trip via the buffer path") {
+  test("property-based: arrays of random doubles round-trip") {
     forAll(org.scalacheck.Gen.listOf(arbitrary[Double].suchThat(java.lang.Double.isFinite))) { values =>
       val json = values.map(_.toString).mkString("[", ",", "]")
       val read = readList(json)

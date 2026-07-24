@@ -12,7 +12,7 @@ abstract class JsonSerializationBenchmark
 
 /** End-to-end GenCodec serialization and deserialization of numeric-heavy payloads: a 128-entry `Map[String, Double]`
   * ([[BigDoubleMap]]) and a 132-key object mixing `Int`/`Long`/`Double`/`Float` ([[BigNumbers]]). Run with `-prof gc`
-  * to see the allocation profile (reads parse straight from the input buffer, avoiding a per-number substring).
+  * to see the allocation profile.
   */
 class JsonNumberBenchmark extends JsonSerializationBenchmark {
 

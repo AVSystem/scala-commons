@@ -3,8 +3,8 @@ package serialization.json
 
 import org.openjdk.jmh.annotations.*
 
-/** End-to-end Long reading, parsed straight from the reader buffer (no per-number substring allocation). Inspect
-  * `gc.alloc.rate.norm` under `-prof gc`.
+/** End-to-end Long reading. `Int`/`Long` reads are unchanged from the released code; this benchmark exists to confirm
+  * they stay at parity (throughput and `gc.alloc.rate.norm` under `-prof gc`) after the `Double`/`Float` changes.
   */
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 10, time = 2)
