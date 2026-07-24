@@ -22,48 +22,6 @@ object JsonStringInput {
   }
 
   class ParseException(msg: String, cause: Throwable = null) extends ReadFailure(msg, cause)
-
-  // Parses s[begin, end) as a signed decimal Int, behaving exactly like Integer.parseInt of that substring (including
-  // Int.MinValue: the value is accumulated negated so the magnitude never overflows). Hand-rolled rather than
-  // Integer.parseInt(CharSequence, begin, end, radix) because the latter is JDK 9+ and absent from the Scala.js javalib.
-  private def parseIntRange(s: String, begin: Int, end: Int): Int = {
-    var i = begin
-    val negative = i < end && s.charAt(i) == '-'
-    if (negative) i += 1
-    if (i >= end) throw new NumberFormatException()
-    val limit = if (negative) Int.MinValue else -Int.MaxValue
-    val multmin = limit / 10
-    var result = 0
-    while (i < end) {
-      val d = s.charAt(i) - '0'
-      if (d < 0 || d > 9 || result < multmin) throw new NumberFormatException()
-      result *= 10
-      if (result < limit + d) throw new NumberFormatException()
-      result -= d
-      i += 1
-    }
-    if (negative) result else -result
-  }
-
-  /** `Long` counterpart of [[parseIntRange]]. */
-  private def parseLongRange(s: String, begin: Int, end: Int): Long = {
-    var i = begin
-    val negative = i < end && s.charAt(i) == '-'
-    if (negative) i += 1
-    if (i >= end) throw new NumberFormatException()
-    val limit = if (negative) Long.MinValue else -Long.MaxValue
-    val multmin = limit / 10
-    var result = 0L
-    while (i < end) {
-      val d = s.charAt(i) - '0'
-      if (d < 0 || d > 9 || result < multmin) throw new NumberFormatException()
-      result *= 10
-      if (result < limit + d) throw new NumberFormatException()
-      result -= d
-      i += 1
-    }
-    if (negative) result else -result
-  }
 }
 
 class JsonStringInput(
@@ -116,52 +74,37 @@ class JsonStringInput(
     }
   }
 
-  // In JsonNumberCodec.Fast, integer reads parse straight from the reader's char buffer (see parseIntRange /
-  // parseLongRange, digit-loop equivalents of Integer/Long.parseInt/parseLong usable from Scala.js) with no substring
-  // allocation. The buffer parse rejects non-integer literals ("1.0", "1e3"), overflow and JSON strings with
-  // NumberFormatException; those fall back to the identical String-based path, so results are unchanged.
-  private def readIntegral[T](fastParse: (String, Int, Int) => T)(slowParse: String => T): T =
-    options.numberCodec match {
-      case JsonNumberCodec.Fast if reader.jsonType == JsonType.number =>
-        try fastParse(reader.json, reader.numberStart, reader.numberEnd)
-        catch { case _: NumberFormatException => parseNumber(slowParse) }
-      case _ => parseNumber(slowParse)
-    }
-
-  override def readByte(): Byte = readIntegral[Byte] { (s, b, e) =>
-    val v = parseIntRange(s, b, e)
-    if (v.toByte.toInt == v) v.toByte else throw new NumberFormatException()
-  } { str =>
+  override def readByte(): Byte = parseNumber { str =>
     if (isInteger(str)) str.toByte
     else {
-      val dbl = str.toDouble
+      val dbl = EiselLemireDouble.parse(str)
       if (dbl.isValidByte) dbl.toByte
       else throw new NumberFormatException(str)
     }
   }
 
-  override def readShort(): Short = readIntegral[Short] { (s, b, e) =>
-    val v = parseIntRange(s, b, e)
-    if (v.toShort.toInt == v) v.toShort else throw new NumberFormatException()
-  } { str =>
+  override def readShort(): Short = parseNumber { str =>
     if (isInteger(str)) str.toShort
     else {
-      val dbl = str.toDouble
+      val dbl = EiselLemireDouble.parse(str)
       if (dbl.isValidShort) dbl.toShort
       else throw new NumberFormatException(str)
     }
   }
 
-  def readInt(): Int = readIntegral[Int](parseIntRange) { str =>
+  // Byte/Short/Int/Long all read via the String path (parseNumber). The char-buffer digit parse measured ~2x slower
+  // end-to-end for integer list reads — an allocation-stall regression around the (unavoidable) Int/Long boxing,
+  // despite parsing faster in isolation and allocating less — so only Double/Float use the buffer fast path.
+  def readInt(): Int = parseNumber { str =>
     if (isInteger(str)) str.toInt
     else {
-      val dbl = str.toDouble
+      val dbl = EiselLemireDouble.parse(str)
       if (dbl.isValidInt) dbl.toInt
       else throw new NumberFormatException(str)
     }
   }
 
-  def readLong(): Long = readIntegral[Long](parseLongRange) { str =>
+  def readLong(): Long = parseNumber { str =>
     if (isInteger(str)) str.toLong
     else {
       val bd = BigDecimal(str, options.mathContext)
@@ -170,38 +113,11 @@ class JsonStringInput(
     }
   }
 
-  override def readFloat(): Float = options.numberCodec match {
-    case JsonNumberCodec.Fast =>
-      reader.jsonType match {
-        case JsonType.number =>
-          try EiselLemireFloat.parse(reader.json, reader.numberStart, reader.numberEnd)
-          catch {
-            case e: NumberFormatException =>
-              throw new ParseException(s"Invalid number format: ${reader.currentValue} ${reader.posInfo(startIdx)}", e)
-          }
-        // JSON strings (e.g. "Infinity"/"-Infinity"/"NaN") still go through the String path.
-        case JsonType.string => parseNumber(EiselLemireFloat.parse)
-        case _ => expectedError(JsonType.number)
-      }
-    case JsonNumberCodec.Standard => parseNumber(_.toFloat)
-  }
+  // Float/Double parse via the fast EiselLemire parser (over the token's text, so JSON string forms like
+  // "Infinity"/"-Infinity"/"NaN" work too); writes use the fast XjbFloat/XjbDouble formatters.
+  override def readFloat(): Float = parseNumber(EiselLemireFloat.parse)
 
-  def readDouble(): Double = options.numberCodec match {
-    case JsonNumberCodec.Fast =>
-      reader.jsonType match {
-        // Parse straight from the reader's char buffer, avoiding the number-substring allocation.
-        case JsonType.number =>
-          try EiselLemireDouble.parse(reader.json, reader.numberStart, reader.numberEnd)
-          catch {
-            case e: NumberFormatException =>
-              throw new ParseException(s"Invalid number format: ${reader.currentValue} ${reader.posInfo(startIdx)}", e)
-          }
-        // JSON strings (e.g. "Infinity"/"-Infinity"/"NaN") still go through the String path.
-        case JsonType.string => parseNumber(EiselLemireDouble.parse)
-        case _ => expectedError(JsonType.number)
-      }
-    case JsonNumberCodec.Standard => parseNumber(_.toDouble)
-  }
+  def readDouble(): Double = parseNumber(EiselLemireDouble.parse)
 
   def readBigInt(): BigInt = parseNumber { str =>
     if (isInteger(str)) BigInt(str)
@@ -404,22 +320,11 @@ final class JsonReader(val json: String) {
   private[this] var i: Int = 0
   private[this] var value: Any = _
   private[this] var tpe: JsonType = _
-  // For numbers we record the source range and materialize the String lazily (see currentValue), so that consumers
-  // which don't need a String (notably readDouble, which parses straight from the buffer) avoid the allocation.
-  private[this] var numStart: Int = -1
-  private[this] var numEnd: Int = -1
 
   def index: Int = i
   def jsonType: JsonType = tpe
 
-  def numberStart: Int = numStart
-  def numberEnd: Int = numEnd
-
-  def currentValue: Any =
-    if ((tpe eq JsonType.number) && value == null) {
-      value = json.substring(numStart, numEnd)
-      value
-    } else value
+  def currentValue: Any = value
 
   def reset(idx: Int): Unit = {
     i = idx
@@ -489,7 +394,8 @@ final class JsonReader(val json: String) {
   private def readHex(): Int =
     fromHex(read())
 
-  private def parseNumber(): Unit = {
+  // Scans the number token, advancing past it, and returns its text.
+  private def scanNumber(): String = {
     val start = i
 
     if (isNext('-')) {
@@ -525,8 +431,7 @@ final class JsonReader(val json: String) {
       parseDigits()
     }
 
-    numStart = start
-    numEnd = i
+    json.substring(start, i)
   }
 
   def parseString(): String = {
@@ -585,8 +490,8 @@ final class JsonReader(val json: String) {
       case 'n' => pass("null"); update(null, JsonType.`null`)
       case '[' => read(); update(null, JsonType.list)
       case '{' => read(); update(null, JsonType.`object`)
-      case '-' => parseNumber(); update(null, JsonType.number)
-      case c if Character.isDigit(c) => parseNumber(); update(null, JsonType.number)
+      case '-' => update(scanNumber(), JsonType.number)
+      case c if Character.isDigit(c) => update(scanNumber(), JsonType.number)
       case c => readFailure(s"Unexpected character: '${c.toChar}'")
     }
     else readFailure("Unexpected EOF")

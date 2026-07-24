@@ -200,8 +200,15 @@ class JsonStringInputOutputTest
   }
 
   test("serialize floats succinctly") {
+    // Floats serialize to the shortest decimal that round-trips. This need not be character-identical to
+    // Float.toString (whose output is not guaranteed shortest on all JDKs), but must parse back to the same Float
+    // and be no longer than what Float.toString produces.
     val values = Seq(1.1999999f, 3.4e38f, 1.4e-45f)
-    assert(values.map(write[Float](_)) == values.map(_.toString.replace('E', 'e')))
+    values.foreach { f =>
+      val text = write[Float](f)
+      assert(java.lang.Float.parseFloat(text) == f, s"round-trip $f -> '$text'")
+      assert(text.length <= f.toString.replace('E', 'e').length, s"succinct $f -> '$text'")
+    }
   }
 
   test("serialize and deserialize nested case classes") {

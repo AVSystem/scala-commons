@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package ser
 
-import com.avsystem.commons.serialization.json.{JsonNumberCodec, JsonOptions, JsonStringInput, JsonStringOutput}
+import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import org.openjdk.jmh.annotations.*
 
 @Warmup(iterations = 5, time = 1)
@@ -10,54 +10,27 @@ import org.openjdk.jmh.annotations.*
 @BenchmarkMode(Array(Mode.Throughput))
 abstract class JsonSerializationBenchmark
 
-/** End-to-end GenCodec serialization and deserialization comparing [[JsonNumberCodec.Standard]] vs
-  * [[JsonNumberCodec.Fast]] on numeric-heavy payloads: a 128-entry `Map[String, Double]` ([[BigDoubleMap]]) and a
-  * 132-key object mixing `Int`/`Long`/`Double`/`Float` ([[BigNumbers]]). Run with `-prof gc` to see the allocation
-  * difference (Fast reads parse straight from the input buffer, avoiding a per-number substring).
+/** End-to-end GenCodec serialization and deserialization of numeric-heavy payloads: a 128-entry `Map[String, Double]`
+  * ([[BigDoubleMap]]) and a 132-key object mixing `Int`/`Long`/`Double`/`Float` ([[BigNumbers]]). Run with `-prof gc`
+  * to see the allocation profile (reads parse straight from the input buffer, avoiding a per-number substring).
   */
-class JsonNumberCodecBenchmark extends JsonSerializationBenchmark {
-  import JsonNumberCodecBenchmark.*
-
-  // --- write (serialization) ---
+class JsonNumberBenchmark extends JsonSerializationBenchmark {
 
   @Benchmark
-  def writeDoubleMapStandard: String =
-    JsonStringOutput.write(BigDoubleMap.Example, Standard)
+  def writeDoubleMap: String =
+    JsonStringOutput.write(BigDoubleMap.Example)
 
   @Benchmark
-  def writeDoubleMapFast: String =
-    JsonStringOutput.write(BigDoubleMap.Example, Fast)
+  def writeMixed: String =
+    JsonStringOutput.write(BigNumbers.Example)
 
   @Benchmark
-  def writeMixedStandard: String =
-    JsonStringOutput.write(BigNumbers.Example, Standard)
+  def readDoubleMap: Map[String, Double] =
+    JsonStringInput.read[Map[String, Double]](BigDoubleMap.ExampleJson)
 
   @Benchmark
-  def writeMixedFast: String =
-    JsonStringOutput.write(BigNumbers.Example, Fast)
-
-  // --- read (deserialization) ---
-
-  @Benchmark
-  def readDoubleMapStandard: Map[String, Double] =
-    JsonStringInput.read[Map[String, Double]](BigDoubleMap.ExampleJsonStandard, Standard)
-
-  @Benchmark
-  def readDoubleMapFast: Map[String, Double] =
-    JsonStringInput.read[Map[String, Double]](BigDoubleMap.ExampleJsonStandard, Fast)
-
-  @Benchmark
-  def readMixedStandard: BigNumbers =
-    JsonStringInput.read[BigNumbers](BigNumbers.ExampleJsonStandard, Standard)
-
-  @Benchmark
-  def readMixedFast: BigNumbers =
-    JsonStringInput.read[BigNumbers](BigNumbers.ExampleJsonStandard, Fast)
-}
-
-object JsonNumberCodecBenchmark {
-  final val Standard: JsonOptions = JsonOptions.Default
-  final val Fast: JsonOptions = JsonOptions(numberCodec = JsonNumberCodec.Fast)
+  def readMixed: BigNumbers =
+    JsonStringInput.read[BigNumbers](BigNumbers.ExampleJson)
 }
 
 class JsonWritingBenchmark extends JsonSerializationBenchmark {

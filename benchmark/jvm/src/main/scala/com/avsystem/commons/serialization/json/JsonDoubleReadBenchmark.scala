@@ -3,8 +3,7 @@ package serialization.json
 
 import org.openjdk.jmh.annotations.*
 
-/** End-to-end Double reading. `parseFromBuffer` vs `parseViaSubstring` isolate the per-number substring allocation that
-  * buffer parsing eliminates (compare their `gc.alloc.rate.norm` under `-prof gc`); `readListEndToEnd` is the full
+/** Double reading. `parseDoubles` isolates the EiselLemire parse over each number's text; `readListEndToEnd` is the full
   * JsonStringInput deserialization for context.
   */
 @Warmup(iterations = 5, time = 1)
@@ -34,15 +33,7 @@ class JsonDoubleReadBenchmark {
   }
 
   @Benchmark
-  def parseFromBuffer: Double = {
-    var sum = 0.0
-    var i = 0
-    while (i < count) { sum += EiselLemireDouble.parse(json, starts(i), ends(i)); i += 1 }
-    sum
-  }
-
-  @Benchmark
-  def parseViaSubstring: Double = {
+  def parseDoubles: Double = {
     var sum = 0.0
     var i = 0
     while (i < count) { sum += EiselLemireDouble.parse(json.substring(starts(i), ends(i))); i += 1 }
@@ -51,5 +42,5 @@ class JsonDoubleReadBenchmark {
 
   @Benchmark
   def readListEndToEnd: List[Double] =
-    JsonStringInput.read[List[Double]](json, JsonOptions(numberCodec = JsonNumberCodec.Fast))
+    JsonStringInput.read[List[Double]](json)
 }

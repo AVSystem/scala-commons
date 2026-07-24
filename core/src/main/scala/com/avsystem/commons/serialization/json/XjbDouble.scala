@@ -11,7 +11,7 @@
 package com.avsystem.commons
 package serialization.json
 
-/** Fast shortest-`Double` formatter backing [[JsonNumberCodec.Fast]]: a scalar port of the xjb numeric core (see file
+/** Fast shortest-`Double` formatter used by [[JsonStringOutput]]: a scalar port of the xjb numeric core (see file
   * header for scope/caveats). Always produces text that parses back to the exact same `Double`.
   */
 private[json] object XjbDouble {

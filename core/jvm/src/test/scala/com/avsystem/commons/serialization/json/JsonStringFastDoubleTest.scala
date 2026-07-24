@@ -8,18 +8,16 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.util.Random
 
-/** Verifies the [[JsonNumberCodec.Fast]] double formatter in [[JsonStringOutput]] (backed by [[XjbDouble]]). Fast mode
-  * is not required to be character-identical to `Double.toString`, so the correctness oracle is round-trip fidelity:
-  * the produced JSON number must parse back to the exact same `Double`.
+/** Verifies the double formatter in [[JsonStringOutput]] (backed by [[XjbDouble]]). It is not required to be
+  * character-identical to `Double.toString`, so the correctness oracle is round-trip fidelity: the produced JSON number
+  * must parse back to the exact same `Double`.
   */
 class JsonStringFastDoubleTest extends AnyFunSuite with Matchers with ScalaCheckPropertyChecks {
-
-  private val fast = JsonOptions(numberCodec = JsonNumberCodec.Fast)
 
   private def bits(d: Double): Long = java.lang.Double.doubleToLongBits(d)
 
   private def assertRoundTrips(d: Double): Unit = {
-    val text = JsonStringOutput.write(d, fast)
+    val text = JsonStringOutput.write(d)
     // Must be valid JSON that the library's own reader accepts, round-tripping to the exact same double.
     val viaReader = JsonStringInput.read[Double](text)
     assert(bits(viaReader) == bits(d), s"library round-trip: $d -> '$text' -> $viaReader")
@@ -70,12 +68,10 @@ class JsonStringFastDoubleTest extends AnyFunSuite with Matchers with ScalaCheck
     }
   }
 
-  test("non-finite values are quoted, identical to Standard") {
+  test("non-finite values are written quoted") {
     List(Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity).foreach { d =>
-      val fastStr = JsonStringOutput.write(d, fast)
-      val stdStr = JsonStringOutput.write(d, JsonOptions.Default)
-      assert(fastStr == stdStr, s"non-finite $d")
-      assert(fastStr.startsWith("\"") && fastStr.endsWith("\""))
+      val str = JsonStringOutput.write(d)
+      assert(str.startsWith("\"") && str.endsWith("\""), s"non-finite $d")
     }
   }
 
@@ -100,9 +96,9 @@ class JsonStringFastDoubleTest extends AnyFunSuite with Matchers with ScalaCheck
     assert(checked > 1000000, s"expected many finite samples, got $checked")
   }
 
-  test("Map[String, Double] serializes and round-trips in Fast mode") {
+  test("Map[String, Double] serializes and round-trips") {
     val m = (0 until 200).map(i => s"f$i" -> (i + 0.123456789) * math.pow(10, (i % 9) - 4)).toMap
-    val json = JsonStringOutput.write(m, fast)
+    val json = JsonStringOutput.write(m)
     val parsed = JsonStringInput.read[Map[String, Double]](json)
     parsed.foreach { case (k, v) => assert(bits(v) == bits(m(k)), s"key $k") }
     assert(parsed == m)

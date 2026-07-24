@@ -67,15 +67,12 @@ private[json] object EiselLemireDouble {
     hi + (if (a < 0) b else 0L) + (if (b < 0) a else 0L)
   }
 
-  /** Parses `s` as a `Double`, exactly as `java.lang.Double.parseDouble` would. */
-  def parse(s: String): Double = parse(s, 0, s.length)
-
-  /** Parses `s[start, end)` as a `Double`, exactly as `java.lang.Double.parseDouble` of that substring would, but
-    * without allocating the substring (except on the rare fallback path).
+  /** Parses `s` as a `Double`, exactly as `java.lang.Double.parseDouble` would (Eisel-Lemire fast path, falling back to
+    * `java.lang.Double.parseDouble` for anything the fast grammar can't handle, e.g. "Infinity"/"NaN").
     */
-  def parse(s: String, start: Int, end: Int): Double = {
-    val len = end
-    var index = start
+  def parse(s: String): Double = {
+    val len = s.length
+    var index = 0
     var isNegative = false
     if (index < len && s.charAt(index) == '-') { isNegative = true; index += 1 }
 
@@ -122,7 +119,7 @@ private[json] object EiselLemireDouble {
 
     // Anything the fast decimal grammar didn't fully consume (incl. "Infinity"/"NaN", trailing junk) -> fall back.
     if (illegal || digitCount == 0 || index < len) {
-      return java.lang.Double.parseDouble(s.substring(start, end))
+      return java.lang.Double.parseDouble(s)
     }
 
     var isSignificandTruncated = false
@@ -148,7 +145,7 @@ private[json] object EiselLemireDouble {
 
     val result =
       tryDecToDoubleTruncated(isNegative, significand, exponent, isSignificandTruncated, exponentOfTruncatedSignificand)
-    if (java.lang.Double.isNaN(result)) java.lang.Double.parseDouble(s.substring(start, end)) else result
+    if (java.lang.Double.isNaN(result)) java.lang.Double.parseDouble(s) else result
   }
 
   private def tryDecToDoubleTruncated(

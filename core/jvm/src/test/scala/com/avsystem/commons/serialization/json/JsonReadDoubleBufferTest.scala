@@ -16,10 +16,8 @@ class JsonReadDoubleBufferTest extends AnyFunSuite with Matchers with ScalaCheck
 
   private def bits(d: Double): Long = java.lang.Double.doubleToLongBits(d)
 
-  // Fast mode routes readDouble through the Eisel-Lemire buffer parser (the path under test).
-  private val fast = JsonOptions(numberCodec = JsonNumberCodec.Fast)
-
-  private def readList(json: String): List[Double] = JsonStringInput.read[List[Double]](json, fast)
+  // readDouble routes through the Eisel-Lemire buffer parser (the path under test).
+  private def readList(json: String): List[Double] = JsonStringInput.read[List[Double]](json)
 
   test("doubles embedded in a JSON array round-trip bit-exactly") {
     val values = List(0.0, -0.0, 1.0, -1.0, 3.14, 0.1, 1e7, 1e-3, 1.7976931348623157e308, 2.2250738585072014e-308,
@@ -32,7 +30,7 @@ class JsonReadDoubleBufferTest extends AnyFunSuite with Matchers with ScalaCheck
   test("doubles as object field values round-trip") {
     val m = Map("a" -> 3.14, "b" -> -1e-9, "c" -> 1e20, "d" -> 0.0)
     val json = JsonStringOutput.write(m)
-    val read = JsonStringInput.read[Map[String, Double]](json, fast)
+    val read = JsonStringInput.read[Map[String, Double]](json)
     m.foreach { case (k, v) => assert(bits(read(k)) == bits(v), s"key $k") }
   }
 

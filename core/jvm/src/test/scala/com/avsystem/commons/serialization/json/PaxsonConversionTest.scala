@@ -25,8 +25,6 @@ import java.math.{MathContext, RoundingMode}
   */
 class PaxsonConversionTest extends AnyFunSuite with Matchers {
 
-  private val fast = JsonOptions(numberCodec = JsonNumberCodec.Fast)
-
   private def dbits(d: Double): Long = java.lang.Double.doubleToLongBits(d)
   private def fbits(f: Float): Int = java.lang.Float.floatToIntBits(f)
 
@@ -81,7 +79,7 @@ class PaxsonConversionTest extends AnyFunSuite with Matchers {
         s"parse '$str' -> ${EiselLemireDouble.parse(str)} (jdk $expected)",
       )
       // also through the full input, exercising the reader's buffer path
-      assert(dbits(JsonStringInput.read[Double](str, fast)) == dbits(expected), s"read '$str'")
+      assert(dbits(JsonStringInput.read[Double](str)) == dbits(expected), s"read '$str'")
     }
 
   private def assertParsesLikeJdkF(s: String): Unit =
@@ -91,14 +89,14 @@ class PaxsonConversionTest extends AnyFunSuite with Matchers {
         fbits(EiselLemireFloat.parse(str)) == fbits(expected),
         s"parse '$str' -> ${EiselLemireFloat.parse(str)} (jdk $expected)",
       )
-      assert(fbits(JsonStringInput.read[Float](str, fast)) == fbits(expected), s"read '$str'")
+      assert(fbits(JsonStringInput.read[Float](str)) == fbits(expected), s"read '$str'")
     }
 
   private def assertFormatsD(value: Double): Unit = {
     val text = writeD(value)
     assert(dbits(java.lang.Double.parseDouble(text)) == dbits(value), s"round-trip: $value -> '$text'")
     assert(
-      dbits(JsonStringInput.read[Double](JsonStringOutput.write(value, fast), fast)) == dbits(value),
+      dbits(JsonStringInput.read[Double](JsonStringOutput.write(value))) == dbits(value),
       s"end-to-end: $value",
     )
     if (value != 0.0)
@@ -112,7 +110,7 @@ class PaxsonConversionTest extends AnyFunSuite with Matchers {
     val text = writeF(value)
     assert(fbits(java.lang.Float.parseFloat(text)) == fbits(value), s"round-trip: $value -> '$text'")
     assert(
-      fbits(JsonStringInput.read[Float](JsonStringOutput.write(value, fast), fast)) == fbits(value),
+      fbits(JsonStringInput.read[Float](JsonStringOutput.write(value))) == fbits(value),
       s"end-to-end: $value",
     )
     if (value != 0.0f)

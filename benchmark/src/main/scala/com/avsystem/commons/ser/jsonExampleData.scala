@@ -80,13 +80,13 @@ object BigDoubleMap {
     }
     .toMap
 
-  final val ExampleJsonStandard: String = JsonStringOutput.write(Example)
+  final val ExampleJson: String = JsonStringOutput.write(Example)
 }
 
 /** A large JSON object mixing all four number types the fast codec covers (`Int`, `Long`, `Double`, `Float`), spread
   * across four maps of 32 entries each — 132 keys total. Represents a realistic numeric-heavy payload (e.g. a Kafka
-  * telemetry record) and is the end-to-end target for comparing [[JsonNumberCodec.Standard]] vs
-  * [[JsonNumberCodec.Fast]] on both serialization and deserialization.
+  * telemetry record) and is the end-to-end target for the number-codec benchmarks on both serialization and
+  * deserialization.
   */
 case class BigNumbers(
   ints: Map[String, Int],
@@ -106,7 +106,7 @@ object BigNumbers extends HasGenCodec[BigNumbers] {
     floats = tab(i => (((i + 1) * 0.31830988f) * (if (i % 2 == 0) 1 else -1) * math.pow(10, (i % 5) - 2)).toFloat),
   )
 
-  final val ExampleJsonStandard: String = JsonStringOutput.write(Example)
+  final val ExampleJson: String = JsonStringOutput.write(Example)
 }
 
 case class Foo(s: String, d: Double, i: Int, l: Long, bs: List[Boolean])

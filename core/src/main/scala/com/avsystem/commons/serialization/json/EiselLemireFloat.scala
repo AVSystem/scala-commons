@@ -43,14 +43,12 @@ private[json] object EiselLemireFloat {
   private final val POWERS_OF_TEN: Array[Float] =
     Array(1e0f, 1e1f, 1e2f, 1e3f, 1e4f, 1e5f, 1e6f, 1e7f, 1e8f, 1e9f, 1e10f)
 
-  def parse(s: String): Float = parse(s, 0, s.length)
-
-  /** Parses `s[start, end)` as a `Float`, exactly as `java.lang.Float.parseFloat` of that substring would, without
-    * allocating the substring (except on the rare fallback path).
+  /** Parses `s` as a `Float`, exactly as `java.lang.Float.parseFloat` would (Eisel-Lemire fast path, falling back to
+    * `java.lang.Float.parseFloat` for anything the fast grammar can't handle, e.g. "Infinity"/"NaN").
     */
-  def parse(s: String, start: Int, end: Int): Float = {
-    val len = end
-    var index = start
+  def parse(s: String): Float = {
+    val len = s.length
+    var index = 0
     var isNegative = false
     if (index < len && s.charAt(index) == '-') { isNegative = true; index += 1 }
 
@@ -95,7 +93,7 @@ private[json] object EiselLemireFloat {
     }
 
     if (illegal || digitCount == 0 || index < len) {
-      return java.lang.Float.parseFloat(s.substring(start, end))
+      return java.lang.Float.parseFloat(s)
     }
 
     var isSignificandTruncated = false
@@ -121,7 +119,7 @@ private[json] object EiselLemireFloat {
 
     val result =
       tryDecToFloatTruncated(isNegative, significand, exponent, isSignificandTruncated, exponentOfTruncatedSignificand)
-    if (java.lang.Float.isNaN(result)) java.lang.Float.parseFloat(s.substring(start, end)) else result
+    if (java.lang.Float.isNaN(result)) java.lang.Float.parseFloat(s) else result
   }
 
   private def tryDecToFloatTruncated(

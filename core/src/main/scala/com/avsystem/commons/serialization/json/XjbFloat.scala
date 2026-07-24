@@ -7,8 +7,8 @@
 package com.avsystem.commons
 package serialization.json
 
-/** Fast shortest-`Float` formatter backing [[JsonNumberCodec.Fast]]: a scalar port of the xjb `xjb32` numeric core.
-  * Always produces text that parses back to the exact same `Float`.
+/** Fast shortest-`Float` formatter used by [[JsonStringOutput]]: a scalar port of the xjb `xjb32` numeric core. Always
+  * produces text that parses back to the exact same `Float`.
   */
 private[json] object XjbFloat {
   final val MaxChars = 15

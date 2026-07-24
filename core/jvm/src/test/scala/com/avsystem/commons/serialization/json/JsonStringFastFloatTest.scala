@@ -8,20 +8,18 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.util.Random
 
-/** Verifies [[JsonNumberCodec.Fast]] `Float` support in [[JsonStringOutput]] (XjbFloat) and [[JsonStringInput]]
-  * (EiselLemireFloat). Writing must round-trip; reading must be bit-identical to `java.lang.Float.parseFloat`.
+/** Verifies `Float` support in [[JsonStringOutput]] (XjbFloat) and [[JsonStringInput]] (EiselLemireFloat). Writing must
+  * round-trip; reading must be bit-identical to `java.lang.Float.parseFloat`.
   */
 class JsonStringFastFloatTest extends AnyFunSuite with Matchers with ScalaCheckPropertyChecks {
 
-  private val fast = JsonOptions(numberCodec = JsonNumberCodec.Fast)
-
   private def bits(f: Float): Int = java.lang.Float.floatToIntBits(f)
-  private def writeF(f: Float): String = JsonStringOutput.write(f, fast)
+  private def writeF(f: Float): String = JsonStringOutput.write(f)
 
   private def assertWriteRoundTrips(f: Float): Unit = {
     val text = writeF(f)
     assert(bits(java.lang.Float.parseFloat(text)) == bits(f), s"JDK round-trip: $f -> '$text'")
-    assert(bits(JsonStringInput.read[Float](text, fast)) == bits(f), s"library round-trip: $f -> '$text'")
+    assert(bits(JsonStringInput.read[Float](text)) == bits(f), s"library round-trip: $f -> '$text'")
   }
 
   private def assertReadSame(s: String): Unit = {
@@ -98,13 +96,13 @@ class JsonStringFastFloatTest extends AnyFunSuite with Matchers with ScalaCheckP
     List(Float.NaN, Float.PositiveInfinity, Float.NegativeInfinity).foreach { f =>
       val text = writeF(f)
       assert(text.startsWith("\"") && text.endsWith("\""))
-      assert(bits(JsonStringInput.read[Float](text, fast)) == bits(f))
+      assert(bits(JsonStringInput.read[Float](text)) == bits(f))
     }
   }
 
   test("floats embedded in an array read via the buffer path") {
     val json = specials.map(_.toString).mkString("[", ",", "]")
-    val read = JsonStringInput.read[List[Float]](json, fast)
+    val read = JsonStringInput.read[List[Float]](json)
     read.zip(specials).foreach { case (r, v) => assert(bits(r) == bits(v), s"$v -> $r") }
   }
 
