@@ -92,9 +92,6 @@ class JsonStringInput(
     }
   }
 
-  // Byte/Short/Int/Long all read via the String path (parseNumber). The char-buffer digit parse measured ~2x slower
-  // end-to-end for integer list reads — an allocation-stall regression around the (unavoidable) Int/Long boxing,
-  // despite parsing faster in isolation and allocating less — so only Double/Float use the buffer fast path.
   def readInt(): Int = parseNumber { str =>
     if (isInteger(str)) str.toInt
     else {
@@ -113,8 +110,6 @@ class JsonStringInput(
     }
   }
 
-  // Float/Double parse via the fast EiselLemire parser (over the token's text, so JSON string forms like
-  // "Infinity"/"-Infinity"/"NaN" work too); writes use the fast XjbFloat/XjbDouble formatters.
   override def readFloat(): Float = parseNumber(EiselLemireFloat.parse)
 
   def readDouble(): Double = parseNumber(EiselLemireDouble.parse)
@@ -394,8 +389,7 @@ final class JsonReader(val json: String) {
   private def readHex(): Int =
     fromHex(read())
 
-  // Scans the number token, advancing past it, and returns its text.
-  private def scanNumber(): String = {
+  private def parseNumber(): String = {
     val start = i
 
     if (isNext('-')) {
@@ -490,8 +484,8 @@ final class JsonReader(val json: String) {
       case 'n' => pass("null"); update(null, JsonType.`null`)
       case '[' => read(); update(null, JsonType.list)
       case '{' => read(); update(null, JsonType.`object`)
-      case '-' => update(scanNumber(), JsonType.number)
-      case c if Character.isDigit(c) => update(scanNumber(), JsonType.number)
+      case '-' => update(parseNumber(), JsonType.number)
+      case c if Character.isDigit(c) => update(parseNumber(), JsonType.number)
       case c => readFailure(s"Unexpected character: '${c.toChar}'")
     }
     else readFailure("Unexpected EOF")
