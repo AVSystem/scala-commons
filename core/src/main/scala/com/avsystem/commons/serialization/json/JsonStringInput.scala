@@ -110,9 +110,11 @@ class JsonStringInput(
     }
   }
 
-  override def readFloat(): Float = parseNumber(EiselLemireFloat.parse)
+  override def readFloat(): Float =
+    parseNumber(EiselLemireFloat.parse)
 
-  def readDouble(): Double = parseNumber(EiselLemireDouble.parse)
+  def readDouble(): Double =
+    parseNumber(EiselLemireDouble.parse)
 
   def readBigInt(): BigInt = parseNumber { str =>
     if (isInteger(str)) BigInt(str)
@@ -317,9 +319,8 @@ final class JsonReader(val json: String) {
   private[this] var tpe: JsonType = _
 
   def index: Int = i
-  def jsonType: JsonType = tpe
-
   def currentValue: Any = value
+  def jsonType: JsonType = tpe
 
   def reset(idx: Int): Unit = {
     i = idx
