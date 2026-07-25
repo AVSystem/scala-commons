@@ -7,10 +7,10 @@ import scala.util.Random
 
 /** Cross-platform (JVM + Scala.js) smoke test of the fast JSON number handling — the Eisel-Lemire `Double`/`Float`
   * reads and shortest-digit writes that [[JsonStringInput]] / [[JsonStringOutput]] use. The exhaustive suites (Paxson
-  * stress vectors, 2M-value sweeps, `toString`-format comparisons) are JVM-only under `core/jvm/src/test` — they are too
-  * slow under Scala.js' emulated `Long` arithmetic and some compare against JVM `toString` formatting. This suite sticks
-  * to platform-independent oracles: a write must round-trip bit-exactly through a read, and integer reads must preserve
-  * their value.
+  * stress vectors, 2M-value sweeps, `toString`-format comparisons) are JVM-only under `core/jvm/src/test` — they are
+  * too slow under Scala.js' emulated `Long` arithmetic and some compare against JVM `toString` formatting. This suite
+  * sticks to platform-independent oracles: a write must round-trip bit-exactly through a read, and integer reads must
+  * preserve their value.
   */
 class JsonFastNumberCrossTest extends AnyFunSuite {
 
