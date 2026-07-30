@@ -137,10 +137,7 @@ final class NativeJsonObjectInput(dict: js.Dictionary[js.Any], options: NativeFo
     it.hasNext
 
   override def peekField(name: String): Opt[FieldInput] =
-    if (dict.contains(name) && !js.isUndefined(dict(name)))
-      Opt(new NativeJsonFieldInput(name, dict(name), options))
-    else
-      Opt.Empty
+    dict.get(name).filterNot(js.isUndefined).map(value => new NativeJsonFieldInput(name, value, options)).toOpt
 
   override def nextField(): FieldInput = {
     val (key, value) = it.next()
