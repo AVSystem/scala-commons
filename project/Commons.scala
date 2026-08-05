@@ -29,7 +29,7 @@ object Commons extends ProjectGroup("commons") {
   val guavaVersion = "33.6.0-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.20"
-  val scalatestplusScalacheckVersion = "3.2.14.0"
+  val scalatestplusScalacheckVersion = "3.2.18.0"
   val scalacheckVersion = "1.19.0"
   val mongoVersion = "5.9.1"
   val jettyVersion = "12.1.11"
@@ -159,7 +159,7 @@ object Commons extends ProjectGroup("commons") {
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
-      "org.scalatestplus" %%% "scalacheck-1-16" % scalatestplusScalacheckVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-17" % scalatestplusScalacheckVersion % Test,
     ),
     ideBasePackages := Seq(organization.value),
     Compile / ideOutputDirectory := Some(target.value.getParentFile / "out/production"),
