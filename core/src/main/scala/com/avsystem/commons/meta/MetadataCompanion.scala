@@ -4,7 +4,7 @@ package meta
 import com.avsystem.commons.macros.misc.MiscMacros
 import com.avsystem.commons.misc.ImplicitNotFound
 
-import scala.annotation.implicitNotFound
+import scala.annotation.nowarn
 
 /** Base trait for companion objects of _metadata classes_. A metadata class is a generic class that captures metadata
   * for some Scala type, typically an RPC interface ([[com.avsystem.commons.rpc.RpcMetadataCompanion
@@ -27,7 +27,8 @@ trait MetadataCompanion[M[_]] {
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
     implicit def lazyMetadata[Real](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
 
-    @implicitNotFound("#{forNotLazy}")
+    @deprecated("Use native implicitNotFound instead", "2.29.0")
+    @nowarn("msg=deprecated")
     implicit def notFound[T](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
       ImplicitNotFound()
   }
@@ -57,7 +58,8 @@ trait BoundedMetadataCompanion[Hi, Lo <: Hi, M[_ >: Lo <: Hi]] {
     // macro effectively turns `metadata` param into by-name param (implicit params by themselves cannot be by-name)
     implicit def lazyMetadata[Real >: Lo <: Hi](implicit metadata: M[Real]): Lazy[Real] = macro MiscMacros.lazyMetadata
 
-    @implicitNotFound("#{forNotLazy}")
+    @deprecated("Use native implicitNotFound instead", "2.29.0")
+    @nowarn("msg=deprecated")
     implicit def notFound[T >: Lo <: Hi](implicit forNotLazy: ImplicitNotFound[M[T]]): ImplicitNotFound[Lazy[T]] =
       ImplicitNotFound()
   }
