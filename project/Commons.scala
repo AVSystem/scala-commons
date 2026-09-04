@@ -67,7 +67,7 @@ object Commons extends ProjectGroup("commons") {
     developers := List(
       Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak"))
     ),
-    scalaVersion := "2.13.18",
+    scalaVersion := "3.9.0",
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21"), JavaSpec.temurin("25")),
