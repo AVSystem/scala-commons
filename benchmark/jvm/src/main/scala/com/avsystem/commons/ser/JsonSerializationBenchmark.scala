@@ -10,6 +10,29 @@ import org.openjdk.jmh.annotations.*
 @BenchmarkMode(Array(Mode.Throughput))
 abstract class JsonSerializationBenchmark
 
+/** End-to-end GenCodec serialization and deserialization of numeric-heavy payloads: a 128-entry `Map[String, Double]`
+  * ([[BigDoubleMap]]) and a 132-key object mixing `Int`/`Long`/`Double`/`Float` ([[BigNumbers]]). Run with `-prof gc`
+  * to see the allocation profile.
+  */
+class JsonNumberBenchmark extends JsonSerializationBenchmark {
+
+  @Benchmark
+  def writeDoubleMap: String =
+    JsonStringOutput.write(BigDoubleMap.Example)
+
+  @Benchmark
+  def writeMixed: String =
+    JsonStringOutput.write(BigNumbers.Example)
+
+  @Benchmark
+  def readDoubleMap: Map[String, Double] =
+    JsonStringInput.read[Map[String, Double]](BigDoubleMap.ExampleJson)
+
+  @Benchmark
+  def readMixed: BigNumbers =
+    JsonStringInput.read[BigNumbers](BigNumbers.ExampleJson)
+}
+
 class JsonWritingBenchmark extends JsonSerializationBenchmark {
   @Benchmark
   def writePrimitivesGenCodec: String =
