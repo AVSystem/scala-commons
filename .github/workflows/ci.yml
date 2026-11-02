@@ -65,10 +65,11 @@ jobs:
         uses: actions/setup-node@v4
 
       - name: Setup MongoDB
-        uses: supercharge/mongodb-github-action@1.12.1
+        uses: supercharge/mongodb-github-action@89d1ecb837145f486898e235478a7e267f68c44e
         with:
-          mongodb-version: 8.0
+          mongodb-version: 8.0-noble
           mongodb-replica-set: test-rs
+          mongodb-extra-env: GLIBC_TUNABLES=glibc.pthread.rseq=1
 
       - name: Check that workflows are up to date
         run: sbt '++ ${{ matrix.scala }}; githubWorkflowCheck'
