@@ -101,11 +101,15 @@ object Commons extends ProjectGroup("commons") {
         name = Some("Setup Node.js"),
       ),
       WorkflowStep.Use(
-        UseRef.Public("supercharge", "mongodb-github-action", "1.12.1"),
+        // pinned to a commit from `main` until a release with `mongodb-extra-env` is cut
+        UseRef.Public("supercharge", "mongodb-github-action", "89d1ecb837145f486898e235478a7e267f68c44e"),
         name = Some("Setup MongoDB"),
         params = Map(
           "mongodb-version" -> "8.0",
           "mongodb-replica-set" -> "test-rs",
+          // workaround for https://github.com/supercharge/mongodb-github-action/issues/81
+          // (https://jira.mongodb.org/browse/SERVER-121912)
+          "mongodb-extra-env" -> "GLIBC_TUNABLES=glibc.pthread.rseq=1",
         ),
       ),
     ),
