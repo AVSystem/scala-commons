@@ -105,10 +105,12 @@ object Commons extends ProjectGroup("commons") {
         UseRef.Public("supercharge", "mongodb-github-action", "89d1ecb837145f486898e235478a7e267f68c44e"),
         name = Some("Setup MongoDB"),
         params = Map(
-          "mongodb-version" -> "8.0",
+          // a plain "8.0" is rendered unquoted, read by YAML as a number and resolved to the `mongo:8` tag
+          "mongodb-version" -> "8.0-noble",
           "mongodb-replica-set" -> "test-rs",
           // workaround for https://github.com/supercharge/mongodb-github-action/issues/81
-          // (https://jira.mongodb.org/browse/SERVER-121912)
+          // root cause: https://jira.mongodb.org/browse/SERVER-121912
+          // can be dropped once on mongo 8.0.37+ (https://jira.mongodb.org/browse/SERVER-131779)
           "mongodb-extra-env" -> "GLIBC_TUNABLES=glibc.pthread.rseq=1",
         ),
       ),
