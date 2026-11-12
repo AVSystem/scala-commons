@@ -82,11 +82,11 @@ final class JsonStringOutput(builder: JStringBuilder, options: JsonOptions = Jso
   private def lowe(str: String): String = str.replace('E', 'e')
 
   override def writeFloat(float: Float): Unit =
-    if (java.lang.Float.isFinite(float)) builder.append(lowe(float.toString))
+    if (java.lang.Float.isFinite(float)) XjbFloat.appendTo(builder, float)
     else builder.append('"').append(lowe(float.toString)).append('"')
 
   def writeDouble(double: Double): Unit =
-    if (java.lang.Double.isFinite(double)) builder.append(lowe(double.toString))
+    if (java.lang.Double.isFinite(double)) XjbDouble.appendTo(builder, double)
     else builder.append('"').append(lowe(double.toString)).append('"')
 
   def writeBigInt(bigInt: BigInt): Unit = builder.append(bigInt)
