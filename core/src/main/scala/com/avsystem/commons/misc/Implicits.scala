@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package misc
 
+import scala.annotation.nowarn
+
 object Implicits {
 
   /** Similar to `implicitly` from standard library but implemented as a macro which materializes directly into the
@@ -8,8 +10,11 @@ object Implicits {
     * `infer` lets you have more detailed control over implicit-not-found compilation error messages through
     * [[ImplicitNotFound]].
     */
+  @deprecated("Use native implicitly instead", "2.29.0")
   def infer[T]: T = macro macros.misc.MiscMacros.infer[T]
+  @deprecated("Use native implicitly instead", "2.29.0")
   def infer[T](clue: String): T = macro macros.misc.MiscMacros.clueInfer[T]
+  @deprecated("Use native implicitly instead", "2.29.0")
   def inferNonMacro[T](clue: String): T = macro macros.misc.MiscMacros.inferNonMacro[T]
 }
 
@@ -40,9 +45,14 @@ object Implicits {
   *   ): ImplicitNotFound[GenCodec[Box[T]]] = ImplicitNotFound()
   * }}}
   */
+@deprecated("Use native implicitNotFound instead", "2.29.0")
 sealed trait ImplicitNotFound[T]
+
+@nowarn("msg=deprecated")
 object ImplicitNotFound {
+  @deprecated("Use native implicitNotFound instead", "2.29.0")
   def apply[T](): ImplicitNotFound[T] = throw new NotImplementedError("ImplicitNotFound.apply")
 
+  @deprecated("Use native implicitNotFound instead", "2.29.0")
   implicit def dummy[T]: ImplicitNotFound[T] = apply()
 }
