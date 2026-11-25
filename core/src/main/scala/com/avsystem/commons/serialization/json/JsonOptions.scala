@@ -42,6 +42,27 @@ object JsonDateFormat {
   case object EpochMillis extends JsonDateFormat
 }
 
+/** Specifies how `JsonStringInput.readByte` / `readShort` / `readInt` / `readLong` read a JSON number that is not plain
+  * digits (e.g. `2.0` or `5e3`). Plain integers (an optional `-` followed by digits) are read the same way in both
+  * modes.
+  */
+sealed trait JsonIntegerReading
+object JsonIntegerReading {
+
+  /** The number is converted to `Double` (`Byte`, `Short`, `Int`) or to `BigDecimal` with `JsonOptions.mathContext`
+    * (`Long`), and accepted when the rounded result is a whole number in range. Because of the rounding, a number that
+    * is not whole but close to one, e.g. `2.0000000000000001`, is accepted as that whole number.
+    */
+  case object Default extends JsonIntegerReading
+
+  /** The number is accepted only when its exact value is a whole number in range, e.g. `2.0`, `5e3` or `-0.0`;
+    * otherwise (e.g. `2.0000000000000001`) reading fails. The check works on the number's text, in time linear in its
+    * length, without `Double` or `BigDecimal`. A number encoded as a JSON string must follow the JSON number grammar,
+    * with an optional leading `+` and leading zeros allowed.
+    */
+  case object Exact extends JsonIntegerReading
+}
+
 /** Adjusts format of JSON produced by [[JsonStringOutput]].
   *
   * @param formatting
@@ -54,6 +75,8 @@ object JsonDateFormat {
   *   format used to represent timestamps
   * @param binaryFormat
   *   format used to represent binary data (byte arrays)
+  * @param integerReading
+  *   how integer types are read from JSON numbers that are not plain digits, see [[JsonIntegerReading]]
   */
 case class JsonOptions(
   formatting: JsonFormatting = JsonFormatting.Compact,
@@ -61,8 +84,45 @@ case class JsonOptions(
   mathContext: MathContext = BigDecimal.defaultMathContext,
   dateFormat: JsonDateFormat = JsonDateFormat.IsoInstant,
   binaryFormat: JsonBinaryFormat = JsonBinaryFormat.ByteArray,
-)
+  integerReading: JsonIntegerReading = JsonIntegerReading.Default,
+) {
+  // The 5-parameter constructor and `copy` keep binary compatibility with versions before `integerReading` was added
+  def this(
+    formatting: JsonFormatting,
+    asciiOutput: Boolean,
+    mathContext: MathContext,
+    dateFormat: JsonDateFormat,
+    binaryFormat: JsonBinaryFormat,
+  ) = this(formatting, asciiOutput, mathContext, dateFormat, binaryFormat, JsonIntegerReading.Default)
+
+  // a user-defined `copy` suppresses the synthetic one, so it is written out too
+  def copy(
+    formatting: JsonFormatting = formatting,
+    asciiOutput: Boolean = asciiOutput,
+    mathContext: MathContext = mathContext,
+    dateFormat: JsonDateFormat = dateFormat,
+    binaryFormat: JsonBinaryFormat = binaryFormat,
+    integerReading: JsonIntegerReading = integerReading,
+  ): JsonOptions = new JsonOptions(formatting, asciiOutput, mathContext, dateFormat, binaryFormat, integerReading)
+
+  def copy(
+    formatting: JsonFormatting,
+    asciiOutput: Boolean,
+    mathContext: MathContext,
+    dateFormat: JsonDateFormat,
+    binaryFormat: JsonBinaryFormat,
+  ): JsonOptions = new JsonOptions(formatting, asciiOutput, mathContext, dateFormat, binaryFormat, integerReading)
+}
 object JsonOptions {
+  // keeps binary compatibility with versions before `integerReading` was added
+  def apply(
+    formatting: JsonFormatting,
+    asciiOutput: Boolean,
+    mathContext: MathContext,
+    dateFormat: JsonDateFormat,
+    binaryFormat: JsonBinaryFormat,
+  ): JsonOptions = new JsonOptions(formatting, asciiOutput, mathContext, dateFormat, binaryFormat)
+
   final val Default = JsonOptions()
   final val Pretty = JsonOptions(formatting = JsonFormatting.Pretty)
 }
