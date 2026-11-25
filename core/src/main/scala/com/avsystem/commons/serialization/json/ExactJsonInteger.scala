@@ -3,8 +3,8 @@ package serialization.json
 
 /** Exact conversion of a JSON number's text to a whole number, used by [[JsonIntegerReading.Exact]].
   *
-  * Works on the text alone, in time linear in its length and without allocating on success. It never builds a
-  * `Double` (which would round) or an unlimited-precision number (which would hang or exhaust memory on inputs like
+  * Works on the text alone, in time linear in its length and without allocating on success. It never builds a `Double`
+  * (which would round) or an unlimited-precision number (which would hang or exhaust memory on inputs like
   * `1e999999999`).
   */
 private[json] object ExactJsonInteger {
@@ -16,8 +16,8 @@ private[json] object ExactJsonInteger {
 
   /** The exact value of `str` as a `Long`.
     *
-    * Accepted grammar (whole string): `[+-]? digit+ ('.' digit+)? ([eE] [+-]? digit+)?` with ASCII digits only;
-    * leading zeros are allowed.
+    * Accepted grammar (whole string): `[+-]? digit+ ('.' digit+)? ([eE] [+-]? digit+)?` with ASCII digits only; leading
+    * zeros are allowed.
     *
     * @throws NumberFormatException
     *   when `str` does not follow the grammar, its value is not a whole number, or it does not fit in a `Long`

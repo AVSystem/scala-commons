@@ -79,38 +79,60 @@ class JsonStringInput(
 
   override def readByte(): Byte = parseNumber { str =>
     if (isInteger(str)) str.toByte
-    else {
-      val dbl = str.toDouble
-      if (dbl.isValidByte) dbl.toByte
-      else throw new NumberFormatException(str)
-    }
+    else
+      options.integerReading match {
+        case JsonIntegerReading.Default =>
+          val dbl = str.toDouble
+          if (dbl.isValidByte) dbl.toByte
+          else throw new NumberFormatException(str)
+        case JsonIntegerReading.Exact =>
+          val l = ExactJsonInteger.parseLong(str)
+          if (l.isValidByte) l.toByte
+          else throw new NumberFormatException(str)
+      }
   }
 
   override def readShort(): Short = parseNumber { str =>
     if (isInteger(str)) str.toShort
-    else {
-      val dbl = str.toDouble
-      if (dbl.isValidShort) dbl.toShort
-      else throw new NumberFormatException(str)
-    }
+    else
+      options.integerReading match {
+        case JsonIntegerReading.Default =>
+          val dbl = str.toDouble
+          if (dbl.isValidShort) dbl.toShort
+          else throw new NumberFormatException(str)
+        case JsonIntegerReading.Exact =>
+          val l = ExactJsonInteger.parseLong(str)
+          if (l.isValidShort) l.toShort
+          else throw new NumberFormatException(str)
+      }
   }
 
   def readInt(): Int = parseNumber { str =>
     if (isInteger(str)) str.toInt
-    else {
-      val dbl = str.toDouble
-      if (dbl.isValidInt) dbl.toInt
-      else throw new NumberFormatException(str)
-    }
+    else
+      options.integerReading match {
+        case JsonIntegerReading.Default =>
+          val dbl = str.toDouble
+          if (dbl.isValidInt) dbl.toInt
+          else throw new NumberFormatException(str)
+        case JsonIntegerReading.Exact =>
+          val l = ExactJsonInteger.parseLong(str)
+          if (l.isValidInt) l.toInt
+          else throw new NumberFormatException(str)
+      }
   }
 
   def readLong(): Long = parseNumber { str =>
     if (isInteger(str)) str.toLong
-    else {
-      val bd = BigDecimal(str, options.mathContext)
-      if (bd.isValidLong) bd.toLong
-      else throw new NumberFormatException(str)
-    }
+    else
+      options.integerReading match {
+        case JsonIntegerReading.Default =>
+          val bd = BigDecimal(str, options.mathContext)
+          if (bd.isValidLong) bd.toLong
+          else throw new NumberFormatException(str)
+        case JsonIntegerReading.Exact =>
+          ExactJsonInteger.parseLong(str)
+      }
   }
 
   override def readFloat(): Float =
