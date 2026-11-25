@@ -22,6 +22,9 @@ object JsonStringInput {
   }
 
   class ParseException(msg: String, cause: Throwable = null) extends ReadFailure(msg, cause)
+
+  // `endIdx` of a list or object input that `readList` / `readObject` has started but not read to its end
+  private final val ReadStarted = -1
 }
 
 class JsonStringInput(
@@ -156,10 +159,47 @@ class JsonStringInput(
       Base64.decode(checkedValue[String](JsonType.string), urlSafe)
   }
 
+  /** Returns the JSON text of this value, exactly as it appears in the source, reading the value to its end if it is a
+    * list or an object. Calling it again returns the same text.
+    *
+    * A list or an object can be read as raw JSON instead of reading it with [[readList]] / [[readObject]], or after
+    * reading it to the end. Reading it as raw JSON after [[readList]] / [[readObject]] but before its end throws a
+    * [[JsonStringInput.ParseException ParseException]].
+    */
   def readRawJson(): String = {
-    skip()
-    reader.json.substring(startIdx, endIdx)
+    val json = reader.json
+    // dispatching on this value's own text rather than on `reader.jsonType`, which belongs to whatever value the
+    // shared reader parsed last - not necessarily this one, if this input is read late
+    json.charAt(startIdx) match {
+      case 't' => "true"
+      case 'f' => "false"
+      case 'n' => "null"
+      case '[' =>
+        // `endIdx` is set once the list has been read to its end
+        if (endIdx == ReadStarted) partlyReadError(JsonType.list)
+        else if (endIdx <= startIdx) new JsonListInput(reader, options, this).skipRemaining()
+        json.substring(startIdx, endIdx)
+      case '{' =>
+        if (endIdx == ReadStarted) partlyReadError(JsonType.`object`)
+        else if (endIdx <= startIdx) new JsonObjectInput(reader, options, this).skipRemaining()
+        json.substring(startIdx, endIdx)
+      case '"' => json.substring(startIdx, endIdx) // `currentValue` holds the unescaped string, not its JSON text
+      case _ =>
+        // a number: the reader already holds its text, unless it has parsed another value since
+        val len = endIdx - startIdx
+        reader.currentValue match {
+          case str: String if str.length == len && json.startsWith(str, startIdx) => str
+          case _ => json.substring(startIdx, endIdx)
+        }
+    }
   }
+
+  private def partlyReadError(tpe: JsonType): Nothing =
+    throw new ParseException(s"Cannot read a partly read $tpe as raw JSON ${reader.posInfo(startIdx)}")
+
+  // not overwriting the `endIdx` of a scalar, or of a list or object that has already been read to its end
+  private def markReadStarted(): Unit =
+    if (endIdx <= startIdx) endIdx = ReadStarted
 
   def jsonType: JsonType = reader.jsonType
 
@@ -175,12 +215,16 @@ class JsonStringInput(
     }
 
   def readList(): JsonListInput = reader.jsonType match {
-    case JsonType.list => new JsonListInput(reader, options, this)
+    case JsonType.list =>
+      markReadStarted() // before the list input's constructor, which ends an empty list right away
+      new JsonListInput(reader, options, this)
     case _ => expectedError(JsonType.list)
   }
 
   def readObject(): JsonObjectInput = reader.jsonType match {
-    case JsonType.`object` => new JsonObjectInput(reader, options, this)
+    case JsonType.`object` =>
+      markReadStarted() // before the object input's constructor, which ends an empty object right away
+      new JsonObjectInput(reader, options, this)
     case _ => expectedError(JsonType.`object`)
   }
 
