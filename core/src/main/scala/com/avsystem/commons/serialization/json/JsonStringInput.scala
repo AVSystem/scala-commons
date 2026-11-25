@@ -77,7 +77,7 @@ class JsonStringInput(
   override def readByte(): Byte = parseNumber { str =>
     if (isInteger(str)) str.toByte
     else {
-      val dbl = str.toDouble
+      val dbl = EiselLemireDouble.parse(str)
       if (dbl.isValidByte) dbl.toByte
       else throw new NumberFormatException(str)
     }
@@ -86,7 +86,7 @@ class JsonStringInput(
   override def readShort(): Short = parseNumber { str =>
     if (isInteger(str)) str.toShort
     else {
-      val dbl = str.toDouble
+      val dbl = EiselLemireDouble.parse(str)
       if (dbl.isValidShort) dbl.toShort
       else throw new NumberFormatException(str)
     }
@@ -95,7 +95,7 @@ class JsonStringInput(
   def readInt(): Int = parseNumber { str =>
     if (isInteger(str)) str.toInt
     else {
-      val dbl = str.toDouble
+      val dbl = EiselLemireDouble.parse(str)
       if (dbl.isValidInt) dbl.toInt
       else throw new NumberFormatException(str)
     }
@@ -111,10 +111,10 @@ class JsonStringInput(
   }
 
   override def readFloat(): Float =
-    parseNumber(_.toFloat)
+    parseNumber(EiselLemireFloat.parse)
 
   def readDouble(): Double =
-    parseNumber(_.toDouble)
+    parseNumber(EiselLemireDouble.parse)
 
   def readBigInt(): BigInt = parseNumber { str =>
     if (isInteger(str)) BigInt(str)
