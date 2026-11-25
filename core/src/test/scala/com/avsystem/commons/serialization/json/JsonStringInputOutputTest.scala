@@ -68,36 +68,36 @@ class JsonStringInputOutputTest
   }
 
   private val rawScalars = List(
-    "0",
-    "-0",
-    "123",
-    "-42",
-    "4.5",
-    "-0.0",
-    "1e999999999",
-    "2.0000000000000001",
-    "-1.5E-3",
-    "true",
-    "false",
-    "null",
-    "\"str\"",
-    "\"esc\\\"aped\\u0041\\n\"",
+    "0" -> JsonType.number,
+    "-0" -> JsonType.number,
+    "123" -> JsonType.number,
+    "-42" -> JsonType.number,
+    "4.5" -> JsonType.number,
+    "-0.0" -> JsonType.number,
+    "1e999999999" -> JsonType.number,
+    "2.0000000000000001" -> JsonType.number,
+    "-1.5E-3" -> JsonType.number,
+    "true" -> JsonType.boolean,
+    "false" -> JsonType.boolean,
+    "null" -> JsonType.`null`,
+    "\"str\"" -> JsonType.string,
+    "\"esc\\\"aped\\u0041\\n\"" -> JsonType.string,
   )
 
   test("raw json of top-level scalars, with surrounding whitespace") {
-    rawScalars.foreach { json =>
+    rawScalars.foreach { case (json, _) =>
       assert(new JsonStringInput(new JsonReader(s" \n\t$json \n")).readRawJson() == json)
     }
   }
 
-  test("raw json of scalars via readCustom(RawJson)") {
-    val jsonList = rawScalars.mkString("[ ", " , ", " ]")
+  test("raw json of scalars via readMetadata(JsonType) and readCustom(RawJson)") {
+    val jsonList = rawScalars.map(_._1).mkString("[ ", " , ", " ]")
     val li = new JsonStringInput(new JsonReader(jsonList)).readList()
-    val resBuilder = new ListBuffer[String]
+    val resBuilder = new ListBuffer[(String, JsonType)]
     while (li.hasNext) {
       val in = li.nextElement()
-      assert(in.readMetadata(JsonType).nonEmpty)
-      resBuilder += in.readCustom(RawJson).get
+      val tpe = in.readMetadata(JsonType).get
+      resBuilder += ((in.readCustom(RawJson).get, tpe))
     }
     assert(resBuilder.result() == rawScalars)
   }

@@ -156,6 +156,12 @@ class JsonStringInput(
       Base64.decode(checkedValue[String](JsonType.string), urlSafe)
   }
 
+  /** Returns the JSON text of this value, exactly as it appears in the source, reading the value to its end if it is a
+    * list or an object. Calling it again returns the same text.
+    *
+    * A list or an object can be read as raw JSON before reading it with [[readList]] / [[readObject]], or after reading
+    * it to the end, but not while one of its nested lists or objects has been read only partly.
+    */
   def readRawJson(): String = {
     val json = reader.json
     // dispatching on this value's own text rather than on `reader.jsonType`, which belongs to whatever value the
