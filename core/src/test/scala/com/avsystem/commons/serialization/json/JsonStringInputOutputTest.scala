@@ -67,6 +67,115 @@ class JsonStringInputOutputTest
     assert(resBuilder.result() == jsons)
   }
 
+  private val rawScalars = List(
+    "0",
+    "-0",
+    "123",
+    "-42",
+    "4.5",
+    "-0.0",
+    "1e999999999",
+    "2.0000000000000001",
+    "-1.5E-3",
+    "true",
+    "false",
+    "null",
+    "\"str\"",
+    "\"esc\\\"aped\\u0041\\n\"",
+  )
+
+  test("raw json of top-level scalars, with surrounding whitespace") {
+    rawScalars.foreach { json =>
+      assert(new JsonStringInput(new JsonReader(s" \n\t$json \n")).readRawJson() == json)
+    }
+  }
+
+  test("raw json of scalars via readCustom(RawJson)") {
+    val jsonList = rawScalars.mkString("[ ", " , ", " ]")
+    val li = new JsonStringInput(new JsonReader(jsonList)).readList()
+    val resBuilder = new ListBuffer[String]
+    while (li.hasNext) {
+      val in = li.nextElement()
+      assert(in.readMetadata(JsonType).nonEmpty)
+      resBuilder += in.readCustom(RawJson).get
+    }
+    assert(resBuilder.result() == rawScalars)
+  }
+
+  test("raw json of a number or literal is not copied again") {
+    // the text of a number is already held by the reader, literals are constants
+    // (inside a list, because `substring` of the whole string would return the string itself)
+    // only meaningful on the JVM - on Scala.js, `eq` on strings compares their values
+    val li = new JsonStringInput(new JsonReader("[-1.5E-3, 123, true, false, null]")).readList()
+    while (li.hasNext) {
+      val in = li.nextElement()
+      assert(in.readRawJson() eq in.readRawJson(), in.readRawJson())
+    }
+  }
+
+  test("raw json of peeked fields") {
+    val json = """{"a": -1.5e3, "b": true, "c": "s", "d": [1, 2], "e": null}"""
+    val oi = new JsonStringInput(new JsonReader(json)).readObject()
+    assert(oi.peekField("e").map(_.asInstanceOf[JsonStringInput].readRawJson()) == Opt("null"))
+    assert(oi.peekField("a").map(_.asInstanceOf[JsonStringInput].readRawJson()) == Opt("-1.5e3"))
+    assert(oi.peekField("d").map(_.asInstanceOf[JsonStringInput].readRawJson()) == Opt("[1, 2]"))
+    assert(oi.nextField().readRawJson() == "-1.5e3")
+  }
+
+  test("raw json of a scalar input read after the reader moved on") {
+    // JsonStringInput instances share one JsonReader; a scalar input read late must still return its own text
+    val li = new JsonStringInput(new JsonReader("""[1.5, 2, "x", true, [3, 4.25], 7]""")).readList()
+    val inputs = List.fill(4)(li.nextElement())
+    val nested = li.nextElement()
+    assert(inputs.map(_.readRawJson()) == List("1.5", "2", "\"x\"", "true"))
+    assert(nested.readRawJson() == "[3, 4.25]")
+    assert(inputs.head.readRawJson() == "1.5")
+    assert(li.nextElement().readRawJson() == "7")
+    assert(!li.hasNext)
+
+    val oi = new JsonStringInput(new JsonReader("""{"a": 10, "b": 20.5, "c": 30}""")).readObject()
+    val a = oi.nextField()
+    assert(oi.peekField("c").map(_.asInstanceOf[JsonStringInput].readRawJson()) == Opt("30"))
+    assert(a.readRawJson() == "10")
+  }
+
+  test("raw json of an object or list input read after the reader moved on") {
+    // peekField parses other fields' values with the shared reader, restoring only its position
+    val oi = new JsonStringInput(new JsonReader("""{"a": {"x": [1]}, "b": 2, "c": [{"y": 3}]}""")).readObject()
+    val a = oi.nextField()
+    assert(oi.peekField("b").map(_.asInstanceOf[JsonStringInput].readRawJson()) == Opt("2"))
+    assert(a.readRawJson() == """{"x": [1]}""")
+    val b = oi.nextField()
+    assert(b.readRawJson() == "2")
+    val c = oi.nextField()
+    assert(oi.peekField("a").map(_.asInstanceOf[JsonStringInput].readRawJson()) == Opt("""{"x": [1]}"""))
+    assert(c.readRawJson() == """[{"y": 3}]""")
+    assert(!oi.hasNext)
+  }
+
+  test("raw json of an object or list input read twice") {
+    val li = new JsonStringInput(new JsonReader("""[[[]], {"a": {}}, 2]""")).readList()
+    val l = li.nextElement()
+    assert(l.readRawJson() == "[[]]")
+    assert(l.readRawJson() == "[[]]")
+    val o = li.nextElement()
+    assert(o.readCustom(RawJson) == Opt("""{"a": {}}"""))
+    assert(o.readCustom(RawJson) == Opt("""{"a": {}}"""))
+    assert(li.nextElement().readRawJson() == "2")
+    assert(!li.hasNext)
+  }
+
+  test("raw json of an already consumed list") {
+    val in = new JsonStringInput(new JsonReader("""[[1, [2]], 3]"""))
+    val outer = in.readList()
+    val inner = outer.nextElement()
+    val li = inner.readList()
+    while (li.hasNext) li.nextElement().skip()
+    assert(inner.readRawJson() == "[1, [2]]")
+    assert(outer.nextElement().readRawJson() == "3")
+    assert(!outer.hasNext)
+  }
+
   def roundtrip[T: GenCodec](name: String)(values: T*)(implicit pos: Position): Unit = {
     test(name) {
       val serialized = values.map(write[T](_))

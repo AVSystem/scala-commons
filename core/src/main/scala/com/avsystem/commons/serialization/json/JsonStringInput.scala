@@ -157,8 +157,29 @@ class JsonStringInput(
   }
 
   def readRawJson(): String = {
-    skip()
-    reader.json.substring(startIdx, endIdx)
+    val json = reader.json
+    // dispatching on this value's own text rather than on `reader.jsonType`, which belongs to whatever value the
+    // shared reader parsed last - not necessarily this one, if this input is read late
+    json.charAt(startIdx) match {
+      case 't' => "true"
+      case 'f' => "false"
+      case 'n' => "null"
+      case '[' =>
+        // `endIdx` is set once the list has been read to its end
+        if (endIdx <= startIdx) new JsonListInput(reader, options, this).skipRemaining()
+        json.substring(startIdx, endIdx)
+      case '{' =>
+        if (endIdx <= startIdx) new JsonObjectInput(reader, options, this).skipRemaining()
+        json.substring(startIdx, endIdx)
+      case '"' => json.substring(startIdx, endIdx) // `currentValue` holds the unescaped string, not its JSON text
+      case _ =>
+        // a number: the reader already holds its text, unless it has parsed another value since
+        val len = endIdx - startIdx
+        reader.currentValue match {
+          case str: String if str.length == len && json.startsWith(str, startIdx) => str
+          case _ => json.substring(startIdx, endIdx)
+        }
+    }
   }
 
   def jsonType: JsonType = reader.jsonType
