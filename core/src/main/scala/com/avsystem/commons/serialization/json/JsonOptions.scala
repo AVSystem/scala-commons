@@ -47,7 +47,8 @@ object JsonDateFormat {
   * way in both modes.
   *
   * Because `readTimestamp` with `JsonDateFormat.EpochMillis` reads through `readLong` and `readBinary` with
-  * `JsonBinaryFormat.ByteArray` reads through `readByte`, this option applies to them as well.
+  * `JsonBinaryFormat.ByteArray` reads through `readByte`, this option applies to them as well. `readBigInt` is not
+  * affected.
   */
 sealed trait JsonIntegerReading
 object JsonIntegerReading {
@@ -79,7 +80,8 @@ object JsonIntegerReading {
   * @param binaryFormat
   *   format used to represent binary data (byte arrays)
   * @param integerReading
-  *   how integer types are read from JSON numbers that are not plain digits, see [[JsonIntegerReading]]
+  *   how `Byte`, `Short`, `Int` and `Long` values are read from JSON numbers that are not plain integers (`BigInt` is
+  *   not affected), see [[JsonIntegerReading]]
   */
 case class JsonOptions(
   formatting: JsonFormatting = JsonFormatting.Compact,
