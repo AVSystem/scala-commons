@@ -5,12 +5,15 @@ import com.avsystem.commons.serialization.GenCodec.ReadFailure
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
 import org.scalatest.funsuite.AnyFunSuite
 
-case class IntAndLong(i: Int, l: Long)
-object IntAndLong extends HasGenCodec[IntAndLong]
+object JsonIntegerReadingTest {
+  case class IntAndLong(i: Int, l: Long)
+  object IntAndLong extends HasGenCodec[IntAndLong]
+}
 
 class JsonIntegerReadingTest extends AnyFunSuite {
 
-  import JsonStringInput.{ParseException, read}
+  import JsonIntegerReadingTest.IntAndLong
+  import JsonStringInput.{read, ParseException}
 
   private val exact = JsonOptions(integerReading = JsonIntegerReading.Exact)
 
@@ -40,8 +43,9 @@ class JsonIntegerReadingTest extends AnyFunSuite {
       "1e999999999",
       "1e-999999999",
     ).foreach(s => intercept[ParseException](read[Int](s, exact)))
-    List("9007199254740993.00000000000000000001", "9223372036854775808.0", "1e999999999")
-      .foreach(s => intercept[ParseException](read[Long](s, exact)))
+    List("9007199254740993.00000000000000000001", "9223372036854775808.0", "1e999999999").foreach(s =>
+      intercept[ParseException](read[Long](s, exact))
+    )
   }
 
   test("exact reading leaves plain digits unchanged") {
@@ -53,8 +57,7 @@ class JsonIntegerReadingTest extends AnyFunSuite {
   test("exact reading of numbers encoded as JSON strings") {
     assert(read[Int]("\"1e3\"", exact) == 1000)
     assert(read[Int]("\"+5\"", exact) == 5)
-    List("\" 1\"", "\"0x10\"", "\"1d\"", "\"Infinity\"")
-      .foreach(s => intercept[ParseException](read[Int](s, exact)))
+    List("\" 1\"", "\"0x10\"", "\"1d\"", "\"Infinity\"").foreach(s => intercept[ParseException](read[Int](s, exact)))
   }
 
   test("default reading keeps its current behaviour") {
@@ -63,6 +66,8 @@ class JsonIntegerReadingTest extends AnyFunSuite {
     assert(read[Int]("\"1d\"") == 1)
     assert(read[Long]("9007199254740993.00000000000000000001") == 9007199254740993L)
     intercept[ParseException](read[Int]("0.5"))
+    assert(read[Byte]("1.0000000000000001") == 1)
+    intercept[ParseException](read[Short]("2.5"))
   }
 
   test("exact reading through a generated codec") {

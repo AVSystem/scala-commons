@@ -31,6 +31,10 @@ class ExactJsonIntegerTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     "-9223372036854775808.0" -> Long.MinValue,
     "-9.223372036854775808e18" -> Long.MinValue,
     "9007199254740993.0" -> 9007199254740993L,
+    "922337203685477580e1" -> 9223372036854775800L,
+    "-922337203685477580e1" -> -9223372036854775800L,
+    "1e-0" -> 1L,
+    "1E-00" -> 1L,
   )
 
   private val rejected = List(
@@ -45,6 +49,8 @@ class ExactJsonIntegerTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     "-9223372036854775809",
     "9.223372036854775808e18",
     "1e19",
+    "922337203685477581e1",
+    "-922337203685477581e1",
     "1e999999999",
     "1e-999999999",
     "1e99999999999999999999",

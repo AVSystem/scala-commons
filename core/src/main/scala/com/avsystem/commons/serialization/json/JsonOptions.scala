@@ -42,9 +42,12 @@ object JsonDateFormat {
   case object EpochMillis extends JsonDateFormat
 }
 
-/** Specifies how `JsonStringInput.readByte` / `readShort` / `readInt` / `readLong` read a JSON number that is not plain
-  * digits (e.g. `2.0` or `5e3`). Plain integers (an optional `-` followed by digits) are read the same way in both
-  * modes.
+/** Specifies how `JsonStringInput.readByte` / `readShort` / `readInt` / `readLong` read a JSON number that is not a
+  * plain integer (e.g. `2.0` or `5e3`). Plain integers (an optional `-` followed by decimal digits) are read the same
+  * way in both modes.
+  *
+  * Because `readTimestamp` with `JsonDateFormat.EpochMillis` reads through `readLong` and `readBinary` with
+  * `JsonBinaryFormat.ByteArray` reads through `readByte`, this option applies to them as well.
   */
 sealed trait JsonIntegerReading
 object JsonIntegerReading {
@@ -55,10 +58,10 @@ object JsonIntegerReading {
     */
   case object Default extends JsonIntegerReading
 
-  /** The number is accepted only when its exact value is a whole number in range, e.g. `2.0`, `5e3` or `-0.0`;
-    * otherwise (e.g. `2.0000000000000001`) reading fails. The check works on the number's text, in time linear in its
-    * length, without `Double` or `BigDecimal`. A number encoded as a JSON string must follow the JSON number grammar,
-    * with an optional leading `+` and leading zeros allowed.
+  /** A number that is not a plain integer is accepted only when its exact value is a whole number in range, e.g. `2.0`,
+    * `5e3` or `-0.0`; otherwise (e.g. `2.0000000000000001`) reading fails. Such a number must follow the JSON number
+    * grammar with ASCII digits, with an optional leading `+` and leading zeros allowed, also when it is encoded as a
+    * JSON string. The check works on the number's text, in time linear in its length, without `Double` or `BigDecimal`.
     */
   case object Exact extends JsonIntegerReading
 }
@@ -86,7 +89,8 @@ case class JsonOptions(
   binaryFormat: JsonBinaryFormat = JsonBinaryFormat.ByteArray,
   integerReading: JsonIntegerReading = JsonIntegerReading.Default,
 ) {
-  // The 5-parameter constructor and `copy` keep binary compatibility with versions before `integerReading` was added
+  // The 5-parameter constructor and `copy` below keep binary compatibility with versions before `integerReading` was
+  // added
   def this(
     formatting: JsonFormatting,
     asciiOutput: Boolean,
@@ -95,7 +99,15 @@ case class JsonOptions(
     binaryFormat: JsonBinaryFormat,
   ) = this(formatting, asciiOutput, mathContext, dateFormat, binaryFormat, JsonIntegerReading.Default)
 
-  // a user-defined `copy` suppresses the synthetic one, so it is written out too
+  def copy(
+    formatting: JsonFormatting,
+    asciiOutput: Boolean,
+    mathContext: MathContext,
+    dateFormat: JsonDateFormat,
+    binaryFormat: JsonBinaryFormat,
+  ): JsonOptions = new JsonOptions(formatting, asciiOutput, mathContext, dateFormat, binaryFormat, integerReading)
+
+  // a user-defined `copy` suppresses the synthetic one, so the 6-parameter `copy` is written out too
   def copy(
     formatting: JsonFormatting = formatting,
     asciiOutput: Boolean = asciiOutput,
@@ -103,14 +115,6 @@ case class JsonOptions(
     dateFormat: JsonDateFormat = dateFormat,
     binaryFormat: JsonBinaryFormat = binaryFormat,
     integerReading: JsonIntegerReading = integerReading,
-  ): JsonOptions = new JsonOptions(formatting, asciiOutput, mathContext, dateFormat, binaryFormat, integerReading)
-
-  def copy(
-    formatting: JsonFormatting,
-    asciiOutput: Boolean,
-    mathContext: MathContext,
-    dateFormat: JsonDateFormat,
-    binaryFormat: JsonBinaryFormat,
   ): JsonOptions = new JsonOptions(formatting, asciiOutput, mathContext, dateFormat, binaryFormat, integerReading)
 }
 object JsonOptions {

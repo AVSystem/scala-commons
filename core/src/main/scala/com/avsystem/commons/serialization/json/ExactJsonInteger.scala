@@ -106,11 +106,10 @@ private[json] object ExactJsonInteger {
         negated -= d
         j += 1
       }
-      var s = scale
-      while (s > 0) {
+      while (scale > 0) {
         if (negated < multMin) fail()
         negated *= 10
-        s -= 1
+        scale -= 1
       }
       if (negative) negated
       else if (negated == Long.MinValue) fail()
