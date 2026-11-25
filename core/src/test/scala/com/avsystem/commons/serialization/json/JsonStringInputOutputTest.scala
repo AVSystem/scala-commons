@@ -176,6 +176,28 @@ class JsonStringInputOutputTest
     assert(!outer.hasNext)
   }
 
+  test("raw json of a partly read list or object") {
+    def partlyRead(json: String)(read: JsonStringInput => Any): JsonStringInput = {
+      val in = new JsonStringInput(new JsonReader(json))
+      read(in)
+      in
+    }
+    List(
+      partlyRead("[[1, 2], 3]")(_.readList().nextElement()), // nested list not read
+      partlyRead("[1, 2]")(_.readList().nextElement()),
+      partlyRead("[1,]")(_.readList().nextElement()), // invalid, must not be accepted
+      partlyRead("[1, 2]")(_.readList()),
+      partlyRead("""{"a": {"b": 1}, "c": 2}""")(_.readObject().nextField()), // nested object not read
+      partlyRead("""{"a": 1,}""")(_.readObject().nextField().readInt()), // invalid, must not be accepted
+    ).foreach { in =>
+      intercept[JsonStringInput.ParseException](in.readRawJson())
+    }
+
+    // read to the end right away by readList / readObject
+    assert(partlyRead(" [ ] ")(_.readList()).readRawJson() == "[ ]")
+    assert(partlyRead(" { } ")(_.readObject()).readRawJson() == "{ }")
+  }
+
   def roundtrip[T: GenCodec](name: String)(values: T*)(implicit pos: Position): Unit = {
     test(name) {
       val serialized = values.map(write[T](_))
