@@ -64,53 +64,87 @@ class JsonStringInput(
     }
   }
 
+  private def numberText(): String = reader.jsonType match {
+    // accepting JSON strings as numbers (also because they may be Infinity/-Infinity/NaN)
+    case JsonType.number | JsonType.string => reader.currentValue.asInstanceOf[String]
+    case _ => expectedError(JsonType.number)
+  }
+
+  private def invalidNumber(str: String, cause: NumberFormatException): Nothing =
+    throw new ParseException(s"Invalid number format: $str ${reader.posInfo(startIdx)}", cause)
+
   private def parseNumber[T](parse: String => T): T = {
-    val str = reader.jsonType match {
-      // accepting JSON strings as numbers (also because they may be Infinity/-Infinity/NaN)
-      case JsonType.number | JsonType.string => reader.currentValue.asInstanceOf[String]
-      case _ => expectedError(JsonType.number)
-    }
+    val str = numberText()
     try parse(str)
     catch {
-      case e: NumberFormatException =>
-        throw new ParseException(s"Invalid number format: $str ${reader.posInfo(startIdx)}", e)
+      case e: NumberFormatException => invalidNumber(str, e)
     }
   }
 
-  override def readByte(): Byte = parseNumber { str =>
-    if (isInteger(str)) str.toByte
-    else {
-      val dbl = str.toDouble
-      if (dbl.isValidByte) dbl.toByte
-      else throw new NumberFormatException(str)
+  // Integer reads don't go through `parseNumber`: its lambda and boxed result are only eliminated when the JIT
+  // manages to inline `parseNumber`, which it does not do reliably, costing an allocation per value read.
+
+  override def readByte(): Byte = {
+    val str = numberText()
+    try if (isInteger(str)) str.toByte else readNonPlainByte(str)
+    catch {
+      case e: NumberFormatException => invalidNumber(str, e)
     }
   }
 
-  override def readShort(): Short = parseNumber { str =>
-    if (isInteger(str)) str.toShort
-    else {
-      val dbl = str.toDouble
-      if (dbl.isValidShort) dbl.toShort
-      else throw new NumberFormatException(str)
+  override def readShort(): Short = {
+    val str = numberText()
+    try if (isInteger(str)) str.toShort else readNonPlainShort(str)
+    catch {
+      case e: NumberFormatException => invalidNumber(str, e)
     }
   }
 
-  def readInt(): Int = parseNumber { str =>
-    if (isInteger(str)) str.toInt
-    else {
+  def readInt(): Int = {
+    val str = numberText()
+    try if (isInteger(str)) str.toInt else readNonPlainInt(str)
+    catch {
+      case e: NumberFormatException => invalidNumber(str, e)
+    }
+  }
+
+  def readLong(): Long = {
+    val str = numberText()
+    try if (isInteger(str)) str.toLong else readNonPlainLong(str)
+    catch {
+      case e: NumberFormatException => invalidNumber(str, e)
+    }
+  }
+
+  // a whole number in `Byte` / `Short` range is also a whole number in `Int` range, in both modes
+  private def readNonPlainByte(str: String): Byte = {
+    val i = readNonPlainInt(str)
+    if (i.isValidByte) i.toByte else throw new NumberFormatException(str)
+  }
+
+  private def readNonPlainShort(str: String): Short = {
+    val i = readNonPlainInt(str)
+    if (i.isValidShort) i.toShort else throw new NumberFormatException(str)
+  }
+
+  private def readNonPlainInt(str: String): Int = options.integerReading match {
+    case JsonIntegerReading.Rounding =>
       val dbl = str.toDouble
       if (dbl.isValidInt) dbl.toInt
       else throw new NumberFormatException(str)
-    }
+    case JsonIntegerReading.Exact =>
+      val l = ExactJsonInteger.parseLong(str)
+      if (l.isValidInt) l.toInt
+      else throw new NumberFormatException(str)
   }
 
-  def readLong(): Long = parseNumber { str =>
-    if (isInteger(str)) str.toLong
-    else {
+  private def readNonPlainLong(str: String): Long = options.integerReading match {
+    case JsonIntegerReading.Rounding =>
       val bd = BigDecimal(str, options.mathContext)
       if (bd.isValidLong) bd.toLong
       else throw new NumberFormatException(str)
-    }
+    case JsonIntegerReading.Exact =>
+      ExactJsonInteger.parseLong(str)
   }
 
   override def readFloat(): Float =
