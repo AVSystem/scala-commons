@@ -60,7 +60,7 @@ class JsonIntegerReadingTest extends AnyFunSuite {
     List("\" 1\"", "\"0x10\"", "\"1d\"", "\"Infinity\"").foreach(s => intercept[ParseException](read[Int](s, exact)))
   }
 
-  test("default reading keeps its current behaviour") {
+  test("rounding reading (the default) keeps its current behaviour") {
     assert(read[Int]("2.0000000000000001") == 2)
     assert(read[Int]("2147483647.0000000001") == Int.MaxValue)
     assert(read[Int]("\"1d\"") == 1)

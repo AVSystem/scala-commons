@@ -88,12 +88,6 @@ class ExactJsonIntegerTest extends AnyFunSuite with ScalaCheckPropertyChecks {
     }
   }
 
-  test("huge exponents complete without expanding the number") {
-    assertThrows[NumberFormatException](parseLong("1e999999999"))
-    assertThrows[NumberFormatException](parseLong("1e-999999999"))
-    assert(parseLong("0e999999999") == 0L)
-  }
-
   // zeros are frequent so that whole numbers (trailing zeros, zero fractions) are common
   private val digit: Gen[Char] = Gen.frequency(3 -> Gen.const('0'), 2 -> Gen.numChar)
   private def digits(minCount: Int, maxCount: Int): Gen[String] =

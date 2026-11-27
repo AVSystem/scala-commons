@@ -7,8 +7,8 @@ class JsonOptionsTest extends AnyFunSuite {
   private val opts = JsonOptions()
 
   test("default integerReading") {
-    assert(JsonOptions().integerReading == JsonIntegerReading.Default)
-    assert(JsonOptions.Default.integerReading == JsonIntegerReading.Default)
+    assert(JsonOptions().integerReading == JsonIntegerReading.Rounding)
+    assert(JsonOptions.Default.integerReading == JsonIntegerReading.Rounding)
   }
 
   test("named-argument copy keeps other fields") {
@@ -22,7 +22,7 @@ class JsonOptionsTest extends AnyFunSuite {
 
   test("5-argument apply") {
     val o = JsonOptions(opts.formatting, opts.asciiOutput, opts.mathContext, opts.dateFormat, opts.binaryFormat)
-    assert(o.integerReading == JsonIntegerReading.Default)
+    assert(o.integerReading == JsonIntegerReading.Rounding)
     assert(o == JsonOptions.Default)
   }
 
@@ -35,7 +35,7 @@ class JsonOptionsTest extends AnyFunSuite {
 
   test("5-argument constructor") {
     val o = new JsonOptions(opts.formatting, opts.asciiOutput, opts.mathContext, opts.dateFormat, opts.binaryFormat)
-    assert(o.integerReading == JsonIntegerReading.Default)
+    assert(o.integerReading == JsonIntegerReading.Rounding)
   }
 
   test("6-field extractor") {

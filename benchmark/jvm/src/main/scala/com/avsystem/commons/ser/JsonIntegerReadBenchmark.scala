@@ -5,7 +5,7 @@ import com.avsystem.commons.serialization.json.{JsonIntegerReading, JsonOptions,
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 
-/** Reading every element of a 10k-element JSON array with `readInt` / `readLong`, under [[JsonIntegerReading.Default]]
+/** Reading every element of a 10k-element JSON array with `readInt` / `readLong`, under [[JsonIntegerReading.Rounding]]
   * (non-plain numbers such as `2.0` or `5e3` go through `Double` / `BigDecimal` rounding) and under
   * [[JsonIntegerReading.Exact]] (they are read exactly). Plain integers show the cost of the option on the common path;
   * decimal and exponent forms show the cost of the non-plain path. Every element is a whole number in range, so both
@@ -19,7 +19,7 @@ import org.openjdk.jmh.infra.Blackhole
 class JsonIntegerReadBenchmark {
   private final val Size = 10000
 
-  private val defaultOptions: JsonOptions = JsonOptions.Default
+  private val roundingOptions: JsonOptions = JsonOptions(integerReading = JsonIntegerReading.Rounding)
   private val exactOptions: JsonOptions = JsonOptions(integerReading = JsonIntegerReading.Exact)
 
   private val plainInts: String =
@@ -49,25 +49,25 @@ class JsonIntegerReadBenchmark {
   }
 
   @Benchmark
-  def plainIntsDefault(bh: Blackhole): Unit = readInts(plainInts, defaultOptions, bh)
+  def plainIntsRounding(bh: Blackhole): Unit = readInts(plainInts, roundingOptions, bh)
 
   @Benchmark
   def plainIntsExact(bh: Blackhole): Unit = readInts(plainInts, exactOptions, bh)
 
   @Benchmark
-  def decimalIntsDefault(bh: Blackhole): Unit = readInts(decimalInts, defaultOptions, bh)
+  def decimalIntsRounding(bh: Blackhole): Unit = readInts(decimalInts, roundingOptions, bh)
 
   @Benchmark
   def decimalIntsExact(bh: Blackhole): Unit = readInts(decimalInts, exactOptions, bh)
 
   @Benchmark
-  def exponentIntsDefault(bh: Blackhole): Unit = readInts(exponentInts, defaultOptions, bh)
+  def exponentIntsRounding(bh: Blackhole): Unit = readInts(exponentInts, roundingOptions, bh)
 
   @Benchmark
   def exponentIntsExact(bh: Blackhole): Unit = readInts(exponentInts, exactOptions, bh)
 
   @Benchmark
-  def decimalLongsDefault(bh: Blackhole): Unit = readLongs(decimalLongs, defaultOptions, bh)
+  def decimalLongsRounding(bh: Blackhole): Unit = readLongs(decimalLongs, roundingOptions, bh)
 
   @Benchmark
   def decimalLongsExact(bh: Blackhole): Unit = readLongs(decimalLongs, exactOptions, bh)

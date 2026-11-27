@@ -116,30 +116,19 @@ class JsonStringInput(
     }
   }
 
-  private def readNonPlainByte(str: String): Byte = options.integerReading match {
-    case JsonIntegerReading.Default =>
-      val dbl = str.toDouble
-      if (dbl.isValidByte) dbl.toByte
-      else throw new NumberFormatException(str)
-    case JsonIntegerReading.Exact =>
-      val l = ExactJsonInteger.parseLong(str)
-      if (l.isValidByte) l.toByte
-      else throw new NumberFormatException(str)
+  // a whole number in `Byte` / `Short` range is also a whole number in `Int` range, in both modes
+  private def readNonPlainByte(str: String): Byte = {
+    val i = readNonPlainInt(str)
+    if (i.isValidByte) i.toByte else throw new NumberFormatException(str)
   }
 
-  private def readNonPlainShort(str: String): Short = options.integerReading match {
-    case JsonIntegerReading.Default =>
-      val dbl = str.toDouble
-      if (dbl.isValidShort) dbl.toShort
-      else throw new NumberFormatException(str)
-    case JsonIntegerReading.Exact =>
-      val l = ExactJsonInteger.parseLong(str)
-      if (l.isValidShort) l.toShort
-      else throw new NumberFormatException(str)
+  private def readNonPlainShort(str: String): Short = {
+    val i = readNonPlainInt(str)
+    if (i.isValidShort) i.toShort else throw new NumberFormatException(str)
   }
 
   private def readNonPlainInt(str: String): Int = options.integerReading match {
-    case JsonIntegerReading.Default =>
+    case JsonIntegerReading.Rounding =>
       val dbl = str.toDouble
       if (dbl.isValidInt) dbl.toInt
       else throw new NumberFormatException(str)
@@ -150,7 +139,7 @@ class JsonStringInput(
   }
 
   private def readNonPlainLong(str: String): Long = options.integerReading match {
-    case JsonIntegerReading.Default =>
+    case JsonIntegerReading.Rounding =>
       val bd = BigDecimal(str, options.mathContext)
       if (bd.isValidLong) bd.toLong
       else throw new NumberFormatException(str)
